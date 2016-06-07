@@ -1,17 +1,47 @@
 "use strict";
 
-var Workspace = function (workspaceXml, canvas) {
-	this.canvas = canvas;
-	this.initialize(workspaceXml);
+var Workspace = function (workspaceXml, processList, mainContainer) {
+	this.processList = processList;
+	this.root = mainContainer;
+	this.setupUI();
+	this.loadWorkspace(workspaceXml);
+	this.updateSize();
 };
 
 Workspace.prototype = {
 	constructor: Workspace,
-	initialize: function (workspaceXml) {
-		//console.log('xml', workspaceXml.documentElement);
+	updateSize: function () {
+		var scrollSize = this.getScrollbarSize();
+		
+		this.canvas.setAttribute('width', this.root.offsetWidth - scrollSize.width);
+		this.canvas.setAttribute('height', this.root.offsetHeight - scrollSize.height);
+		
+		this.draw();
+	},
+	setupUI: function () {
+		this.root.innerHTML = '<canvas></canvas>';
+		this.canvas = this.root.childNodes[0];
+		
+		this.canvas.addEventListener('dragover', function (e) {
+			e.preventDefault();
+		});
+		
+		this.canvas.addEventListener('drop', function (e) {
+			e.preventDefault();
+			var process = e.dataTransfer.getData('process');
+			var canvasPos = this.canvas.getBoundingClientRect();
+			var dropX = e.clientX - canvasPos.left;
+			var dropY = e.clientY - canvasPos.top;
+			
+			this.dropProcess(true, process, dropX, dropY);
+		}.bind(this));
+		
+		window.addEventListener('resize', this.updateSize.bind(this));
+	},
+	loadWorkspace: function (workspaceXml) {
 		this.types = [];
-		this.systemProcesses = [];
-		this.userProcesses = [];
+		this.systemProcesses = {};
+		this.userProcesses = {};
 		
 		var typesByName = {};
 		var typeNodes = workspaceXml.getElementsByTagName('Type');
@@ -103,12 +133,12 @@ Workspace.prototype = {
 			}
 			
 			var process = new SystemProcess(name, inputs, outputs, returnPaths);
-			this.systemProcesses.push(process);
+			this.systemProcesses[name] = process;
 		}
-		//console.log('types', this.types);
-		//console.log('processes', this.systemProcesses);
+		
+		this.populateProcessList();
 	},
-	allocateColors: function (num) {		
+	allocateColors: function (num) {
 		var hue2rgb = function hue2rgb(p, q, t){
 			if(t < 0) t += 1;
 			if(t > 1) t -= 1;
@@ -135,7 +165,7 @@ Workspace.prototype = {
 		};
 		
 		var colors = [];
-		var hueStep = 1 / num, hue = 0, sat = 1, lum = 0.8;
+		var hueStep = 1 / num, hue = 0, sat = 1, lum = 0.45;
 		for (var i=0; i<num; i++) {
 			colors.push(hslToRgb(hue, sat, lum));
 			hue += hueStep;
@@ -143,14 +173,106 @@ Workspace.prototype = {
 		return colors;
 	},
 	loadProcesses: function (processXml) {
-		
+		this.populateProcessList();
 	},
 	saveProcesses: function () {
 		return '<Processes />';
 	},
+	populateProcessList: function () {
+		var content = '';
+		for (var proc in this.systemProcesses)
+			content += this.writeProcessListItem(this.systemProcesses[proc]);
+		
+		this.processList.innerHTML = content;
+		
+		var dragStart = function (e) {
+			e.dataTransfer.setData('process',e.target.getAttribute('data-process'));
+		};
+		for (var i=0; i<this.processList.childNodes.length; i++)
+			this.processList.childNodes[i].addEventListener('dragstart', dragStart);
+	},
+	writeProcessListItem: function (process) {
+		var desc = '<li draggable="true" data-process="' + process.name + '"><div class="name">' + process.name + '</div>';
+		if (process.inputs.length > 0) {
+			desc += '<div class="props inputs"><span class="separator">inputs: </span>';
+			for (var i=0; i<process.inputs.length; i++) {
+				if (i > 0)
+					desc += '<span class="separator">, </span>';
+				desc += '<span class="prop" style="color: ' + process.inputs[i].type.color + '">' + process.inputs[i].name + '</span>';
+			}
+			desc += '</div>';
+		}
+		if (process.outputs.length > 0) {
+			desc += '<div class="props output"><span class="separator">outputs: </span>';
+			for (var i=0; i<process.outputs.length; i++) {
+				if (i > 0)
+					desc += '<span class="separator">, </span>';
+				desc += '<span class="prop" style="color: ' + process.outputs[i].type.color + '">' + process.outputs[i].name + '</span>';
+			}
+			desc += '</div>';
+		}
+		if (process.returnPaths.length > 0) {
+			desc += '<div class="props paths"><span class="separator">return paths: </span>';
+			for (var i=0; i<process.returnPaths.length; i++) {
+				if (i > 0)
+					desc += '<span class="separator">, </span>';
+				desc += '<span class="prop">' + process.returnPaths[i] + '</span>';
+			}
+			desc += '</div>';
+		}
+		desc += '</li>';
+		return desc;
+	},
+	dropProcess: function (isSystem, name, x, y) {
+		var list = isSystem ? this.systemProcesses : this.userProcesses;
+		var process = list[name];
+		
+		if (process === undefined) {
+			showError('Dropped unrecognised ' + (isSystem ? 'system' : 'user') + ' process: ' + name);
+			return;
+		}
+		
+		console.log('dropped ' + (isSystem ? 'system' : 'user') + ' process "' + process.name + '" at ' + x + ', ' + y);
+		this.draw();
+	},
+	draw: function() {
+		
+	},
 	showError: function (message) {
 		console.error(message);
-	}
+	},
+	getScrollbarSize: function() {
+        var outer = document.createElement('div');
+        outer.style.visibility = 'hidden';
+        outer.style.width = '100px';
+        outer.style.height = '100px';
+        outer.style.msOverflowStyle = 'scrollbar'; // needed for WinJS apps
+
+        document.body.appendChild(outer);
+
+        var widthNoScroll = outer.offsetWidth;
+        var heightNoScroll = outer.offsetHeight;
+
+        // force scrollbars
+        outer.style.overflow = 'scroll';
+
+        // add innerdiv
+        var inner = document.createElement('div');
+        inner.style.width = '100%';
+        inner.style.height = '100%';
+        outer.appendChild(inner);
+
+        var widthWithScroll = inner.offsetWidth;
+        var heightWithScroll = inner.offsetHeight;
+
+        // remove divs
+        outer.parentNode.removeChild(outer);
+
+        return {
+            width: widthNoScroll - widthWithScroll,
+            height: heightNoScroll - heightWithScroll
+        }
+    }
 };
 
 var Type = function(name, color) {
