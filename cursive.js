@@ -292,6 +292,8 @@ Workspace.prototype = {
 	draw: function() {
 		var ctx = this.canvas.getContext('2d');
 		ctx.clearRect(0, 0, this.root.offsetWidth, this.root.offsetHeight);
+		ctx.lineCap = 'round';
+		
 		// TODO: write the name of the current function at the top of the page
 		
 		var steps = this.currentProcess.steps;
@@ -374,8 +376,11 @@ var Step = function (process, x, y) {
 	this.x = x;
 	this.y = y;
 	this.radius = 45;
-	this.linkLength = 16;
-	this.textDistance = 21;
+	this.linkLength = 18;
+	this.linkBranchLength = 6;
+	this.outputBranchAngle = Math.PI * 0.8;
+	this.inputBranchAngle = Math.PI - this.outputBranchAngle;
+	this.textDistance = 24;
 	this.drawText = false;
 };
 
@@ -397,7 +402,7 @@ Step.prototype = {
 		ctx.fillStyle = '#000';
 		ctx.fillText(this.process.name, this.x, this.y);
 	},
-	drawConnectors: function(ctx, params, leftSide) {
+	drawConnectors: function(ctx, params, input) {
 		if (params.length == 0)
 			return;
 		
@@ -414,7 +419,7 @@ Step.prototype = {
 		angularSpread *= Math.PI / 180;
 		
 		var centerAngle;
-		if (leftSide) {
+		if (input) {
 			centerAngle = Math.PI;
 			ctx.textAlign = 'right';
 		}
@@ -427,8 +432,8 @@ Step.prototype = {
 		ctx.textBaseline = 'middle';
 		
 		var stepSize = params.length == 1 ? 0 : angularSpread / (params.length - 1);
-		var currentAngle = leftSide ? centerAngle + angularSpread / 2 : centerAngle - angularSpread / 2;
-		if (leftSide)
+		var currentAngle = input ? centerAngle + angularSpread / 2 : centerAngle - angularSpread / 2;
+		if (input)
 			stepSize = -stepSize;
 		
 		ctx.lineWidth = 4;
@@ -436,25 +441,42 @@ Step.prototype = {
 		
 		for (var i=0; i<params.length; i++) {
 			ctx.fillStyle = ctx.strokeStyle = params[i].type.color;
-			ctx.beginPath();
-			var pos = this.offset(this.radius, currentAngle);
-			ctx.moveTo(pos.x, pos.y);
-			pos = this.offset(this.radius + this.linkLength, currentAngle);
-			ctx.lineTo(pos.x, pos.y);
-			ctx.stroke();
+			this.drawConnector(ctx, currentAngle, input);
 			
+			var pos;
 			if (this.drawText) {
-				pos = this.offset(textDist, currentAngle);
+				pos = this.offset(this.x, this.y, textDist, currentAngle);
 				ctx.fillText(params[i].name, pos.x, pos.y);
 			}
 			
 			currentAngle += stepSize;
 		}
 	},
-	offset: function(distance, angle) {
+	drawConnector: function(ctx, angle, input) {
+		ctx.beginPath();
+		var startPos = this.offset(this.x, this.y, this.radius + 2, angle);
+		ctx.moveTo(startPos.x, startPos.y);
+		var endPos = this.offset(this.x, this.y, this.radius + this.linkLength, angle);
+		ctx.lineTo(endPos.x, endPos.y);
+		
+		if (input) {
+			var tmp = startPos;
+			startPos = endPos;
+			endPos = tmp;
+		}
+		
+		var sidePos1 = this.offset(endPos.x, endPos.y, this.linkBranchLength, input ? angle + this.inputBranchAngle : angle + this.outputBranchAngle);
+		var sidePos2 = this.offset(endPos.x, endPos.y, this.linkBranchLength, input ? angle - this.inputBranchAngle : angle - this.outputBranchAngle);
+		ctx.moveTo(sidePos1.x, sidePos1.y);
+		ctx.lineTo(endPos.x, endPos.y);
+		ctx.lineTo(sidePos2.x, sidePos2.y);
+		
+		ctx.stroke();
+	},
+	offset: function(x, y, distance, angle) {
 		return {
-			x: this.x + distance * Math.cos(angle),
-			y: this.y + distance * Math.sin(angle)
+			x: x + distance * Math.cos(angle),
+			y: y + distance * Math.sin(angle)
 		};
 	}
 };
