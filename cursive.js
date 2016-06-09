@@ -3,9 +3,12 @@
 var Workspace = function (workspaceXml, processList, mainContainer) {
 	this.processList = processList;
 	this.root = mainContainer;
+	this.moveStep = this.hoverStep = null;
+	this.currentProcess = new UserProcess();
 	this.setupUI();
 	this.loadWorkspace(workspaceXml);
 	this.updateSize();
+	this.processes = [this.currentProcess];
 };
 
 Workspace.prototype = {
@@ -34,6 +37,57 @@ Workspace.prototype = {
 			var dropY = e.clientY - canvasPos.top;
 			
 			this.dropProcess(true, process, dropX, dropY);
+		}.bind(this));
+		
+		this.canvas.addEventListener('mousedown', function (e) {
+			var canvasPos = this.canvas.getBoundingClientRect();
+			var x = e.clientX - canvasPos.left;
+			var y = e.clientY - canvasPos.top;
+			
+			this.moveStep = this.findStepAt(x, y);
+			if (this.moveStep !== null) {
+				this.hoverStep = this.moveStep;
+				this.moveStep.drawText = true;
+				this.moveOffsetX = this.moveStep.x - x;
+				this.moveOffsetY = this.moveStep.y - y;
+				this.draw();
+			}
+		}.bind(this));
+		
+		var stopMove = function (e) {
+			if (this.moveStep != null && this.moveStep != this.hoverStep)
+				this.moveStep.drawText = false;
+			this.moveStep = null;
+			this.draw();
+		}.bind(this);
+		this.canvas.addEventListener('mouseup', stopMove);
+		this.canvas.addEventListener('mouseout', stopMove);
+		
+		this.canvas.addEventListener('mousemove', function (e) {
+			var canvasPos = this.canvas.getBoundingClientRect();
+			var x = e.clientX - canvasPos.left;
+			var y = e.clientY - canvasPos.top;
+			
+			if (this.moveStep === null) {
+				var hover = this.findStepAt(x, y);
+				if (hover != this.hoverStep) {
+					if (this.hoverStep != null)
+						this.hoverStep.drawText = false;
+					this.hoverStep = hover;
+					if (hover != null)
+						hover.drawText = true;
+					this.draw();
+				}
+				return;
+			}
+			
+			var blocking = this.findStepAt(x + this.moveOffsetX, y + this.moveOffsetY, this.moveStep);
+			if (blocking === null) {
+				this.moveStep.x = x + this.moveOffsetX;
+				this.moveStep.y = y + this.moveOffsetY;
+				
+				this.draw();
+			}
 		}.bind(this));
 		
 		window.addEventListener('resize', this.updateSize.bind(this));
@@ -231,15 +285,34 @@ Workspace.prototype = {
 			showError('Dropped unrecognised ' + (isSystem ? 'system' : 'user') + ' process: ' + name);
 			return;
 		}
-		
-		console.log('dropped ' + (isSystem ? 'system' : 'user') + ' process "' + process.name + '" at ' + x + ', ' + y);
+
+		this.currentProcess.steps.push(new Step(process, x, y));
 		this.draw();
 	},
 	draw: function() {
+		var ctx = this.canvas.getContext('2d');
+		ctx.clearRect(0, 0, this.root.offsetWidth, this.root.offsetHeight);
+		// TODO: write the name of the current function at the top of the page
 		
+		var steps = this.currentProcess.steps;
+		for (var i=0; i<steps.length; i++)
+			steps[i].draw(ctx);
 	},
 	showError: function (message) {
 		console.error(message);
+	},
+	findStepAt: function(x, y, ignoreStep) {
+		var testRadius = ignoreStep === undefined ? 0 : ignoreStep.radius;
+		var steps = this.currentProcess.steps;
+		for (var i=0; i<steps.length; i++) {
+			var step = steps[i];
+			if (step === ignoreStep)
+				continue;
+			var distSq = (x-step.x)*(x-step.x) + (y-step.y)*(y-step.y);
+			if (distSq <= (step.radius + testRadius) * (step.radius + testRadius))
+				return step;
+		}
+		return null;
 	},
 	getScrollbarSize: function() {
         var outer = document.createElement('div');
@@ -293,12 +366,99 @@ var SystemProcess = function (name, inputs, outputs, returnPaths) {
 };
 
 var UserProcess = function () {
-	
+	this.steps = [];
 };
 
-var Step = function () {
-	
+var Step = function (process, x, y) {
+	this.process = process;
+	this.x = x;
+	this.y = y;
+	this.radius = 45;
+	this.linkLength = 16;
+	this.textDistance = 21;
+	this.drawText = false;
 };
+
+Step.prototype = {
+	constructor: Step,
+	draw: function (ctx) {
+		this.drawConnectors(ctx, this.process.inputs, true);
+		this.drawConnectors(ctx, this.process.outputs, false);
+		
+		ctx.lineWidth = 2;
+		ctx.strokeStyle = '#000';
+		ctx.beginPath();
+		ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+		ctx.stroke();
+		
+		ctx.font = '16px sans-serif';
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+		ctx.fillStyle = '#000';
+		ctx.fillText(this.process.name, this.x, this.y);
+	},
+	drawConnectors: function(ctx, params, leftSide) {
+		if (params.length == 0)
+			return;
+		
+		var angularSpread;
+		switch (params.length) {
+			case 1: angularSpread = 0; break;
+			case 2: angularSpread = 60; break;
+			case 3: angularSpread = 90; break;
+			case 4: angularSpread = 110; break;
+			case 5: angularSpread = 120; break;
+			case 6: angularSpread = 130; break;
+			default: angularSpread = 140; break;
+		}
+		angularSpread *= Math.PI / 180;
+		
+		var centerAngle;
+		if (leftSide) {
+			centerAngle = Math.PI;
+			ctx.textAlign = 'right';
+		}
+		else {
+			centerAngle = 0;
+			ctx.textAlign = 'left';
+		}
+		
+		ctx.font = '12px sans-serif';
+		ctx.textBaseline = 'middle';
+		
+		var stepSize = params.length == 1 ? 0 : angularSpread / (params.length - 1);
+		var currentAngle = leftSide ? centerAngle + angularSpread / 2 : centerAngle - angularSpread / 2;
+		if (leftSide)
+			stepSize = -stepSize;
+		
+		ctx.lineWidth = 4;
+		var textDist = this.textDistance + this.radius;
+		
+		for (var i=0; i<params.length; i++) {
+			ctx.fillStyle = ctx.strokeStyle = params[i].type.color;
+			ctx.beginPath();
+			var pos = this.offset(this.radius, currentAngle);
+			ctx.moveTo(pos.x, pos.y);
+			pos = this.offset(this.radius + this.linkLength, currentAngle);
+			ctx.lineTo(pos.x, pos.y);
+			ctx.stroke();
+			
+			if (this.drawText) {
+				pos = this.offset(textDist, currentAngle);
+				ctx.fillText(params[i].name, pos.x, pos.y);
+			}
+			
+			currentAngle += stepSize;
+		}
+	},
+	offset: function(distance, angle) {
+		return {
+			x: this.x + distance * Math.cos(angle),
+			y: this.y + distance * Math.sin(angle)
+		};
+	}
+};
+		
 var Link = function () {
 	
 };
