@@ -4,11 +4,12 @@ var Workspace = function (workspaceXml, processList, mainContainer) {
 	this.processList = processList;
 	this.root = mainContainer;
 	this.moveStep = this.hoverStep = null;
-	this.currentProcess = new UserProcess();
-	this.setupUI();
 	this.loadWorkspace(workspaceXml);
-	this.updateSize();
-	this.processes = [this.currentProcess];
+	
+	this.currentProcess = new UserProcess('initial process', [], [], [], false); // TODO: required user process signatures ought to be loaded from the workspace
+	this.userProcesses[this.currentProcess.name] = this.currentProcess;
+	
+	this.setupUI();
 };
 
 Workspace.prototype = {
@@ -16,14 +17,21 @@ Workspace.prototype = {
 	updateSize: function () {
 		var scrollSize = this.getScrollbarSize();
 		
-		this.canvas.setAttribute('width', this.root.offsetWidth - scrollSize.width);
-		this.canvas.setAttribute('height', this.root.offsetHeight - scrollSize.height);
+		var w = this.root.offsetWidth - scrollSize.width, h = this.root.offsetHeight - scrollSize.height;
+		this.canvas.setAttribute('width', w);
+		this.canvas.setAttribute('height', h);
+		this.textDisplay.setAttribute('width', w);
+		this.textDisplay.setAttribute('height', h);
 		
 		this.draw();
 	},
 	setupUI: function () {
-		this.root.innerHTML = '<canvas></canvas>';
+		this.populateProcessList();
+	
+		this.root.innerHTML = '<canvas></canvas><div class="textDisplay"></div>';
 		this.canvas = this.root.childNodes[0];
+		this.textDisplay = this.root.childNodes[1];
+		this.showCanvas(true);
 		
 		this.canvas.addEventListener('dragover', function (e) {
 			e.preventDefault();
@@ -36,7 +44,7 @@ Workspace.prototype = {
 			var dropX = e.clientX - canvasPos.left;
 			var dropY = e.clientY - canvasPos.top;
 			
-			this.dropProcess(true, process, dropX, dropY);
+			this.dropProcess(process, dropX, dropY);
 		}.bind(this));
 		
 		this.canvas.addEventListener('mousedown', function (e) {
@@ -91,6 +99,7 @@ Workspace.prototype = {
 		}.bind(this));
 		
 		window.addEventListener('resize', this.updateSize.bind(this));
+		this.updateSize();
 	},
 	loadWorkspace: function (workspaceXml) {
 		this.types = [];
@@ -189,8 +198,6 @@ Workspace.prototype = {
 			var process = new SystemProcess(name, inputs, outputs, returnPaths);
 			this.systemProcesses[name] = process;
 		}
-		
-		this.populateProcessList();
 	},
 	allocateColors: function (num) {
 		var hue2rgb = function hue2rgb(p, q, t){
@@ -233,20 +240,54 @@ Workspace.prototype = {
 		return '<Processes />';
 	},
 	populateProcessList: function () {
-		var content = '';
+		var content = '<li class="addNew">add new process</li>';
+		
+		for (var proc in this.userProcesses)
+			content += this.writeProcessListItem(this.userProcesses[proc], true);
+			
 		for (var proc in this.systemProcesses)
-			content += this.writeProcessListItem(this.systemProcesses[proc]);
+			content += this.writeProcessListItem(this.systemProcesses[proc], false);
 		
 		this.processList.innerHTML = content;
 		
 		var dragStart = function (e) {
-			e.dataTransfer.setData('process',e.target.getAttribute('data-process'));
+			e.dataTransfer.setData('process', e.target.getAttribute('data-process'));
 		};
-		for (var i=0; i<this.processList.childNodes.length; i++)
-			this.processList.childNodes[i].addEventListener('dragstart', dragStart);
+		
+		var openUserProcess = function (e) {
+			var name = e.currentTarget.getAttribute('data-process');
+			var process = this.userProcesses[name];
+			if (process === undefined) {
+				this.showError('Clicked unrecognised process: ' + name);
+				return;
+			}
+			
+			this.showCanvas(true);
+			this.currentProcess = process;
+			this.draw();
+		}.bind(this);
+		
+		this.processList.childNodes[0].addEventListener('dblclick', this.showNewProcessOptions.bind(this));
+		
+		var userProcessCutoff = Object.keys(this.userProcesses).length;
+		
+		for (var i=1; i<this.processList.childNodes.length; i++) {
+			var item = this.processList.childNodes[i];
+			item.addEventListener('dragstart', dragStart);
+			
+			if (i <= userProcessCutoff)
+				item.addEventListener('dblclick', openUserProcess);
+		}
 	},
-	writeProcessListItem: function (process) {
-		var desc = '<li draggable="true" data-process="' + process.name + '"><div class="name">' + process.name + '</div>';
+	writeProcessListItem: function (process, editable) {
+		var desc = '<li draggable="true" data-process="' + process.name + '" class="';
+		
+		if (!editable)
+			desc += 'readonly';
+		else if (process == this.currentProcess)
+			desc += 'active';
+		
+		desc += '"><div class="name">' + process.name + '</div>';
 		if (process.inputs.length > 0) {
 			desc += '<div class="props inputs"><span class="separator">inputs: </span>';
 			for (var i=0; i<process.inputs.length; i++) {
@@ -277,12 +318,21 @@ Workspace.prototype = {
 		desc += '</li>';
 		return desc;
 	},
-	dropProcess: function (isSystem, name, x, y) {
-		var list = isSystem ? this.systemProcesses : this.userProcesses;
-		var process = list[name];
+	showCanvas: function(show) {
+		this.canvas.style = show ? '' : 'display:none;';
+		this.textDisplay.style = show ? 'display:none;' : '';
+	},
+	showNewProcessOptions: function () {
+		this.showCanvas(false);
+		this.textDisplay.innerHTML = 'Options for adding a new process are shown here';
+	},
+	dropProcess: function (name, x, y) {
+		var process = this.systemProcesses[name];
+		if (process === undefined)
+			process = this.userProcesses[name];
 		
 		if (process === undefined) {
-			showError('Dropped unrecognised ' + (isSystem ? 'system' : 'user') + ' process: ' + name);
+			this.showError('Dropped unrecognised process: ' + name);
 			return;
 		}
 
@@ -301,6 +351,8 @@ Workspace.prototype = {
 			steps[i].draw(ctx);
 	},
 	showError: function (message) {
+		this.textDisplay.innerHTML = '<h3>An error has occurred</h3><p>Sorry. You might need to reload the page to continue.</p><p>The following error was encountered - you might want to report this:</p><pre>' + message + '</pre>';
+		this.showCanvas(false);
 		console.error(message);
 	},
 	findStepAt: function(x, y, ignoreStep) {
@@ -367,7 +419,13 @@ var SystemProcess = function (name, inputs, outputs, returnPaths) {
 	this.returnPaths = returnPaths;
 };
 
-var UserProcess = function () {
+var UserProcess = function (name, inputs, outputs, returnPaths, fixedSignature) {
+	this.name = name;
+	this.inputs = inputs;
+	this.outputs = outputs;
+	this.returnPaths = returnPaths;
+	this.fixedSignature = fixedSignature;
+	
 	this.steps = [];
 };
 
