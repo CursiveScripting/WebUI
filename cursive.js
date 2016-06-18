@@ -3,7 +3,8 @@
 var Workspace = function (workspaceXml, processList, mainContainer) {
 	this.processList = processList;
 	this.root = mainContainer;
-	this.moveStep = this.hoverStep = null;
+	this.moveStep = null;
+	this.hoverRegion = null;
 	this.loadWorkspace(workspaceXml);
 	
 	this.currentProcess = new UserProcess('initial process', [], [], [], false); // TODO: required user process signatures ought to be loaded from the workspace
@@ -33,6 +34,15 @@ Workspace.prototype = {
 		this.textDisplay = this.root.childNodes[1];
 		this.showCanvas(true);
 		
+		this.editLinkRegion = new Region(
+			function (ctx) { ctx.rect(32, 46, 100, 18); },
+			function () { this.draw(); }.bind(this),
+			function () { this.draw(); }.bind(this),
+			function () { this.showProcessOptions(this.currentProcess); }.bind(this),
+			'pointer'
+		);
+		this.fixedRegions = [this.editLinkRegion];
+		
 		this.canvas.addEventListener('dragover', function (e) {
 			e.preventDefault();
 		});
@@ -54,7 +64,6 @@ Workspace.prototype = {
 			
 			this.moveStep = this.findStepAt(x, y);
 			if (this.moveStep !== null) {
-				this.hoverStep = this.moveStep;
 				this.moveStep.drawText = true;
 				this.moveOffsetX = this.moveStep.x - x;
 				this.moveOffsetY = this.moveStep.y - y;
@@ -63,7 +72,7 @@ Workspace.prototype = {
 		}.bind(this));
 		
 		var stopMove = function (e) {
-			if (this.moveStep != null && this.moveStep != this.hoverStep)
+			if (this.moveStep != null)
 				this.moveStep.drawText = false;
 			this.moveStep = null;
 			this.draw();
@@ -72,29 +81,99 @@ Workspace.prototype = {
 		this.canvas.addEventListener('mouseout', stopMove);
 		
 		this.canvas.addEventListener('mousemove', function (e) {
+			if (this.currentProcess == null)
+				return;
+		
 			var canvasPos = this.canvas.getBoundingClientRect();
 			var x = e.clientX - canvasPos.left;
 			var y = e.clientY - canvasPos.top;
 			
-			if (this.moveStep === null) {
-				var hover = this.findStepAt(x, y);
-				if (hover != this.hoverStep) {
-					if (this.hoverStep != null)
-						this.hoverStep.drawText = false;
-					this.hoverStep = hover;
-					if (hover != null)
-						hover.drawText = true;
+			var ctx = this.canvas.getContext('2d');
+			ctx.strokeStyle = 'rgba(0,0,0,0)';
+			
+			// TODO: can this bit be re-done to use regions? each step would have to have a separate pointer to its "hover" region, i guess
+			if (this.moveStep !== null) {			
+				var blocking = this.findStepAt(x + this.moveOffsetX, y + this.moveOffsetY, this.moveStep);
+				if (blocking === null) {
+					this.moveStep.x = x + this.moveOffsetX;
+					this.moveStep.y = y + this.moveOffsetY;
 					this.draw();
 				}
 				return;
 			}
 			
-			var blocking = this.findStepAt(x + this.moveOffsetX, y + this.moveOffsetY, this.moveStep);
-			if (blocking === null) {
-				this.moveStep.x = x + this.moveOffsetX;
-				this.moveStep.y = y + this.moveOffsetY;
-				
-				this.draw();
+			// check for "unhovering"
+			if (this.hoverRegion != null) {
+				if (!this.hoverRegion.containsPoint(ctx, x, y)) {
+					this.hoverRegion.unhover();
+					this.hoverRegion = null;
+					this.draw();
+					this.canvas.style.cursor = 'default'; 
+				}
+			}
+			
+			// check regions from steps
+			var steps = this.currentProcess.steps;
+			for (var i=0; i<steps.length; i++) {
+				var regions = steps[i].regions;
+				for (var j=0; j<regions.length; j++) {
+					var region = regions[j];
+					if (region.containsPoint(ctx, x, y)) {
+						region.hover();
+						this.hoverRegion = region;
+						this.canvas.style.cursor = region.cursor;
+						return;
+					}
+				}
+			}
+			
+			// check fixed regions
+			for (var i=0; i<this.fixedRegions.length; i++) {
+				var region = this.fixedRegions[i];
+				if (region.containsPoint(ctx, x, y)) {
+					region.hover();
+					this.hoverRegion = region;
+					this.canvas.style.cursor = region.cursor; 
+					return;
+				}
+			}
+			
+			// TODO: clear "selected step" if there is such a thing
+			
+			this.draw();
+		}.bind(this));
+		
+		this.canvas.addEventListener('click', function (e) {
+			if (this.currentProcess == null)
+				return;
+			
+			var canvasPos = this.canvas.getBoundingClientRect();
+			var x = e.clientX - canvasPos.left;
+			var y = e.clientY - canvasPos.top;
+			
+			var ctx = this.canvas.getContext('2d');
+			ctx.strokeStyle = 'rgba(0,0,0,0)';
+			
+			// check regions from steps
+			var steps = this.currentProcess.steps;
+			for (var i=0; i<steps.length; i++) {
+				var regions = steps[i].regions;
+				for (var j=0; j<regions.length; j++) {
+					var region = regions[j];
+					if (region.containsPoint(ctx, x, y)) {
+						region.click();
+						return;
+					}
+				}
+			}
+			
+			// check fixed regions
+			for (var i=0; i<this.fixedRegions.length; i++) {
+				var region = this.fixedRegions[i];
+				if (region.containsPoint(ctx, x, y)) {
+					region.click();
+					return;
+				}
 			}
 		}.bind(this));
 		
@@ -240,7 +319,10 @@ Workspace.prototype = {
 		return '<Processes />';
 	},
 	populateProcessList: function () {
-		var content = '<li class="addNew">add new process</li>';
+		var content = '<li class="addNew';
+		if (this.currentProcess === null)
+			content += ' active';
+		content += '">add new process</li>';
 		
 		for (var proc in this.userProcesses)
 			content += this.writeProcessListItem(this.userProcesses[proc], true);
@@ -262,12 +344,14 @@ Workspace.prototype = {
 				return;
 			}
 			
+			this.hoverRegion = null;
 			this.showCanvas(true);
 			this.currentProcess = process;
+			this.populateProcessList();
 			this.draw();
 		}.bind(this);
 		
-		this.processList.childNodes[0].addEventListener('dblclick', this.showNewProcessOptions.bind(this));
+		this.processList.childNodes[0].addEventListener('dblclick', this.showProcessOptions.bind(this, null));
 		
 		var userProcessCutoff = Object.keys(this.userProcesses).length;
 		
@@ -288,6 +372,7 @@ Workspace.prototype = {
 			desc += 'active';
 		
 		desc += '"><div class="name">' + process.name + '</div>';
+		
 		if (process.inputs.length > 0) {
 			desc += '<div class="props inputs"><span class="separator">inputs: </span>';
 			for (var i=0; i<process.inputs.length; i++) {
@@ -322,9 +407,17 @@ Workspace.prototype = {
 		this.canvas.style = show ? '' : 'display:none;';
 		this.textDisplay.style = show ? 'display:none;' : '';
 	},
-	showNewProcessOptions: function () {
-		this.showCanvas(false);
+	showProcessOptions: function (process) {
+		if (process === undefined)
+			process = null;
+		this.currentProcess = process;
 		this.textDisplay.innerHTML = 'Options for adding a new process are shown here';
+		
+		// TODO: display function name box (with already-in-use check), list of inputs and outputs. Text that return paths are configured within the function, and aren't part of its signature.
+		// populate these if process is not null, otherwise set them up blank
+		
+		this.showCanvas(false);
+		this.populateProcessList();
 	},
 	dropProcess: function (name, x, y) {
 		var process = this.systemProcesses[name];
@@ -332,11 +425,11 @@ Workspace.prototype = {
 			process = this.userProcesses[name];
 		
 		if (process === undefined) {
-			this.showError('Dropped unrecognised process: ' + name);
+			//this.showError('Dropped unrecognised process: ' + name);
 			return;
 		}
 
-		this.currentProcess.steps.push(new Step(process, x, y));
+		this.currentProcess.steps.push(new Step(this, process, x, y));
 		this.draw();
 	},
 	draw: function() {
@@ -344,7 +437,15 @@ Workspace.prototype = {
 		ctx.clearRect(0, 0, this.root.offsetWidth, this.root.offsetHeight);
 		ctx.lineCap = 'round';
 		
-		// TODO: write the name of the current function at the top of the page
+		ctx.font = '36px sans-serif';
+		ctx.textAlign = 'left';
+		ctx.textBaseline = 'top';
+		ctx.fillStyle = '#000';
+		ctx.fillText(this.currentProcess.name, 32, 8);
+		
+		ctx.font = '16px sans-serif';
+		ctx.fillStyle = this.hoverRegion === this.editLinkRegion ? '#000' : '#999';
+		ctx.fillText('edit this process', 32, 46);
 		
 		var steps = this.currentProcess.steps;
 		for (var i=0; i<steps.length; i++)
@@ -429,7 +530,7 @@ var UserProcess = function (name, inputs, outputs, returnPaths, fixedSignature) 
 	this.steps = [];
 };
 
-var Step = function (process, x, y) {
+var Step = function (workspace, process, x, y) {
 	this.process = process;
 	this.x = x;
 	this.y = y;
@@ -440,6 +541,15 @@ var Step = function (process, x, y) {
 	this.inputBranchAngle = Math.PI - this.outputBranchAngle;
 	this.textDistance = 24;
 	this.drawText = false;
+	this.regions = [
+		new Region(
+			function (ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); ctx.stroke(); }.bind(this),
+			function () { this.drawText = true; workspace.draw(); }.bind(this),
+			function () { this.drawText = false; workspace.draw(); }.bind(this),
+			function () { /* click? */ },
+			'move'
+		)
+	]; // TODO: populate this with individual clicky bits
 };
 
 Step.prototype = {
@@ -541,6 +651,25 @@ Step.prototype = {
 		
 var Link = function () {
 	
+};
+
+var Region = function(definition, hover, unhover, click, cursor) {
+	this.define = definition == null ? function () {} : definition;
+	this.hover = hover == null ? function () {} : hover;
+	this.unhover = unhover == null ? function () {} : unhover;
+	this.click = click == null ? function () {} : click;
+	this.cursor = cursor == null ? 'default' : cursor;
+};
+
+Region.prototype = {
+	constructor: Region,
+	containsPoint: function(ctx,x,y) {
+		ctx.beginPath();
+		this.define(ctx);
+		ctx.stroke();
+		
+		return ctx.isPointInPath(x,y);
+	}
 };
 
 var Cursive = {};
