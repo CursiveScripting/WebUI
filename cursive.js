@@ -62,20 +62,27 @@ Workspace.prototype = {
 			var x = e.clientX - canvasPos.left;
 			var y = e.clientY - canvasPos.top;
 			
-			this.moveStep = this.findStepAt(x, y);
-			if (this.moveStep !== null) {
-				this.moveStep.drawText = true;
-				this.moveOffsetX = this.moveStep.x - x;
-				this.moveOffsetY = this.moveStep.y - y;
-				this.draw();
+			var ctx = this.canvas.getContext('2d');
+			var steps = this.currentProcess.steps;
+			
+			for (var i=0; i<steps.length; i++) {
+				if (steps[i].bodyRegion.containsPoint(ctx, x, y)) {
+					this.moveStep = steps[i];
+					this.moveStep.drawText = true;
+					this.moveOffsetX = this.moveStep.x - x;
+					this.moveOffsetY = this.moveStep.y - y;
+					this.draw();
+					break;
+				}
 			}
 		}.bind(this));
 		
 		var stopMove = function (e) {
-			if (this.moveStep != null)
+			if (this.moveStep != null) {
 				this.moveStep.drawText = false;
-			this.moveStep = null;
-			this.draw();
+				this.moveStep = null;
+				this.draw();
+			}
 		}.bind(this);
 		this.canvas.addEventListener('mouseup', stopMove);
 		this.canvas.addEventListener('mouseout', stopMove);
@@ -91,10 +98,21 @@ Workspace.prototype = {
 			var ctx = this.canvas.getContext('2d');
 			ctx.strokeStyle = 'rgba(0,0,0,0)';
 			
-			// TODO: can this bit be re-done to use regions? each step would have to have a separate pointer to its "hover" region, i guess
-			if (this.moveStep !== null) {			
-				var blocking = this.findStepAt(x + this.moveOffsetX, y + this.moveOffsetY, this.moveStep);
-				if (blocking === null) {
+			// handle dragging
+			if (this.moveStep != null) {
+				var steps = this.currentProcess.steps;
+				var blocking = null;
+				
+				for (var i=0; i<steps.length; i++) {
+					if (steps[i] === this.moveStep)
+						continue;
+					
+					if (steps[i].collisionRegion.containsPoint(ctx, x + this.moveOffsetX, y + this.moveOffsetY)) {
+						blocking = steps[i];
+						break;
+					}
+				}
+				if (blocking == null) {
 					this.moveStep.x = x + this.moveOffsetX;
 					this.moveStep.y = y + this.moveOffsetY;
 					this.draw();
@@ -137,8 +155,6 @@ Workspace.prototype = {
 					return;
 				}
 			}
-			
-			// TODO: clear "selected step" if there is such a thing
 			
 			this.draw();
 		}.bind(this));
@@ -408,8 +424,6 @@ Workspace.prototype = {
 		this.textDisplay.style = show ? 'display:none;' : '';
 	},
 	showProcessOptions: function (process) {
-		if (process === undefined)
-			process = null;
 		this.currentProcess = process;
 		this.textDisplay.innerHTML = 'Options for adding a new process are shown here';
 		
@@ -455,19 +469,6 @@ Workspace.prototype = {
 		this.textDisplay.innerHTML = '<h3>An error has occurred</h3><p>Sorry. You might need to reload the page to continue.</p><p>The following error was encountered - you might want to report this:</p><pre>' + message + '</pre>';
 		this.showCanvas(false);
 		console.error(message);
-	},
-	findStepAt: function(x, y, ignoreStep) {
-		var testRadius = ignoreStep === undefined ? 0 : ignoreStep.radius;
-		var steps = this.currentProcess.steps;
-		for (var i=0; i<steps.length; i++) {
-			var step = steps[i];
-			if (step === ignoreStep)
-				continue;
-			var distSq = (x-step.x)*(x-step.x) + (y-step.y)*(y-step.y);
-			if (distSq <= (step.radius + testRadius) * (step.radius + testRadius))
-				return step;
-		}
-		return null;
 	},
 	getScrollbarSize: function() {
         var outer = document.createElement('div');
@@ -541,15 +542,17 @@ var Step = function (workspace, process, x, y) {
 	this.inputBranchAngle = Math.PI - this.outputBranchAngle;
 	this.textDistance = 24;
 	this.drawText = false;
-	this.regions = [
-		new Region(
-			function (ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); ctx.stroke(); }.bind(this),
-			function () { this.drawText = true; workspace.draw(); }.bind(this),
-			function () { this.drawText = false; workspace.draw(); }.bind(this),
-			function () { /* click? */ },
-			'move'
-		)
-	]; // TODO: populate this with individual clicky bits
+	this.bodyRegion = new Region(
+		function (ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); ctx.stroke(); }.bind(this),
+		function () { this.drawText = true; workspace.draw(); }.bind(this),
+		function () { this.drawText = false; workspace.draw(); }.bind(this),
+		function () { /* click? */ },
+		'move'
+	);
+	this.collisionRegion = new Region( // twice the normal radius, so that another step can't overlap this one
+		function (ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 2, 0, 2 * Math.PI); ctx.stroke(); }.bind(this)
+	);
+	this.regions = [this.bodyRegion]; // TODO: populate this with individual clicky bits
 };
 
 Step.prototype = {
