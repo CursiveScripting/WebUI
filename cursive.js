@@ -482,7 +482,9 @@ ProcessEditor.prototype = {
 			return;
 		}
 
-		this.currentProcess.steps.push(new Step(process, x, y));
+		var step = new Step(process, x, y)
+		step.editor = this;
+		this.currentProcess.steps.push(step);
 		this.draw();
 	},
 	draw: function() {
@@ -558,16 +560,11 @@ Step.prototype = {
 					return;
 				}
 				
-				// keep up with the drag
-				this.x = x + this.moveOffsetX;
-				this.y = y + this.moveOffsetY;
+				this.tryDrag(x, y);
 			}.bind(this),
 			function (x,y) {
-				if (!this.dragging)
-					return;
-				
-				this.x = x + this.moveOffsetX;
-				this.y = y + this.moveOffsetY;
+				if (this.dragging)
+					this.tryDrag(x, y);
 			}.bind(this),
 			function (x,y) {
 				this.dragging = true;
@@ -584,6 +581,22 @@ Step.prototype = {
 		this.collisionRegion = new Region( // twice the normal radius, so that another step can't overlap this one
 			function (ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 2, 0, 2 * Math.PI); ctx.stroke(); }.bind(this)
 		);
+	},
+	tryDrag: function (x, y) {
+		// test for collisions!
+		var steps = this.editor.currentProcess.steps;
+		var ctx = this.editor.canvas.getContext('2d');
+
+		for (var i=0; i<steps.length; i++) {
+			if (steps[i] === this)
+				continue;
+			
+			if (steps[i].collisionRegion.containsPoint(ctx, x + this.moveOffsetX, y + this.moveOffsetY))
+				return;
+		}
+		
+		this.x = x + this.moveOffsetX;
+		this.y = y + this.moveOffsetY;
 	},
 	drawBody: function (ctx) {
 		ctx.lineWidth = 2;
