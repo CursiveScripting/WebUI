@@ -59,15 +59,15 @@ Workspace.prototype = {
 					ctx.stroke();
 				}
 			}.bind(this),
-			null,
-			null,
 			function () { this.showProcessOptions(this.currentProcess); }.bind(this),
+			null,
+			null,
+			null,
 			null,
 			null,
 			'pointer'
 		);
 		this.fixedRegions = [titleRegion, editLinkRegion];
-		this.moveStep = null; // TODO: remove this and handle all dragging in region code?
 		this.hoverRegion = null;
 		this.mouseDownRegion = null;
 		
@@ -85,20 +85,6 @@ Workspace.prototype = {
 		
 		this.canvas.addEventListener('mousedown', function (e) {
 			var pos = this.getCanvasCoords(e);
-			var ctx = this.canvas.getContext('2d');
-			var steps = this.currentProcess.steps;
-			
-			for (var i=0; i<steps.length; i++) {
-				if (steps[i].bodyRegion.containsPoint(ctx, pos.x, pos.y)) {
-					this.moveStep = steps[i];
-					this.moveStep.drawText = true;
-					this.moveOffsetX = this.moveStep.x - pos.x;
-					this.moveOffsetY = this.moveStep.y - pos.y;
-					this.draw();
-					return;
-				}
-			}
-			
 			var region = this.getRegion(pos.x, pos.y);
 			this.mouseDownRegion = region;
 			if (region != null)
@@ -107,17 +93,7 @@ Workspace.prototype = {
 			this.draw();
 		}.bind(this));
 		
-		var stopMove = function (e) {
-			if (this.moveStep != null) {
-				this.moveStep.drawText = false;
-				this.moveStep = null;
-				this.draw();
-			}
-		}.bind(this);
-		
 		this.canvas.addEventListener('mouseup', function (e) {
-			stopMove(e);
-			
 			var pos = this.getCanvasCoords(e);
 			var region = this.getRegion(pos.x, pos.y);
 			if (region != null) {
@@ -134,15 +110,16 @@ Workspace.prototype = {
 		
 		this.canvas.addEventListener('mouseout', function (e) {
 			if (this.hoverRegion != null) {
+				var pos = this.getCanvasCoords(e);
+				var ctx = this.canvas.getContext('2d');
+				
 				if (!this.hoverRegion.containsPoint(ctx, pos.x, pos.y)) {
-					this.hoverRegion.unhover();
+					this.hoverRegion.unhover(pos.x, pos.y);
 					this.hoverRegion = null;
 					this.canvas.style.cursor = ''; 
 					this.draw();
 				}
 			}
-			
-			stopMove(e);
 		}.bind(this));
 		
 		this.canvas.addEventListener('mousemove', function (e) {
@@ -154,32 +131,10 @@ Workspace.prototype = {
 			var ctx = this.canvas.getContext('2d');
 			ctx.strokeStyle = 'rgba(0,0,0,0)';
 			
-			// handle dragging
-			if (this.moveStep != null) {
-				var steps = this.currentProcess.steps;
-				var blocking = null;
-				
-				for (var i=0; i<steps.length; i++) {
-					if (steps[i] === this.moveStep)
-						continue;
-					
-					if (steps[i].collisionRegion.containsPoint(ctx, pos.x + this.moveOffsetX, pos.y + this.moveOffsetY)) {
-						blocking = steps[i];
-						break;
-					}
-				}
-				if (blocking == null) {
-					this.moveStep.x = pos.x + this.moveOffsetX;
-					this.moveStep.y = pos.y + this.moveOffsetY;
-					this.draw();
-				}
-				return;
-			}
-			
 			// check for "unhovering"
 			if (this.hoverRegion != null) {
 				if (!this.hoverRegion.containsPoint(ctx, pos.x, pos.y)) {
-					this.hoverRegion.unhover();
+					this.hoverRegion.unhover(pos.x, pos.y);
 					this.hoverRegion = null;
 					this.canvas.style.cursor = ''; 
 					this.draw();
@@ -187,10 +142,14 @@ Workspace.prototype = {
 			}
 		
 			var region = this.getRegion(pos.x, pos.y);
-			if (region != null/* && region != this.hoverRegion*/) {
-				region.hover(pos.x, pos.y);
-				this.hoverRegion = region;
-				this.canvas.style.cursor = region.cursor;
+			if (region != null) {
+				if (region != this.hoverRegion) {
+					region.hover(pos.x, pos.y);
+					this.hoverRegion = region;
+					this.canvas.style.cursor = region.cursor;
+				}
+				else
+					region.move(pos.x, pos.y);
 				this.draw();
 			}
 		}.bind(this));
@@ -578,11 +537,33 @@ Step.prototype = {
 		this.bodyRegion = new Region(
 			function (ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); ctx.stroke(); }.bind(this),
 			this.drawBody.bind(this),
+			null,
 			function () { this.drawText = true; }.bind(this),
-			function () { this.drawText = false; }.bind(this),
-			null,
-			null, // TODO: handle dragging here?
-			null,
+			function (x, y) {
+				if (!this.dragging) {
+					this.drawText = false;
+					return;
+				}
+				
+				// keep up with the drag
+				this.x = x + this.moveOffsetX;
+				this.y = y + this.moveOffsetY;
+			}.bind(this),
+			function (x,y) {
+				if (!this.dragging)
+					return;
+				
+				this.x = x + this.moveOffsetX;
+				this.y = y + this.moveOffsetY;
+			}.bind(this),
+			function (x,y) {
+				this.dragging = true;
+				this.moveOffsetX = this.x - x;
+				this.moveOffsetY = this.y - y;
+			}.bind(this),
+			function () {
+				this.dragging = false;
+			}.bind(this),
 			'move'
 		);
 		this.regions.push(this.bodyRegion);
@@ -698,13 +679,14 @@ var Link = function () {
 	
 };
 
-var Region = function(definition, draw, hover, unhover, click, mousedown, mouseup, cursor) {
+var Region = function(definition, draw, click, hover, unhover, move, mousedown, mouseup, cursor) {
 	var empty = function () {}
 	this.define = definition == null ? empty : definition;
 	this.draw = draw == null ? empty : draw;
+	this.click = click == null ? empty : click;
 	this.hover = hover == null ? empty : hover;
 	this.unhover = unhover == null ? empty : unhover;
-	this.click = click == null ? empty : click;
+	this.move = move == null ? empty : move;
 	this.mousedown = mousedown == null ? empty : mousedown;
 	this.mouseup = mouseup == null ? empty : mouseup;
 	this.cursor = cursor == null ? '' : cursor;
