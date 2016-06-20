@@ -2,189 +2,15 @@
 
 var Workspace = function (workspaceXml, processList, mainContainer) {
 	this.processList = processList;
-	this.root = mainContainer;
 	this.loadWorkspace(workspaceXml);
 	
-	this.currentProcess = new UserProcess('initial process', [], [], [], false); // TODO: required user process signatures ought to be loaded from the workspace
-	this.userProcesses[this.currentProcess.name] = this.currentProcess;
+	this.editor = new ProcessEditor(this, mainContainer);
 	
-	this.setupUI();
+	this.populateProcessList();
 };
 
 Workspace.prototype = {
-	constructor: Workspace,
-	updateSize: function () {
-		var scrollSize = this.getScrollbarSize();
-		
-		var w = this.root.offsetWidth - scrollSize.width, h = this.root.offsetHeight - scrollSize.height;
-		this.canvas.setAttribute('width', w);
-		this.canvas.setAttribute('height', h);
-		this.textDisplay.setAttribute('width', w);
-		this.textDisplay.setAttribute('height', h);
-		
-		this.draw();
-	},
-	setupUI: function () {
-		this.populateProcessList();
-	
-		this.root.innerHTML = '<canvas></canvas><div class="textDisplay"></div>';
-		this.canvas = this.root.childNodes[0];
-		this.textDisplay = this.root.childNodes[1];
-		this.showCanvas(true);
-		
-		var titleRegion = new Region(
-			null,
-			function (ctx) {
-				ctx.font = '36px sans-serif';
-				ctx.textAlign = 'left';
-				ctx.textBaseline = 'top';
-				ctx.fillStyle = '#000';
-				ctx.fillText(this.currentProcess.name, 32, 8);
-			}.bind(this)
-		);
-		var editLinkRegion = new Region(
-			function (ctx) { ctx.rect(32, 46, 100, 18); },
-			function (ctx, isMouseOver, isMouseDown) {
-				ctx.textAlign = 'left';
-				ctx.textBaseline = 'top';
-				ctx.font = '16px sans-serif';
-				ctx.strokeStyle = ctx.fillStyle = isMouseDown ? '#000' : '#999';
-				ctx.fillText('edit this process', 32, 46);
-				
-				if (isMouseOver) {
-					ctx.lineWidth = 1;
-					ctx.beginPath();
-					ctx.moveTo(32, 64);
-					ctx.lineTo(148, 64);
-					ctx.stroke();
-				}
-			}.bind(this),
-			function () { this.showProcessOptions(this.currentProcess); }.bind(this),
-			null,
-			null,
-			null,
-			null,
-			null,
-			'pointer'
-		);
-		this.fixedRegions = [titleRegion, editLinkRegion];
-		this.hoverRegion = null;
-		this.mouseDownRegion = null;
-		
-		this.canvas.addEventListener('dragover', function (e) {
-			e.preventDefault();
-		});
-		
-		this.canvas.addEventListener('drop', function (e) {
-			e.preventDefault();
-			var process = e.dataTransfer.getData('process');
-			var pos = this.getCanvasCoords(e);
-			
-			this.dropProcess(process, pos.x, pos.y);
-		}.bind(this));
-		
-		this.canvas.addEventListener('mousedown', function (e) {
-			var pos = this.getCanvasCoords(e);
-			var region = this.getRegion(pos.x, pos.y);
-			this.mouseDownRegion = region;
-			if (region != null)
-				region.mousedown(pos.x, pos.y);
-
-			this.draw();
-		}.bind(this));
-		
-		this.canvas.addEventListener('mouseup', function (e) {
-			var pos = this.getCanvasCoords(e);
-			var region = this.getRegion(pos.x, pos.y);
-			if (region != null) {
-				region.mouseup(pos.x, pos.y);
-				if (region == this.mouseDownRegion)
-					region.click(pos.x, pos.y);
-			}
-			if (this.mouseDownRegion != null) {
-				this.mouseDownRegion = null;
-			}
-			
-			this.draw();
-		}.bind(this));
-		
-		this.canvas.addEventListener('mouseout', function (e) {
-			if (this.hoverRegion != null) {
-				var pos = this.getCanvasCoords(e);
-				var ctx = this.canvas.getContext('2d');
-				
-				if (!this.hoverRegion.containsPoint(ctx, pos.x, pos.y)) {
-					this.hoverRegion.unhover(pos.x, pos.y);
-					this.hoverRegion = null;
-					this.canvas.style.cursor = ''; 
-					this.draw();
-				}
-			}
-		}.bind(this));
-		
-		this.canvas.addEventListener('mousemove', function (e) {
-			if (this.currentProcess == null)
-				return;
-		
-			var pos = this.getCanvasCoords(e);	
-			
-			var ctx = this.canvas.getContext('2d');
-			ctx.strokeStyle = 'rgba(0,0,0,0)';
-			
-			// check for "unhovering"
-			if (this.hoverRegion != null) {
-				if (!this.hoverRegion.containsPoint(ctx, pos.x, pos.y)) {
-					this.hoverRegion.unhover(pos.x, pos.y);
-					this.hoverRegion = null;
-					this.canvas.style.cursor = ''; 
-					this.draw();
-				}
-			}
-		
-			var region = this.getRegion(pos.x, pos.y);
-			if (region != null) {
-				if (region != this.hoverRegion) {
-					region.hover(pos.x, pos.y);
-					this.hoverRegion = region;
-					this.canvas.style.cursor = region.cursor;
-				}
-				else
-					region.move(pos.x, pos.y);
-				this.draw();
-			}
-		}.bind(this));
-		
-		window.addEventListener('resize', this.updateSize.bind(this));
-		this.updateSize();
-	},
-	getCanvasCoords: function (e) {
-		var canvasPos = this.canvas.getBoundingClientRect();
-		return { x: e.clientX - canvasPos.left, y: e.clientY - canvasPos.top };
-	},
-	getRegion: function (x, y) {
-		var ctx = this.canvas.getContext('2d');
-		ctx.strokeStyle = 'rgba(0,0,0,0)';
-		
-		// check regions from steps
-		var steps = this.currentProcess.steps;
-		for (var i=0; i<steps.length; i++) {
-			var regions = steps[i].regions;
-			for (var j=0; j<regions.length; j++) {
-				var region = regions[j];
-				if (region.containsPoint(ctx, x, y))
-					return region;
-			}
-		}
-		
-		// check fixed regions
-		for (var i=0; i<this.fixedRegions.length; i++) {
-			var region = this.fixedRegions[i];
-			if (region.containsPoint(ctx, x, y))
-				return region;
-		}
-		
-		return null;
-	},
+	constructor: Workspace,	
 	loadWorkspace: function (workspaceXml) {
 		this.types = [];
 		this.systemProcesses = {};
@@ -349,14 +175,11 @@ Workspace.prototype = {
 				return;
 			}
 			
-			this.hoverRegion = null;
-			this.showCanvas(true);
-			this.currentProcess = process;
+			this.editor.loadProcess(process);
 			this.populateProcessList();
-			this.draw();
 		}.bind(this);
 		
-		this.processList.childNodes[0].addEventListener('dblclick', this.showProcessOptions.bind(this, null));
+		this.processList.childNodes[0].addEventListener('dblclick', this.editor.showProcessOptions.bind(this.editor, null));
 		
 		var userProcessCutoff = Object.keys(this.userProcesses).length;
 		
@@ -373,7 +196,7 @@ Workspace.prototype = {
 		
 		if (!editable)
 			desc += 'readonly';
-		else if (process == this.currentProcess)
+		else if (process == this.editor.currentProcess)
 			desc += 'active';
 		
 		desc += '"><div class="name">' + process.name + '</div>';
@@ -408,51 +231,9 @@ Workspace.prototype = {
 		desc += '</li>';
 		return desc;
 	},
-	showCanvas: function(show) {
-		this.canvas.style = show ? '' : 'display:none;';
-		this.textDisplay.style = show ? 'display:none;' : '';
-	},
-	showProcessOptions: function (process) {
-		this.currentProcess = process;
-		this.textDisplay.innerHTML = 'Options for adding a new process are shown here';
-		
-		// TODO: display function name box (with already-in-use check), list of inputs and outputs. Text that return paths are configured within the function, and aren't part of its signature.
-		// populate these if process is not null, otherwise set them up blank
-		
-		this.showCanvas(false);
-		this.populateProcessList();
-	},
-	dropProcess: function (name, x, y) {
-		var process = this.systemProcesses[name];
-		if (process === undefined)
-			process = this.userProcesses[name];
-		
-		if (process === undefined) {
-			//this.showError('Dropped unrecognised process: ' + name);
-			return;
-		}
-
-		this.currentProcess.steps.push(new Step(process, x, y));
-		this.draw();
-	},
-	draw: function() {
-		var ctx = this.canvas.getContext('2d');
-		ctx.clearRect(0, 0, this.root.offsetWidth, this.root.offsetHeight);
-		ctx.lineCap = 'round';
-		
-		for (var i=0; i<this.fixedRegions.length; i++)
-			this.fixedRegions[i].callDraw(ctx, this);
-		
-		var steps = this.currentProcess.steps, step;
-		for (var i=0; i<steps.length; i++) {
-			step = steps[i];
-			for (var j=0; j<step.regions.length; j++)
-				step.regions[j].callDraw(ctx, this);
-		}
-	},
 	showError: function (message) {
-		this.textDisplay.innerHTML = '<h3>An error has occurred</h3><p>Sorry. You might need to reload the page to continue.</p><p>The following error was encountered - you might want to report this:</p><pre>' + message + '</pre>';
-		this.showCanvas(false);
+		this.editor.textDisplay.innerHTML = '<h3>An error has occurred</h3><p>Sorry. You might need to reload the page to continue.</p><p>The following error was encountered - you might want to report this:</p><pre>' + message + '</pre>';
+		this.editor.showCanvas(false);
 		console.error(message);
 	},
 	getScrollbarSize: function() {
@@ -487,6 +268,238 @@ Workspace.prototype = {
             height: heightNoScroll - heightWithScroll
         }
     }
+};
+
+var ProcessEditor = function(workspace, root) {
+	this.workspace = workspace;
+	this.root = root;
+	
+	this.currentProcess = new UserProcess('initial process', [], [], [], false); // TODO: required user process signatures ought to be loaded from the workspace
+	this.workspace.userProcesses[this.currentProcess.name] = this.currentProcess;
+	
+	this.setupUI();
+};
+
+ProcessEditor.prototype = {
+	constructor: ProcessEditor,
+	loadProcess: function (process) {
+		this.hoverRegion = null;
+		this.currentProcess = process;
+		this.showCanvas(true);
+		this.draw();
+	},
+	updateSize: function () {
+		var scrollSize = this.workspace.getScrollbarSize();
+		
+		var w = this.root.offsetWidth - scrollSize.width, h = this.root.offsetHeight - scrollSize.height;
+		this.canvas.setAttribute('width', w);
+		this.canvas.setAttribute('height', h);
+		this.textDisplay.setAttribute('width', w);
+		this.textDisplay.setAttribute('height', h);
+		
+		this.draw();
+	},
+	setupUI: function () {
+		this.root.innerHTML = '<canvas></canvas><div class="textDisplay"></div>';
+		this.canvas = this.root.childNodes[0];
+		this.textDisplay = this.root.childNodes[1];
+		this.showCanvas(true);
+		
+		var titleRegion = new Region(
+			null,
+			function (ctx) {
+				ctx.font = '36px sans-serif';
+				ctx.textAlign = 'left';
+				ctx.textBaseline = 'top';
+				ctx.fillStyle = '#000';
+				ctx.fillText(this.currentProcess.name, 32, 8);
+			}.bind(this)
+		);
+		var editLinkRegion = new Region(
+			function (ctx) { ctx.rect(32, 46, 100, 18); },
+			function (ctx, isMouseOver, isMouseDown) {
+				ctx.textAlign = 'left';
+				ctx.textBaseline = 'top';
+				ctx.font = '16px sans-serif';
+				ctx.strokeStyle = ctx.fillStyle = isMouseDown ? '#000' : '#999';
+				ctx.fillText('edit this process', 32, 46);
+				
+				if (isMouseOver) {
+					ctx.lineWidth = 1;
+					ctx.beginPath();
+					ctx.moveTo(32, 64);
+					ctx.lineTo(148, 64);
+					ctx.stroke();
+				}
+			}.bind(this),
+			function () { this.showProcessOptions(this.currentProcess); }.bind(this),
+			null,
+			null,
+			null,
+			null,
+			null,
+			'pointer'
+		);
+		this.fixedRegions = [titleRegion, editLinkRegion];
+		this.hoverRegion = null;
+		this.mouseDownRegion = null;
+		
+		this.canvas.addEventListener('dragover', function (e) {
+			e.preventDefault();
+		});
+		
+		this.canvas.addEventListener('drop', function (e) {
+			e.preventDefault();
+			var process = e.dataTransfer.getData('process');
+			var pos = this.getCanvasCoords(e);
+			
+			this.dropProcess(process, pos.x, pos.y);
+		}.bind(this));
+		
+		this.canvas.addEventListener('mousedown', function (e) {
+			var pos = this.getCanvasCoords(e);
+			var region = this.getRegion(pos.x, pos.y);
+			this.mouseDownRegion = region;
+			if (region != null)
+				region.mousedown(pos.x, pos.y);
+
+			this.draw();
+		}.bind(this));
+		
+		this.canvas.addEventListener('mouseup', function (e) {
+			var pos = this.getCanvasCoords(e);
+			var region = this.getRegion(pos.x, pos.y);
+			if (region != null) {
+				region.mouseup(pos.x, pos.y);
+				if (region == this.mouseDownRegion)
+					region.click(pos.x, pos.y);
+			}
+			if (this.mouseDownRegion != null) {
+				this.mouseDownRegion = null;
+			}
+			
+			this.draw();
+		}.bind(this));
+		
+		this.canvas.addEventListener('mouseout', function (e) {
+			if (this.hoverRegion != null) {
+				var pos = this.getCanvasCoords(e);
+				var ctx = this.canvas.getContext('2d');
+				
+				if (!this.hoverRegion.containsPoint(ctx, pos.x, pos.y)) {
+					this.hoverRegion.unhover(pos.x, pos.y);
+					this.hoverRegion = null;
+					this.canvas.style.cursor = ''; 
+					this.draw();
+				}
+			}
+		}.bind(this));
+		
+		this.canvas.addEventListener('mousemove', function (e) {
+			if (this.currentProcess == null)
+				return;
+		
+			var pos = this.getCanvasCoords(e);	
+			
+			var ctx = this.canvas.getContext('2d');
+			ctx.strokeStyle = 'rgba(0,0,0,0)';
+			
+			// check for "unhovering"
+			if (this.hoverRegion != null) {
+				if (!this.hoverRegion.containsPoint(ctx, pos.x, pos.y)) {
+					this.hoverRegion.unhover(pos.x, pos.y);
+					this.hoverRegion = null;
+					this.canvas.style.cursor = ''; 
+					this.draw();
+				}
+			}
+		
+			var region = this.getRegion(pos.x, pos.y);
+			if (region != null) {
+				if (region != this.hoverRegion) {
+					region.hover(pos.x, pos.y);
+					this.hoverRegion = region;
+					this.canvas.style.cursor = region.cursor;
+				}
+				else
+					region.move(pos.x, pos.y);
+				this.draw();
+			}
+		}.bind(this));
+		
+		window.addEventListener('resize', this.updateSize.bind(this));
+		this.updateSize();
+	},
+	getCanvasCoords: function (e) {
+		var canvasPos = this.canvas.getBoundingClientRect();
+		return { x: e.clientX - canvasPos.left, y: e.clientY - canvasPos.top };
+	},
+	getRegion: function (x, y) {
+		var ctx = this.canvas.getContext('2d');
+		ctx.strokeStyle = 'rgba(0,0,0,0)';
+		
+		// check regions from steps
+		var steps = this.currentProcess.steps;
+		for (var i=0; i<steps.length; i++) {
+			var regions = steps[i].regions;
+			for (var j=0; j<regions.length; j++) {
+				var region = regions[j];
+				if (region.containsPoint(ctx, x, y))
+					return region;
+			}
+		}
+		
+		// check fixed regions
+		for (var i=0; i<this.fixedRegions.length; i++) {
+			var region = this.fixedRegions[i];
+			if (region.containsPoint(ctx, x, y))
+				return region;
+		}
+		
+		return null;
+	},
+	showCanvas: function(show) {
+		this.canvas.style = show ? '' : 'display:none;';
+		this.textDisplay.style = show ? 'display:none;' : '';
+	},
+	showProcessOptions: function (process) {
+		this.currentProcess = process;
+		this.textDisplay.innerHTML = 'Options for adding a new process are shown here';
+		
+		// TODO: display function name box (with already-in-use check), list of inputs and outputs. Text that return paths are configured within the function, and aren't part of its signature.
+		// populate these if process is not null, otherwise set them up blank
+		
+		this.showCanvas(false);
+		this.workspace.populateProcessList();
+	},
+	dropProcess: function (name, x, y) {
+		var process = this.workspace.systemProcesses[name];
+		if (process === undefined)
+			process = this.workspace.userProcesses[name];
+		
+		if (process === undefined) {
+			//this.showError('Dropped unrecognised process: ' + name);
+			return;
+		}
+
+		this.currentProcess.steps.push(new Step(process, x, y));
+		this.draw();
+	},
+	draw: function() {
+		var ctx = this.canvas.getContext('2d');
+		ctx.clearRect(0, 0, this.root.offsetWidth, this.root.offsetHeight);
+		ctx.lineCap = 'round';
+		
+		for (var i=0; i<this.fixedRegions.length; i++)
+			this.fixedRegions[i].callDraw(ctx, this);
+		
+		var steps = this.currentProcess.steps, step;
+		for (var i=0; i<steps.length; i++) {
+			step = steps[i];
+			for (var j=0; j<step.regions.length; j++)
+				step.regions[j].callDraw(ctx, this);
+		}
+	}
 };
 
 var Type = function(name, color) {
@@ -701,13 +714,14 @@ Region.prototype = {
 		
 		return ctx.isPointInPath(x,y);
 	},
-	callDraw: function (ctx,workspace) {
-		this.draw(ctx, workspace.hoverRegion === this, workspace.mouseDownRegion === this);
+	callDraw: function (ctx, editor) {
+		this.draw(ctx, editor.hoverRegion === this, editor.mouseDownRegion === this);
 	}
 };
 
 var Cursive = {};
 Cursive.Workspace = Workspace;
+Cursive.ProcessEditor = ProcessEditor;
 Cursive.Parameter = Parameter;
 Cursive.SystemProcess = SystemProcess;
 Cursive.UserProcess = UserProcess;
