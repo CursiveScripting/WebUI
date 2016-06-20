@@ -3,8 +3,6 @@
 var Workspace = function (workspaceXml, processList, mainContainer) {
 	this.processList = processList;
 	this.root = mainContainer;
-	this.moveStep = null;
-	this.hoverRegion = null;
 	this.loadWorkspace(workspaceXml);
 	
 	this.currentProcess = new UserProcess('initial process', [], [], [], false); // TODO: required user process signatures ought to be loaded from the workspace
@@ -34,14 +32,44 @@ Workspace.prototype = {
 		this.textDisplay = this.root.childNodes[1];
 		this.showCanvas(true);
 		
-		this.editLinkRegion = new Region(
+		var titleRegion = new Region(
+			null,
+			function (ctx) {
+				ctx.font = '36px sans-serif';
+				ctx.textAlign = 'left';
+				ctx.textBaseline = 'top';
+				ctx.fillStyle = '#000';
+				ctx.fillText(this.currentProcess.name, 32, 8);
+			}.bind(this)
+		);
+		var editLinkRegion = new Region(
 			function (ctx) { ctx.rect(32, 46, 100, 18); },
-			function () { this.draw(); }.bind(this),
-			function () { this.draw(); }.bind(this),
+			function (ctx, isMouseOver, isMouseDown) {
+				ctx.textAlign = 'left';
+				ctx.textBaseline = 'top';
+				ctx.font = '16px sans-serif';
+				ctx.strokeStyle = ctx.fillStyle = isMouseDown ? '#000' : '#999';
+				ctx.fillText('edit this process', 32, 46);
+				
+				if (isMouseOver) {
+					ctx.lineWidth = 1;
+					ctx.beginPath();
+					ctx.moveTo(32, 64);
+					ctx.lineTo(148, 64);
+					ctx.stroke();
+				}
+			}.bind(this),
+			null,
+			null,
 			function () { this.showProcessOptions(this.currentProcess); }.bind(this),
+			null,
+			null,
 			'pointer'
 		);
-		this.fixedRegions = [this.editLinkRegion];
+		this.fixedRegions = [titleRegion, editLinkRegion];
+		this.moveStep = null; // TODO: remove this and handle all dragging in region code?
+		this.hoverRegion = null;
+		this.mouseDownRegion = null;
 		
 		this.canvas.addEventListener('dragover', function (e) {
 			e.preventDefault();
@@ -50,31 +78,33 @@ Workspace.prototype = {
 		this.canvas.addEventListener('drop', function (e) {
 			e.preventDefault();
 			var process = e.dataTransfer.getData('process');
-			var canvasPos = this.canvas.getBoundingClientRect();
-			var dropX = e.clientX - canvasPos.left;
-			var dropY = e.clientY - canvasPos.top;
+			var pos = this.getCanvasCoords(e);
 			
-			this.dropProcess(process, dropX, dropY);
+			this.dropProcess(process, pos.x, pos.y);
 		}.bind(this));
 		
 		this.canvas.addEventListener('mousedown', function (e) {
-			var canvasPos = this.canvas.getBoundingClientRect();
-			var x = e.clientX - canvasPos.left;
-			var y = e.clientY - canvasPos.top;
-			
+			var pos = this.getCanvasCoords(e);
 			var ctx = this.canvas.getContext('2d');
 			var steps = this.currentProcess.steps;
 			
 			for (var i=0; i<steps.length; i++) {
-				if (steps[i].bodyRegion.containsPoint(ctx, x, y)) {
+				if (steps[i].bodyRegion.containsPoint(ctx, pos.x, pos.y)) {
 					this.moveStep = steps[i];
 					this.moveStep.drawText = true;
-					this.moveOffsetX = this.moveStep.x - x;
-					this.moveOffsetY = this.moveStep.y - y;
+					this.moveOffsetX = this.moveStep.x - pos.x;
+					this.moveOffsetY = this.moveStep.y - pos.y;
 					this.draw();
-					break;
+					return;
 				}
 			}
+			
+			var region = this.getRegion(pos.x, pos.y);
+			this.mouseDownRegion = region;
+			if (region != null)
+				region.mousedown(pos.x, pos.y);
+
+			this.draw();
 		}.bind(this));
 		
 		var stopMove = function (e) {
@@ -84,16 +114,42 @@ Workspace.prototype = {
 				this.draw();
 			}
 		}.bind(this);
-		this.canvas.addEventListener('mouseup', stopMove);
-		this.canvas.addEventListener('mouseout', stopMove);
+		
+		this.canvas.addEventListener('mouseup', function (e) {
+			stopMove(e);
+			
+			var pos = this.getCanvasCoords(e);
+			var region = this.getRegion(pos.x, pos.y);
+			if (region != null) {
+				region.mouseup(pos.x, pos.y);
+				if (region == this.mouseDownRegion)
+					region.click(pos.x, pos.y);
+			}
+			if (this.mouseDownRegion != null) {
+				this.mouseDownRegion = null;
+			}
+			
+			this.draw();
+		}.bind(this));
+		
+		this.canvas.addEventListener('mouseout', function (e) {
+			if (this.hoverRegion != null) {
+				if (!this.hoverRegion.containsPoint(ctx, pos.x, pos.y)) {
+					this.hoverRegion.unhover();
+					this.hoverRegion = null;
+					this.canvas.style.cursor = ''; 
+					this.draw();
+				}
+			}
+			
+			stopMove(e);
+		}.bind(this));
 		
 		this.canvas.addEventListener('mousemove', function (e) {
 			if (this.currentProcess == null)
 				return;
 		
-			var canvasPos = this.canvas.getBoundingClientRect();
-			var x = e.clientX - canvasPos.left;
-			var y = e.clientY - canvasPos.top;
+			var pos = this.getCanvasCoords(e);	
 			
 			var ctx = this.canvas.getContext('2d');
 			ctx.strokeStyle = 'rgba(0,0,0,0)';
@@ -107,14 +163,14 @@ Workspace.prototype = {
 					if (steps[i] === this.moveStep)
 						continue;
 					
-					if (steps[i].collisionRegion.containsPoint(ctx, x + this.moveOffsetX, y + this.moveOffsetY)) {
+					if (steps[i].collisionRegion.containsPoint(ctx, pos.x + this.moveOffsetX, pos.y + this.moveOffsetY)) {
 						blocking = steps[i];
 						break;
 					}
 				}
 				if (blocking == null) {
-					this.moveStep.x = x + this.moveOffsetX;
-					this.moveStep.y = y + this.moveOffsetY;
+					this.moveStep.x = pos.x + this.moveOffsetX;
+					this.moveStep.y = pos.y + this.moveOffsetY;
 					this.draw();
 				}
 				return;
@@ -122,79 +178,53 @@ Workspace.prototype = {
 			
 			// check for "unhovering"
 			if (this.hoverRegion != null) {
-				if (!this.hoverRegion.containsPoint(ctx, x, y)) {
+				if (!this.hoverRegion.containsPoint(ctx, pos.x, pos.y)) {
 					this.hoverRegion.unhover();
 					this.hoverRegion = null;
+					this.canvas.style.cursor = ''; 
 					this.draw();
-					this.canvas.style.cursor = 'default'; 
 				}
 			}
-			
-			// check regions from steps
-			var steps = this.currentProcess.steps;
-			for (var i=0; i<steps.length; i++) {
-				var regions = steps[i].regions;
-				for (var j=0; j<regions.length; j++) {
-					var region = regions[j];
-					if (region.containsPoint(ctx, x, y)) {
-						region.hover();
-						this.hoverRegion = region;
-						this.canvas.style.cursor = region.cursor;
-						return;
-					}
-				}
-			}
-			
-			// check fixed regions
-			for (var i=0; i<this.fixedRegions.length; i++) {
-				var region = this.fixedRegions[i];
-				if (region.containsPoint(ctx, x, y)) {
-					region.hover();
-					this.hoverRegion = region;
-					this.canvas.style.cursor = region.cursor; 
-					return;
-				}
-			}
-			
-			this.draw();
-		}.bind(this));
 		
-		this.canvas.addEventListener('click', function (e) {
-			if (this.currentProcess == null)
-				return;
-			
-			var canvasPos = this.canvas.getBoundingClientRect();
-			var x = e.clientX - canvasPos.left;
-			var y = e.clientY - canvasPos.top;
-			
-			var ctx = this.canvas.getContext('2d');
-			ctx.strokeStyle = 'rgba(0,0,0,0)';
-			
-			// check regions from steps
-			var steps = this.currentProcess.steps;
-			for (var i=0; i<steps.length; i++) {
-				var regions = steps[i].regions;
-				for (var j=0; j<regions.length; j++) {
-					var region = regions[j];
-					if (region.containsPoint(ctx, x, y)) {
-						region.click();
-						return;
-					}
-				}
-			}
-			
-			// check fixed regions
-			for (var i=0; i<this.fixedRegions.length; i++) {
-				var region = this.fixedRegions[i];
-				if (region.containsPoint(ctx, x, y)) {
-					region.click();
-					return;
-				}
+			var region = this.getRegion(pos.x, pos.y);
+			if (region != null/* && region != this.hoverRegion*/) {
+				region.hover(pos.x, pos.y);
+				this.hoverRegion = region;
+				this.canvas.style.cursor = region.cursor;
+				this.draw();
 			}
 		}.bind(this));
 		
 		window.addEventListener('resize', this.updateSize.bind(this));
 		this.updateSize();
+	},
+	getCanvasCoords: function (e) {
+		var canvasPos = this.canvas.getBoundingClientRect();
+		return { x: e.clientX - canvasPos.left, y: e.clientY - canvasPos.top };
+	},
+	getRegion: function (x, y) {
+		var ctx = this.canvas.getContext('2d');
+		ctx.strokeStyle = 'rgba(0,0,0,0)';
+		
+		// check regions from steps
+		var steps = this.currentProcess.steps;
+		for (var i=0; i<steps.length; i++) {
+			var regions = steps[i].regions;
+			for (var j=0; j<regions.length; j++) {
+				var region = regions[j];
+				if (region.containsPoint(ctx, x, y))
+					return region;
+			}
+		}
+		
+		// check fixed regions
+		for (var i=0; i<this.fixedRegions.length; i++) {
+			var region = this.fixedRegions[i];
+			if (region.containsPoint(ctx, x, y))
+				return region;
+		}
+		
+		return null;
 	},
 	loadWorkspace: function (workspaceXml) {
 		this.types = [];
@@ -443,7 +473,7 @@ Workspace.prototype = {
 			return;
 		}
 
-		this.currentProcess.steps.push(new Step(this, process, x, y));
+		this.currentProcess.steps.push(new Step(process, x, y));
 		this.draw();
 	},
 	draw: function() {
@@ -451,19 +481,15 @@ Workspace.prototype = {
 		ctx.clearRect(0, 0, this.root.offsetWidth, this.root.offsetHeight);
 		ctx.lineCap = 'round';
 		
-		ctx.font = '36px sans-serif';
-		ctx.textAlign = 'left';
-		ctx.textBaseline = 'top';
-		ctx.fillStyle = '#000';
-		ctx.fillText(this.currentProcess.name, 32, 8);
+		for (var i=0; i<this.fixedRegions.length; i++)
+			this.fixedRegions[i].callDraw(ctx, this);
 		
-		ctx.font = '16px sans-serif';
-		ctx.fillStyle = this.hoverRegion === this.editLinkRegion ? '#000' : '#999';
-		ctx.fillText('edit this process', 32, 46);
-		
-		var steps = this.currentProcess.steps;
-		for (var i=0; i<steps.length; i++)
-			steps[i].draw(ctx);
+		var steps = this.currentProcess.steps, step;
+		for (var i=0; i<steps.length; i++) {
+			step = steps[i];
+			for (var j=0; j<step.regions.length; j++)
+				step.regions[j].callDraw(ctx, this);
+		}
 	},
 	showError: function (message) {
 		this.textDisplay.innerHTML = '<h3>An error has occurred</h3><p>Sorry. You might need to reload the page to continue.</p><p>The following error was encountered - you might want to report this:</p><pre>' + message + '</pre>';
@@ -531,36 +557,41 @@ var UserProcess = function (name, inputs, outputs, returnPaths, fixedSignature) 
 	this.steps = [];
 };
 
-var Step = function (workspace, process, x, y) {
+var Step = function (process, x, y) {
 	this.process = process;
 	this.x = x;
 	this.y = y;
 	this.radius = 45;
-	this.linkLength = 18;
-	this.linkBranchLength = 6;
-	this.outputBranchAngle = Math.PI * 0.8;
-	this.inputBranchAngle = Math.PI - this.outputBranchAngle;
-	this.textDistance = 24;
 	this.drawText = false;
-	this.bodyRegion = new Region(
-		function (ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); ctx.stroke(); }.bind(this),
-		function () { this.drawText = true; workspace.draw(); }.bind(this),
-		function () { this.drawText = false; workspace.draw(); }.bind(this),
-		function () { /* click? */ },
-		'move'
-	);
-	this.collisionRegion = new Region( // twice the normal radius, so that another step can't overlap this one
-		function (ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 2, 0, 2 * Math.PI); ctx.stroke(); }.bind(this)
-	);
-	this.regions = [this.bodyRegion]; // TODO: populate this with individual clicky bits
+	this.createRegions();
 };
 
 Step.prototype = {
 	constructor: Step,
-	draw: function (ctx) {
-		this.drawConnectors(ctx, this.process.inputs, true);
-		this.drawConnectors(ctx, this.process.outputs, false);
+	createRegions: function() {
+		this.connectors = [];
+		this.regions = [];
 		
+		this.createConnectors(this.process.inputs, true);
+		this.createConnectors(this.process.outputs, false);
+		
+		this.bodyRegion = new Region(
+			function (ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); ctx.stroke(); }.bind(this),
+			this.drawBody.bind(this),
+			function () { this.drawText = true; }.bind(this),
+			function () { this.drawText = false; }.bind(this),
+			null,
+			null, // TODO: handle dragging here?
+			null,
+			'move'
+		);
+		this.regions.push(this.bodyRegion);
+		
+		this.collisionRegion = new Region( // twice the normal radius, so that another step can't overlap this one
+			function (ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 2, 0, 2 * Math.PI); ctx.stroke(); }.bind(this)
+		);
+	},
+	drawBody: function (ctx) {
 		ctx.lineWidth = 2;
 		ctx.strokeStyle = '#000';
 		ctx.beginPath();
@@ -573,12 +604,10 @@ Step.prototype = {
 		ctx.fillStyle = '#000';
 		ctx.fillText(this.process.name, this.x, this.y);
 	},
-	drawConnectors: function(ctx, params, input) {
-		if (params.length == 0)
-			return;
-		
+	createConnectors: function(params, input) {
 		var angularSpread;
 		switch (params.length) {
+			case 0: return;
 			case 1: angularSpread = 0; break;
 			case 2: angularSpread = 60; break;
 			case 3: angularSpread = 90; break;
@@ -589,60 +618,73 @@ Step.prototype = {
 		}
 		angularSpread *= Math.PI / 180;
 		
-		var centerAngle;
-		if (input) {
-			centerAngle = Math.PI;
-			ctx.textAlign = 'right';
-		}
-		else {
-			centerAngle = 0;
-			ctx.textAlign = 'left';
-		}
-		
-		ctx.font = '12px sans-serif';
-		ctx.textBaseline = 'middle';
+		var centerAngle = input ? Math.PI : 0;
 		
 		var stepSize = params.length == 1 ? 0 : angularSpread / (params.length - 1);
 		var currentAngle = input ? centerAngle + angularSpread / 2 : centerAngle - angularSpread / 2;
 		if (input)
 			stepSize = -stepSize;
-		
-		ctx.lineWidth = 4;
-		var textDist = this.textDistance + this.radius;
-		
+				
 		for (var i=0; i<params.length; i++) {
-			ctx.fillStyle = ctx.strokeStyle = params[i].type.color;
-			this.drawConnector(ctx, currentAngle, input);
-			
-			var pos;
-			if (this.drawText) {
-				pos = this.offset(this.x, this.y, textDist, currentAngle);
-				ctx.fillText(params[i].name, pos.x, pos.y);
-			}
-			
+			var connector = new Connector(this, currentAngle, params[i], input);
+			this.connectors.push(connector);
+			this.regions.push(connector.region);
 			currentAngle += stepSize;
 		}
-	},
-	drawConnector: function(ctx, angle, input) {
+	}
+};
+
+var Connector = function (step, angle, param, isInput) {
+	this.step = step;
+	this.angle = angle;
+	this.param = param;
+	this.input = isInput;
+	
+	this.linkLength = 18;
+	this.linkBranchLength = 6;
+	this.outputBranchAngle = Math.PI * 0.8;
+	this.inputBranchAngle = Math.PI - this.outputBranchAngle;
+	this.textDistance = 24;
+	
+	this.region = new Region(
+		function (ctx) { },
+		this.draw.bind(this)
+	);
+};
+
+Connector.prototype = {
+	constructor: Connector,
+	draw: function (ctx, isMouseOver, isMouseDown) {
+		ctx.fillStyle = ctx.strokeStyle = this.param.type.color;
+		ctx.font = '12px sans-serif';
+		ctx.textAlign = this.input ? 'right' : 'left';
+		ctx.textBaseline = 'middle';
+		ctx.lineWidth = 4;
+		
 		ctx.beginPath();
-		var startPos = this.offset(this.x, this.y, this.radius + 2, angle);
+		var startPos = this.offset(this.step.x, this.step.y, this.step.radius + 2, this.angle);
 		ctx.moveTo(startPos.x, startPos.y);
-		var endPos = this.offset(this.x, this.y, this.radius + this.linkLength, angle);
+		var endPos = this.offset(this.step.x, this.step.y, this.step.radius + this.linkLength, this.angle);
 		ctx.lineTo(endPos.x, endPos.y);
 		
-		if (input) {
+		if (this.input) {
 			var tmp = startPos;
 			startPos = endPos;
 			endPos = tmp;
 		}
 		
-		var sidePos1 = this.offset(endPos.x, endPos.y, this.linkBranchLength, input ? angle + this.inputBranchAngle : angle + this.outputBranchAngle);
-		var sidePos2 = this.offset(endPos.x, endPos.y, this.linkBranchLength, input ? angle - this.inputBranchAngle : angle - this.outputBranchAngle);
+		var sidePos1 = this.offset(endPos.x, endPos.y, this.linkBranchLength, this.input ? this.angle + this.inputBranchAngle : this.angle + this.outputBranchAngle);
+		var sidePos2 = this.offset(endPos.x, endPos.y, this.linkBranchLength, this.input ? this.angle - this.inputBranchAngle : this.angle - this.outputBranchAngle);
 		ctx.moveTo(sidePos1.x, sidePos1.y);
 		ctx.lineTo(endPos.x, endPos.y);
 		ctx.lineTo(sidePos2.x, sidePos2.y);
 		
 		ctx.stroke();
+		
+		if (this.step.drawText) {
+			var pos = this.offset(this.step.x, this.step.y, this.textDistance + this.step.radius, this.angle);
+			ctx.fillText(this.param.name, pos.x, pos.y);
+		}
 	},
 	offset: function(x, y, distance, angle) {
 		return {
@@ -651,17 +693,21 @@ Step.prototype = {
 		};
 	}
 };
-		
+
 var Link = function () {
 	
 };
 
-var Region = function(definition, hover, unhover, click, cursor) {
-	this.define = definition == null ? function () {} : definition;
-	this.hover = hover == null ? function () {} : hover;
-	this.unhover = unhover == null ? function () {} : unhover;
-	this.click = click == null ? function () {} : click;
-	this.cursor = cursor == null ? 'default' : cursor;
+var Region = function(definition, draw, hover, unhover, click, mousedown, mouseup, cursor) {
+	var empty = function () {}
+	this.define = definition == null ? empty : definition;
+	this.draw = draw == null ? empty : draw;
+	this.hover = hover == null ? empty : hover;
+	this.unhover = unhover == null ? empty : unhover;
+	this.click = click == null ? empty : click;
+	this.mousedown = mousedown == null ? empty : mousedown;
+	this.mouseup = mouseup == null ? empty : mouseup;
+	this.cursor = cursor == null ? '' : cursor;
 };
 
 Region.prototype = {
@@ -672,6 +718,9 @@ Region.prototype = {
 		ctx.stroke();
 		
 		return ctx.isPointInPath(x,y);
+	},
+	callDraw: function (ctx,workspace) {
+		this.draw(ctx, workspace.hoverRegion === this, workspace.mouseDownRegion === this);
 	}
 };
 
