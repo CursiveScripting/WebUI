@@ -332,14 +332,10 @@ ProcessEditor.prototype = {
 					ctx.stroke();
 				}
 			}.bind(this),
-			function () { this.showProcessOptions(this.currentProcess); }.bind(this),
-			null,
-			null,
-			null,
-			null,
-			null,
 			'pointer'
 		);
+		editLinkRegion.click = function () { this.showProcessOptions(this.currentProcess); }.bind(this);
+		
 		this.fixedRegions = [titleRegion, editLinkRegion];
 		this.hoverRegion = null;
 		this.mouseDownRegion = null;
@@ -360,25 +356,30 @@ ProcessEditor.prototype = {
 			var pos = this.getCanvasCoords(e);
 			var region = this.getRegion(pos.x, pos.y);
 			this.mouseDownRegion = region;
-			if (region != null)
-				region.mousedown(pos.x, pos.y);
-
-			this.draw();
+			if (region != null && region.mousedown(pos.x, pos.y))
+				this.draw();
 		}.bind(this));
 		
 		this.canvas.addEventListener('mouseup', function (e) {
 			var pos = this.getCanvasCoords(e);
 			var region = this.getRegion(pos.x, pos.y);
+			var draw = false;
+			
 			if (region != null) {
-				region.mouseup(pos.x, pos.y);
+				draw = region.mouseup(pos.x, pos.y);
+				
 				if (region == this.mouseDownRegion)
-					region.click(pos.x, pos.y);
+					draw |= region.click(pos.x, pos.y);
+				else if (this.mouseDownRegion != null)
+					draw |= this.mouseDownRegion.mouseup(pos.x, pos.y);
 			}
 			if (this.mouseDownRegion != null) {
 				this.mouseDownRegion = null;
+				draw = true;
 			}
 			
-			this.draw();
+			if (draw)
+				this.draw();
 		}.bind(this));
 		
 		this.canvas.addEventListener('mouseout', function (e) {
@@ -387,10 +388,12 @@ ProcessEditor.prototype = {
 				var ctx = this.canvas.getContext('2d');
 				
 				if (!this.hoverRegion.containsPoint(ctx, pos.x, pos.y)) {
-					this.hoverRegion.unhover(pos.x, pos.y);
+					var draw = this.hoverRegion.unhover(pos.x, pos.y);
 					this.hoverRegion = null;
 					this.canvas.style.cursor = ''; 
-					this.draw();
+					
+					if (draw)
+						this.draw();
 				}
 			}
 		}.bind(this));
@@ -407,24 +410,32 @@ ProcessEditor.prototype = {
 			// check for "unhovering"
 			if (this.hoverRegion != null) {
 				if (!this.hoverRegion.containsPoint(ctx, pos.x, pos.y)) {
-					this.hoverRegion.unhover(pos.x, pos.y);
+					var draw = this.hoverRegion.unhover(pos.x, pos.y);
 					this.hoverRegion = null;
 					this.canvas.style.cursor = ''; 
-					this.draw();
+					
+					if (draw)
+						this.draw();
 				}
 			}
 		
+			var draw = false;
 			var region = this.getRegion(pos.x, pos.y);
 			if (region != null) {
 				if (region != this.hoverRegion) {
-					region.hover(pos.x, pos.y);
+					draw = region.hover(pos.x, pos.y);
 					this.hoverRegion = region;
 					this.canvas.style.cursor = region.cursor;
 				}
 				else
-					region.move(pos.x, pos.y);
-				this.draw();
+					draw = region.move(pos.x, pos.y);
 			}
+			
+			if (this.mouseDownRegion != null && this.mouseDownRegion != region)
+				draw |= this.mouseDownRegion.move(pos.x, pos.y);
+			
+			if (draw)
+				this.draw();
 		}.bind(this));
 		
 		window.addEventListener('resize', this.updateSize.bind(this));
@@ -552,30 +563,40 @@ Step.prototype = {
 		this.bodyRegion = new Region(
 			function (ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); ctx.stroke(); }.bind(this),
 			this.drawBody.bind(this),
-			null,
-			function () { this.drawText = true; }.bind(this),
-			function (x, y) {
-				if (!this.dragging) {
-					this.drawText = false;
-					return;
-				}
-				
-				this.tryDrag(x, y);
-			}.bind(this),
-			function (x,y) {
-				if (this.dragging)
-					this.tryDrag(x, y);
-			}.bind(this),
-			function (x,y) {
-				this.dragging = true;
-				this.moveOffsetX = this.x - x;
-				this.moveOffsetY = this.y - y;
-			}.bind(this),
-			function () {
-				this.dragging = false;
-			}.bind(this),
 			'move'
 		);
+		
+		this.bodyRegion.mousedown = function (x,y) {
+			this.dragging = true;
+			this.moveOffsetX = this.x - x;
+			this.moveOffsetY = this.y - y;
+			return true;
+		}.bind(this);
+		
+		this.bodyRegion.mouseup = function (x,y) {
+			this.dragging = false;
+			return true;
+		}.bind(this);
+		
+		this.bodyRegion.hover = function () { this.drawText = true; return true; }.bind(this);
+		
+		this.bodyRegion.move = function (x,y) {
+			if (!this.dragging)
+				return false;
+			
+			this.tryDrag(x, y);
+			return true;
+		}.bind(this);
+		
+		this.bodyRegion.unhover = function (x, y) {
+			if (this.dragging)
+				this.tryDrag(x, y);
+			else
+				this.drawText = false;
+			
+			return true;
+		}.bind(this);
+		
 		this.regions.push(this.bodyRegion);
 		
 		this.collisionRegion = new Region( // twice the normal radius, so that another step can't overlap this one
@@ -583,7 +604,7 @@ Step.prototype = {
 		);
 	},
 	tryDrag: function (x, y) {
-		// test for collisions!
+		// test for collisions
 		var steps = this.editor.currentProcess.steps;
 		var ctx = this.editor.canvas.getContext('2d');
 
@@ -705,16 +726,11 @@ var Link = function () {
 	
 };
 
-var Region = function(definition, draw, click, hover, unhover, move, mousedown, mouseup, cursor) {
-	var empty = function () {}
+var Region = function(definition, draw, cursor) {
+	var empty = function () { return false; }
 	this.define = definition == null ? empty : definition;
 	this.draw = draw == null ? empty : draw;
-	this.click = click == null ? empty : click;
-	this.hover = hover == null ? empty : hover;
-	this.unhover = unhover == null ? empty : unhover;
-	this.move = move == null ? empty : move;
-	this.mousedown = mousedown == null ? empty : mousedown;
-	this.mouseup = mouseup == null ? empty : mouseup;
+	this.click = this.hover = this.unhover = this.move = this.mousedown = this.mouseup = empty;
 	this.cursor = cursor == null ? '' : cursor;
 };
 
