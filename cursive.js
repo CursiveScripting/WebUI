@@ -503,15 +503,22 @@ ProcessEditor.prototype = {
 		ctx.clearRect(0, 0, this.root.offsetWidth, this.root.offsetHeight);
 		ctx.lineCap = 'round';
 		
-		for (var i=0; i<this.fixedRegions.length; i++)
-			this.fixedRegions[i].callDraw(ctx, this);
-		
+		// draw in opposite order to getRegion, so that topmost (visible) regions are the ones you can interact with
 		var steps = this.currentProcess.steps, step;
-		for (var i=0; i<steps.length; i++) {
+		for (var i=steps.length - 1; i>=0; i--) {
 			step = steps[i];
-			for (var j=0; j<step.regions.length; j++)
+			for (var j=step.regions.length - 1; j>=0; j--)
 				step.regions[j].callDraw(ctx, this);
 		}
+		
+		for (var i=this.fixedRegions.length - 1; i>=0; i--)
+			this.fixedRegions[i].callDraw(ctx, this);
+	},
+	drawCurve: function (ctx, startX, startY, cp1x, cp1y, cp2x, cp2y, endX, endY) {
+		ctx.beginPath();
+		ctx.moveTo(startX, startY);
+		ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
+		ctx.stroke();
 	}
 };
 
@@ -547,7 +554,7 @@ var Step = function (process, x, y) {
 	this.x = x;
 	this.y = y;
 	this.radius = 45;
-	this.drawText = false;
+	this.drawText = this.dragging = this.draggingPath = false;
 	this.createRegions();
 };
 
@@ -559,6 +566,49 @@ Step.prototype = {
 		
 		this.createConnectors(this.process.inputs, true);
 		this.createConnectors(this.process.outputs, false);
+		
+		var returnStartSize = 2.5, returnStartOffset = 20;
+		this.returnConnectorRegion = new Region(
+			function (ctx) { ctx.arc(this.x, this.y + returnStartOffset, returnStartSize * 2.5, 0, 2 * Math.PI);}.bind(this),
+			function (ctx, isMouseOver, isMouseDown) {
+				ctx.lineWidth = 2;
+				ctx.strokeStyle = isMouseOver ? '#000' : '#999';
+				ctx.beginPath();
+				ctx.moveTo(this.x - returnStartSize, this.y + returnStartOffset);
+				ctx.lineTo(this.x + returnStartSize, this.y + returnStartOffset);
+				ctx.moveTo(this.x, this.y - returnStartSize + returnStartOffset);
+				ctx.lineTo(this.x, this.y + returnStartSize + returnStartOffset);
+				ctx.stroke();
+			}.bind(this),
+			'crosshair'
+		);
+		this.returnConnectorRegion.hover = function () { return true; };
+		this.returnConnectorRegion.unhover = function () { return true; };
+		
+		this.returnConnectorRegion.mousedown = function (x,y) {
+			this.draggingPath = true;
+			return true;
+		}.bind(this);
+		this.returnConnectorRegion.mouseup = function (x,y) {
+			if (!this.draggingPath)
+				return false;
+			
+			this.dragEndX = undefined;
+			this.dragEndY = undefined;
+			this.draggingPath = false;
+			return true;
+		}.bind(this);
+		this.returnConnectorRegion.move = function (x,y) {
+			if (!this.draggingPath)
+				return false;
+			
+			this.dragEndX = x;
+			this.dragEndY = y;
+			return true;
+		}.bind(this);
+		
+		this.regions.push(this.returnConnectorRegion);
+		
 		
 		this.bodyRegion = new Region(
 			function (ctx) { ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); }.bind(this),
@@ -578,20 +628,33 @@ Step.prototype = {
 			return true;
 		}.bind(this);
 		
-		this.bodyRegion.hover = function () { this.drawText = true; return true; }.bind(this);
+		this.bodyRegion.hover = function () {
+			this.drawText = true; return true;
+		}.bind(this);
 		
 		this.bodyRegion.move = function (x,y) {
 			if (!this.dragging)
 				return false;
 			
-			this.tryDrag(x, y);
+			// test for collisions
+			var steps = this.editor.currentProcess.steps;
+			var ctx = this.editor.canvas.getContext('2d');
+
+			for (var i=0; i<steps.length; i++) {
+				if (steps[i] === this)
+					continue;
+				
+				if (steps[i].collisionRegion.containsPoint(ctx, x + this.moveOffsetX, y + this.moveOffsetY))
+					return;
+			}
+			
+			this.x = x + this.moveOffsetX;
+			this.y = y + this.moveOffsetY;
 			return true;
 		}.bind(this);
 		
 		this.bodyRegion.unhover = function (x, y) {
-			if (this.dragging)
-				this.tryDrag(x, y);
-			else
+			if (!this.dragging)
 				this.drawText = false;
 			
 			return true;
@@ -604,24 +667,21 @@ Step.prototype = {
 		);
 	},
 	tryDrag: function (x, y) {
-		// test for collisions
-		var steps = this.editor.currentProcess.steps;
-		var ctx = this.editor.canvas.getContext('2d');
 
-		for (var i=0; i<steps.length; i++) {
-			if (steps[i] === this)
-				continue;
-			
-			if (steps[i].collisionRegion.containsPoint(ctx, x + this.moveOffsetX, y + this.moveOffsetY))
-				return;
-		}
-		
-		this.x = x + this.moveOffsetX;
-		this.y = y + this.moveOffsetY;
 	},
 	drawBody: function (ctx) {
-		ctx.lineWidth = 2;
 		ctx.strokeStyle = '#000';
+		ctx.fillStyle = '#fff';
+		
+		if (this.draggingPath) {
+			ctx.lineWidth = 4;
+			this.editor.drawCurve(ctx, this.x, this.y, this.x, this.y + 400, this.dragEndX, this.dragEndY - 200, this.dragEndX, this.dragEndY);
+		}
+		
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+		ctx.fill();
 		ctx.beginPath();
 		ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
 		ctx.stroke();
@@ -674,33 +734,46 @@ var Connector = function (step, angle, param, isInput) {
 	this.inputBranchAngle = Math.PI - this.outputBranchAngle;
 	this.textDistance = 24;
 	
-	this.dragging = false;
-	
-	this.region = new Region(
-		this.outline.bind(this),
-		this.draw.bind(this),
-		isInput ? 'default' : 'crosshair'
-	);
-	this.region.hover = function () { this.step.drawText = true; return true; }.bind(this);
-	this.region.unhover = function () {
-		this.step.drawText = false;
-		
-		if (this.dragging && !this.input) {
-			// do stuff
-		}
-		
-		return true;
-	}.bind(this);
-	
-	if (!isInput) {
-		this.region.mousedown = this.mousedown.bind(this);
-		this.region.mouseup = this.mouseup.bind(this);
-		this.region.move = this.mousemove.bind(this);
-	}
+	this.createRegion();
 };
 
 Connector.prototype = {
 	constructor: Connector,
+	createRegion: function () {
+		this.dragging = false;
+		
+		this.region = new Region(
+			this.outline.bind(this),
+			this.draw.bind(this),
+			this.input ? 'default' : 'crosshair'
+		);
+		this.region.hover = function () { this.step.drawText = true; return true; }.bind(this);
+		this.region.unhover = function () { this.step.drawText = false; return true; }.bind(this);
+		
+		if (!this.input) {
+			this.region.mousedown = function (x,y) {
+				this.dragging = true;
+				return true;
+			}.bind(this);
+			this.region.mouseup = function (x,y) {
+				if (!this.dragging)
+					return false;
+				
+				this.dragEndX = undefined;
+				this.dragEndY = undefined;
+				this.dragging = false;
+				return true;
+			}.bind(this);
+			this.region.move = function (x,y) {
+				if (!this.dragging)
+					return false;
+				
+				this.dragEndX = x;
+				this.dragEndY = y;
+				return true;
+			}.bind(this);
+		}
+	},
 	outline: function (ctx) {
 		var halfAngle = Math.PI / 24;
 		var pos = this.offset(this.step.x, this.step.y, this.step.radius + 2, this.angle - halfAngle);
@@ -746,11 +819,8 @@ Connector.prototype = {
 		
 		if (this.dragging) {
 			ctx.beginPath();
-			ctx.moveTo(endPos.x, endPos.y);
 			var cp1 = this.offset(this.step.x, this.step.y, this.step.radius * 3, this.angle);
-			var cp2 = {x: (cp1.x + this.dragEndX)/2, y: (cp1.y + this.dragEndY)/2};
-			ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, this.dragEndX, this.dragEndY);
-			ctx.stroke();
+			this.step.editor.drawCurve(ctx, endPos.x, endPos.y, cp1.x, cp1.y, this.dragEndX, this.dragEndY + 200, this.dragEndX, this.dragEndY);
 		}
 	},
 	offset: function(x, y, distance, angle) {
@@ -758,34 +828,6 @@ Connector.prototype = {
 			x: x + distance * Math.cos(angle),
 			y: y + distance * Math.sin(angle)
 		};
-	},
-	mousedown: function (x,y) {
-		this.dragging = true;
-		return true;
-	},
-	mouseup: function (x,y) {
-		if (!this.dragging)
-			return false;
-		
-		this.dragEndX = undefined;
-		this.dragEndY = undefined;
-		this.dragging = false;
-		return true;
-	},
-	mousemove: function (x,y) {
-		if (!this.dragging)
-			return false;
-		
-		this.dragEndX = x;
-		this.dragEndY = y;
-		return true;
-	},
-	mouseout: function (x,y) {
-		if (!this.dragging)
-			return false;
-		
-		this.mouseMove(x, y);
-		return true;
 	}
 };
 
