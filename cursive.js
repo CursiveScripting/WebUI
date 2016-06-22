@@ -368,12 +368,12 @@ ProcessEditor.prototype = {
 			if (region != null) {
 				draw = region.mouseup(pos.x, pos.y);
 				
-				if (region == this.mouseDownRegion)
+				if (region === this.mouseDownRegion)
 					draw |= region.click(pos.x, pos.y);
-				else if (this.mouseDownRegion != null)
-					draw |= this.mouseDownRegion.mouseup(pos.x, pos.y);
 			}
 			if (this.mouseDownRegion != null) {
+				if (region !== this.mouseDownRegion)
+					draw |= this.mouseDownRegion.mouseup(pos.x, pos.y);
 				this.mouseDownRegion = null;
 				draw = true;
 			}
@@ -561,7 +561,7 @@ Step.prototype = {
 		this.createConnectors(this.process.outputs, false);
 		
 		this.bodyRegion = new Region(
-			function (ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); ctx.stroke(); }.bind(this),
+			function (ctx) { ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); }.bind(this),
 			this.drawBody.bind(this),
 			'move'
 		);
@@ -600,7 +600,7 @@ Step.prototype = {
 		this.regions.push(this.bodyRegion);
 		
 		this.collisionRegion = new Region( // twice the normal radius, so that another step can't overlap this one
-			function (ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 2, 0, 2 * Math.PI); ctx.stroke(); }.bind(this)
+			function (ctx) { ctx.arc(this.x, this.y, this.radius * 2, 0, 2 * Math.PI); }.bind(this)
 		);
 	},
 	tryDrag: function (x, y) {
@@ -674,14 +674,44 @@ var Connector = function (step, angle, param, isInput) {
 	this.inputBranchAngle = Math.PI - this.outputBranchAngle;
 	this.textDistance = 24;
 	
+	this.dragging = false;
+	
 	this.region = new Region(
-		function (ctx) { },
-		this.draw.bind(this)
+		this.outline.bind(this),
+		this.draw.bind(this),
+		isInput ? 'default' : 'crosshair'
 	);
+	this.region.hover = function () { this.step.drawText = true; return true; }.bind(this);
+	this.region.unhover = function () {
+		this.step.drawText = false;
+		
+		if (this.dragging && !this.input) {
+			// do stuff
+		}
+		
+		return true;
+	}.bind(this);
+	
+	if (!isInput) {
+		this.region.mousedown = this.mousedown.bind(this);
+		this.region.mouseup = this.mouseup.bind(this);
+		this.region.move = this.mousemove.bind(this);
+	}
 };
 
 Connector.prototype = {
 	constructor: Connector,
+	outline: function (ctx) {
+		var halfAngle = Math.PI / 24;
+		var pos = this.offset(this.step.x, this.step.y, this.step.radius + 2, this.angle - halfAngle);
+		ctx.moveTo(pos.x, pos.y);
+		pos = this.offset(this.step.x, this.step.y, this.step.radius + 2, this.angle + halfAngle);
+		ctx.lineTo(pos.x, pos.y);
+		pos = this.offset(this.step.x, this.step.y, this.step.radius + this.textDistance, this.angle + halfAngle);
+		ctx.lineTo(pos.x, pos.y);
+		pos = this.offset(this.step.x, this.step.y, this.step.radius + this.textDistance, this.angle - halfAngle);
+		ctx.lineTo(pos.x, pos.y);
+	},
 	draw: function (ctx, isMouseOver, isMouseDown) {
 		ctx.fillStyle = ctx.strokeStyle = this.param.type.color;
 		ctx.font = '12px sans-serif';
@@ -713,12 +743,49 @@ Connector.prototype = {
 			var pos = this.offset(this.step.x, this.step.y, this.textDistance + this.step.radius, this.angle);
 			ctx.fillText(this.param.name, pos.x, pos.y);
 		}
+		
+		if (this.dragging) {
+			ctx.beginPath();
+			ctx.moveTo(endPos.x, endPos.y);
+			var cp1 = this.offset(this.step.x, this.step.y, this.step.radius * 3, this.angle);
+			var cp2 = {x: (cp1.x + this.dragEndX)/2, y: (cp1.y + this.dragEndY)/2};
+			ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, this.dragEndX, this.dragEndY);
+			ctx.stroke();
+		}
 	},
 	offset: function(x, y, distance, angle) {
 		return {
 			x: x + distance * Math.cos(angle),
 			y: y + distance * Math.sin(angle)
 		};
+	},
+	mousedown: function (x,y) {
+		this.dragging = true;
+		return true;
+	},
+	mouseup: function (x,y) {
+		if (!this.dragging)
+			return false;
+		
+		this.dragEndX = undefined;
+		this.dragEndY = undefined;
+		this.dragging = false;
+		return true;
+	},
+	mousemove: function (x,y) {
+		if (!this.dragging)
+			return false;
+		
+		this.dragEndX = x;
+		this.dragEndY = y;
+		return true;
+	},
+	mouseout: function (x,y) {
+		if (!this.dragging)
+			return false;
+		
+		this.mouseMove(x, y);
+		return true;
 	}
 };
 
