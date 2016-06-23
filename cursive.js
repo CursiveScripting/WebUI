@@ -519,6 +519,32 @@ ProcessEditor.prototype = {
 		ctx.moveTo(startX, startY);
 		ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
 		ctx.stroke();
+		
+		var mid1x = (startX + cp1x + cp1x + cp2x) / 4, mid1y = (startY + cp1y + cp1y + cp2y) / 4;
+		var mid2x = (endX + cp2x + cp2x + cp1x) / 4, mid2y = (endY + cp2y + cp2y + cp1y) / 4;
+		var angle = this.findAngle(mid1x, mid1y, mid2x, mid2y);
+		var midX = (mid1x + mid2x) / 2, midY = (mid1y + mid2y) / 2;
+		
+		this.drawArrowhead(ctx, midX, midY, angle, 15, 20);
+	},
+	drawArrowhead: function (ctx, locx, locy, angle, length, width) {
+		var hw = width / 2;
+
+		ctx.translate(locx, locy);
+		ctx.rotate(angle);
+
+		ctx.beginPath();
+		ctx.moveTo(-length,width-hw);
+		ctx.lineTo(0,0);
+		ctx.lineTo(-length, -hw);
+		ctx.stroke();
+
+		ctx.rotate(-angle);
+		ctx.translate(-locx,-locy);
+	},
+	findAngle: function (sx, sy, ex, ey) {
+		// make sx and sy at the zero point
+		return Math.atan2((ey - sy), (ex - sx));
 	}
 };
 
@@ -564,15 +590,12 @@ Step.prototype = {
 		this.connectors = [];
 		this.regions = [];
 		
-		this.createConnectors(this.process.inputs, true);
-		this.createConnectors(this.process.outputs, false);
-		
 		var returnStartSize = 2.5, returnStartOffset = 20;
 		this.returnConnectorRegion = new Region(
 			function (ctx) { ctx.arc(this.x, this.y + returnStartOffset, returnStartSize * 2.5, 0, 2 * Math.PI);}.bind(this),
 			function (ctx, isMouseOver, isMouseDown) {
 				ctx.lineWidth = 2;
-				ctx.strokeStyle = isMouseOver ? '#000' : '#999';
+				ctx.strokeStyle = isMouseOver || isMouseDown ? '#000' : '#999';
 				ctx.beginPath();
 				ctx.moveTo(this.x - returnStartSize, this.y + returnStartOffset);
 				ctx.lineTo(this.x + returnStartSize, this.y + returnStartOffset);
@@ -665,19 +688,22 @@ Step.prototype = {
 		this.collisionRegion = new Region( // twice the normal radius, so that another step can't overlap this one
 			function (ctx) { ctx.arc(this.x, this.y, this.radius * 2, 0, 2 * Math.PI); }.bind(this)
 		);
+		
+		this.createConnectors(this.process.inputs, true);
+		this.createConnectors(this.process.outputs, false);
 	},
 	tryDrag: function (x, y) {
 
 	},
 	drawBody: function (ctx) {
 		ctx.strokeStyle = '#000';
-		ctx.fillStyle = '#fff';
 		
 		if (this.draggingPath) {
 			ctx.lineWidth = 4;
-			this.editor.drawCurve(ctx, this.x, this.y, this.x, this.y + 400, this.dragEndX, this.dragEndY - 200, this.dragEndX, this.dragEndY);
+			this.editor.drawCurve(ctx, this.x, this.y, this.x, this.y + 300, this.dragEndX, this.dragEndY - 300, this.dragEndX, this.dragEndY);
 		}
 		
+		ctx.fillStyle = '#fff';
 		ctx.lineWidth = 2;
 		ctx.beginPath();
 		ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
