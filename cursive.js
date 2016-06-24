@@ -586,7 +586,7 @@ Step.prototype = {
 		
 		var returnStartSize = 2.5, returnStartOffset = 20;
 		this.returnConnectorRegion = new Region(
-			function (ctx) { ctx.arc(this.x, this.y + returnStartOffset, returnStartSize * 2.5, 0, 2 * Math.PI);}.bind(this),
+			function (ctx) { ctx.arc(this.x, this.y + returnStartOffset, returnStartSize * 3.5, 0, 2 * Math.PI);}.bind(this),
 			function (ctx, isMouseOver, isMouseDown) {
 				ctx.lineWidth = 2;
 				ctx.strokeStyle = isMouseOver || isMouseDown ? '#000' : '#999';
@@ -616,9 +616,9 @@ Step.prototype = {
 				
 				for (var i=0; i<this.returnPaths.length; i++) {
 					var existing = this.returnPaths[i];
+					existing.onlyPath = false;
 					if (existing.name === null) {
 						existing.warnDuplicate = newPath.warnDuplicate = true;
-						break;
 					}
 				}
 				
@@ -904,7 +904,8 @@ ReturnPath.prototype = {
 ReturnPath.drawPath = function (editor, ctx, fromX, fromY, toX, toY, name, warnDuplicate) {
 	ctx.strokeStyle = '#000';
 	ctx.lineWidth = 3;
-	var cp1x = fromX, cp1y = fromY + 300, cp2x = toX, cp2y = toY - 300;
+	var cpOffset = Math.min(300, Math.abs(toX - fromX));
+	var cp1x = fromX, cp1y = fromY + cpOffset, cp2x = toX, cp2y = toY - cpOffset;
 	editor.drawCurve(ctx, fromX, fromY, cp1x, cp1y, cp2x, cp2y, toX, toY);
 	
 	var mid1x = (fromX + cp1x + cp1x + cp2x) / 4, mid1y = (fromY + cp1y + cp1y + cp2y) / 4;
@@ -913,38 +914,51 @@ ReturnPath.drawPath = function (editor, ctx, fromX, fromY, toX, toY, name, warnD
 	var midX = (mid1x + mid2x) / 2;
 	var midY = (mid1y + mid2y) / 2;
 	
-	var halfWidth = 7.5, arrowLength = 20;
+	var halfWidth = 10, arrowLength = 20;
 	
 	ctx.save();
 	
 	ctx.translate(midX, midY);
 	ctx.rotate(angle);
 
+	ctx.shadowOffsetX = 0; 
+	ctx.shadowOffsetY = 0; 
+	ctx.fillStyle = '#fff';
+	
 	ctx.beginPath();
 	ctx.moveTo(-arrowLength, halfWidth);
 	ctx.lineTo(0,0);
 	ctx.lineTo(-arrowLength, -halfWidth);
+	ctx.closePath();
+	ctx.fill();
+	
+	ctx.beginPath();
+	ctx.moveTo(-arrowLength, halfWidth);
+	ctx.lineTo(0,0);
+	ctx.lineTo(-arrowLength, -halfWidth);
+	ctx.closePath();
 	ctx.stroke();
 	
+	ctx.translate(-26, 0);
 	
-	if (this.warnDuplicate) {
-		;
+	ctx.shadowBlur = 14;
+	ctx.textAlign = 'right';
+	
+	if (angle > Math.PI / 2 || angle <= -Math.PI / 2) {
+		ctx.rotate(Math.PI);
+		ctx.textAlign = 'left';
 	}
 	
 	if (name !== null)
 	{
-		ctx.shadowColor = '#000';
-		ctx.shadowOffsetX = 0; 
-		ctx.shadowOffsetY = 0; 
-		ctx.shadowBlur = 12;
+		ctx.shadowColor = warnDuplicate ? '#f99' : '#fff';
 		
-		ctx.fillStyle = '#fff';
-		ctx.font = '18px sans-serif';
-		ctx.textAlign = 'left';
+		ctx.fillStyle = '#000';
+		ctx.font = '16px sans-serif';
 		ctx.textBaseline = 'middle';
 		
-		for (var i=0; i<3; i++) // strengthen the shadow
-			ctx.fillText(name, 16, 0);
+		for (var i=0; i<8; i++) // strengthen the shadow
+			ctx.fillText(name, 0, 0);
 	}
 	
 	ctx.restore();
