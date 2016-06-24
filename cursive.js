@@ -469,6 +469,19 @@ ProcessEditor.prototype = {
 		
 		return null;
 	},
+	getStep: function (x, y) {
+		var ctx = this.canvas.getContext('2d');
+		var steps = this.currentProcess.steps;
+		for (var i=0; i<steps.length; i++) {
+			var regions = steps[i].regions;
+			for (var j=0; j<regions.length; j++) {
+				var region = regions[j];
+				if (region.containsPoint(ctx, x, y))
+					return steps[i];
+			}
+		}
+		return null;
+	},
 	showCanvas: function(show) {
 		this.canvas.style = show ? '' : 'display:none;';
 		this.textDisplay.style = show ? 'display:none;' : '';
@@ -503,8 +516,14 @@ ProcessEditor.prototype = {
 		ctx.clearRect(0, 0, this.root.offsetWidth, this.root.offsetHeight);
 		ctx.lineCap = 'round';
 		
-		// draw in opposite order to getRegion, so that topmost (visible) regions are the ones you can interact with
 		var steps = this.currentProcess.steps, step;
+		for (var i=steps.length - 1; i>=0; i--) {
+			step = steps[i];
+			for (var j=0; j<step.returnPaths.length; j++)
+				step.returnPaths[j].draw(ctx);
+		}
+		
+		// draw in opposite order to getRegion, so that topmost (visible) regions are the ones you can interact with
 		for (var i=steps.length - 1; i>=0; i--) {
 			step = steps[i];
 			for (var j=step.regions.length - 1; j>=0; j--)
@@ -519,32 +538,6 @@ ProcessEditor.prototype = {
 		ctx.moveTo(startX, startY);
 		ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
 		ctx.stroke();
-		
-		var mid1x = (startX + cp1x + cp1x + cp2x) / 4, mid1y = (startY + cp1y + cp1y + cp2y) / 4;
-		var mid2x = (endX + cp2x + cp2x + cp1x) / 4, mid2y = (endY + cp2y + cp2y + cp1y) / 4;
-		var angle = this.findAngle(mid1x, mid1y, mid2x, mid2y);
-		var midX = (mid1x + mid2x) / 2, midY = (mid1y + mid2y) / 2;
-		
-		this.drawArrowhead(ctx, midX, midY, angle, 15, 20);
-	},
-	drawArrowhead: function (ctx, locx, locy, angle, length, width) {
-		var hw = width / 2;
-
-		ctx.translate(locx, locy);
-		ctx.rotate(angle);
-
-		ctx.beginPath();
-		ctx.moveTo(-length,width-hw);
-		ctx.lineTo(0,0);
-		ctx.lineTo(-length, -hw);
-		ctx.stroke();
-
-		ctx.rotate(-angle);
-		ctx.translate(-locx,-locy);
-	},
-	findAngle: function (sx, sy, ex, ey) {
-		// make sx and sy at the zero point
-		return Math.atan2((ey - sy), (ex - sx));
 	}
 };
 
@@ -579,6 +572,7 @@ var Step = function (process, x, y) {
 	this.process = process;
 	this.x = x;
 	this.y = y;
+	this.returnPaths = [];
 	this.radius = 45;
 	this.drawText = this.dragging = this.draggingPath = false;
 	this.createRegions();
@@ -615,6 +609,22 @@ Step.prototype = {
 		this.returnConnectorRegion.mouseup = function (x,y) {
 			if (!this.draggingPath)
 				return false;
+			
+			var toStep = this.editor.getStep(x, y);
+			if (toStep !== null) {
+				var newPath = new ReturnPath(this, toStep, null);
+				
+				for (var i=0; i<this.returnPaths.length; i++) {
+					var existing = this.returnPaths[i];
+					if (existing.name === null) {
+						existing.warnDuplicate = newPath.warnDuplicate = true;
+						break;
+					}
+				}
+				
+				newPath.onlyPath = this.returnPaths.length == 0;
+				this.returnPaths.push(newPath);
+			}
 			
 			this.dragEndX = undefined;
 			this.dragEndY = undefined;
@@ -692,17 +702,11 @@ Step.prototype = {
 		this.createConnectors(this.process.inputs, true);
 		this.createConnectors(this.process.outputs, false);
 	},
-	tryDrag: function (x, y) {
-
-	},
 	drawBody: function (ctx) {
+		if (this.draggingPath)
+			ReturnPath.drawPath(this.editor, ctx, this.x, this.y, this.dragEndX, this.dragEndY, null, false);
+		
 		ctx.strokeStyle = '#000';
-		
-		if (this.draggingPath) {
-			ctx.lineWidth = 4;
-			this.editor.drawCurve(ctx, this.x, this.y, this.x, this.y + 300, this.dragEndX, this.dragEndY - 300, this.dragEndX, this.dragEndY);
-		}
-		
 		ctx.fillStyle = '#fff';
 		ctx.lineWidth = 2;
 		ctx.beginPath();
@@ -857,9 +861,95 @@ Connector.prototype = {
 	}
 };
 
-var Link = function () {
+var ReturnPath = function (fromStep, toStep, name) {
+	this.fromStep = fromStep;
+	this.toStep = toStep;
+	this.name = name;
+	this.warnDuplicate = false;
+	this.onlyPath = false;
 	
+	this.nameRegion = new Region(
+		function (ctx) {
+			if (this.name === null && !this.warnDuplicate)
+				return;
+			
+			// TODO: define path to surround name text / duplicate warning thing
+			;
+		}.bind(this),
+		null,
+		'pointer'
+	);
+	
+	this.nameRegion.click = function (x, y) {
+		console.log('showing name change input');
+	}
+	
+	// return paths should encapsulate the logic for deciding arrow/text angle and control point placement. Am happy for hooking up I/O to show arrowheads
+	
+	// when drawing a "fake" return path (i.e. while dragging), the arrow angle & control point stuff is still needed. How best to do this, short of a static "draw curve" method in here?
 };
+
+ReturnPath.prototype = {
+	constructor: ReturnPath,
+	draw: function (ctx) {
+		var writeName = this.name !== null ? this.name : this.onlyPath ? null : 'default';
+		ReturnPath.drawPath(this.fromStep.editor, ctx, this.fromStep.x, this.fromStep.y, this.toStep.x, this.toStep.y, writeName, this.warnDuplicate);
+
+		// TODO: add nameRegion to the regions property of the fromStep, so that it is detected for interactions, etc.
+		// But don't want it to be used for detecting the region you have dragged a return path onto, which currently just uses that list.
+		// How to handle this?
+	}
+};
+
+ReturnPath.drawPath = function (editor, ctx, fromX, fromY, toX, toY, name, warnDuplicate) {
+	ctx.strokeStyle = '#000';
+	ctx.lineWidth = 3;
+	var cp1x = fromX, cp1y = fromY + 300, cp2x = toX, cp2y = toY - 300;
+	editor.drawCurve(ctx, fromX, fromY, cp1x, cp1y, cp2x, cp2y, toX, toY);
+	
+	var mid1x = (fromX + cp1x + cp1x + cp2x) / 4, mid1y = (fromY + cp1y + cp1y + cp2y) / 4;
+	var mid2x = (toX + cp2x + cp2x + cp1x) / 4, mid2y = (toY + cp2y + cp2y + cp1y) / 4;
+	var angle = Math.atan2((mid2y - mid1y), (mid2x - mid1x));
+	var midX = (mid1x + mid2x) / 2;
+	var midY = (mid1y + mid2y) / 2;
+	
+	var halfWidth = 7.5, arrowLength = 20;
+	
+	ctx.save();
+	
+	ctx.translate(midX, midY);
+	ctx.rotate(angle);
+
+	ctx.beginPath();
+	ctx.moveTo(-arrowLength, halfWidth);
+	ctx.lineTo(0,0);
+	ctx.lineTo(-arrowLength, -halfWidth);
+	ctx.stroke();
+	
+	
+	if (this.warnDuplicate) {
+		;
+	}
+	
+	if (name !== null)
+	{
+		ctx.shadowColor = '#000';
+		ctx.shadowOffsetX = 0; 
+		ctx.shadowOffsetY = 0; 
+		ctx.shadowBlur = 12;
+		
+		ctx.fillStyle = '#fff';
+		ctx.font = '18px sans-serif';
+		ctx.textAlign = 'left';
+		ctx.textBaseline = 'middle';
+		
+		for (var i=0; i<3; i++) // strengthen the shadow
+			ctx.fillText(name, 16, 0);
+	}
+	
+	ctx.restore();
+};
+
 
 var Region = function(definition, draw, cursor) {
 	var empty = function () { return false; }
@@ -885,9 +975,3 @@ Region.prototype = {
 
 var Cursive = {};
 Cursive.Workspace = Workspace;
-Cursive.ProcessEditor = ProcessEditor;
-Cursive.Parameter = Parameter;
-Cursive.SystemProcess = SystemProcess;
-Cursive.UserProcess = UserProcess;
-Cursive.Step = Step;
-Cursive.Link = Link;
