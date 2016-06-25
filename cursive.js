@@ -452,9 +452,16 @@ ProcessEditor.prototype = {
 		// check regions from steps
 		var steps = this.currentProcess.steps;
 		for (var i=0; i<steps.length; i++) {
-			var regions = steps[i].regions;
+			var step = steps[i];
+			var regions = step.regions;
 			for (var j=0; j<regions.length; j++) {
 				var region = regions[j];
+				if (region.containsPoint(ctx, x, y))
+					return region;
+			}
+			var paths = step.returnPaths;
+			for (var j=0; j<paths.length; j++) {
+				var region = paths[j].nameRegion;
 				if (region.containsPoint(ctx, x, y))
 					return region;
 			}
@@ -528,6 +535,10 @@ ProcessEditor.prototype = {
 			step = steps[i];
 			for (var j=step.regions.length - 1; j>=0; j--)
 				step.regions[j].callDraw(ctx, this);
+				
+			var paths = step.returnPaths;
+			for (var j=paths.length - 1; j>=0; j--)
+				paths[j].nameRegion.callDraw(ctx, this);
 		}
 		
 		for (var i=this.fixedRegions.length - 1; i>=0; i--)
@@ -704,7 +715,7 @@ Step.prototype = {
 	},
 	drawBody: function (ctx) {
 		if (this.draggingPath)
-			ReturnPath.drawPath(this.editor, ctx, this.x, this.y, this.dragEndX, this.dragEndY, null, false);
+			ReturnPath.drawPath(this.editor, ctx, this.x, this.y, this.dragEndX, this.dragEndY);
 		
 		ctx.strokeStyle = '#000';
 		ctx.fillStyle = '#fff';
@@ -867,41 +878,79 @@ var ReturnPath = function (fromStep, toStep, name) {
 	this.name = name;
 	this.warnDuplicate = false;
 	this.onlyPath = false;
+	this.nameLength = 30;
 	
 	this.nameRegion = new Region(
 		function (ctx) {
-			if (this.name === null && !this.warnDuplicate)
+			if (this.getNameToWrite() === null)
 				return;
 			
-			// TODO: define path to surround name text / duplicate warning thing
-			;
+			ctx.save();
+			
+			var t = this.textTransform
+			ctx.translate(t[0], t[1]);
+			ctx.rotate(t[2]);
+			ctx.translate(-26, 0);
+			
+			ctx.rect(-this.nameLength - 5, -10, this.nameLength + 10, 20);
+			
+			ctx.restore();
 		}.bind(this),
-		null,
+		this.drawName.bind(this),
 		'pointer'
 	);
 	
 	this.nameRegion.click = function (x, y) {
 		console.log('showing name change input');
 	}
-	
-	// return paths should encapsulate the logic for deciding arrow/text angle and control point placement. Am happy for hooking up I/O to show arrowheads
-	
-	// when drawing a "fake" return path (i.e. while dragging), the arrow angle & control point stuff is still needed. How best to do this, short of a static "draw curve" method in here?
 };
 
 ReturnPath.prototype = {
 	constructor: ReturnPath,
 	draw: function (ctx) {
-		var writeName = this.name !== null ? this.name : this.onlyPath ? null : 'default';
-		ReturnPath.drawPath(this.fromStep.editor, ctx, this.fromStep.x, this.fromStep.y, this.toStep.x, this.toStep.y, writeName, this.warnDuplicate);
-
-		// TODO: add nameRegion to the regions property of the fromStep, so that it is detected for interactions, etc.
-		// But don't want it to be used for detecting the region you have dragged a return path onto, which currently just uses that list.
-		// How to handle this?
+		this.textTransform = ReturnPath.drawPath(this.fromStep.editor, ctx, this.fromStep.x, this.fromStep.y, this.toStep.x, this.toStep.y);
+	},
+	getNameToWrite: function () {
+		return this.name !== null ? this.name : this.onlyPath ? null : 'default';
+	},
+	drawName: function (ctx) {
+		var writeName = this.getNameToWrite();
+		if (writeName === null)
+			return;
+		
+		ctx.save();
+		var t = this.textTransform; // not actually a transform, but hey
+		ctx.translate(t[0], t[1]);
+		ctx.rotate(t[2]);
+		ctx.translate(-26, 0);
+	
+		ctx.shadowBlur = 14;
+		ctx.textAlign = 'right';
+		
+		var angle = t[2];
+		if (angle > Math.PI / 2 || angle <= -Math.PI / 2) {
+			ctx.rotate(Math.PI);
+			ctx.textAlign = 'left';
+		}
+		
+		if (writeName !== null)
+		{
+			ctx.shadowColor = this.warnDuplicate ? '#f99' : '#fff';
+			
+			ctx.fillStyle = '#000';
+			ctx.font = '16px sans-serif';
+			ctx.textBaseline = 'middle';
+			
+			this.nameLength = ctx.measureText(writeName).width;
+			for (var i=0; i<8; i++) // strengthen the shadow
+				ctx.fillText(writeName, 0, 0);
+		}
+		
+		ctx.restore();
 	}
 };
 
-ReturnPath.drawPath = function (editor, ctx, fromX, fromY, toX, toY, name, warnDuplicate) {
+ReturnPath.drawPath = function (editor, ctx, fromX, fromY, toX, toY) {
 	ctx.strokeStyle = '#000';
 	ctx.lineWidth = 3;
 	var cpOffset = Math.min(300, Math.abs(toX - fromX));
@@ -914,13 +963,14 @@ ReturnPath.drawPath = function (editor, ctx, fromX, fromY, toX, toY, name, warnD
 	var midX = (mid1x + mid2x) / 2;
 	var midY = (mid1y + mid2y) / 2;
 	
-	var halfWidth = 10, arrowLength = 20;
+	var halfWidth = 8, arrowLength = 20;
 	
 	ctx.save();
 	
+	var transform = [midX, midY, angle];
 	ctx.translate(midX, midY);
 	ctx.rotate(angle);
-
+	
 	ctx.shadowOffsetX = 0; 
 	ctx.shadowOffsetY = 0; 
 	ctx.fillStyle = '#fff';
@@ -938,32 +988,10 @@ ReturnPath.drawPath = function (editor, ctx, fromX, fromY, toX, toY, name, warnD
 	ctx.lineTo(-arrowLength, -halfWidth);
 	ctx.closePath();
 	ctx.stroke();
-	
-	ctx.translate(-26, 0);
-	
-	ctx.shadowBlur = 14;
-	ctx.textAlign = 'right';
-	
-	if (angle > Math.PI / 2 || angle <= -Math.PI / 2) {
-		ctx.rotate(Math.PI);
-		ctx.textAlign = 'left';
-	}
-	
-	if (name !== null)
-	{
-		ctx.shadowColor = warnDuplicate ? '#f99' : '#fff';
-		
-		ctx.fillStyle = '#000';
-		ctx.font = '16px sans-serif';
-		ctx.textBaseline = 'middle';
-		
-		for (var i=0; i<8; i++) // strengthen the shadow
-			ctx.fillText(name, 0, 0);
-	}
-	
-	ctx.restore();
-};
 
+	ctx.restore();
+	return transform;
+};
 
 var Region = function(definition, draw, cursor) {
 	var empty = function () { return false; }
