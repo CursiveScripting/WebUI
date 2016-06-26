@@ -461,9 +461,12 @@ ProcessEditor.prototype = {
 			}
 			var paths = step.returnPaths;
 			for (var j=0; j<paths.length; j++) {
-				var region = paths[j].nameRegion;
-				if (region.containsPoint(ctx, x, y))
-					return region;
+				var path = paths[j];
+				for (var k=0; k<path.regions.length; k++) {
+					var region = path.regions[k];
+					if (region.containsPoint(ctx, x, y))
+						return region;
+				}
 			}
 		}
 		
@@ -537,8 +540,11 @@ ProcessEditor.prototype = {
 				step.regions[j].callDraw(ctx, this);
 				
 			var paths = step.returnPaths;
-			for (var j=paths.length - 1; j>=0; j--)
-				paths[j].nameRegion.callDraw(ctx, this);
+			for (var j=paths.length - 1; j>=0; j--) {
+				var path = paths[j];
+				for (var k=0; k<path.regions.length; k++)
+					path.regions[k].callDraw(ctx, this);
+			}
 		}
 		
 		for (var i=this.fixedRegions.length - 1; i>=0; i--)
@@ -612,47 +618,10 @@ Step.prototype = {
 		);
 		this.returnConnectorRegion.hover = function () { return true; };
 		this.returnConnectorRegion.unhover = function () { return true; };
-		
-		this.returnConnectorRegion.mousedown = function (x,y) {
-			this.draggingPath = true;
-			return true;
-		}.bind(this);
-		this.returnConnectorRegion.mouseup = function (x,y) {
-			if (!this.draggingPath)
-				return false;
-			
-			var toStep = this.editor.getStep(x, y);
-			if (toStep !== null) {
-				var newPath = new ReturnPath(this, toStep, null);
-				
-				for (var i=0; i<this.returnPaths.length; i++) {
-					var existing = this.returnPaths[i];
-					existing.onlyPath = false;
-					if (existing.name === null) {
-						existing.warnDuplicate = newPath.warnDuplicate = true;
-					}
-				}
-				
-				newPath.onlyPath = this.returnPaths.length == 0;
-				this.returnPaths.push(newPath);
-			}
-			
-			this.dragEndX = undefined;
-			this.dragEndY = undefined;
-			this.draggingPath = false;
-			return true;
-		}.bind(this);
-		this.returnConnectorRegion.move = function (x,y) {
-			if (!this.draggingPath)
-				return false;
-			
-			this.dragEndX = x;
-			this.dragEndY = y;
-			return true;
-		}.bind(this);
-		
+		this.returnConnectorRegion.mousedown = this.startDragPath.bind(this);
+		this.returnConnectorRegion.mouseup = this.stopDragPath.bind(this);
+		this.returnConnectorRegion.move = this.moveDragPath.bind(this);
 		this.regions.push(this.returnConnectorRegion);
-		
 		
 		this.bodyRegion = new Region(
 			function (ctx) { ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); }.bind(this),
@@ -760,6 +729,53 @@ Step.prototype = {
 			this.regions.push(connector.region);
 			currentAngle += stepSize;
 		}
+	},
+	startDragPath: function (x,y) {
+		this.draggingPath = true;
+		return true;
+	},
+	stopDragPath: function (x,y) {
+		if (!this.draggingPath)
+			return false;
+		
+		var toStep = this.editor.getStep(x, y);
+		if (toStep !== null) {
+			var existingPath = null;
+			for (var i=0; i<this.returnPaths.length; i++)
+				if (toStep === this.returnPaths[i].toStep) {
+					existingPath = this.returnPaths[i];
+					// TODO: explain to user that they should set up multiple return paths to the same destination through a single link
+					break;
+				}
+			
+			if (existingPath === null) {
+				var newPath = new ReturnPath(this, toStep, null);
+				
+				for (var i=0; i<this.returnPaths.length; i++) {
+					var existing = this.returnPaths[i];
+					existing.onlyPath = false;
+					if (existing.name === null) {
+						existing.warnDuplicate = newPath.warnDuplicate = true;
+					}
+				}
+				
+				newPath.onlyPath = this.returnPaths.length == 0;
+				this.returnPaths.push(newPath);
+			}
+		}
+		
+		this.dragEndX = undefined;
+		this.dragEndY = undefined;
+		this.draggingPath = false;
+		return true;
+	},
+	moveDragPath: function (x,y) {
+		if (!this.draggingPath)
+			return false;
+		
+		this.dragEndX = x;
+		this.dragEndY = y;
+		return true;
 	}
 };
 
@@ -880,16 +896,16 @@ var ReturnPath = function (fromStep, toStep, name) {
 	this.onlyPath = false;
 	this.nameLength = 30;
 	
-	this.nameRegion = new Region(
+	var pathName = new Region(
 		function (ctx) {
 			if (this.getNameToWrite() === null)
 				return;
 			
 			ctx.save();
 			
-			var t = this.textTransform
-			ctx.translate(t[0], t[1]);
-			ctx.rotate(t[2]);
+			var transform = this.arrowTransform;
+			ctx.translate(transform.x, transform.y);
+			ctx.rotate(transform.angle);
 			ctx.translate(-26, 0);
 			
 			ctx.rect(-this.nameLength - 5, -10, this.nameLength + 10, 20);
@@ -900,15 +916,48 @@ var ReturnPath = function (fromStep, toStep, name) {
 		'pointer'
 	);
 	
-	this.nameRegion.click = function (x, y) {
+	pathName.click = function (x, y) {
 		console.log('showing name change input');
 	}
+	
+	var arrowHead = new Region(
+		function (ctx) {
+			ctx.save();			
+			var transform = this.arrowTransform;
+			ctx.translate(transform.x, transform.y);
+			ctx.rotate(transform.angle);
+			
+			var halfWidth = 8, arrowLength = 20;
+			ctx.rect(-arrowLength - 1, -halfWidth - 1, arrowLength + 2, halfWidth * 2 + 2);
+			
+			ctx.restore();
+		}.bind(this),
+		null, // drawn as part of the line
+		'move'
+	);
+	
+	arrowHead.hover = function () { return true; };
+	arrowHead.unhover = function () { return true; };
+	arrowHead.mousedown = function (x, y) {
+		// first, disconnect this return path - it must be dragged somewhere to avoid deleting it
+		var paths = this.fromStep.returnPaths;
+		for (var i=0; i<paths.length; i++)
+			if (paths[i] === this) {
+				paths.splice(i, 1);
+				break;
+			}
+
+		return this.fromStep.startDragPath.call(this.fromStep);
+	}.bind(this);
+	arrowHead.mouseup = this.fromStep.stopDragPath.bind(this.fromStep);
+	arrowHead.move = this.fromStep.moveDragPath.bind(this.fromStep);
+	this.regions = [pathName, arrowHead];
 };
 
 ReturnPath.prototype = {
 	constructor: ReturnPath,
 	draw: function (ctx) {
-		this.textTransform = ReturnPath.drawPath(this.fromStep.editor, ctx, this.fromStep.x, this.fromStep.y, this.toStep.x, this.toStep.y);
+		this.arrowTransform = ReturnPath.drawPath(this.fromStep.editor, ctx, this.fromStep.x, this.fromStep.y, this.toStep.x, this.toStep.y);
 	},
 	getNameToWrite: function () {
 		return this.name !== null ? this.name : this.onlyPath ? null : 'default';
@@ -919,16 +968,15 @@ ReturnPath.prototype = {
 			return;
 		
 		ctx.save();
-		var t = this.textTransform; // not actually a transform, but hey
-		ctx.translate(t[0], t[1]);
-		ctx.rotate(t[2]);
+		var transform = this.arrowTransform; // not actually a transform, but hey
+		ctx.translate(transform.x, transform.y);
+		ctx.rotate(transform.angle);
 		ctx.translate(-26, 0);
 	
 		ctx.shadowBlur = 14;
 		ctx.textAlign = 'right';
 		
-		var angle = t[2];
-		if (angle > Math.PI / 2 || angle <= -Math.PI / 2) {
+		if (transform.angle > Math.PI / 2 || transform.angle <= -Math.PI / 2) {
 			ctx.rotate(Math.PI);
 			ctx.textAlign = 'left';
 		}
@@ -967,9 +1015,9 @@ ReturnPath.drawPath = function (editor, ctx, fromX, fromY, toX, toY) {
 	
 	ctx.save();
 	
-	var transform = [midX, midY, angle];
-	ctx.translate(midX, midY);
-	ctx.rotate(angle);
+	var transform = {x: midX, y: midY, angle: angle};
+	ctx.translate(transform.x, transform.y);
+	ctx.rotate(transform.angle);
 	
 	ctx.shadowOffsetX = 0; 
 	ctx.shadowOffsetY = 0; 
