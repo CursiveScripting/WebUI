@@ -876,8 +876,9 @@ Connector.prototype = {
 		
 		if (this.dragging) {
 			ctx.beginPath();
-			var cp1 = this.offset(this.step.x, this.step.y, this.step.radius * 3, this.angle);
-			this.step.editor.drawCurve(ctx, endPos.x, endPos.y, cp1.x, cp1.y, this.dragEndX, this.dragEndY + 200, this.dragEndX, this.dragEndY);
+			var cp1 = this.offset(this.step.x, this.step.y, this.step.radius * 5, this.angle);
+			var cp2x = this.dragEndX, cp2y = this.dragEndY + 200;
+			this.step.editor.drawCurve(ctx, endPos.x, endPos.y, cp1.x, cp1.y, cp2x, cp2y, this.dragEndX, this.dragEndY);
 		}
 	},
 	offset: function(x, y, distance, angle) {
@@ -1001,8 +1002,23 @@ ReturnPath.prototype = {
 ReturnPath.drawPath = function (editor, ctx, fromX, fromY, toX, toY) {
 	ctx.strokeStyle = '#000';
 	ctx.lineWidth = 3;
-	var cpOffset = Math.min(300, Math.abs(toX - fromX));
-	var cp1x = fromX, cp1y = fromY + cpOffset, cp2x = toX, cp2y = toY - cpOffset;
+	
+	var scale = function (input, min, max) {
+		if (input <= min)
+			return 0;
+		if (input >= max)
+			return 1;
+		return (input - min) / (max - min);
+	};
+	
+	var dx = toX - fromX, dy = toY - fromY, m = dx === 0 ? 1 : Math.abs(dy/dx);
+	var xOffset = -175 * scale(-Math.abs(dx), -100, -40) * scale(-dy, -50, -20);
+	var yOffset = dy < 0 ? 300 : 300 * scale(-m, -5, -0.62);
+	
+	var cp1x = fromX + xOffset, cp2x = toX + xOffset;
+	var cp1y = fromY + yOffset, cp2y = toY - yOffset;
+	
+	
 	editor.drawCurve(ctx, fromX, fromY, cp1x, cp1y, cp2x, cp2y, toX, toY);
 	
 	var mid1x = (fromX + cp1x + cp1x + cp2x) / 4, mid1y = (fromY + cp1y + cp1y + cp2y) / 4;
