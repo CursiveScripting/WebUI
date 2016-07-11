@@ -144,9 +144,11 @@ Workspace.prototype = {
 		return colors;
 	},
 	loadProcesses: function (processXml) {
+		// TODO: parse XML, add to existing processes
 		this.populateProcessList();
 	},
 	saveProcesses: function () {
+		// TODO: generate XML of all (user?) processes
 		return '<Processes />';
 	},
 	populateProcessList: function () {
@@ -291,7 +293,7 @@ ProcessEditor.prototype = {
 	updateSize: function () {
 		var scrollSize = this.workspace.getScrollbarSize();
 		
-		var w = this.root.offsetWidth - scrollSize.width, h = this.root.offsetHeight - scrollSize.height;
+		var w = this.canvasWidth = this.root.offsetWidth - scrollSize.width, h = this.root.offsetHeight - scrollSize.height;
 		this.canvas.setAttribute('width', w);
 		this.canvas.setAttribute('height', h);
 		this.textDisplay.setAttribute('width', w);
@@ -305,7 +307,23 @@ ProcessEditor.prototype = {
 		this.textDisplay = this.root.childNodes[1];
 		this.showCanvas(true);
 		
-		var titleRegion = new Region(
+		this.headerCutoff = 68;
+		this.canvasWidth = 999;
+		
+		var underlineText = function (ctx, text, x, y, drawLine) {
+			ctx.fillText(text, x, y);
+				
+			if (drawLine) {
+				var w = ctx.measureText(text).width;
+				ctx.lineWidth = 1;
+				ctx.beginPath();
+				ctx.moveTo(x, y + 1);
+				ctx.lineTo(x + w, y + 1);
+				ctx.stroke();
+			}
+		}
+		
+		var title = new Region(
 			null,
 			function (ctx) {
 				ctx.font = '36px sans-serif';
@@ -313,30 +331,52 @@ ProcessEditor.prototype = {
 				ctx.textBaseline = 'top';
 				ctx.fillStyle = '#000';
 				ctx.fillText(this.currentProcess.name, 32, 8);
+				
+				this.titleEndX = 32 + ctx.measureText(this.currentProcess.name).width;
+				
+				ctx.lineWidth = 0.5;
+				ctx.strokeStyle = '#000';
+				ctx.beginPath();
+				ctx.moveTo(0, this.headerCutoff);
+				ctx.lineTo(this.canvasWidth, this.headerCutoff);
+				ctx.stroke();
 			}.bind(this)
 		);
-		var editLinkRegion = new Region(
-			function (ctx) { ctx.rect(32, 46, 100, 18); },
+		var editLink = new Region(
+			function (ctx) { ctx.rect(32, 44, 100, 18); },
 			function (ctx, isMouseOver, isMouseDown) {
 				ctx.textAlign = 'left';
-				ctx.textBaseline = 'top';
+				ctx.textBaseline = 'bottom';
 				ctx.font = '16px sans-serif';
 				ctx.strokeStyle = ctx.fillStyle = isMouseDown ? '#000' : '#999';
-				ctx.fillText('edit this process', 32, 46);
 				
-				if (isMouseOver) {
-					ctx.lineWidth = 1;
-					ctx.beginPath();
-					ctx.moveTo(32, 64);
-					ctx.lineTo(148, 64);
-					ctx.stroke();
-				}
+				underlineText(ctx, 'edit this process', 32, 62, isMouseOver);
 			}.bind(this),
 			'pointer'
 		);
-		editLinkRegion.click = function () { this.showProcessOptions(this.currentProcess); }.bind(this);
+		editLink.click = function () { this.showProcessOptions(this.currentProcess); }.bind(this);
+		editLink.hover = function() { return true; }
+		editLink.unhover = function() { return true; }
 		
-		this.fixedRegions = [titleRegion, editLinkRegion];
+		var addVariable = new Region(
+			function (ctx) {
+				ctx.rect(this.titleEndX + 16, 16, 100, 16);
+			}.bind(this),
+			function (ctx, isMouseOver, isMouseDown) {
+				ctx.textAlign = 'left';
+				ctx.textBaseline = 'bottom';
+				ctx.font = '16px sans-serif';
+				ctx.strokeStyle = ctx.fillStyle = isMouseDown ? '#000' : '#999';
+				
+				underlineText(ctx, 'add variable', this.titleEndX + 16, 32, isMouseOver);
+			}.bind(this),
+			'pointer'
+		);
+		addVariable.click = function () { /* TODO: show variable name & type selection UI */ }.bind(this);
+		addVariable.hover = function() { return true; }
+		addVariable.unhover = function() { return true; }
+		
+		this.fixedRegions = [addVariable, title, editLink];
 		this.hoverRegion = null;
 		this.mouseDownRegion = null;
 		
@@ -498,10 +538,174 @@ ProcessEditor.prototype = {
 	},
 	showProcessOptions: function (process) {
 		this.currentProcess = process;
-		this.textDisplay.innerHTML = 'Options for adding a new process are shown here';
 		
-		// TODO: display function name box (with already-in-use check), list of inputs and outputs. Text that return paths are configured within the function, and aren't part of its signature.
-		// populate these if process is not null, otherwise set them up blank
+		var output = '<p><label for="txtProcessName">Process name</label>: <input id="txtProcessName" type="text"';
+		if (process !== null)
+			output += ' value="' + process.name + '"';
+		
+		output += ' /></p>'
+		
+		var writeParameter = function (param) {
+			output = '<input type="text" class="name" value="'
+			
+			if (param !== null)
+				output += param.name + '" data-orig="' + param.name;
+			
+			output += '" /> <select class="type">';
+			
+			for (var i=0; i<this.types.length; i++) {
+				var type = this.types[i];
+				output += '<option value="' + i + '" style="color:' + type.color + ';"';
+				if (param != null && param.type === type)
+					output +=' selected="selected"';
+				output += '>' + type.name + '</option>';
+			}
+			
+			output += '</select> <a href="#" class="remove" onclick="this.parentNode.parentNode.removeChild(this.parentNode); return false">remove</a>';
+			return output;
+		}.bind(this.workspace);
+		
+		output += '<fieldset class="inputs"><legend>inputs</legend><ol id="inputList">';
+		
+		if (process !== null)
+			for (var i=0; i<process.inputs.length; i++)
+				output += '<li>' + writeParameter(process.inputs[i]) + '</li>';
+		
+		output += '</ol><a href="#" id="lnkAddInput" onclick="return false">add new input</a></fieldset>';
+		
+		output += '<fieldset class="outputs"><legend>outputs</legend><ol id="outputList">';
+		
+		if (process !== null)
+			for (var i=0; i<process.outputs.length; i++)
+				output += '<li>' + writeParameter(process.outputs[i]) + '</li>';
+		
+		output += '</ol><a href="#" id="lnkAddOutput" onclick="return false">add new output</a></fieldset>';
+		
+		output += '<p>Note that return paths are configured within the process, and aren\'t set up through this screen.</p>';
+		
+		output += '<input id="btnSaveProcess" type="button" value="';
+		if (process === null)
+			output += 'add';
+		else
+			output += 'update';
+		output += ' function" />';
+		
+		this.textDisplay.innerHTML = output;
+		
+		document.getElementById('lnkAddInput').addEventListener('click', function () {
+			var item = document.createElement('li');
+			item.innerHTML = writeParameter(null);
+			document.getElementById('inputList').appendChild(item);
+			return false;
+		});
+		document.getElementById('lnkAddOutput').addEventListener('click', function () {
+		var item = document.createElement('li');
+			item.innerHTML = writeParameter(null);
+			document.getElementById('outputList').appendChild(item);
+			return false;
+		});
+		
+		document.getElementById('btnSaveProcess').addEventListener('click', function () {
+			var name = document.getElementById('txtProcessName').value.trim();
+			
+			var processes = this.workspace.systemProcesses;
+			for (var i=0; i<processes.length; i++)
+				if (processes[i].name.trim() == name) {
+					// TODO: show error - a system process already uses this name
+					return;
+				}
+				
+			processes = this.workspace.userProcesses;
+			for (var i=0; i<processes.length; i++)
+				if (processes[i] != this.currentProcess && processes[i].name.trim() == name) {
+					// TODO: show error - another process already uses this name
+					return;
+				}
+			
+			var updateParameters = function(parameters, listItems) {
+				var oldParameters = parameters.slice();
+				
+				for (var i=0; i<listItems.length; i++) {
+					var item = listItems[i];
+					
+					var typeIndex = parseInt(item.querySelector('.type').value);
+					if (isNaN(typeIndex) || typeIndex < 0 || typeIndex >= this.types.length) {
+						continue;
+					}
+					var type = this.types[typeIndex];
+					
+					var textbox = item.querySelector('.name');
+					var name = textbox.value.trim();
+					
+					var origName = textbox.getAttribute('data-orig');
+					if ( origName === null || origName == '') {
+						parameters.push(new Parameter(name, type));
+						continue; // new parameter
+					}
+					
+					var origParam = null; // existing parameter
+					for (var j=0; j<oldParameters.length; j++) {
+						var origParam = oldParameters[j];
+						if (origParam.name == origName) {
+							origParam.name = name;
+							origParam.type = type;
+							oldParameters.splice(j, 1);
+							break;
+						}
+					}
+				}
+				
+				// remove any parameters which weren't in the UI (cos they must have been removed)
+				for (var i=0; i<oldParameters.length; i++) {
+					var oldParam = oldParameters[i];
+					for (var j=0; j<parameters.length; j++)
+						if (parameters[j] === oldParam)
+							parameters.splice(j, 1);
+				}
+			}.bind(this.workspace);
+				
+			var inputs = this.textDisplay.querySelectorAll('#inputList li');
+			var outputs = this.textDisplay.querySelectorAll('#outputList li');
+			
+			var paramNames = {};
+			for (var i=0; i<inputs.length; i++) {
+				var paramName = inputs[i].querySelector('.name').value.trim();
+				if (paramNames.hasOwnProperty(paramName)) {
+					// TODO: show error - duplicate-named inputs
+					return;
+				}
+				else
+					paramNames[paramName] = true;
+			}
+			paramNames = {};
+			for (var i=0; i<outputs.length; i++) {
+				var paramName = outputs[i].querySelector('.name').value.trim();
+				if (paramNames.hasOwnProperty(paramName)) {
+					// TODO: show error, duplicate-named outputs
+					return;
+				}
+				else
+					paramNames[paramName] = true;
+			}
+			
+			if (this.currentProcess === null) { // create new process
+				this.currentProcess = new UserProcess(name, [], [], [], false);
+			}
+			else { // unlink existing process's old name
+				delete this.workspace.userProcesses[this.currentProcess.name];
+				this.currentProcess.name = name;
+			}
+			
+			
+			this.workspace.userProcesses[name] = this.currentProcess;
+			
+			updateParameters(this.currentProcess.inputs, inputs);
+			updateParameters(this.currentProcess.outputs, outputs);
+			
+			this.workspace.populateProcessList();
+			this.showCanvas(true);
+			this.draw();
+		}.bind(this));
 		
 		this.showCanvas(false);
 		this.workspace.populateProcessList();
@@ -583,6 +787,7 @@ var UserProcess = function (name, inputs, outputs, returnPaths, fixedSignature) 
 	this.fixedSignature = fixedSignature;
 	
 	this.steps = [];
+	this.memberVariables = [];
 };
 
 var Step = function (process, x, y) {
