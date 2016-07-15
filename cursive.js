@@ -238,6 +238,22 @@ Workspace.prototype = {
 		this.editor.showCanvas(false);
 		console.error(message);
 	},
+	showPopup: function (contents, okAction) {
+		this.editor.popupContent.innerHTML = contents;
+		
+		if (this.editor.popupEventListener != null)
+			this.editor.popupOkButton.removeEventListener('click', this.editor.popupEventListener);
+		
+		if (okAction != null) {
+			this.editor.popupOkButton.addEventListener('click', okAction);
+			this.editor.popupEventListener = okAction;
+		}
+		else
+			this.editor.popupEventListener = null;
+		
+		this.editor.popup.style.display = '';
+		this.editor.overlay.style.display = '';
+	},
 	getScrollbarSize: function() {
         var outer = document.createElement('div');
         outer.style.visibility = 'hidden';
@@ -302,9 +318,19 @@ ProcessEditor.prototype = {
 		this.draw();
 	},
 	setupUI: function () {
-		this.root.innerHTML = '<canvas></canvas><div class="textDisplay"></div>';
+		this.root.innerHTML = '<canvas></canvas><div class="textDisplay"></div><div class="popup" style="display:none"><div class="content"></div><div class="buttons"><button>OK</button></div></div><div class="overlay" style="display:none"></div>';
 		this.canvas = this.root.childNodes[0];
 		this.textDisplay = this.root.childNodes[1];
+		this.popup = this.root.childNodes[2];
+		this.popupContent = this.popup.childNodes[0];
+		this.popupOkButton = this.popup.querySelector('.buttons > button');
+		this.overlay = this.root.childNodes[3];
+		
+		this.popupOkButton.addEventListener('click', function () {
+			this.popup.style.display = 'none';
+			this.overlay.style.display = 'none';
+		}.bind(this));
+		
 		this.showCanvas(true);
 		
 		this.headerCutoff = 68;
@@ -611,14 +637,14 @@ ProcessEditor.prototype = {
 			var processes = this.workspace.systemProcesses;
 			for (var i=0; i<processes.length; i++)
 				if (processes[i].name.trim() == name) {
-					// TODO: show error - a system process already uses this name
+					this.workspace.showPopup('A system process already uses the name \'' + name + '\'. Please use a different one.');
 					return;
 				}
 				
 			processes = this.workspace.userProcesses;
 			for (var i=0; i<processes.length; i++)
 				if (processes[i] != this.currentProcess && processes[i].name.trim() == name) {
-					// TODO: show error - another process already uses this name
+					this.workspace.showPopup('Another process already uses the name \'' + name + '\'. Please use a different one.');
 					return;
 				}
 			
@@ -671,7 +697,7 @@ ProcessEditor.prototype = {
 			for (var i=0; i<inputs.length; i++) {
 				var paramName = inputs[i].querySelector('.name').value.trim();
 				if (paramNames.hasOwnProperty(paramName)) {
-					// TODO: show error - duplicate-named inputs
+					this.workspace.showPopup('Multiple inputs have the same name: \'' + paramName + '\'. Please ensure input are unique.');
 					return;
 				}
 				else
@@ -681,7 +707,7 @@ ProcessEditor.prototype = {
 			for (var i=0; i<outputs.length; i++) {
 				var paramName = outputs[i].querySelector('.name').value.trim();
 				if (paramNames.hasOwnProperty(paramName)) {
-					// TODO: show error, duplicate-named outputs
+					this.workspace.showPopup('Multiple outputs have the same name: \'' + paramName + '\'. Please ensure output are unique.');
 					return;
 				}
 				else
@@ -1123,8 +1149,32 @@ var ReturnPath = function (fromStep, toStep, name) {
 	);
 	
 	pathName.click = function (x, y) {
-		console.log('showing name change input');
-	}
+		var paths = this.fromStep.process.returnPaths;
+		var content, action;
+		if (paths.length < 2)
+			content = 'Only one path can come from this process,<br />as it doesn\'t have multiple return paths.<br />Please remove the extra path(s).';
+		else {
+			content = 'Select the return path to use:<br/><select class="returnPath"><option value="">[default]</option>';
+			for (var i=0; i<paths.length; i++)
+				content += '<option value="' + paths[i] + '">' + paths[i] + '</option>';
+			content += '</select>';
+			
+			action = function () {
+				this.name = this.fromStep.editor.popupContent.querySelector('.returnPath').value;
+				this.warnDuplicate = false;
+				
+				for (var i=0; i<this.fromStep.returnPaths.length; i++) {
+					var existing = this.fromStep.returnPaths[i];
+					if (existing !== this && existing.name === this.name)
+						existing.warnDuplicate = this.warnDuplicate = true;
+				}
+				
+				this.fromStep.editor.draw();
+			}.bind(this);
+		}
+		
+		this.fromStep.editor.workspace.showPopup(content, action);
+	}.bind(this);
 	
 	var arrowHead = new Region(
 		function (ctx) {
@@ -1196,7 +1246,7 @@ ReturnPath.prototype = {
 			ctx.textBaseline = 'middle';
 			
 			this.nameLength = ctx.measureText(writeName).width;
-			for (var i=0; i<8; i++) // strengthen the shadow
+			for (var i=0; i<12; i++) // strengthen the shadow
 				ctx.fillText(writeName, 0, 0);
 		}
 		
