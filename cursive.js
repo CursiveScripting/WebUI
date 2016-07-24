@@ -854,8 +854,12 @@ ProcessEditor.prototype = {
 		var steps = this.currentProcess.steps, step;
 		for (var i=steps.length - 1; i>=0; i--) {
 			step = steps[i];
+			
 			for (var j=0; j<step.returnPaths.length; j++)
 				step.returnPaths[j].draw(ctx);
+			
+			if (step.draggingPath)
+				ReturnPath.drawPath(this, ctx, step.x, step.y, step.dragEndX, step.dragEndY);
 		}
 		
 		// draw in opposite order to getRegion, so that topmost (visible) regions are the ones you can interact with
@@ -1012,9 +1016,6 @@ Step.prototype = {
 		this.createConnectors(this.process.outputs, false);
 	},
 	drawBody: function (ctx) {
-		if (this.draggingPath)
-			ReturnPath.drawPath(this.editor, ctx, this.x, this.y, this.dragEndX, this.dragEndY);
-		
 		ctx.strokeStyle = '#000';
 		ctx.fillStyle = '#fff';
 		ctx.lineWidth = 2;
