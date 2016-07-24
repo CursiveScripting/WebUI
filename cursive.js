@@ -61,7 +61,7 @@ Workspace.prototype = {
 					this.showError('The \'' + name + '\' system function has two inputs with the same name: ' + paramName + '. Input names must be unique within the a process.');
 				else {
 					usedNames[paramName] = null;
-					inputs.push(new Parameter(paramName, paramType));
+					inputs.push(new Variable(paramName, paramType));
 				}
 			}
 			
@@ -83,7 +83,7 @@ Workspace.prototype = {
 					this.showError('The \'' + name + '\' system function has two outputs with the same name: ' + paramName + '. Output names must be unique within the a process.');
 				else {
 					usedNames[paramName] = null;
-					outputs.push(new Parameter(paramName, paramType));
+					outputs.push(new Variable(paramName, paramType));
 				}
 			}
 			
@@ -291,11 +291,12 @@ Workspace.prototype = {
 var ProcessEditor = function(workspace, root) {
 	this.workspace = workspace;
 	this.root = root;
-	
-	this.currentProcess = new UserProcess('initial process', [], [], [], false); // TODO: required user process signatures ought to be loaded from the workspace
-	this.workspace.userProcesses[this.currentProcess.name] = this.currentProcess;
-	
 	this.setupUI();
+	
+	// TODO: required user process signatures ought to be loaded from the workspace
+	var process = this.currentProcess = new UserProcess('initial process', [], [], [], false);
+	this.workspace.userProcesses[process.name] = process;
+	this.loadProcess(process);
 };
 
 ProcessEditor.prototype = {
@@ -304,6 +305,7 @@ ProcessEditor.prototype = {
 		this.hoverRegion = null;
 		this.currentProcess = process;
 		this.showCanvas(true);
+		this.variablesUpdated();
 		this.draw();
 	},
 	updateSize: function () {
@@ -386,7 +388,7 @@ ProcessEditor.prototype = {
 		
 		var addVariable = new Region(
 			function (ctx) {
-				ctx.rect(this.titleEndX + 16, 16, 100, 16);
+				ctx.rect(this.titleEndX + 16, 22, 100, 16);
 			}.bind(this),
 			function (ctx, isMouseOver, isMouseDown) {
 				ctx.textAlign = 'left';
@@ -394,7 +396,7 @@ ProcessEditor.prototype = {
 				ctx.font = '16px sans-serif';
 				ctx.strokeStyle = ctx.fillStyle = isMouseDown ? '#000' : '#999';
 				
-				underlineText(ctx, 'add variable', this.titleEndX + 16, 32, isMouseOver);
+				underlineText(ctx, 'add variable', this.titleEndX + 16, 40, isMouseOver);
 			}.bind(this),
 			'pointer'
 		);
@@ -432,8 +434,8 @@ ProcessEditor.prototype = {
 				
 				var type = this.workspace.types[parseInt(this.popupContent.querySelector('.type').value)];
 				
-				this.currentProcess.variables.push(new Parameter(name, type));
-				
+				this.currentProcess.variables.push(new Variable(name, type));
+				this.variablesUpdated();
 				this.draw();
 			}.bind(this);
 			
@@ -443,6 +445,7 @@ ProcessEditor.prototype = {
 		addVariable.unhover = function() { return true; }
 		
 		this.fixedRegions = [addVariable, title, editLink];
+		this.variableRegions = [];
 		this.hoverRegion = null;
 		this.mouseDownRegion = null;
 		
@@ -545,7 +548,7 @@ ProcessEditor.prototype = {
 		}.bind(this));
 		
 		window.addEventListener('resize', this.updateSize.bind(this));
-		this.updateSize();
+		setTimeout(this.updateSize.bind(this), 0);
 	},
 	getCanvasCoords: function (e) {
 		var canvasPos = this.canvas.getBoundingClientRect();
@@ -583,6 +586,12 @@ ProcessEditor.prototype = {
 				return region;
 		}
 		
+		// check variable regions
+		for (var i=0; i<this.variableRegions.length; i++) {
+			var region = this.variableRegions[i];
+			if (region.containsPoint(ctx, x, y))
+				return region;
+		}
 		return null;
 	},
 	getStep: function (x, y) {
@@ -705,7 +714,7 @@ ProcessEditor.prototype = {
 					
 					var origName = textbox.getAttribute('data-orig');
 					if ( origName === null || origName == '') {
-						parameters.push(new Parameter(name, type));
+						parameters.push(new Variable(name, type));
 						continue; // new parameter
 					}
 					
@@ -791,6 +800,52 @@ ProcessEditor.prototype = {
 		this.currentProcess.steps.push(step);
 		this.draw();
 	},
+	variablesUpdated: function () {
+		var ctx = this.canvas.getContext('2d');
+		this.variableRegions = [];
+		var vars = this.currentProcess.variables;
+		
+		var createRegion = function(variable, x) {
+			var textWidth = ctx.measureText(variable.name).width;
+			var regionWidth = textWidth + xPadding + xPadding;
+			var region = new Region(
+				function (ctx) { ctx.rect(x, 22, regionWidth, 18); },
+				function (ctx, isMouseOver, isMouseDown) {
+					ctx.textAlign = 'left';
+					ctx.textBaseline = 'bottom';
+					ctx.font = '16px sans-serif';
+					ctx.strokeStyle = ctx.fillStyle = variable.type.color;
+					
+					ctx.fillText(variable.name, x + xPadding, 40);
+					
+					if (isMouseOver) {
+						ctx.lineWidth = 1;
+						ctx.beginPath();
+						ctx.moveTo(x + xPadding, 41);
+						ctx.lineTo(x + xPadding + textWidth, 41);
+						ctx.stroke();
+					}
+				}.bind(this),
+				'crosshair'
+			);
+			region.hover = function () { return true; };
+			region.unhover = function () { return true; };
+			/*
+			region.mousedown = this.startDragPath.bind(this);
+			region.mouseup = this.stopDragPath.bind(this);
+			region.move = this.moveDragPath.bind(this);
+			*/
+			this.variableRegions.push(region);
+			return regionWidth;
+		}.bind(this);
+		
+		var x = this.titleEndX + 120;
+		var xPadding = 5;
+		
+		for (var i=0; i<vars.length; i++) {
+			x += createRegion(vars[i], x) + xPadding;
+		}
+	},
 	draw: function() {
 		var ctx = this.canvas.getContext('2d');
 		ctx.clearRect(0, 0, this.root.offsetWidth, this.root.offsetHeight);
@@ -819,6 +874,9 @@ ProcessEditor.prototype = {
 		
 		for (var i=this.fixedRegions.length - 1; i>=0; i--)
 			this.fixedRegions[i].callDraw(ctx, this);
+			
+		for (var i=this.variableRegions.length - 1; i>=0; i--)
+			this.variableRegions[i].callDraw(ctx, this);
 	},
 	drawCurve: function (ctx, startX, startY, cp1x, cp1y, cp2x, cp2y, endX, endY) {
 		ctx.beginPath();
@@ -833,7 +891,7 @@ var Type = function(name, color) {
 	this.color = color;
 };
 
-var Parameter = function(name, type) {
+var Variable = function(name, type) {
 	this.name = name;
 	this.type = type;
 };
