@@ -153,7 +153,7 @@ Workspace.prototype = {
 	},
 	populateProcessList: function () {
 		var content = '<li class="addNew';
-		if (this.currentProcess === null)
+		if (this.editor.currentProcess === null)
 			content += ' active';
 		content += '">add new process</li>';
 		
@@ -398,7 +398,47 @@ ProcessEditor.prototype = {
 			}.bind(this),
 			'pointer'
 		);
-		addVariable.click = function () { /* TODO: show variable name & type selection UI */ }.bind(this);
+		addVariable.click = function () {
+			var content = 'Name your new variable, and select its type:<br/><input type="text" class="name" value="'
+			// content += name
+			content += '" /> <select class="type">';
+			
+			for (var i=0; i<this.workspace.types.length; i++) {
+				var type = this.workspace.types[i];
+				content += '<option value="' + i + '" style="color:' + type.color + ';"';
+				//content +=' selected="selected"';
+				content += '>' + type.name + '</option>';
+			}
+			content += '</select>';
+			
+			// TODO: allow editing existing variables
+			
+			// TODO: link to delete existing variables
+			
+			var action = function () {
+				var name = this.popupContent.querySelector('.name').value;
+				var warnDuplicate = false;
+				
+				for (var i=0; i<this.currentProcess.variables.length; i++) {
+					var existing = this.currentProcess.variables[i];
+					if (existing !== this && existing.name === this.name) {
+						warnDuplicate = true;
+						break;
+					}
+				}
+				
+				if (warnDuplicate)
+					return false; // TODO: have a way of stopping the popup from closing
+				
+				var type = this.workspace.types[parseInt(this.popupContent.querySelector('.type').value)];
+				
+				this.currentProcess.variables.push(new Parameter(name, type));
+				
+				this.draw();
+			}.bind(this);
+			
+			this.workspace.showPopup(content, action);
+		}.bind(this);
 		addVariable.hover = function() { return true; }
 		addVariable.unhover = function() { return true; }
 		
@@ -813,7 +853,7 @@ var UserProcess = function (name, inputs, outputs, returnPaths, fixedSignature) 
 	this.fixedSignature = fixedSignature;
 	
 	this.steps = [];
-	this.memberVariables = [];
+	this.variables = [];
 };
 
 var Step = function (process, x, y) {
