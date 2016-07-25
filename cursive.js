@@ -291,6 +291,8 @@ Workspace.prototype = {
 var ProcessEditor = function(workspace, root) {
 	this.workspace = workspace;
 	this.root = root;
+	this.highlightType = null;
+	this.hoverVariable = null;
 	this.setupUI();
 	
 	// TODO: required user process signatures ought to be loaded from the workspace
@@ -809,7 +811,7 @@ ProcessEditor.prototype = {
 			var textWidth = ctx.measureText(variable.name).width;
 			var regionWidth = textWidth + xPadding + xPadding;
 			var region = new Region(
-				function (ctx) { ctx.rect(x, 22, regionWidth, 18); },
+				function (ctx) { ctx.rect(x, 22, regionWidth, 36); },
 				function (ctx, isMouseOver, isMouseDown) {
 					ctx.textAlign = 'left';
 					ctx.textBaseline = 'bottom';
@@ -825,16 +827,38 @@ ProcessEditor.prototype = {
 						ctx.lineTo(x + xPadding + textWidth, 41);
 						ctx.stroke();
 					}
+					if (this.highlightType === variable.type) {
+						var midX = x + xPadding + textWidth / 2;
+						var halfLength = 4, topY = 43;
+						ctx.lineWidth = 3;
+						ctx.beginPath();
+						ctx.moveTo(midX, topY);
+						ctx.lineTo(midX, topY + halfLength + halfLength);
+						ctx.moveTo(midX - halfLength, topY + halfLength);
+						ctx.lineTo(midX + halfLength, topY + halfLength);
+						ctx.stroke();
+					}
 				}.bind(this),
 				'crosshair'
 			);
-			region.hover = function () { return true; };
-			region.unhover = function () { return true; };
+			region.hover = function () {
+				this.hoverVariable = variable;
+				this.draw();
+				return true;
+			}.bind(this);
+			region.unhover = function () {
+				this.hoverVariable = null;
+				this.draw();
+				return true;
+			}.bind(this);
 			/*
+			// TODO: allow dragging these to I/O connectors of the same type
 			region.mousedown = this.startDragPath.bind(this);
 			region.mouseup = this.stopDragPath.bind(this);
 			region.move = this.moveDragPath.bind(this);
 			*/
+			
+			region.centerX = x + xPadding + textWidth / 2;
 			this.variableRegions.push(region);
 			return regionWidth;
 		}.bind(this);
@@ -845,6 +869,9 @@ ProcessEditor.prototype = {
 		for (var i=0; i<vars.length; i++) {
 			x += createRegion(vars[i], x) + xPadding;
 		}
+	},
+	highlightVariables(type) {
+		this.highlightType = type;
 	},
 	draw: function() {
 		var ctx = this.canvas.getContext('2d');
@@ -881,6 +908,14 @@ ProcessEditor.prototype = {
 			
 		for (var i=this.variableRegions.length - 1; i>=0; i--)
 			this.variableRegions[i].callDraw(ctx, this);
+		
+		if (this.hoverVariable !== null) {
+			var region = this.variableRegions[this.currentProcess.variables.indexOf(this.hoverVariable)];
+			var fromX = region.centerX, fromY = 50;
+			
+			for (var i=0; i<this.hoverVariable.links.length; i++)
+				Connector.drawPath(ctx, this.hoverVariable.links[i], fromX, fromY);
+		}
 	},
 	drawCurve: function (ctx, startX, startY, cp1x, cp1y, cp2x, cp2y, endX, endY) {
 		ctx.beginPath();
@@ -898,6 +933,7 @@ var Type = function(name, color) {
 var Variable = function(name, type) {
 	this.name = name;
 	this.type = type;
+	this.links = [];
 };
 
 var SystemProcess = function (name, inputs, outputs, returnPaths) {
@@ -1120,6 +1156,7 @@ var Connector = function (step, angle, param, isInput) {
 	this.outputBranchAngle = Math.PI * 0.8;
 	this.inputBranchAngle = Math.PI - this.outputBranchAngle;
 	this.textDistance = 24;
+	this.dragging = false;
 	
 	this.createRegion();
 };
@@ -1127,8 +1164,6 @@ var Connector = function (step, angle, param, isInput) {
 Connector.prototype = {
 	constructor: Connector,
 	createRegion: function () {
-		this.dragging = false;
-		
 		this.region = new Region(
 			this.outline.bind(this),
 			this.draw.bind(this),
@@ -1137,29 +1172,49 @@ Connector.prototype = {
 		this.region.hover = function () { this.step.drawText = true; return true; }.bind(this);
 		this.region.unhover = function () { this.step.drawText = false; return true; }.bind(this);
 		
-		if (!this.input) {
-			this.region.mousedown = function (x,y) {
-				this.dragging = true;
-				return true;
-			}.bind(this);
-			this.region.mouseup = function (x,y) {
-				if (!this.dragging)
-					return false;
+		this.region.mousedown = function (x,y) {
+			this.dragging = true;
+			this.step.editor.highlightVariables(this.param.type);
+			this.step.editor.draw();
+			return true;
+		}.bind(this);
+		this.region.mouseup = function (x,y) {
+			if (!this.dragging)
+				return false;
 				
-				this.dragEndX = undefined;
-				this.dragEndY = undefined;
-				this.dragging = false;
-				return true;
-			}.bind(this);
-			this.region.move = function (x,y) {
-				if (!this.dragging)
-					return false;
+			this.step.editor.highlightVariables(null);
+			
+			var editor = this.step.editor;
+			var ctx = editor.canvas.getContext('2d');
+			var variables = editor.currentProcess.variables;
+			for (var i=0; i<variables.length; i++) {
+				var region = editor.variableRegions[i];
+				if (!region.containsPoint(ctx, x, y))
+					continue;
 				
-				this.dragEndX = x;
-				this.dragEndY = y;
-				return true;
-			}.bind(this);
-		}
+				var variable = variables[i];
+				
+				if (variable.type !== this.param.type)
+					break;
+				
+				this.param.links = [variable];
+				variable.links.push(this);
+			}
+			
+			this.dragEndX = undefined;
+			this.dragEndY = undefined;
+			this.dragging = false;
+			editor.draw();
+			return true;
+		}.bind(this);
+		this.region.move = function (x,y) {
+			if (!this.dragging)
+				return false;
+			
+			this.dragEndX = x;
+			this.dragEndY = y;
+			return true;
+		}.bind(this);
 	},
 	outline: function (ctx) {
 		var halfAngle = Math.PI / 24;
@@ -1204,12 +1259,8 @@ Connector.prototype = {
 			ctx.fillText(this.param.name, pos.x, pos.y);
 		}
 		
-		if (this.dragging) {
-			ctx.beginPath();
-			var cp1 = this.offset(this.step.x, this.step.y, this.step.radius * 5, this.angle);
-			var cp2x = this.dragEndX, cp2y = this.dragEndY + 200;
-			this.step.editor.drawCurve(ctx, endPos.x, endPos.y, cp1.x, cp1.y, cp2x, cp2y, this.dragEndX, this.dragEndY);
-		}
+		if (this.dragging)
+			Connector.drawPath(ctx, this, this.dragEndX, this.dragEndY);
 	},
 	offset: function(x, y, distance, angle) {
 		return {
@@ -1217,6 +1268,17 @@ Connector.prototype = {
 			y: y + distance * Math.sin(angle)
 		};
 	}
+};
+
+Connector.drawPath = function (ctx, connector, toX, toY) {
+	ctx.strokeStyle = connector.param.type.color;
+	ctx.lineWidth = 3;
+
+	var edgePos = connector.offset(connector.step.x, connector.step.y, connector.step.radius + connector.linkLength, connector.angle);
+	var cp1 = connector.offset(connector.step.x, connector.step.y, connector.step.radius * 5, connector.angle);
+	var cp2x = toX, cp2y = toY + 200;
+	
+	connector.step.editor.drawCurve(ctx, edgePos.x, edgePos.y, cp1.x, cp1.y, cp2x, cp2y, toX, toY);
 };
 
 var ReturnPath = function (fromStep, toStep, name) {
