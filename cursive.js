@@ -810,8 +810,8 @@ ProcessEditor.prototype = {
 		var createRegion = function(variable, x) {
 			var textWidth = ctx.measureText(variable.name).width;
 			var regionWidth = textWidth + xPadding + xPadding;
-			var region = new Region(
-				function (ctx) { ctx.rect(x, 22, regionWidth, 36); },
+			var textRegion = new Region(
+				function (ctx) { ctx.rect(x, 22, regionWidth, 20); },
 				function (ctx, isMouseOver, isMouseDown) {
 					ctx.textAlign = 'left';
 					ctx.textBaseline = 'bottom';
@@ -827,39 +827,60 @@ ProcessEditor.prototype = {
 						ctx.lineTo(x + xPadding + textWidth, 41);
 						ctx.stroke();
 					}
-					if (this.highlightType === variable.type) {
-						var midX = x + xPadding + textWidth / 2;
-						var halfLength = 4, topY = 43;
-						ctx.lineWidth = 3;
-						ctx.beginPath();
-						ctx.moveTo(midX, topY);
-						ctx.lineTo(midX, topY + halfLength + halfLength);
-						ctx.moveTo(midX - halfLength, topY + halfLength);
-						ctx.lineTo(midX + halfLength, topY + halfLength);
-						ctx.stroke();
-					}
+				},
+				'pointer'
+			);
+			
+			textRegion.click = function () {
+				console.log('show region edit dialog');
+			};
+			
+			var hover = function () {
+				this.hoverVariable = variable;
+				return true;
+			}.bind(this);
+			
+			var unhover = function () {
+				this.hoverVariable = null;
+				return true;
+			}.bind(this);
+			
+			textRegion.hover = hover;
+			textRegion.unhover = unhover;
+			/*
+			// TODO: allow dragging these to I/O connectors of the same type
+			textRegion.mousedown = this.startDragPath.bind(this);
+			textRegion.mouseup = this.stopDragPath.bind(this);
+			textRegion.move = this.moveDragPath.bind(this);
+			*/
+			
+			textRegion.centerX = x + xPadding + textWidth / 2;
+			this.variableRegions.push(textRegion);
+			
+			var connectorRegion = new Region(
+				function (ctx) { ctx.rect(x, 22, regionWidth, 36); },
+				function (ctx, isMouseOver, isMouseDown) {
+					if (!isMouseOver && this.highlightType !== variable.type)
+						return;
+					
+					ctx.strokeStyle = ctx.fillStyle = variable.type.color;
+				
+					var midX = x + xPadding + textWidth / 2;
+					var halfLength = 4, topY = 43;
+					ctx.lineWidth = 3;
+					ctx.beginPath();
+					ctx.moveTo(midX, topY);
+					ctx.lineTo(midX, topY + halfLength + halfLength);
+					ctx.moveTo(midX - halfLength, topY + halfLength);
+					ctx.lineTo(midX + halfLength, topY + halfLength);
+					ctx.stroke();
 				}.bind(this),
 				'crosshair'
 			);
-			region.hover = function () {
-				this.hoverVariable = variable;
-				this.draw();
-				return true;
-			}.bind(this);
-			region.unhover = function () {
-				this.hoverVariable = null;
-				this.draw();
-				return true;
-			}.bind(this);
-			/*
-			// TODO: allow dragging these to I/O connectors of the same type
-			region.mousedown = this.startDragPath.bind(this);
-			region.mouseup = this.stopDragPath.bind(this);
-			region.move = this.moveDragPath.bind(this);
-			*/
+			connectorRegion.hover = hover;
+			connectorRegion.unhover = unhover;
+			this.variableRegions.push(connectorRegion);
 			
-			region.centerX = x + xPadding + textWidth / 2;
-			this.variableRegions.push(region);
 			return regionWidth;
 		}.bind(this);
 		
@@ -910,7 +931,8 @@ ProcessEditor.prototype = {
 			this.variableRegions[i].callDraw(ctx, this);
 		
 		if (this.hoverVariable !== null) {
-			var region = this.variableRegions[this.currentProcess.variables.indexOf(this.hoverVariable)];
+			var varNumber = this.currentProcess.variables.indexOf(this.hoverVariable);
+			var region = this.variableRegions[varNumber * 2];
 			var fromX = region.centerX, fromY = 50;
 			
 			for (var i=0; i<this.hoverVariable.links.length; i++)
@@ -1167,7 +1189,7 @@ Connector.prototype = {
 		this.region = new Region(
 			this.outline.bind(this),
 			this.draw.bind(this),
-			this.input ? 'default' : 'crosshair'
+			'crosshair'
 		);
 		this.region.hover = function () { this.step.drawText = true; return true; }.bind(this);
 		this.region.unhover = function () { this.step.drawText = false; return true; }.bind(this);
@@ -1187,16 +1209,24 @@ Connector.prototype = {
 			var editor = this.step.editor;
 			var ctx = editor.canvas.getContext('2d');
 			var variables = editor.currentProcess.variables;
-			for (var i=0; i<variables.length; i++) {
+			for (var i=0; i<editor.variableRegions.length; i++) {
 				var region = editor.variableRegions[i];
+				
 				if (!region.containsPoint(ctx, x, y))
 					continue;
 				
-				var variable = variables[i];
+				var variableIndex = i % 2 == 0 ? i / 2 : (i-1) / 2; // there's two regions for each
+				var variable = variables[variableIndex];
 				
 				if (variable.type !== this.param.type)
 					break;
 				
+				for (var j=0; j<this.param.links.length; j++) {
+					var oldVarLinks = this.param.links[j].links;
+					var index = oldVarLinks.indexOf(this);
+					if (index > -1)
+						oldVarLinks.splice(index, 1);
+				}
 				this.param.links = [variable];
 				variable.links.push(this);
 			}
