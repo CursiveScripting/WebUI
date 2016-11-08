@@ -1,6 +1,4 @@
-"use strict";
-
-var Workspace = function (workspaceXml, processList, mainContainer) {
+﻿var Workspace = function (workspaceXml, processList, mainContainer) {
 	this.processList = processList;
 	this.loadWorkspace(workspaceXml);
 	
