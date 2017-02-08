@@ -26,11 +26,6 @@
 	        this.highlightType = null;
 	        this.hoverVariable = null;
 	        this.setupUI();
-	
-	        // TODO: required user process signatures ought to be loaded from the workspace
-	        let process = this.currentProcess = new UserProcess('initial process', [], [], [], false);
-	        this.workspace.userProcesses[process.name] = process;
-	        this.loadProcess(process);
         }
 	    loadProcess(process) {
 		    this.hoverRegion = null;
@@ -104,6 +99,8 @@
 		    let editLink = new Region(
 			    function (ctx) { ctx.rect(32, 44, 100, 18); },
 			    function (ctx, isMouseOver, isMouseDown) {
+                    if (this.currentProcess.fixedSignature)
+                        return;
 				    ctx.textAlign = 'left';
 				    ctx.textBaseline = 'bottom';
 				    ctx.font = '16px sans-serif';
@@ -113,7 +110,11 @@
 			    }.bind(this),
 			    'pointer'
 		    );
-		    editLink.click = function () { this.showProcessOptions(this.currentProcess); }.bind(this);
+		    editLink.click = function () {
+                if (this.currentProcess.fixedSignature)
+                    return;
+                this.showProcessOptions(this.currentProcess);
+            }.bind(this);
 		    editLink.hover = function() { return true; }
 		    editLink.unhover = function() { return true; }
 		
@@ -635,6 +636,8 @@
 		    this.highlightType = type;
 	    }
 	    draw() {
+            if (this.currentProcess == null)
+                return;
 		    let ctx = this.canvas.getContext('2d');
 		    ctx.clearRect(0, 0, this.root.offsetWidth, this.root.offsetHeight);
 		    ctx.lineCap = 'round';
