@@ -1,16 +1,15 @@
 ﻿namespace Cursive {
     export class Workspace {
-        private readonly processList: HTMLElement;
-        private readonly editor: ProcessEditor;
+        readonly processList: ProcessList;
+        readonly editor: ProcessEditor;
         private types: Type[];
         systemProcesses: {[key:string]:SystemProcess};
         userProcesses: {[key:string]:UserProcess};
 
         constructor(workspaceXml: HTMLElement, processList: HTMLElement, mainContainer: HTMLElement) {
-	        this.processList = processList;
 	        this.loadWorkspace(workspaceXml);
 	        this.editor = new ProcessEditor(this, mainContainer);
-	        this.populateProcessList();
+	        this.processList = new ProcessList(this, processList);
         }
 	    loadWorkspace(workspaceXml: HTMLElement) {
 		    this.types = [];
@@ -145,93 +144,11 @@
 	    }
 	    loadProcesses(processXml) {
 		    // TODO: parse XML, add to existing processes
-		    this.populateProcessList();
+		    this.processList.populateList();
 	    }
 	    saveProcesses() {
 		    // TODO: generate XML of all (user?) processes
 		    return '<Processes />';
-	    }
-	    populateProcessList() {
-		    let content = '<li class="addNew';
-		    if (this.editor.currentProcess === null)
-			    content += ' active';
-		    content += '">add new process</li>';
-		
-		    for (let proc in this.userProcesses)
-			    content += this.writeProcessListItem(this.userProcesses[proc], true);
-			
-		    for (let proc in this.systemProcesses)
-			    content += this.writeProcessListItem(this.systemProcesses[proc], false);
-		
-		    this.processList.innerHTML = content;
-		
-		    let dragStart = function (e) {
-			    e.dataTransfer.setData('process', e.target.getAttribute('data-process'));
-		    };
-		
-		    let openUserProcess = function (e) {
-			    let name = e.currentTarget.getAttribute('data-process');
-			    let process = this.userProcesses[name];
-			    if (process === undefined) {
-				    this.showError('Clicked unrecognised process: ' + name);
-				    return;
-			    }
-			
-			    this.editor.loadProcess(process);
-			    this.populateProcessList();
-		    }.bind(this);
-		
-		    this.processList.childNodes[0].addEventListener('dblclick', this.editor.showProcessOptions.bind(this.editor, null));
-		
-		    let userProcessCutoff = Object.keys(this.userProcesses).length;
-		
-		    for (let i=1; i<this.processList.childNodes.length; i++) {
-			    let item = this.processList.childNodes[i];
-			    item.addEventListener('dragstart', dragStart);
-			
-			    if (i <= userProcessCutoff)
-				    item.addEventListener('dblclick', openUserProcess);
-		    }
-	    }
-	    writeProcessListItem(process, editable) {
-		    let desc = '<li draggable="true" data-process="' + process.name + '" class="';
-		
-		    if (!editable)
-			    desc += 'readonly';
-		    else if (process == this.editor.currentProcess)
-			    desc += 'active';
-		
-		    desc += '"><div class="name">' + process.name + '</div>';
-		
-		    if (process.inputs.length > 0) {
-			    desc += '<div class="props inputs"><span class="separator">inputs: </span>';
-			    for (let i=0; i<process.inputs.length; i++) {
-				    if (i > 0)
-					    desc += '<span class="separator">, </span>';
-				    desc += '<span class="prop" style="color: ' + process.inputs[i].type.color + '">' + process.inputs[i].name + '</span>';
-			    }
-			    desc += '</div>';
-		    }
-		    if (process.outputs.length > 0) {
-			    desc += '<div class="props output"><span class="separator">outputs: </span>';
-			    for (let i=0; i<process.outputs.length; i++) {
-				    if (i > 0)
-					    desc += '<span class="separator">, </span>';
-				    desc += '<span class="prop" style="color: ' + process.outputs[i].type.color + '">' + process.outputs[i].name + '</span>';
-			    }
-			    desc += '</div>';
-		    }
-		    if (process.returnPaths.length > 0) {
-			    desc += '<div class="props paths"><span class="separator">return paths: </span>';
-			    for (let i=0; i<process.returnPaths.length; i++) {
-				    if (i > 0)
-					    desc += '<span class="separator">, </span>';
-				    desc += '<span class="prop">' + process.returnPaths[i] + '</span>';
-			    }
-			    desc += '</div>';
-		    }
-		    desc += '</li>';
-		    return desc;
 	    }
 	    showError(message) {
 		    this.editor.showText('<h3>An error has occurred</h3><p>Sorry. You might need to reload the page to continue.</p><p>The following error was encountered - you might want to report this:</p><pre>' + message + '</pre>');

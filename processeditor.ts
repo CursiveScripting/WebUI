@@ -518,13 +518,13 @@
 			    updateParameters(this.currentProcess.inputs, inputs);
 			    updateParameters(this.currentProcess.outputs, outputs);
 			
-			    this.workspace.populateProcessList();
+			    this.workspace.processList.populateList();
 			    this.showCanvas(true);
 			    this.draw();
 		    }.bind(this));
 		
 		    this.showCanvas(false);
-		    this.workspace.populateProcessList();
+		    this.workspace.processList.populateList();
 	    }
 	    dropProcess(name: string, x: number, y: number) {
 		    let process: Process = this.workspace.systemProcesses[name];

@@ -25,12 +25,14 @@
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
   </ItemGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="connector.ts" />
-    <TypeScriptCompile Include="region.ts" />
-    <TypeScriptCompile Include="returnpath.ts" />
-    <TypeScriptCompile Include="step.ts" />
+    <TypeScriptCompile Include="Connector.ts" />
+    <TypeScriptCompile Include="Process.ts" />
+    <TypeScriptCompile Include="Region.ts" />
+    <TypeScriptCompile Include="ReturnPath.ts" />
+    <TypeScriptCompile Include="Step.ts" />
     <TypeScriptCompile Include="processeditor.ts" />
-    <TypeScriptCompile Include="workspace.ts" />
+    <TypeScriptCompile Include="ProcessList.ts" />
+    <TypeScriptCompile Include="Workspace.ts" />
     <TypeScriptCompile Include="_references.ts" />
     <TypeScriptCompile Include="everythingelse.ts" />
   </ItemGroup>
