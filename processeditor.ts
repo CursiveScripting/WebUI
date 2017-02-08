@@ -182,10 +182,14 @@
 		    this.mouseDownRegion = null;
 		
 		    this.canvas.addEventListener('dragover', function (e) {
+                if (this.currentProcess == null)
+                    return;
 			    e.preventDefault();
-		    });
+		    }.bind(this));
 		
 		    this.canvas.addEventListener('drop', function (e) {
+                if (this.currentProcess == null)
+                    return;
 			    e.preventDefault();
 			    let process = e.dataTransfer.getData('process');
 			    let pos = this.getCanvasCoords(e);
@@ -528,7 +532,7 @@
 		    this.workspace.processList.populateList();
 	    }
 	    dropProcess(name: string, x: number, y: number) {
-		    let process: Process = this.workspace.systemProcesses[name];
+            let process: Process = this.workspace.systemProcesses[name];
 		    if (process === undefined)
 			    process = this.workspace.userProcesses[name];
 		
