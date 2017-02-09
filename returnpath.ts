@@ -11,7 +11,8 @@
         private dragging: boolean = false;
 
         readonly regions: Region[];
-        private dragHandleTransform: Transform;
+        private midArrowTransform: Transform;
+        private endConnectorTranform: Transform;
 
         constructor(fromStep, toStep, name, endOffsetX?: number, endOffsetY?: number) {
 	        this.fromStep = fromStep;
@@ -27,9 +28,7 @@
 			
 			        ctx.save();
 			
-			        let transform = this.dragHandleTransform;
-			        ctx.translate(transform.x, transform.y);
-			        ctx.rotate(transform.angle);
+			        this.midArrowTransform.apply(ctx);
 			        ctx.translate(-26, 0);
 			
 			        ctx.rect(-this.nameLength - 5, -10, this.nameLength + 10, 20);
@@ -70,29 +69,33 @@
 	
 	        let dragHandle = new Region(
 		        function (ctx) {
-			        ctx.save();			
-			        this.dragHandleTransform.apply(ctx);			
+                    ctx.save();
 
                     if (this.toStep == null && !this.dragging) {
+                        this.endConnectorTranform.apply(ctx);
                         let radius = 8;
                         ctx.arc(0, 0, radius, 0, Math.PI * 2);
                     }
                     else {
+                        this.midArrowTransform.apply(ctx);
 			            let halfWidth = 8, arrowLength = 20;
 			            ctx.rect(-arrowLength - 1, -halfWidth - 1, arrowLength + 2, halfWidth * 2 + 2);
 			        }
 
 			        ctx.restore();
 		        }.bind(this),
-		        function (ctx) {
-                    this.dragHandleTransform.apply(ctx);
+                function (ctx) {
+                    ctx.save();
 
-                    if (this.toStep == null && !this.dragging)
+                    if (this.toStep == null && !this.dragging) {
+                        this.endConnectorTranform.apply(ctx);
                         this.drawUnconnectedHandle(ctx);
-                    else
+                    }
+                    else {
+                        this.midArrowTransform.apply(ctx);
                         this.drawConnectedHandle(ctx);
-
-			        ctx.restore();
+                    }
+                    ctx.restore();
                 }.bind(this),
 		        'move'
 	        );
@@ -113,7 +116,7 @@
 			    return;
 		
 		    ctx.save();
-            let transform = this.dragHandleTransform;
+            let transform = this.midArrowTransform;
 		    transform.apply(ctx);
 		    ctx.translate(-26, 0);
 	
@@ -127,15 +130,16 @@
 		
 		    if (writeName !== null)
 		    {
-			    ctx.shadowColor = this.warnDuplicate ? '#f99' : '#fff';
-			
-			    ctx.fillStyle = '#000';
+                ctx.shadowColor = ctx.fillStyle = this.warnDuplicate ? '#f99' : '#fff';
 			    ctx.font = '16px sans-serif';
 			    ctx.textBaseline = 'middle';
 			
 			    this.nameLength = ctx.measureText(writeName).width;
 			    for (let i=0; i<12; i++) // strengthen the shadow
-				    ctx.fillText(writeName, 0, 0);
+                    ctx.fillText(writeName, 0, 0);
+
+                ctx.fillStyle = '#000';
+                ctx.fillText(writeName, 0, 0);
 		    }
 		
 		    ctx.restore();
@@ -202,24 +206,24 @@
 	        this.fromStep.editor.drawCurve(ctx, fromX, fromY, cp1x, cp1y, cp2x, cp2y, toX, toY);
 	
 	        ctx.save();
-	
+
+
             let tx: number, ty: number, angle: number;
-            if (this.toStep == null) {
+            if (this.toStep == null && !this.dragging) {
                 // handle goes at the end of the line
                 tx = toX;
                 ty = toY;
                 angle = Math.atan2((toY - fromY), (toX - fromX));
-            }
-            else {
-                // handle goes at the middle of the line
-	            let mid1x = (fromX + cp1x + cp1x + cp2x) / 4, mid1y = (fromY + cp1y + cp1y + cp2y) / 4;
-	            let mid2x = (toX + cp2x + cp2x + cp1x) / 4, mid2y = (toY + cp2y + cp2y + cp1y) / 4;
-	            angle = Math.atan2((mid2y - mid1y), (mid2x - mid1x));
-	            tx = (mid1x + mid2x) / 2;
-	            tx = (mid1y + mid2y) / 2;
+                this.endConnectorTranform = new Transform(tx, ty, angle);
             }
 
-	        this.dragHandleTransform = new Transform(tx, ty, angle);
+            // handle goes at the middle of the line
+            let mid1x = (fromX + cp1x + cp1x + cp2x) / 4, mid1y = (fromY + cp1y + cp1y + cp2y) / 4;
+            let mid2x = (toX + cp2x + cp2x + cp1x) / 4, mid2y = (toY + cp2y + cp2y + cp1y) / 4;
+            angle = Math.atan2((mid2y - mid1y), (mid2x - mid1x));
+            tx = (mid1x + mid2x) / 2;
+            ty = (mid1y + mid2y) / 2;
+            this.midArrowTransform = new Transform(tx, ty, angle);
         }
         private dragStart(x, y) {
             this.toStep = null;
