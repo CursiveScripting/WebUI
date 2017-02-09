@@ -291,6 +291,8 @@
 		    return { x: e.clientX - canvasPos.left, y: e.clientY - canvasPos.top };
 	    }
 	    getRegion(x, y) {
+            if (this.currentProcess == null)
+                return null;
 		    let ctx = this.canvas.getContext('2d');
 		    ctx.strokeStyle = 'rgba(0,0,0,0)';
 		
@@ -543,6 +545,7 @@
 
 		    let step = new Step(process, x, y)
 		    step.editor = this;
+            step.createDanglingReturnPaths();
 		    this.currentProcess.steps.push(step);
 		    this.draw();
 	    }
@@ -592,12 +595,6 @@
 			
 			    textRegion.hover = hover;
 			    textRegion.unhover = unhover;
-			    /*
-			    // TODO: allow dragging these to I/O connectors of the same type
-			    textRegion.mousedown = this.startDragPath.bind(this);
-			    textRegion.mouseup = this.stopDragPath.bind(this);
-			    textRegion.move = this.moveDragPath.bind(this);
-			    */
 			
 			    textRegion.centerX = x + xPadding + textWidth / 2;
 			    this.variableRegions.push(textRegion);
@@ -652,9 +649,6 @@
 			
 			    for (let j=0; j<step.returnPaths.length; j++)
 				    step.returnPaths[j].draw(ctx);
-			
-			    if (step.draggingPath)
-				    ReturnPath.drawPath(this, ctx, step.x, step.y, step.dragEndX, step.dragEndY);
 		    }
 		
 		    // draw in opposite order to getRegion, so that topmost (visible) regions are the ones you can interact with

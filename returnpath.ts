@@ -1,22 +1,24 @@
 ﻿namespace Cursive {
     export class ReturnPath {
         private readonly fromStep: Step;
-        readonly toStep: Step;
+        private toStep: Step;
+        private endOffsetX?: number;
+        private endOffsetY?: number;
         readonly name: string;
-        warnDuplicate: boolean;
-        onlyPath: boolean;
-        private nameLength: number;
+        warnDuplicate: boolean = false;
+        onlyPath: boolean = false;
+        private nameLength: number = 30;
+        private dragging: boolean = false;
 
         readonly regions: Region[];
-        private arrowTransform: Transform;
+        private dragHandleTransform: Transform;
 
-        constructor(fromStep, toStep, name) {
+        constructor(fromStep, toStep, name, endOffsetX?: number, endOffsetY?: number) {
 	        this.fromStep = fromStep;
 	        this.toStep = toStep;
+            this.endOffsetX = endOffsetX;
+            this.endOffsetY = endOffsetY;
 	        this.name = name;
-	        this.warnDuplicate = false;
-	        this.onlyPath = false;
-	        this.nameLength = 30;
 	
 	        let pathName = new Region(
 		        function (ctx) {
@@ -25,7 +27,7 @@
 			
 			        ctx.save();
 			
-			        let transform = this.arrowTransform;
+			        let transform = this.dragHandleTransform;
 			        ctx.translate(transform.x, transform.y);
 			        ctx.rotate(transform.angle);
 			        ctx.translate(-26, 0);
@@ -66,50 +68,52 @@
 		        this.fromStep.editor.workspace.showPopup(content, action);
 	        }.bind(this);
 	
-	        let arrowHead = new Region(
+	        let dragHandle = new Region(
 		        function (ctx) {
 			        ctx.save();			
-			        this.arrowTransform.apply(ctx);
-			
-			        let halfWidth = 8, arrowLength = 20;
-			        ctx.rect(-arrowLength - 1, -halfWidth - 1, arrowLength + 2, halfWidth * 2 + 2);
-			
+			        this.dragHandleTransform.apply(ctx);			
+
+                    if (this.toStep == null && !this.dragging) {
+                        let radius = 8;
+                        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                    }
+                    else {
+			            let halfWidth = 8, arrowLength = 20;
+			            ctx.rect(-arrowLength - 1, -halfWidth - 1, arrowLength + 2, halfWidth * 2 + 2);
+			        }
+
 			        ctx.restore();
 		        }.bind(this),
-		        null, // drawn as part of the line
+		        function (ctx) {
+                    this.dragHandleTransform.apply(ctx);
+
+                    if (this.toStep == null && !this.dragging)
+                        this.drawUnconnectedHandle(ctx);
+                    else
+                        this.drawConnectedHandle(ctx);
+
+			        ctx.restore();
+                }.bind(this),
 		        'move'
 	        );
 	
-	        arrowHead.hover = function () { return true; };
-	        arrowHead.unhover = function () { return true; };
-	        arrowHead.mousedown = function (x, y) {
-		        // first, disconnect this return path - it must be dragged somewhere to avoid deleting it
-		        let paths = this.fromStep.returnPaths;
-		        for (let i=0; i<paths.length; i++)
-			        if (paths[i] === this) {
-				        paths.splice(i, 1);
-				        break;
-			        }
-
-		        return this.fromStep.startDragPath.call(this.fromStep);
-	        }.bind(this);
-	        arrowHead.mouseup = this.fromStep.stopDragPath.bind(this.fromStep);
-	        arrowHead.move = this.fromStep.moveDragPath.bind(this.fromStep);
-	        this.regions = [pathName, arrowHead];
+	        dragHandle.hover = function () { return true; };
+	        dragHandle.unhover = function () { return true; };
+	        dragHandle.mousedown = this.dragStart.bind(this);
+	        dragHandle.mouseup = this.dragStop.bind(this);
+	        dragHandle.move = this.dragMove.bind(this);
+	        this.regions = [pathName, dragHandle];
         }
-	    draw(ctx) {
-		    this.arrowTransform = ReturnPath.drawPath(this.fromStep.editor, ctx, this.fromStep.x, this.fromStep.y, this.toStep.x, this.toStep.y);
-	    }
-	    getNameToWrite() {
+	    private getNameToWrite() {
 		    return this.name !== null ? this.name : this.onlyPath ? null : 'default';
 	    }
-	    drawName(ctx) {
+	    private drawName(ctx) {
 		    let writeName = this.getNameToWrite();
 		    if (writeName === null)
 			    return;
 		
 		    ctx.save();
-            let transform = this.arrowTransform;
+            let transform = this.dragHandleTransform;
 		    transform.apply(ctx);
 		    ctx.translate(-26, 0);
 	
@@ -136,40 +140,16 @@
 		
 		    ctx.restore();
 	    }
-        static drawPath(editor, ctx, fromX, fromY, toX, toY) {
-	        ctx.strokeStyle = '#000';
-	        ctx.lineWidth = 3;
-	
-	        let scale = function (input, min, max) {
-		        if (input <= min)
-			        return 0;
-		        if (input >= max)
-			        return 1;
-		        return (input - min) / (max - min);
-	        };
-	
-	        let dx = toX - fromX, dy = toY - fromY, m = dx === 0 ? 1 : Math.abs(dy/dx);
-	        let xOffset = -175 * scale(-Math.abs(dx), -100, -40) * scale(-dy, -50, -20);
-	        let yOffset = dy < 0 ? 300 : 300 * scale(-m, -5, -0.62);
-	
-	        let cp1x = fromX + xOffset, cp2x = toX + xOffset;
-	        let cp1y = fromY + yOffset, cp2y = toY - yOffset;
-	
-	
-	        editor.drawCurve(ctx, fromX, fromY, cp1x, cp1y, cp2x, cp2y, toX, toY);
-	
-	        let mid1x = (fromX + cp1x + cp1x + cp2x) / 4, mid1y = (fromY + cp1y + cp1y + cp2y) / 4;
-	        let mid2x = (toX + cp2x + cp2x + cp1x) / 4, mid2y = (toY + cp2y + cp2y + cp1y) / 4;
-	        let angle = Math.atan2((mid2y - mid1y), (mid2x - mid1x));
-	        let midX = (mid1x + mid2x) / 2;
-	        let midY = (mid1y + mid2y) / 2;
-	
-	        let halfWidth = 8, arrowLength = 20;
-	
-	        ctx.save();
-	
-	        let transform = new Transform(midX, midY, angle);
-            transform.apply(ctx);
+        private drawUnconnectedHandle(ctx) {
+            let radius = 8;
+
+            ctx.beginPath();
+            ctx.fillStyle = '#f00';
+            ctx.arc(0, 0, radius, 0, Math.PI * 2);
+	        ctx.fill();
+        }
+        private drawConnectedHandle(ctx) {
+            let halfWidth = 8, arrowLength = 20;
 	
 	        ctx.shadowOffsetX = 0; 
 	        ctx.shadowOffsetY = 0; 
@@ -188,9 +168,85 @@
 	        ctx.lineTo(-arrowLength, -halfWidth);
 	        ctx.closePath();
 	        ctx.stroke();
+        }
+        draw(ctx) {
+            let fromX = this.fromStep.x, fromY = this.fromStep.y;
+            let toX: number, toY: number;
+            if (this.toStep == null) {
+                toX = this.fromStep.x + this.endOffsetX;
+                toY = this.fromStep.y + this.endOffsetY;
+            }
+            else {
+                toX = this.toStep.x;
+                toY = this.toStep.y;
+            }
 
-	        ctx.restore();
-	        return transform;
+	        ctx.strokeStyle = '#000';
+	        ctx.lineWidth = 3;
+	
+	        let scale = function (input, min, max) {
+		        if (input <= min)
+			        return 0;
+		        if (input >= max)
+			        return 1;
+		        return (input - min) / (max - min);
+	        };
+	
+	        let dx = toX - fromX, dy = toY - fromY, m = dx === 0 ? 1 : Math.abs(dy/dx);
+	        let xOffset = -175 * scale(-Math.abs(dx), -100, -40) * scale(-dy, -50, -20);
+	        let yOffset = dy < 0 ? 300 : 300 * scale(-m, -5, -0.62);
+	
+	        let cp1x = fromX + xOffset, cp2x = toX + xOffset;
+	        let cp1y = fromY + yOffset, cp2y = toY - yOffset;
+	
+	        this.fromStep.editor.drawCurve(ctx, fromX, fromY, cp1x, cp1y, cp2x, cp2y, toX, toY);
+	
+	        ctx.save();
+	
+            let tx: number, ty: number, angle: number;
+            if (this.toStep == null) {
+                // handle goes at the end of the line
+                tx = toX;
+                ty = toY;
+                angle = Math.atan2((toY - fromY), (toX - fromX));
+            }
+            else {
+                // handle goes at the middle of the line
+	            let mid1x = (fromX + cp1x + cp1x + cp2x) / 4, mid1y = (fromY + cp1y + cp1y + cp2y) / 4;
+	            let mid2x = (toX + cp2x + cp2x + cp1x) / 4, mid2y = (toY + cp2y + cp2y + cp1y) / 4;
+	            angle = Math.atan2((mid2y - mid1y), (mid2x - mid1x));
+	            tx = (mid1x + mid2x) / 2;
+	            tx = (mid1y + mid2y) / 2;
+            }
+
+	        this.dragHandleTransform = new Transform(tx, ty, angle);
+        }
+        private dragStart(x, y) {
+            this.toStep = null;
+            this.updateOffset(x, y);
+            this.dragging = true;
+            return true;
+        }
+        private dragStop(x, y) {
+		    if (!this.dragging)
+			    return false;
+
+            this.updateOffset(x, y);
+		    this.dragging = false;
+            this.toStep = this.fromStep.editor.getStep(x, y);
+            // TODO: if other return paths from this step already go to the same destination, combine them into one somehow
+		    return true;
+        }
+        private dragMove(x, y) {
+		    if (!this.dragging)
+			    return false;
+		
+		    this.updateOffset(x, y);
+		    return true;
+        }
+        private updateOffset(x, y) {
+            this.endOffsetX = x - this.fromStep.x;
+            this.endOffsetY = y - this.fromStep.y;
         }
     }
 }

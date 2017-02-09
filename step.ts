@@ -8,15 +8,11 @@ namespace Cursive {
         readonly radius: number;
         drawText: boolean;
         private dragging: boolean;
-        private draggingPath: boolean;
         private connectors: Connector[];
         regions: Region[];
-        private returnConnectorRegion: Region;
         private bodyRegion: Region;
         private collisionRegion: Region;
         editor: ProcessEditor;
-        private dragEndX: number;
-        private dragEndY: number;
 
         constructor(process: Process, x: number, y: number) {
 	        this.process = process;
@@ -24,35 +20,13 @@ namespace Cursive {
 	        this.y = y;
 	        this.returnPaths = [];
 	        this.radius = 45;
-	        this.drawText = this.dragging = this.draggingPath = false;
+	        this.drawText = this.dragging = false;
 	        this.createRegions();
         }
-	    createRegions() {
+	    private createRegions() {
 		    this.connectors = [];
 		    this.regions = [];
-		
-		    let returnStartSize = 2.5, returnStartOffset = 20;
-		    this.returnConnectorRegion = new Region(
-			    function (ctx) { ctx.arc(this.x, this.y + returnStartOffset, returnStartSize * 3.5, 0, 2 * Math.PI);}.bind(this),
-			    function (ctx, isMouseOver, isMouseDown) {
-				    ctx.lineWidth = 2;
-				    ctx.strokeStyle = isMouseOver || isMouseDown ? '#000' : '#999';
-				    ctx.beginPath();
-				    ctx.moveTo(this.x - returnStartSize, this.y + returnStartOffset);
-				    ctx.lineTo(this.x + returnStartSize, this.y + returnStartOffset);
-				    ctx.moveTo(this.x, this.y - returnStartSize + returnStartOffset);
-				    ctx.lineTo(this.x, this.y + returnStartSize + returnStartOffset);
-				    ctx.stroke();
-			    }.bind(this),
-			    'crosshair'
-		    );
-		    this.returnConnectorRegion.hover = function () { return true; };
-		    this.returnConnectorRegion.unhover = function () { return true; };
-		    this.returnConnectorRegion.mousedown = this.startDragPath.bind(this);
-		    this.returnConnectorRegion.mouseup = this.stopDragPath.bind(this);
-		    this.returnConnectorRegion.move = this.moveDragPath.bind(this);
-		    this.regions.push(this.returnConnectorRegion);
-		
+
 		    this.bodyRegion = new Region(
 			    function (ctx) { ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); }.bind(this),
 			    this.drawBody.bind(this),
@@ -112,7 +86,7 @@ namespace Cursive {
 		    this.createConnectors(this.process.inputs, true);
 		    this.createConnectors(this.process.outputs, false);
 	    }
-	    drawBody(ctx) {
+	    private drawBody(ctx) {
 		    ctx.strokeStyle = '#000';
 		    ctx.fillStyle = '#fff';
 		    ctx.lineWidth = 2;
@@ -129,7 +103,7 @@ namespace Cursive {
 		    ctx.fillStyle = '#000';
 		    ctx.fillText(this.process.name, this.x, this.y);
 	    }
-	    createConnectors(params, input) {
+	    private createConnectors(params, input) {
 		    let angularSpread;
 		    switch (params.length) {
 			    case 0: return;
@@ -157,52 +131,27 @@ namespace Cursive {
 			    currentAngle += stepSize;
 		    }
 	    }
-	    startDragPath(x,y) {
-		    this.draggingPath = true;
-		    return true;
-	    }
-	    stopDragPath(x,y) {
-		    if (!this.draggingPath)
-			    return false;
-		
-		    let toStep = this.editor.getStep(x, y);
-		    if (toStep !== null) {
-			    let existingPath = null;
-			    for (let i=0; i<this.returnPaths.length; i++)
-				    if (toStep === this.returnPaths[i].toStep) {
-					    existingPath = this.returnPaths[i];
-					    // TODO: explain to user that they should set up multiple return paths to the same destination through a single link
-					    break;
-				    }
-			
-			    if (existingPath === null) {
-				    let newPath = new ReturnPath(this, toStep, null);
-				
-				    for (let i=0; i<this.returnPaths.length; i++) {
-					    let existing = this.returnPaths[i];
-					    existing.onlyPath = false;
-					    if (existing.name === null) {
-						    existing.warnDuplicate = newPath.warnDuplicate = true;
-					    }
-				    }
-				
-				    newPath.onlyPath = this.returnPaths.length == 0;
-				    this.returnPaths.push(newPath);
-			    }
-		    }
-		
-		    this.dragEndX = undefined;
-		    this.dragEndY = undefined;
-		    this.draggingPath = false;
-		    return true;
-	    }
-	    moveDragPath(x,y) {
-		    if (!this.draggingPath)
-			    return false;
-		
-		    this.dragEndX = x;
-		    this.dragEndY = y;
-		    return true;
-	    }
+        createDanglingReturnPaths() {
+            let distance = 150;
+            if (this.process.returnPaths.length == 0) {
+                let returnPath = new ReturnPath(this, null, null, 0, distance);
+                returnPath.onlyPath = true;
+                this.returnPaths.push(returnPath);
+            }
+            else {
+                let totalSpread = Math.min(140, (this.process.returnPaths.length - 1) * 30) * Math.PI / 180;
+                let currentAngle = (Math.PI - totalSpread) / 2;
+                let angularIncrement = totalSpread / this.process.returnPaths.length;
+
+                for (let path of this.process.returnPaths) {
+                    let xOffset = distance * Math.cos(currentAngle);
+                    let yOffset = distance * Math.sin(currentAngle);
+                    currentAngle += angularIncrement;
+
+                    let returnPath = new ReturnPath(this, null, path, xOffset, yOffset);
+                    this.returnPaths.push(returnPath);
+                }
+            }
+        }
     }
 }

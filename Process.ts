@@ -44,5 +44,10 @@
 	        this.steps = [];
 	        this.variables = [];
         }
+
+        isValid() : boolean {
+            // TODO: check if every step's outputs and I/O parameters are connected
+            return true;
+        }
     }
 }
