@@ -139,9 +139,14 @@ namespace Cursive {
                 this.returnPaths.push(returnPath);
             }
             else {
-                let totalSpread = Math.min(140, (this.process.returnPaths.length - 1) * 30) * Math.PI / 180;
-                let currentAngle = (Math.PI - totalSpread) / 2;
-                let angularIncrement = totalSpread / this.process.returnPaths.length;
+                let centerAngle = 7 * Math.PI / 16;
+                let targetSeparation = 3 * Math.PI / 16;
+                let maxSpread = 5 * Math.PI / 8;
+                let numSteps = this.process.returnPaths.length - 1;
+                let totalSpread = Math.min(maxSpread, numSteps * targetSeparation);
+
+                let currentAngle = centerAngle - totalSpread / 2;
+                let angularIncrement = totalSpread / numSteps;
 
                 for (let path of this.process.returnPaths) {
                     let xOffset = distance * Math.cos(currentAngle);
