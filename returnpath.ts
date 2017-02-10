@@ -78,7 +78,7 @@
                 function (ctx) {
                     ctx.save();
                     this.midArrowTransform.apply(ctx);
-                    this.drawConnectedHandle(ctx);
+                    this.drawMidArrow(ctx);
                     ctx.restore();
                 }.bind(this),
 		        'move'
@@ -160,19 +160,20 @@
             let radius = 8;
 
             ctx.beginPath();
-            ctx.fillStyle = '#f00';
+            ctx.fillStyle = this.toStep == null && !this.dragging ? '#f00' : '#fff';
             ctx.strokeStyle = '#000';
             ctx.lineWidth = 2;
             ctx.arc(0, 0, radius, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
         }
-        private drawConnectedHandle(ctx) {
+        private drawMidArrow(ctx) {
             let halfWidth = 8, arrowLength = 20;
 	
 	        ctx.shadowOffsetX = 0; 
 	        ctx.shadowOffsetY = 0; 
-	        ctx.fillStyle = '#fff';
+            
+            ctx.fillStyle = this.toStep == null && !this.dragging ? '#f00' : '#fff';
 	
 	        ctx.beginPath();
 	        ctx.moveTo(-arrowLength, halfWidth);
