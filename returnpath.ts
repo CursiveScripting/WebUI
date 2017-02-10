@@ -67,45 +67,57 @@
 		        this.fromStep.editor.workspace.showPopup(content, action);
 	        }.bind(this);
 	
-	        let dragHandle = new Region(
+	        let midArrow = new Region(
 		        function (ctx) {
                     ctx.save();
-
-                    if (this.toStep == null && !this.dragging) {
-                        this.endConnectorTranform.apply(ctx);
-                        let radius = 8;
-                        ctx.arc(0, 0, radius, 0, Math.PI * 2);
-                    }
-                    else {
-                        this.midArrowTransform.apply(ctx);
-			            let halfWidth = 8, arrowLength = 20;
-			            ctx.rect(-arrowLength - 1, -halfWidth - 1, arrowLength + 2, halfWidth * 2 + 2);
-			        }
-
+                    this.midArrowTransform.apply(ctx);
+			        let halfWidth = 8, arrowLength = 20;
+			        ctx.rect(-arrowLength - 1, -halfWidth - 1, arrowLength + 2, halfWidth * 2 + 2);
 			        ctx.restore();
 		        }.bind(this),
                 function (ctx) {
                     ctx.save();
-
-                    if (this.toStep == null && !this.dragging) {
-                        this.endConnectorTranform.apply(ctx);
-                        this.drawUnconnectedHandle(ctx);
-                    }
-                    else {
-                        this.midArrowTransform.apply(ctx);
-                        this.drawConnectedHandle(ctx);
-                    }
+                    this.midArrowTransform.apply(ctx);
+                    this.drawConnectedHandle(ctx);
                     ctx.restore();
                 }.bind(this),
 		        'move'
-	        );
-	
-	        dragHandle.hover = function () { return true; };
-	        dragHandle.unhover = function () { return true; };
-	        dragHandle.mousedown = this.dragStart.bind(this);
-	        dragHandle.mouseup = this.dragStop.bind(this);
-	        dragHandle.move = this.dragMove.bind(this);
-	        this.regions = [pathName, dragHandle];
+            );
+            midArrow.hover = function () { return true; };
+            midArrow.unhover = function () { return true; };
+            midArrow.mousedown = this.dragStart.bind(this);
+            midArrow.mouseup = this.dragStop.bind(this);
+            midArrow.move = this.dragMove.bind(this);
+
+            let endConnector = new Region(
+                function (ctx) {
+                    if (this.toStep != null)
+                        return;
+
+                    ctx.save();
+                    this.endConnectorTranform.apply(ctx);
+                    let radius = 8;
+                    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                    ctx.restore();
+                }.bind(this),
+                function (ctx) {
+                    if (this.toStep != null)
+                        return;
+
+                    ctx.save();
+                    this.endConnectorTranform.apply(ctx);
+                    this.drawUnconnectedHandle(ctx);
+                    ctx.restore();
+                }.bind(this),
+                'move'
+            );
+            endConnector.hover = function () { return true; };
+            endConnector.unhover = function () { return true; };
+            endConnector.mousedown = this.dragStart.bind(this);
+            endConnector.mouseup = this.dragStop.bind(this);
+            endConnector.move = this.dragMove.bind(this);
+
+	        this.regions = [pathName, midArrow, endConnector];
         }
 	    private getNameToWrite() {
 		    return this.name !== null ? this.name : this.onlyPath ? null : 'default';
@@ -149,8 +161,11 @@
 
             ctx.beginPath();
             ctx.fillStyle = '#f00';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
             ctx.arc(0, 0, radius, 0, Math.PI * 2);
-	        ctx.fill();
+            ctx.fill();
+            ctx.stroke();
         }
         private drawConnectedHandle(ctx) {
             let halfWidth = 8, arrowLength = 20;
@@ -205,11 +220,8 @@
 	
 	        this.fromStep.editor.drawCurve(ctx, fromX, fromY, cp1x, cp1y, cp2x, cp2y, toX, toY);
 	
-	        ctx.save();
-
-
             let tx: number, ty: number, angle: number;
-            if (this.toStep == null && !this.dragging) {
+            if (this.toStep == null) {
                 // handle goes at the end of the line
                 tx = toX;
                 ty = toY;
