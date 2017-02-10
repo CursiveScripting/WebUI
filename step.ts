@@ -1,7 +1,7 @@
 ﻿/// <reference path="processeditor.ts" />
 namespace Cursive {
     export class Step {
-        private readonly process: Process;
+        readonly process: Process;
         x: number;
         y: number;
         readonly returnPaths: ReturnPath[];

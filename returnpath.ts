@@ -204,30 +204,36 @@
 	        ctx.strokeStyle = '#000';
 	        ctx.lineWidth = 3;
 	
-	        let scale = function (input, min, max) {
-		        if (input <= min)
-			        return 0;
-		        if (input >= max)
-			        return 1;
-		        return (input - min) / (max - min);
-	        };
-	
-	        let dx = toX - fromX, dy = toY - fromY, m = dx === 0 ? 1 : Math.abs(dy/dx);
-	        let xOffset = -175 * scale(-Math.abs(dx), -100, -40) * scale(-dy, -50, -20);
-	        let yOffset = dy < 0 ? 300 : 300 * scale(-m, -5, -0.62);
-	
-	        let cp1x = fromX + xOffset, cp2x = toX + xOffset;
-	        let cp1y = fromY + yOffset, cp2y = toY - yOffset;
+	        let dx = toX - fromX, dy = toY - fromY, m = dx === 0 ? dy > 0 ? 999 : -999 : Math.abs(dy/dx);
+            let cp1x = fromX + dx / 5, cp1y = fromY + dy / 5, cp2x = toX - dx / 5, cp2y = toY - dy / 5;
+
+            // need to curve if near horizontal (and i/o connectors will get in the way)
+            let minCurveGradient = 0.1;
+            m = Math.abs(m);
+            if (m < minCurveGradient) {
+                let curveScale = (minCurveGradient - m) / minCurveGradient;
+                let yOffset = 50 * curveScale;
+
+                if (dx < 0) {
+                    if (this.fromStep.process.inputs.length % 2 == 1)
+                        cp1y += dy > 0 ? yOffset : -yOffset;
+                    if (this.toStep != null && this.toStep.process.outputs.length % 2 == 1)
+                        cp2y += dy > 0 ? -yOffset : yOffset;
+                }
+                else {
+                    if (this.fromStep.process.outputs.length % 2 == 1)
+                        cp1y += dy > 0 ? yOffset : -yOffset;
+                    if (this.toStep != null && this.toStep.process.inputs.length % 2 == 1)
+                        cp2y += dy > 0 ? -yOffset : yOffset;
+                }
+            }
 	
 	        this.fromStep.editor.drawCurve(ctx, fromX, fromY, cp1x, cp1y, cp2x, cp2y, toX, toY);
-	
+
             let tx: number, ty: number, angle: number;
             if (this.toStep == null) {
                 // handle goes at the end of the line
-                tx = toX;
-                ty = toY;
-                angle = Math.atan2((toY - fromY), (toX - fromX));
-                this.endConnectorTranform = new Transform(tx, ty, angle);
+                this.endConnectorTranform = new Transform(toX, toY, 0);
             }
 
             // handle goes at the middle of the line
