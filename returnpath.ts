@@ -215,15 +215,15 @@
                 let yOffset = 50 * curveScale;
 
                 if (dx < 0) {
-                    if (this.fromStep.process.inputs.length % 2 == 1)
+                    if (this.fromStep.process != null && this.fromStep.process.inputs.length % 2 == 1)
                         cp1y += dy > 0 ? yOffset : -yOffset;
-                    if (this.toStep != null && this.toStep.process.outputs.length % 2 == 1)
+                    if (this.toStep != null && this.toStep.process != null && this.toStep.process.outputs.length % 2 == 1)
                         cp2y += dy > 0 ? -yOffset : yOffset;
                 }
                 else {
-                    if (this.fromStep.process.outputs.length % 2 == 1)
+                    if (this.fromStep.process != null && this.fromStep.process.outputs.length % 2 == 1)
                         cp1y += dy > 0 ? yOffset : -yOffset;
-                    if (this.toStep != null && this.toStep.process.inputs.length % 2 == 1)
+                    if (this.toStep != null && this.toStep.process != null && this.toStep.process.inputs.length % 2 == 1)
                         cp2y += dy > 0 ? -yOffset : yOffset;
                 }
             }

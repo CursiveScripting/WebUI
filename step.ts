@@ -27,11 +27,7 @@ namespace Cursive {
 		    this.connectors = [];
 		    this.regions = [];
 
-		    this.bodyRegion = new Region(
-			    function (ctx) { ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); }.bind(this),
-			    this.drawBody.bind(this),
-			    'move'
-		    );
+		    this.bodyRegion = this.createBodyRegion();
 		
 		    this.bodyRegion.mousedown = function (x,y) {
 			    this.dragging = true;
@@ -79,30 +75,43 @@ namespace Cursive {
 		
 		    this.regions.push(this.bodyRegion);
 		
-		    this.collisionRegion = new Region( // twice the normal radius, so that another step can't overlap this one
-			    function (ctx) { ctx.arc(this.x, this.y, this.radius * 2, 0, 2 * Math.PI); }.bind(this)
-		    );
-		
-		    this.createConnectors(this.process.inputs, true);
-		    this.createConnectors(this.process.outputs, false);
+		    this.collisionRegion = this.createCollisionRegion();
+
+            if (this.process != null) {
+                this.createConnectors(this.process.inputs, true);
+                this.createConnectors(this.process.outputs, false);
+            }
 	    }
-	    private drawBody(ctx) {
-		    ctx.strokeStyle = '#000';
-		    ctx.fillStyle = '#fff';
-		    ctx.lineWidth = 2;
-		    ctx.beginPath();
-		    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-		    ctx.fill();
-		    ctx.beginPath();
-		    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-		    ctx.stroke();
-		
+        protected drawBody(ctx) {
+            ctx.strokeStyle = '#000';
+            ctx.fillStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            this.bodyRegion.define(ctx);
+            ctx.fill();
+            ctx.stroke();
+
+            this.writeText(ctx);
+        }
+        protected writeText(ctx) {
 		    ctx.font = '16px sans-serif';
 		    ctx.textAlign = 'center';
 		    ctx.textBaseline = 'middle';
 		    ctx.fillStyle = '#000';
 		    ctx.fillText(this.process.name, this.x, this.y);
-	    }
+        }
+        protected createBodyRegion() {
+            return new Region(
+                function (ctx) { ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); }.bind(this),
+                this.drawBody.bind(this),
+                'move'
+            )
+        }
+        protected createCollisionRegion() {
+            return new Region( // twice the normal radius, so that another step can't overlap this one
+                function (ctx) { ctx.arc(this.x, this.y, this.radius * 2, 0, 2 * Math.PI); }.bind(this)
+            )
+        }
 	    private createConnectors(params, input) {
 		    let angularSpread;
 		    switch (params.length) {
@@ -158,5 +167,71 @@ namespace Cursive {
                 }
             }
         }
+    }
+
+    export class StartStep extends Step {
+        constructor(x: number, y: number) {
+            super(null, x, y);
+        }
+        protected writeText(ctx) {
+            ctx.font = '16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#0a0';
+            ctx.fillText("Start", this.x - this.radius / 4, this.y);
+        }
+        protected createBodyRegion() {
+            return new Region(
+                function (ctx) {
+                    ctx.moveTo(this.x - this.radius, this.y - this.radius * 0.75);
+                    ctx.lineTo(this.x + this.radius, this.y);
+                    ctx.lineTo(this.x - this.radius, this.y + this.radius * 0.75);
+                    ctx.closePath();
+                }.bind(this),
+                this.drawBody.bind(this),
+                'move'
+            )
+        }
+        protected createCollisionRegion() {
+            return new Region( // twice the normal radius, so that another step can't overlap this one
+                function (ctx) {
+                    ctx.moveTo(this.x - this.radius * 2, this.y - this.radius * 1.5);
+                    ctx.lineTo(this.x + this.radius * 2, this.y);
+                    ctx.lineTo(this.x - this.radius * 2, this.y + this.radius * 1.5);
+                    ctx.closePath();
+                }.bind(this)
+            )
+        }
+        createDanglingReturnPaths() {
+            let returnPath = new ReturnPath(this, null, null, 150, 0);
+            returnPath.onlyPath = true;
+            this.returnPaths.push(returnPath);
+        }
+    }
+
+    export class StopStep extends Step {
+        constructor(x: number, y: number) {
+            super(null, x, y);
+        }
+        protected writeText(ctx) {
+            ctx.font = '16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#a00';
+            ctx.fillText("Stop", this.x, this.y);
+        }
+        protected createBodyRegion() {
+            return new Region(
+                function (ctx) { ctx.rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2); }.bind(this),
+                this.drawBody.bind(this),
+                'move'
+            )
+        }
+        protected createCollisionRegion() {
+            return new Region( // twice the normal radius, so that another step can't overlap this one
+                function (ctx) { ctx.rect(this.x - this.radius * 2, this.y - this.radius * 2, this.radius * 4, this.radius * 4); }.bind(this)
+            )
+        }
+        createDanglingReturnPaths() { }
     }
 }

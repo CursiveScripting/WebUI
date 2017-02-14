@@ -511,15 +511,13 @@
 					    paramNames[paramName] = true;
 			    }
 			
-			    if (this.currentProcess === null) { // create new process
-				    this.currentProcess = new UserProcess(name, [], [], [], false);
-			    }
-			    else { // unlink existing process's old name
+			    if (this.currentProcess !== null) { // unlink existing process's old name
 				    delete this.workspace.userProcesses[this.currentProcess.name];
 				    this.currentProcess.name = name;
-			    }
-			
-			
+                }
+
+                this.currentProcess = new UserProcess(name, [], [], [], false);
+                this.currentProcess.createDefaultSteps(this);
 			    this.workspace.userProcesses[name] = this.currentProcess;
 			
 			    updateParameters(this.currentProcess.inputs, inputs);

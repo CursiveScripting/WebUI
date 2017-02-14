@@ -49,5 +49,16 @@
             // TODO: check if every step's outputs and I/O parameters are connected
             return true;
         }
+
+        createDefaultSteps(editor) {
+            let step: Step = new StartStep(75, 125);
+            step.editor = editor;
+            step.createDanglingReturnPaths();
+            this.steps.push(step);
+
+            step = new StopStep(500, 300);
+            step.editor = editor;
+            this.steps.push(step);
+        }
     }
 }
