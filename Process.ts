@@ -56,7 +56,7 @@
             step.createDanglingReturnPaths();
             this.steps.push(step);
 
-            step = new StopStep(this, 500, 300);
+            step = new StopStep(this, null, 500, 300);
             this.steps.push(step);
         }
     }

@@ -64,19 +64,6 @@
 		    this.headerCutoff = 68;
 		    this.canvasWidth = 999;
 		
-		    let underlineText = function (ctx, text, x, y, drawLine) {
-			    ctx.fillText(text, x, y);
-				
-			    if (drawLine) {
-				    let w = ctx.measureText(text).width;
-				    ctx.lineWidth = 1;
-				    ctx.beginPath();
-				    ctx.moveTo(x, y + 1);
-				    ctx.lineTo(x + w, y + 1);
-				    ctx.stroke();
-			    }
-		    }
-		
 		    let title = new Region(
 			    null,
 			    function (ctx) {
@@ -106,7 +93,7 @@
 				    ctx.font = '16px sans-serif';
 				    ctx.strokeStyle = ctx.fillStyle = isMouseDown ? '#000' : '#999';
 				
-				    underlineText(ctx, 'edit this process', 32, 62, isMouseOver);
+				    this.underlineText(ctx, 'edit this process', 32, 62, isMouseOver);
 			    }.bind(this),
 			    'pointer'
 		    );
@@ -128,7 +115,7 @@
 				    ctx.font = '16px sans-serif';
 				    ctx.strokeStyle = ctx.fillStyle = isMouseDown ? '#000' : '#999';
 				
-				    underlineText(ctx, 'add variable', this.titleEndX + 16, 40, isMouseOver);
+                    this.underlineText(ctx, 'add variable', this.titleEndX + 16, 40, isMouseOver);
 			    }.bind(this),
 			    'pointer'
 		    );
@@ -285,7 +272,30 @@
 		
 		    window.addEventListener('resize', this.updateSize.bind(this));
 		    setTimeout(this.updateSize.bind(this), 0);
-	    }
+        }
+        underlineText(ctx, text, x, y, drawLine) {
+            ctx.fillText(text, x, y);
+
+            if (drawLine) {
+                let w = ctx.measureText(text).width;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+
+                let startX: number;
+                switch (ctx.textAlign) {
+                    case 'center':
+                        startX = x - w / 2; break;
+                    case 'right':
+                        startX = x - w; break;
+                    default:
+                        startX = x; break;
+                }
+
+                ctx.moveTo(startX, y + 1);
+                ctx.lineTo(startX + w, y + 1);
+                ctx.stroke();
+            }
+        }
 	    getCanvasCoords(e) {
 		    let canvasPos = this.canvas.getBoundingClientRect();
 		    return { x: e.clientX - canvasPos.left, y: e.clientY - canvasPos.top };
