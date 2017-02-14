@@ -541,8 +541,7 @@
 			    return;
 		    }
 
-		    let step = new Step(process, x, y)
-		    step.editor = this;
+		    let step = new Step(process, this.currentProcess, x, y)
             step.createDanglingReturnPaths();
 		    this.currentProcess.steps.push(step);
 		    this.draw();

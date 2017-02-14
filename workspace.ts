@@ -115,13 +115,16 @@
 				}
 			}
 			    
+            let process: Process;
             if (isSystemProcess)
-                return new SystemProcess(name, inputs, outputs, returnPaths);
+                process = new SystemProcess(name, inputs, outputs, returnPaths);
             else {
-                let process = new UserProcess(name, inputs, outputs, returnPaths, true);
-                process.createDefaultSteps(this.editor);
-                return process;
+                process = new UserProcess(name, inputs, outputs, returnPaths, true);
+                (process as UserProcess).createDefaultSteps();
             }
+            
+            process.editor = this.editor;
+            return process;
         }
 	    private allocateColors(num) {
 		    let hue2rgb = function hue2rgb(p, q, t){

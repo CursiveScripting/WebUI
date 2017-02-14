@@ -42,17 +42,18 @@
 		
 		    this.region.mousedown = function (x,y) {
 			    this.dragging = true;
-			    this.step.editor.highlightVariables(this.param.type);
-			    this.step.editor.draw();
+                let editor = this.step.parentProcess.editor;
+			    editor.highlightVariables(this.param.type);
+			    editor.draw();
 			    return true;
 		    }.bind(this);
 		    this.region.mouseup = function (x,y) {
 			    if (!this.dragging)
 				    return false;
 				
-			    this.step.editor.highlightVariables(null);
-			
-			    let editor = this.step.editor;
+			    let editor = this.step.parentProcess.editor;
+                editor.highlightVariables(null);
+
 			    let ctx = editor.canvas.getContext('2d');
 			    let variables = editor.currentProcess.variables;
 			    for (let i=0; i<editor.variableRegions.length; i++) {
@@ -152,7 +153,7 @@
 	        let cp1 = connector.offset(connector.step.x, connector.step.y, connector.step.radius * 5, connector.angle);
 	        let cp2x = toX, cp2y = toY + 200;
 	
-	        connector.step.editor.drawCurve(ctx, edgePos.x, edgePos.y, cp1.x, cp1.y, cp2x, cp2y, toX, toY);
+	        connector.step.parentProcess.editor.drawCurve(ctx, edgePos.x, edgePos.y, cp1.x, cp1.y, cp2x, cp2y, toX, toY);
         }
     }
 }

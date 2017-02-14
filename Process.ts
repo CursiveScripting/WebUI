@@ -1,5 +1,6 @@
 ﻿namespace Cursive {
     export abstract class Process {
+        editor: ProcessEditor;
         constructor(readonly name: string, readonly inputs: Variable[], readonly outputs: Variable[], readonly returnPaths: string[]) { }
 
         signatureMatches(other: Process) {
@@ -50,14 +51,12 @@
             return true;
         }
 
-        createDefaultSteps(editor) {
-            let step: Step = new StartStep(75, 125);
-            step.editor = editor;
+        createDefaultSteps() {
+            let step: Step = new StartStep(this, 75, 125);
             step.createDanglingReturnPaths();
             this.steps.push(step);
 
-            step = new StopStep(500, 300);
-            step.editor = editor;
+            step = new StopStep(this, 500, 300);
             this.steps.push(step);
         }
     }

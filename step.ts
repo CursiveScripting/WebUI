@@ -1,7 +1,5 @@
-﻿/// <reference path="processeditor.ts" />
-namespace Cursive {
+﻿namespace Cursive {
     export class Step {
-        readonly process: Process;
         x: number;
         y: number;
         readonly returnPaths: ReturnPath[];
@@ -12,10 +10,8 @@ namespace Cursive {
         regions: Region[];
         private bodyRegion: Region;
         private collisionRegion: Region;
-        editor: ProcessEditor;
 
-        constructor(process: Process, x: number, y: number) {
-	        this.process = process;
+        constructor(readonly process: Process, readonly parentProcess: Process, x: number, y: number) {
 	        this.x = x;
 	        this.y = y;
 	        this.returnPaths = [];
@@ -50,8 +46,8 @@ namespace Cursive {
 				    return false;
 			
 			    // test for collisions
-			    let steps = this.editor.currentProcess.steps;
-			    let ctx = this.editor.canvas.getContext('2d');
+			    let steps = this.parentProcess.steps;
+			    let ctx = this.parentProcess.editor.canvas.getContext('2d');
 
 			    for (let i=0; i<steps.length; i++) {
 				    if (steps[i] === this)
@@ -76,11 +72,8 @@ namespace Cursive {
 		    this.regions.push(this.bodyRegion);
 		
 		    this.collisionRegion = this.createCollisionRegion();
-
-            if (this.process != null) {
-                this.createConnectors(this.process.inputs, true);
-                this.createConnectors(this.process.outputs, false);
-            }
+            this.createConnectors(this.getInputs(), true);
+            this.createConnectors(this.getOutputs(), false);
 	    }
         protected drawBody(ctx) {
             ctx.strokeStyle = '#000';
@@ -112,7 +105,15 @@ namespace Cursive {
                 function (ctx) { ctx.arc(this.x, this.y, this.radius * 2, 0, 2 * Math.PI); }.bind(this)
             )
         }
+        protected getInputs() {
+            return this.process.inputs;
+        }
+        protected getOutputs() {
+            return this.process.outputs;
+        }
 	    private createConnectors(params, input) {
+            if (params === null)
+                return;
 		    let angularSpread;
 		    switch (params.length) {
 			    case 0: return;
@@ -170,8 +171,8 @@ namespace Cursive {
     }
 
     export class StartStep extends Step {
-        constructor(x: number, y: number) {
-            super(null, x, y);
+        constructor(parentProcess: Process, x: number, y: number) {
+            super(null, parentProcess, x, y);
         }
         protected writeText(ctx) {
             ctx.font = '16px sans-serif';
@@ -207,11 +208,13 @@ namespace Cursive {
             returnPath.onlyPath = true;
             this.returnPaths.push(returnPath);
         }
+        protected getInputs() { return null; }
+        protected getOutputs() { return this.parentProcess.inputs; }
     }
 
     export class StopStep extends Step {
-        constructor(x: number, y: number) {
-            super(null, x, y);
+        constructor(parentProcess: Process, x: number, y: number) {
+            super(null, parentProcess, x, y);
         }
         protected writeText(ctx) {
             ctx.font = '16px sans-serif';
@@ -233,5 +236,7 @@ namespace Cursive {
             )
         }
         createDanglingReturnPaths() { }
+        protected getInputs() { return this.parentProcess.outputs; }
+        protected getOutputs() { return null; }
     }
 }
