@@ -15,73 +15,73 @@
         private endConnectorTranform: Transform;
 
         constructor(fromStep, toStep, name, endOffsetX?: number, endOffsetY?: number) {
-	        this.fromStep = fromStep;
-	        this.toStep = toStep;
+            this.fromStep = fromStep;
+            this.toStep = toStep;
             this.endOffsetX = endOffsetX;
             this.endOffsetY = endOffsetY;
-	        this.name = name;
-	
-	        let pathName = new Region(
-		        function (ctx) {
-			        if (this.getNameToWrite() === null)
-				        return;
-			
-			        ctx.save();
-			
-			        this.midArrowTransform.apply(ctx);
-			        ctx.translate(-26, 0);
-			
-			        ctx.rect(-this.nameLength - 5, -10, this.nameLength + 10, 20);
-			
-			        ctx.restore();
-		        }.bind(this),
-		        this.drawName.bind(this),
-		        'pointer'
-	        );
-	
-	        pathName.click = function (x, y) {
-		        let paths = this.fromStep.process.returnPaths;
-		        let content, action;
-		        if (paths.length < 2)
-			        content = 'Only one path can come from this process,<br />as it doesn\'t have multiple return paths.<br />Please remove the extra path(s).';
-		        else {
-			        content = 'Select the return path to use:<br/><select class="returnPath"><option value="">[default]</option>';
-			        for (let i=0; i<paths.length; i++)
-				        content += '<option value="' + paths[i] + '">' + paths[i] + '</option>';
-			        content += '</select>';
-			
-			        action = function () {
-				        this.name = this.fromStep.editor.popupContent.querySelector('.returnPath').value;
-				        this.warnDuplicate = false;
-				
-				        for (let i=0; i<this.fromStep.returnPaths.length; i++) {
-					        let existing = this.fromStep.returnPaths[i];
-					        if (existing !== this && existing.name === this.name)
-						        existing.warnDuplicate = this.warnDuplicate = true;
-				        }
-				
-				        this.fromStep.editor.draw();
-			        }.bind(this);
-		        }
-		
-		        this.fromStep.editor.workspace.showPopup(content, action);
-	        }.bind(this);
-	
-	        let midArrow = new Region(
-		        function (ctx) {
+            this.name = name;
+    
+            let pathName = new Region(
+                function (ctx) {
+                    if (this.getNameToWrite() === null)
+                        return;
+            
+                    ctx.save();
+            
+                    this.midArrowTransform.apply(ctx);
+                    ctx.translate(-26, 0);
+            
+                    ctx.rect(-this.nameLength - 5, -10, this.nameLength + 10, 20);
+            
+                    ctx.restore();
+                }.bind(this),
+                this.drawName.bind(this),
+                'pointer'
+            );
+    
+            pathName.click = function (x, y) {
+                let paths = this.fromStep.process.returnPaths;
+                let content, action;
+                if (paths.length < 2)
+                    content = 'Only one path can come from this process,<br />as it doesn\'t have multiple return paths.<br />Please remove the extra path(s).';
+                else {
+                    content = 'Select the return path to use:<br/><select class="returnPath"><option value="">[default]</option>';
+                    for (let i=0; i<paths.length; i++)
+                        content += '<option value="' + paths[i] + '">' + paths[i] + '</option>';
+                    content += '</select>';
+            
+                    action = function () {
+                        this.name = this.fromStep.editor.popupContent.querySelector('.returnPath').value;
+                        this.warnDuplicate = false;
+                
+                        for (let i=0; i<this.fromStep.returnPaths.length; i++) {
+                            let existing = this.fromStep.returnPaths[i];
+                            if (existing !== this && existing.name === this.name)
+                                existing.warnDuplicate = this.warnDuplicate = true;
+                        }
+                
+                        this.fromStep.editor.draw();
+                    }.bind(this);
+                }
+        
+                this.fromStep.editor.workspace.showPopup(content, action);
+            }.bind(this);
+    
+            let midArrow = new Region(
+                function (ctx) {
                     ctx.save();
                     this.midArrowTransform.apply(ctx);
-			        let halfWidth = 8, arrowLength = 20;
-			        ctx.rect(-arrowLength - 1, -halfWidth - 1, arrowLength + 2, halfWidth * 2 + 2);
-			        ctx.restore();
-		        }.bind(this),
+                    let halfWidth = 8, arrowLength = 20;
+                    ctx.rect(-arrowLength - 1, -halfWidth - 1, arrowLength + 2, halfWidth * 2 + 2);
+                    ctx.restore();
+                }.bind(this),
                 function (ctx) {
                     ctx.save();
                     this.midArrowTransform.apply(ctx);
                     this.drawMidArrow(ctx);
                     ctx.restore();
                 }.bind(this),
-		        'move'
+                'move'
             );
             midArrow.hover = function () { return true; };
             midArrow.unhover = function () { return true; };
@@ -117,45 +117,45 @@
             endConnector.mouseup = this.dragStop.bind(this);
             endConnector.move = this.dragMove.bind(this);
 
-	        this.regions = [pathName, midArrow, endConnector];
+            this.regions = [pathName, midArrow, endConnector];
         }
-	    private getNameToWrite() {
-		    return this.name !== null ? this.name : this.onlyPath ? null : 'default';
-	    }
-	    private drawName(ctx) {
-		    let writeName = this.getNameToWrite();
-		    if (writeName === null)
-			    return;
-		
-		    ctx.save();
+        private getNameToWrite() {
+            return this.name !== null ? this.name : this.onlyPath ? null : 'default';
+        }
+        private drawName(ctx) {
+            let writeName = this.getNameToWrite();
+            if (writeName === null)
+                return;
+        
+            ctx.save();
             let transform = this.midArrowTransform;
-		    transform.apply(ctx);
-		    ctx.translate(-26, 0);
-	
-		    ctx.shadowBlur = 14;
-		    ctx.textAlign = 'right';
-		
-		    if (transform.angle > Math.PI / 2 || transform.angle <= -Math.PI / 2) {
-			    ctx.rotate(Math.PI);
-			    ctx.textAlign = 'left';
-		    }
-		
-		    if (writeName !== null)
-		    {
+            transform.apply(ctx);
+            ctx.translate(-26, 0);
+    
+            ctx.shadowBlur = 14;
+            ctx.textAlign = 'right';
+        
+            if (transform.angle > Math.PI / 2 || transform.angle <= -Math.PI / 2) {
+                ctx.rotate(Math.PI);
+                ctx.textAlign = 'left';
+            }
+        
+            if (writeName !== null)
+            {
                 ctx.shadowColor = ctx.fillStyle = this.warnDuplicate ? '#f99' : '#fff';
-			    ctx.font = '16px sans-serif';
-			    ctx.textBaseline = 'middle';
-			
-			    this.nameLength = ctx.measureText(writeName).width;
-			    for (let i=0; i<12; i++) // strengthen the shadow
+                ctx.font = '16px sans-serif';
+                ctx.textBaseline = 'middle';
+            
+                this.nameLength = ctx.measureText(writeName).width;
+                for (let i=0; i<12; i++) // strengthen the shadow
                     ctx.fillText(writeName, 0, 0);
 
                 ctx.fillStyle = '#000';
                 ctx.fillText(writeName, 0, 0);
-		    }
-		
-		    ctx.restore();
-	    }
+            }
+        
+            ctx.restore();
+        }
         private drawUnconnectedHandle(ctx) {
             let radius = 8;
 
@@ -169,25 +169,25 @@
         }
         private drawMidArrow(ctx) {
             let halfWidth = 8, arrowLength = 20;
-	
-	        ctx.shadowOffsetX = 0; 
-	        ctx.shadowOffsetY = 0; 
+    
+            ctx.shadowOffsetX = 0; 
+            ctx.shadowOffsetY = 0; 
             
             ctx.fillStyle = this.toStep == null && !this.dragging ? '#f00' : '#fff';
-	
-	        ctx.beginPath();
-	        ctx.moveTo(-arrowLength, halfWidth);
-	        ctx.lineTo(0,0);
-	        ctx.lineTo(-arrowLength, -halfWidth);
-	        ctx.closePath();
-	        ctx.fill();
-	
-	        ctx.beginPath();
-	        ctx.moveTo(-arrowLength, halfWidth);
-	        ctx.lineTo(0,0);
-	        ctx.lineTo(-arrowLength, -halfWidth);
-	        ctx.closePath();
-	        ctx.stroke();
+    
+            ctx.beginPath();
+            ctx.moveTo(-arrowLength, halfWidth);
+            ctx.lineTo(0,0);
+            ctx.lineTo(-arrowLength, -halfWidth);
+            ctx.closePath();
+            ctx.fill();
+    
+            ctx.beginPath();
+            ctx.moveTo(-arrowLength, halfWidth);
+            ctx.lineTo(0,0);
+            ctx.lineTo(-arrowLength, -halfWidth);
+            ctx.closePath();
+            ctx.stroke();
         }
         draw(ctx) {
             let fromX = this.fromStep.x, fromY = this.fromStep.y;
@@ -201,10 +201,10 @@
                 toY = this.toStep.y;
             }
 
-	        ctx.strokeStyle = '#000';
-	        ctx.lineWidth = 3;
-	
-	        let dx = toX - fromX, dy = toY - fromY, m = dx === 0 ? dy > 0 ? 999 : -999 : Math.abs(dy/dx);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+    
+            let dx = toX - fromX, dy = toY - fromY, m = dx === 0 ? dy > 0 ? 999 : -999 : Math.abs(dy/dx);
             let cp1x = fromX + dx / 5, cp1y = fromY + dy / 5, cp2x = toX - dx / 5, cp2y = toY - dy / 5;
 
             // need to curve if near horizontal (and i/o connectors will get in the way)
@@ -227,8 +227,8 @@
                         cp2y += dy > 0 ? -yOffset : yOffset;
                 }
             }
-	
-	        this.fromStep.parentProcess.editor.drawCurve(ctx, fromX, fromY, cp1x, cp1y, cp2x, cp2y, toX, toY);
+    
+            this.fromStep.parentProcess.editor.drawCurve(ctx, fromX, fromY, cp1x, cp1y, cp2x, cp2y, toX, toY);
 
             let tx: number, ty: number, angle: number;
             if (this.toStep == null) {
@@ -251,21 +251,21 @@
             return true;
         }
         private dragStop(x, y) {
-		    if (!this.dragging)
-			    return false;
+            if (!this.dragging)
+                return false;
 
             this.updateOffset(x, y);
-		    this.dragging = false;
+            this.dragging = false;
             this.toStep = this.fromStep.parentProcess.editor.getStep(x, y);
             // TODO: if other return paths from this step already go to the same destination, combine them into one somehow
-		    return true;
+            return true;
         }
         private dragMove(x, y) {
-		    if (!this.dragging)
-			    return false;
-		
-		    this.updateOffset(x, y);
-		    return true;
+            if (!this.dragging)
+                return false;
+        
+            this.updateOffset(x, y);
+            return true;
         }
         private updateOffset(x, y) {
             this.endOffsetX = x - this.fromStep.x;

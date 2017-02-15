@@ -41,9 +41,9 @@
         variables: Variable[];
         constructor(name, inputs, outputs, returnPaths, readonly fixedSignature: boolean) {
             super(name, inputs, outputs, returnPaths);
-	    
-	        this.steps = [];
-	        this.variables = [];
+        
+            this.steps = [];
+            this.variables = [];
         }
 
         isValid() : boolean {
