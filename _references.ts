@@ -1,4 +1,6 @@
-﻿/// <reference path="Workspace.ts" />
+﻿/// <reference path="WorkspaceSerialization.ts" />
+/// <reference path="ProcessSerialization.ts" />
+/// <reference path="Workspace.ts" />
 /// <reference path="ProcessList.ts" />
 /// <reference path="processeditor.ts" />
 /// <reference path="Process.ts" />

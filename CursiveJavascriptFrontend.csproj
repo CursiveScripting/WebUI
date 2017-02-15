@@ -35,6 +35,8 @@
     <TypeScriptCompile Include="Step.ts" />
     <TypeScriptCompile Include="ProcessEditor.ts" />
     <TypeScriptCompile Include="ProcessList.ts" />
+    <TypeScriptCompile Include="ProcessSerialization.ts" />
+    <TypeScriptCompile Include="WorkspaceSerialization.ts" />
     <TypeScriptCompile Include="Workspace.ts" />
     <TypeScriptCompile Include="_references.ts" />
     <TypeScriptCompile Include="Type.ts" />
