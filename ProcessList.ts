@@ -15,12 +15,14 @@
             content += '">add new process</li>';
         
             let procs: {[key:string]:Process} = this.workspace.userProcesses;
-            for (let proc in procs)
-                content += this.writeListItem(procs[proc], true);
+            for (let name in procs) {
+                let proc = procs[name];
+                content += this.writeListItem(proc, true, (proc as UserProcess).isValid);
+            }
             
             procs = this.workspace.systemProcesses;
             for (let proc in procs)
-                content += this.writeListItem(procs[proc], false);
+                content += this.writeListItem(procs[proc], false, true);
         
             this.listElement.innerHTML = content;
         
@@ -52,11 +54,13 @@
                     item.addEventListener('dblclick', openUserProcess);
             }
         }
-        private writeListItem(process, editable) {
+        private writeListItem(process: Process, editable: boolean, valid: boolean) {
             let desc = '<li draggable="true" data-process="' + process.name + '" class="';
         
             if (!editable)
-                desc += 'readonly';
+                desc += 'readonly ';
+            if (!valid)
+                desc += 'invalid ';
             else if (process == this.workspace.editor.currentProcess)
                 desc += 'active';
         

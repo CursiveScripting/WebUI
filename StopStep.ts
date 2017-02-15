@@ -39,7 +39,7 @@
                     ctx.fillStyle = '#000';
 
                     let displayName = this.returnPath == null ? '[no name]' : '"' + this.returnPath + '"';
-                    this.parentProcess.editor.underlineText(ctx, displayName, this.x, this.y + this.radius / 2, isMouseOver);
+                    Drawing.underlineText(ctx, displayName, this.x, this.y + this.radius / 2, isMouseOver);
                 }.bind(this),
                 'pointer'
             );
@@ -49,11 +49,11 @@
                 content += '" />';
                 
                 let action = function () {
-                    let name = this.parentProcess.editor.popupContent.querySelector('.name').value.trim();
+                    let name = this.parentProcess.workspace.editor.popupContent.querySelector('.name').value.trim();
                     this.returnPath = name == '' ? null : name;
                 }.bind(this);
 
-                this.parentProcess.editor.workspace.showPopup(content, action);
+                this.parentProcess.workspace.editor.workspace.showPopup(content, action);
             }.bind(this);
             pathName.hover = function () { return true; }
             pathName.unhover = function () { return true; }

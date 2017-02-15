@@ -1,6 +1,6 @@
 ﻿namespace Cursive {
     export abstract class Process {
-        editor: ProcessEditor;
+        workspace: Workspace;
         constructor(readonly name: string, readonly inputs: Variable[], readonly outputs: Variable[], readonly returnPaths: string[]) { }
 
         signatureMatches(other: Process) {
@@ -33,28 +33,6 @@
     export class SystemProcess extends Process {
         constructor(name, inputs, outputs, returnPaths) {
             super(name, inputs, outputs, returnPaths);
-        }
-    }
-
-    export class UserProcess extends Process {
-        steps: Step[];
-        variables: Variable[];
-        constructor(name, inputs, outputs, returnPaths, readonly fixedSignature: boolean) {
-            super(name, inputs, outputs, returnPaths);
-        
-            this.steps = [];
-            this.variables = [];
-        }
-
-        isValid() : boolean {
-            // TODO: check if every step's outputs and I/O parameters are connected
-            return true;
-        }
-
-        createDefaultSteps() {
-            let step: Step = new StartStep(this, 75, 125);
-            step.createDanglingReturnPaths();
-            this.steps.push(step);
         }
     }
 }

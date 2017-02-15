@@ -47,7 +47,7 @@
             
                 // test for collisions
                 let steps = this.parentProcess.steps;
-                let ctx = this.parentProcess.editor.canvas.getContext('2d');
+                let ctx = this.parentProcess.workspace.editor.canvas.getContext('2d');
 
                 for (let i=0; i<steps.length; i++) {
                     if (steps[i] === this)
@@ -167,6 +167,15 @@
                     this.returnPaths.push(returnPath);
                 }
             }
+        }
+        validate() {
+            for (let path of this.returnPaths)
+                if (!path.isConnected())
+                    return false;
+
+            // TODO: check if all I/O parameters are connected
+
+            return true;
         }
     }
 }

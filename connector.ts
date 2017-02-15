@@ -42,7 +42,7 @@
         
             this.region.mousedown = function (x,y) {
                 this.dragging = true;
-                let editor = this.step.parentProcess.editor;
+                let editor = this.step.parentProcess.workspace.editor;
                 editor.highlightVariables(this.param.type);
                 editor.draw();
                 return true;
@@ -51,7 +51,7 @@
                 if (!this.dragging)
                     return false;
                 
-                let editor = this.step.parentProcess.editor;
+                let editor = this.step.parentProcess.workspace.editor;
                 editor.highlightVariables(null);
 
                 let ctx = editor.canvas.getContext('2d');
@@ -153,7 +153,7 @@
             let cp1 = connector.offset(connector.step.x, connector.step.y, connector.step.radius * 5, connector.angle);
             let cp2x = toX, cp2y = toY + 200;
     
-            connector.step.parentProcess.editor.drawCurve(ctx, edgePos.x, edgePos.y, cp1.x, cp1.y, cp2x, cp2y, toX, toY);
+            Drawing.drawCurve(ctx, edgePos.x, edgePos.y, cp1.x, cp1.y, cp2x, cp2y, toX, toY);
         }
     }
 }

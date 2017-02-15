@@ -132,7 +132,7 @@
                 (process as UserProcess).createDefaultSteps();
             }
             
-            process.editor = workspace.editor;
+            process.workspace = workspace;
             return process;
         }
         private static allocateColors(num) {

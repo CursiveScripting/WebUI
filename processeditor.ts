@@ -93,7 +93,7 @@
                     ctx.font = '16px sans-serif';
                     ctx.strokeStyle = ctx.fillStyle = isMouseDown ? '#000' : '#999';
                 
-                    this.underlineText(ctx, 'edit this process', 32, 62, isMouseOver);
+                    Drawing.underlineText(ctx, 'edit this process', 32, 62, isMouseOver);
                 }.bind(this),
                 'pointer'
             );
@@ -115,7 +115,7 @@
                     ctx.font = '16px sans-serif';
                     ctx.strokeStyle = ctx.fillStyle = isMouseDown ? '#000' : '#999';
                 
-                    this.underlineText(ctx, 'add variable', this.titleEndX + 16, 40, isMouseOver);
+                    Drawing.underlineText(ctx, 'add variable', this.titleEndX + 16, 40, isMouseOver);
                 }.bind(this),
                 'pointer'
             );
@@ -301,29 +301,6 @@
         
             window.addEventListener('resize', this.updateSize.bind(this));
             setTimeout(this.updateSize.bind(this), 0);
-        }
-        underlineText(ctx, text, x, y, drawLine) {
-            ctx.fillText(text, x, y);
-
-            if (drawLine) {
-                let w = ctx.measureText(text).width;
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-
-                let startX: number;
-                switch (ctx.textAlign) {
-                    case 'center':
-                        startX = x - w / 2; break;
-                    case 'right':
-                        startX = x - w; break;
-                    default:
-                        startX = x; break;
-                }
-
-                ctx.moveTo(startX, y + 1);
-                ctx.lineTo(startX + w, y + 1);
-                ctx.stroke();
-            }
         }
         getCanvasCoords(e) {
             let canvasPos = this.canvas.getBoundingClientRect();
@@ -715,12 +692,6 @@
                 for (let i=0; i<this.hoverVariable.links.length; i++)
                     Connector.drawPath(ctx, this.hoverVariable.links[i], fromX, fromY);
             }
-        }
-        drawCurve(ctx, startX, startY, cp1x, cp1y, cp2x, cp2y, endX, endY) {
-            ctx.beginPath();
-            ctx.moveTo(startX, startY);
-            ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
-            ctx.stroke();
         }
     }
 }

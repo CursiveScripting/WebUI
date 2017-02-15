@@ -23,6 +23,17 @@
         saveProcesses() {
             return ProcessSerialization.saveProcesses(this.userProcesses);
         }
+        validate() {
+            let valid = true;
+
+            for (let name in this.userProcesses) {
+                let process = this.userProcesses[name];
+                if (!process.validate())
+                    valid = false;
+            }
+
+            return valid;
+        }
         showError(message) {
             this.editor.showText('<h3>An error has occurred</h3><p>Sorry. You might need to reload the page to continue.</p><p>The following error was encountered - you might want to report this:</p><pre>' + message + '</pre>');
             console.error(message);

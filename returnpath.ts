@@ -228,7 +228,7 @@
                 }
             }
     
-            this.fromStep.parentProcess.editor.drawCurve(ctx, fromX, fromY, cp1x, cp1y, cp2x, cp2y, toX, toY);
+            Drawing.drawCurve(ctx, fromX, fromY, cp1x, cp1y, cp2x, cp2y, toX, toY);
 
             let tx: number, ty: number, angle: number;
             if (this.toStep == null) {
@@ -256,7 +256,7 @@
 
             this.updateOffset(x, y);
             this.dragging = false;
-            this.toStep = this.fromStep.parentProcess.editor.getStep(x, y);
+            this.toStep = this.fromStep.parentProcess.workspace.editor.getStep(x, y);
             // TODO: if other return paths from this step already go to the same destination, combine them into one somehow
             return true;
         }
@@ -270,6 +270,9 @@
         private updateOffset(x, y) {
             this.endOffsetX = x - this.fromStep.x;
             this.endOffsetY = y - this.fromStep.y;
+        }
+        isConnected() {
+            return this.toStep !== null;
         }
     }
 }
