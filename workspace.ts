@@ -21,17 +21,15 @@
             let typeColors = this.allocateColors(typeNodes.length);
         
             for (let i=0; i<typeNodes.length; i++) {
-                let name = typeNodes[i].getAttribute('name');
-                let color = typeColors[i];
-            
-                if (typesByName.hasOwnProperty(name)) {
+                let type = this.loadType(typeNodes[i], typeColors[i]);
+                
+                if (typesByName.hasOwnProperty(type.name)) {
                     this.showError('There are two types in the workspace with the same name: ' + name + '. Type names must be unique.');
                     continue;
                 }
-            
-                let type = new Type(name, color);
+
                 this.types.push(type);
-                typesByName[name] = type;
+                typesByName[type.name] = type;
             }
         
             let procNodes = workspaceXml.getElementsByTagName('SystemProcess');
@@ -45,6 +43,26 @@
                 let process = <UserProcess>this.loadProcess(procNodes[i], typesByName, false);
                 this.userProcesses[process.name] = process;
             }
+        }
+        private loadType(typeNode, color) {
+            let name = typeNode.getAttribute('name');
+            
+            let validationExpression: RegExp;
+            if (typeNode.hasAttribute('validation')) {
+                let validation = typeNode.getAttribute('validation');
+
+                // ensure the whole value will be tested
+                if (validation.charAt(0) != '^')
+                    validation = '^' + validation;
+                if (validation.charAt(validation.length - 1) != '$')
+                    validation = validation + '$';
+
+                validationExpression = new RegExp(validation);
+            }
+            else
+                validationExpression = null;
+
+            return new Type(name, color, validationExpression);
         }
         private loadProcess(procNode, typesByName, isSystemProcess): Process {
             let name = procNode.getAttribute('name');
