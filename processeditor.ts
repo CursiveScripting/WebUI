@@ -162,8 +162,37 @@
             }.bind(this);
             addVariable.hover = function() { return true; }
             addVariable.unhover = function() { return true; }
-        
-            this.fixedRegions = [addVariable, title, editLink];
+            
+            let stopStep = new Region(
+                function (ctx) {
+                    ctx.rect(this.canvasWidth - 50, 10, 40, 40);
+                }.bind(this),
+                function (ctx, isMouseOver, isMouseDown) {
+                    ctx.strokeStyle = '#000';
+                    ctx.fillStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.rect(this.canvasWidth - 50, 10, 40, 40);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.font = '32px sans-serif';
+                    ctx.strokeStyle = ctx.fillStyle = isMouseDown ? '#000' : '#a00';
+                    ctx.fillText('+', this.canvasWidth - 30, 30);
+                }.bind(this),
+                'move'
+            );
+            stopStep.mousedown = function (x, y) {
+                let step = new StopStep(this.currentProcess, null, this.canvasWidth - 30, 30);
+                this.currentProcess.steps.push(step);
+                step.dragging = true;
+                step.bodyRegion.mousedown(x, y - 35);
+                return false;
+            }.bind(this);
+
+            this.fixedRegions = [addVariable, title, editLink, stopStep];
             this.variableRegions = [];
             this.hoverRegion = null;
             this.mouseDownRegion = null;

@@ -55,9 +55,6 @@
             let step: Step = new StartStep(this, 75, 125);
             step.createDanglingReturnPaths();
             this.steps.push(step);
-
-            step = new StopStep(this, null, 500, 300);
-            this.steps.push(step);
         }
     }
 }

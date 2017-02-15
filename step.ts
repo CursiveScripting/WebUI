@@ -5,10 +5,10 @@
         readonly returnPaths: ReturnPath[];
         readonly radius: number;
         drawText: boolean;
-        private dragging: boolean;
+        dragging: boolean;
         private connectors: Connector[];
         regions: Region[];
-        private bodyRegion: Region;
+        bodyRegion: Region;
         private collisionRegion: Region;
 
         constructor(readonly process: Process, readonly parentProcess: Process, x: number, y: number) {
