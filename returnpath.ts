@@ -36,36 +36,8 @@
                     ctx.restore();
                 }.bind(this),
                 this.drawName.bind(this),
-                'pointer'
+                'default'
             );
-    
-            pathName.click = function (x, y) {
-                let paths = this.fromStep.process.returnPaths;
-                let content, action;
-                if (paths.length < 2)
-                    content = 'Only one path can come from this process,<br />as it doesn\'t have multiple return paths.<br />Please remove the extra path(s).';
-                else {
-                    content = 'Select the return path to use:<br/><select class="returnPath"><option value="">[default]</option>';
-                    for (let i=0; i<paths.length; i++)
-                        content += '<option value="' + paths[i] + '">' + paths[i] + '</option>';
-                    content += '</select>';
-            
-                    action = function () {
-                        this.name = this.fromStep.editor.popupContent.querySelector('.returnPath').value;
-                        this.warnDuplicate = false;
-                
-                        for (let i=0; i<this.fromStep.returnPaths.length; i++) {
-                            let existing = this.fromStep.returnPaths[i];
-                            if (existing !== this && existing.name === this.name)
-                                existing.warnDuplicate = this.warnDuplicate = true;
-                        }
-                
-                        this.fromStep.editor.draw();
-                    }.bind(this);
-                }
-        
-                this.fromStep.editor.workspace.showPopup(content, action);
-            }.bind(this);
     
             let midArrow = new Region(
                 function (ctx) {
