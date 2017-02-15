@@ -25,6 +25,8 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="Connector.ts" />
+    <TypeScriptCompile Include="Transform.ts" />
+    <TypeScriptCompile Include="Variable.ts" />
     <TypeScriptCompile Include="Process.ts" />
     <TypeScriptCompile Include="Region.ts" />
     <TypeScriptCompile Include="ReturnPath.ts" />
@@ -35,7 +37,7 @@
     <TypeScriptCompile Include="ProcessList.ts" />
     <TypeScriptCompile Include="Workspace.ts" />
     <TypeScriptCompile Include="_references.ts" />
-    <TypeScriptCompile Include="everythingelse.ts" />
+    <TypeScriptCompile Include="Type.ts" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
