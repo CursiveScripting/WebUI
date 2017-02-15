@@ -28,6 +28,8 @@
     <TypeScriptCompile Include="Process.ts" />
     <TypeScriptCompile Include="Region.ts" />
     <TypeScriptCompile Include="ReturnPath.ts" />
+    <TypeScriptCompile Include="StartStep.ts" />
+    <TypeScriptCompile Include="StopStep.ts" />
     <TypeScriptCompile Include="Step.ts" />
     <TypeScriptCompile Include="ProcessEditor.ts" />
     <TypeScriptCompile Include="ProcessList.ts" />
