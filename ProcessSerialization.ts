@@ -5,7 +5,8 @@
         }
 
         static saveProcesses(processes) {
-            let rootNode = document.createElement('Processes');
+            let saveDoc = document.implementation.createDocument(null, 'processes', null);
+            let rootNode = saveDoc.createElement('Processes');
 
             for (let name in processes) {
                 let process = processes[name];
