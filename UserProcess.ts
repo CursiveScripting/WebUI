@@ -3,16 +3,22 @@
         steps: Step[];
         variables: Variable[];
         private valid: boolean;
+        private nextStepID: number;
         constructor(name, inputs, outputs, returnPaths, readonly fixedSignature: boolean) {
             super(name, inputs, outputs, returnPaths);
         
             this.steps = [];
             this.variables = [];
             this.valid = false;
+            this.nextStepID = 1;
         }
 
         get isValid(): boolean {
             return this.valid;
+        }
+
+        getNextStepID() {
+            return this.nextStepID++;
         }
 
         validate() : boolean {

@@ -1,6 +1,6 @@
 ﻿namespace Cursive {
     export class StartStep extends Step {
-        constructor(parentProcess: Process, x: number, y: number) {
+        constructor(parentProcess: UserProcess, x: number, y: number) {
             super(null, parentProcess, x, y);
         }
         protected writeText(ctx) {
@@ -37,7 +37,7 @@
             returnPath.onlyPath = true;
             this.returnPaths.push(returnPath);
         }
-        protected getInputs() { return null; }
-        protected getOutputs() { return this.parentProcess.inputs; }
+        getInputs() { return null; }
+        getOutputs() { return this.parentProcess.inputs; }
     }
 }

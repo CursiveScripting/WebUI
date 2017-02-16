@@ -10,13 +10,15 @@
         regions: Region[];
         bodyRegion: Region;
         private collisionRegion: Region;
+        readonly uniqueID: number;
 
-        constructor(readonly process: Process, readonly parentProcess: Process, x: number, y: number) {
+        constructor(readonly process: Process, readonly parentProcess: UserProcess, x: number, y: number) {
             this.x = x;
             this.y = y;
             this.returnPaths = [];
             this.radius = 45;
             this.drawText = this.dragging = false;
+            this.uniqueID = parentProcess.getNextStepID();
             this.createRegions();
         }
         protected createRegions() {
@@ -105,10 +107,10 @@
                 function (ctx) { ctx.arc(this.x, this.y, this.radius * 2, 0, 2 * Math.PI); }.bind(this)
             )
         }
-        protected getInputs() {
+        getInputs() {
             return this.process.inputs;
         }
-        protected getOutputs() {
+        getOutputs() {
             return this.process.outputs;
         }
         private createConnectors(params, input) {

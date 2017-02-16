@@ -1,7 +1,7 @@
 ﻿namespace Cursive {
     export class ReturnPath {
         private readonly fromStep: Step;
-        private toStep: Step;
+        private _toStep: Step;
         private endOffsetX?: number;
         private endOffsetY?: number;
         readonly name: string;
@@ -16,7 +16,7 @@
 
         constructor(fromStep, toStep, name, endOffsetX?: number, endOffsetY?: number) {
             this.fromStep = fromStep;
-            this.toStep = toStep;
+            this._toStep = toStep;
             this.endOffsetX = endOffsetX;
             this.endOffsetY = endOffsetY;
             this.name = name;
@@ -63,7 +63,7 @@
 
             let endConnector = new Region(
                 function (ctx) {
-                    if (this.toStep != null)
+                    if (this._toStep != null)
                         return;
 
                     ctx.save();
@@ -73,7 +73,7 @@
                     ctx.restore();
                 }.bind(this),
                 function (ctx) {
-                    if (this.toStep != null)
+                    if (this._toStep != null)
                         return;
 
                     ctx.save();
@@ -90,6 +90,9 @@
             endConnector.move = this.dragMove.bind(this);
 
             this.regions = [pathName, midArrow, endConnector];
+        }
+        get toStep(): Step {
+            return this._toStep;
         }
         private getNameToWrite() {
             return this.name !== null ? this.name : this.onlyPath ? null : 'default';
@@ -132,7 +135,7 @@
             let radius = 8;
 
             ctx.beginPath();
-            ctx.fillStyle = this.toStep == null && !this.dragging ? '#f00' : '#fff';
+            ctx.fillStyle = this._toStep == null && !this.dragging ? '#f00' : '#fff';
             ctx.strokeStyle = '#000';
             ctx.lineWidth = 2;
             ctx.arc(0, 0, radius, 0, Math.PI * 2);
@@ -145,7 +148,7 @@
             ctx.shadowOffsetX = 0; 
             ctx.shadowOffsetY = 0; 
             
-            ctx.fillStyle = this.toStep == null && !this.dragging ? '#f00' : '#fff';
+            ctx.fillStyle = this._toStep == null && !this.dragging ? '#f00' : '#fff';
     
             ctx.beginPath();
             ctx.moveTo(-arrowLength, halfWidth);
@@ -164,13 +167,13 @@
         draw(ctx) {
             let fromX = this.fromStep.x, fromY = this.fromStep.y;
             let toX: number, toY: number;
-            if (this.toStep == null) {
+            if (this._toStep == null) {
                 toX = this.fromStep.x + this.endOffsetX;
                 toY = this.fromStep.y + this.endOffsetY;
             }
             else {
-                toX = this.toStep.x;
-                toY = this.toStep.y;
+                toX = this._toStep.x;
+                toY = this._toStep.y;
             }
 
             ctx.strokeStyle = '#000';
@@ -189,13 +192,13 @@
                 if (dx < 0) {
                     if (this.fromStep.process != null && this.fromStep.process.inputs.length % 2 == 1)
                         cp1y += dy > 0 ? yOffset : -yOffset;
-                    if (this.toStep != null && this.toStep.process != null && this.toStep.process.outputs.length % 2 == 1)
+                    if (this._toStep != null && this._toStep.process != null && this._toStep.process.outputs.length % 2 == 1)
                         cp2y += dy > 0 ? -yOffset : yOffset;
                 }
                 else {
                     if (this.fromStep.process != null && this.fromStep.process.outputs.length % 2 == 1)
                         cp1y += dy > 0 ? yOffset : -yOffset;
-                    if (this.toStep != null && this.toStep.process != null && this.toStep.process.inputs.length % 2 == 1)
+                    if (this._toStep != null && this._toStep.process != null && this._toStep.process.inputs.length % 2 == 1)
                         cp2y += dy > 0 ? -yOffset : yOffset;
                 }
             }
@@ -203,7 +206,7 @@
             Drawing.drawCurve(ctx, fromX, fromY, cp1x, cp1y, cp2x, cp2y, toX, toY);
 
             let tx: number, ty: number, angle: number;
-            if (this.toStep == null) {
+            if (this._toStep == null) {
                 // handle goes at the end of the line
                 this.endConnectorTranform = new Transform(toX, toY, 0);
             }
@@ -217,7 +220,7 @@
             this.midArrowTransform = new Transform(tx, ty, angle);
         }
         private dragStart(x, y) {
-            this.toStep = null;
+            this._toStep = null;
             this.updateOffset(x, y);
             this.dragging = true;
             return true;
@@ -228,7 +231,7 @@
 
             this.updateOffset(x, y);
             this.dragging = false;
-            this.toStep = this.fromStep.parentProcess.workspace.editor.getStep(x, y);
+            this._toStep = this.fromStep.parentProcess.workspace.editor.getStep(x, y);
             // TODO: if other return paths from this step already go to the same destination, combine them into one somehow
             return true;
         }
@@ -244,7 +247,7 @@
             this.endOffsetY = y - this.fromStep.y;
         }
         isConnected() {
-            return this.toStep !== null;
+            return this._toStep !== null;
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿namespace Cursive {
     export class StopStep extends Step {
         returnPath: string;
-        constructor(parentProcess: Process, returnPath: string, x: number, y: number) {
+        constructor(parentProcess: UserProcess, returnPath: string, x: number, y: number) {
             super(null, parentProcess, x, y);
             this.returnPath = returnPath;
         }
@@ -61,7 +61,7 @@
             this.regions.unshift(pathName);
         }
         createDanglingReturnPaths() { }
-        protected getInputs() { return this.parentProcess.outputs; }
-        protected getOutputs() { return null; }
+        getInputs() { return this.parentProcess.outputs; }
+        getOutputs() { return null; }
     }
 }

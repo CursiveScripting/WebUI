@@ -2,7 +2,7 @@
     export class Variable {
         name: string;
         type: Type;
-        links: any[];
+        links: Connector[];
         constructor(name, type) {
             this.name = name;
             this.type = type;

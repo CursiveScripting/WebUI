@@ -1,8 +1,8 @@
 ﻿namespace Cursive {
     export class Connector {
-        private readonly step: Step;
+        readonly step: Step;
         private readonly angle: number;
-        private readonly param: any;
+        readonly param: Variable;
         private readonly input: boolean;
         region: Region;
 
