@@ -81,7 +81,10 @@
         private static saveParameter(parameter: Variable, parent, nodeName, variableAttributeName) {
             let element = parent.ownerDocument.createElement(nodeName);
             element.setAttribute('name', parameter.name);
-            element.setAttribute(variableAttributeName, 'dunno'); // TODO: get actual variable name
+            parent.appendChild(element);
+            
+            if (parameter.links.length >= 0)
+                element.setAttribute(variableAttributeName, parameter.links[0].name);
         }
     }
 }
