@@ -20,12 +20,22 @@
             parent.appendChild(element);
             element.setAttribute('name', process.name);
 
-            // TODO: write inputs, outputs
+            // write inputs, outputs, variables
+            for (let parameter of process.inputs)
+                this.saveProcessParameter(parameter, element, 'Input');
+            for (let parameter of process.outputs)
+                this.saveProcessParameter(parameter, element, 'Output');
+            for (let variable of process.variables) {
+                let varElement = this.saveProcessParameter(variable, element, 'Variable');
+                // TODO: write initialValue attribute if required
+            }
 
-            // TODO: write all variables
+            // write steps
+            let steps = parent.ownerDocument.createElement('Steps');
+            element.appendChild(steps);
     
             for (let step of process.steps)
-                this.saveStep(step, element);
+                this.saveStep(step, steps);
         }
 
         private static saveStep(step: Step, parent: HTMLElement) {
@@ -51,8 +61,8 @@
             element.setAttribute('y', step.y.toString());
 
             // TODO: write fixed input values
-            this.saveParameters(step.getInputs(), element, 'MapInput', 'source');
-            this.saveParameters(step.getOutputs(), element, 'MapOutput', 'destination');
+            this.saveStepParameters(step.getInputs(), element, 'MapInput', 'source');
+            this.saveStepParameters(step.getOutputs(), element, 'MapOutput', 'destination');
 
             for (let path of step.returnPaths) {
                 let pathElement: HTMLElement;
@@ -69,22 +79,30 @@
             }
         }
 
-        private static saveParameters(parameters: Variable[], parent, nodeName, variableAttributeName) {
+        private static saveStepParameters(parameters: Variable[], parent, nodeName, variableAttributeName) {
             if (parameters === null)
                 return;
 
             for (let parameter of parameters) {
-                this.saveParameter(parameter, parent, nodeName, variableAttributeName);
+                this.saveStepParameter(parameter, parent, nodeName, variableAttributeName);
             }
         }
 
-        private static saveParameter(parameter: Variable, parent, nodeName, variableAttributeName) {
+        private static saveStepParameter(parameter: Variable, parent, nodeName, variableAttributeName) {
             let element = parent.ownerDocument.createElement(nodeName);
             element.setAttribute('name', parameter.name);
             parent.appendChild(element);
             
             if (parameter.links.length >= 0)
                 element.setAttribute(variableAttributeName, parameter.links[0].name);
+        }
+
+        private static saveProcessParameter(parameter: Variable, parent, nodeName) {
+            let element = parent.ownerDocument.createElement(nodeName);
+            element.setAttribute('name', parameter.name);
+            element.setAttribute('type', parameter.type.name);
+            parent.appendChild(element);
+            return element;
         }
     }
 }
