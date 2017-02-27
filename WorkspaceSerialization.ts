@@ -10,7 +10,7 @@
             let typeColors = this.allocateColors(typeNodes.length);
         
             for (let i=0; i<typeNodes.length; i++) {
-                let type = this.loadType(typeNodes[i], typeColors[i]);
+                let type = this.loadType(typeNodes[i], typeColors[i], workspace, typesByName);
                 
                 if (typesByName.hasOwnProperty(type.name)) {
                     workspace.showError('There are two types in the workspace with the same name: ' + name + '. Type names must be unique.');
@@ -35,25 +35,36 @@
 
             workspace.setDefinitions(types, systemProcesses, userProcesses);
         }
-        private static loadType(typeNode, color) {
+        private static loadType(typeNode, color, workspace, typesByName) {
             let name = typeNode.getAttribute('name');
             
             let validationExpression: RegExp;
             if (typeNode.hasAttribute('validation')) {
                 let validation = typeNode.getAttribute('validation');
-
-                // ensure the whole value will be tested
-                if (validation.charAt(0) != '^')
-                    validation = '^' + validation;
-                if (validation.charAt(validation.length - 1) != '$')
-                    validation = validation + '$';
-
                 validationExpression = new RegExp(validation);
             }
             else
                 validationExpression = null;
 
-            return new Type(name, color, validationExpression);
+            let extendsType: Type;
+            if (typeNode.hasAttribute('extends')) {
+                let extendsName = typeNode.getAttribute('extends');
+                if (typesByName.hasOwnProperty(extendsName))
+                    extendsType = typesByName[extendsName];
+                else {
+                    extendsType = null;
+                    workspace.showError('Type ' + name + ' extends a type which has not been defined: ' + extendsName + '.');
+                }
+            }
+            else
+                extendsType = null;
+
+            let guidance: string;
+            if (typeNode.hasAttribute('guidance')) {
+                guidance = typeNode.getAttribute('guidance');
+            }
+
+            return new Type(name, color, extendsType, validationExpression, guidance);
         }
         private static loadProcessDefinition(workspace, procNode, typesByName, isSystemProcess): Process {
             let name = procNode.getAttribute('name');
