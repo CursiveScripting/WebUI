@@ -7,10 +7,9 @@
 
             let typesByName: {[key:string]:Type} = {};
             let typeNodes = workspaceXml.getElementsByTagName('Type');
-            let typeColors = this.allocateColors(typeNodes.length);
         
             for (let i=0; i<typeNodes.length; i++) {
-                let type = this.loadType(typeNodes[i], typeColors[i], workspace, typesByName);
+                let type = this.loadType(typeNodes[i], workspace, typesByName);
                 
                 if (typesByName.hasOwnProperty(type.name)) {
                     workspace.showError('There are two types in the workspace with the same name: ' + name + '. Type names must be unique.');
@@ -35,8 +34,10 @@
 
             workspace.setDefinitions(types, systemProcesses, userProcesses);
         }
-        private static loadType(typeNode, color, workspace, typesByName) {
+        private static loadType(typeNode, workspace, typesByName) {
             let name = typeNode.getAttribute('name');
+
+            let color = typeNode.getAttribute('color');
             
             let validationExpression: RegExp;
             if (typeNode.hasAttribute('validation')) {
@@ -145,41 +146,6 @@
             
             process.workspace = workspace;
             return process;
-        }
-        private static allocateColors(num) {
-            let hue2rgb = function hue2rgb(p, q, t){
-                if(t < 0) t += 1;
-                if(t > 1) t -= 1;
-                if(t < 1/6) return p + (q - p) * 6 * t;
-                if(t < 1/2) return q;
-                if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-                return p;
-            };
-            let hslToRgb = function (h, s, l) {
-                let r, g, b;
-
-                if(s == 0) {
-                    r = g = b = l; // achromatic
-                }
-                else{
-
-                    let q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-                    let p = 2 * l - q;
-                    r = hue2rgb(p, q, h + 1/3);
-                    g = hue2rgb(p, q, h);
-                    b = hue2rgb(p, q, h - 1/3);
-                }
-
-                return 'rgb(' + Math.round(r * 255) + ', ' + Math.round(g * 255) + ', ' + Math.round(b * 255) + ')';
-            };
-        
-            let colors = [];
-            let hueStep = 1 / num, hue = 0, sat = 1, lum = 0.45;
-            for (let i=0; i<num; i++) {
-                colors.push(hslToRgb(hue, sat, lum));
-                hue += hueStep;
-            }
-            return colors;
         }
     }
 }
