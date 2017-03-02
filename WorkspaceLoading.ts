@@ -1,5 +1,5 @@
 ﻿namespace Cursive {
-    export class WorkspaceSerialization {
+    export class WorkspaceLoading {
         static loadWorkspace(workspace: Workspace, workspaceXml: HTMLElement) {
             let types: Type[] = [];
             let systemProcesses: {[key:string]:SystemProcess} = {};

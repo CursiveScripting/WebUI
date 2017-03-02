@@ -8,7 +8,7 @@
 
         constructor(workspaceXml: HTMLElement, processList: HTMLElement, mainContainer: HTMLElement) {
             this.editor = new ProcessEditor(this, mainContainer);
-            WorkspaceSerialization.loadWorkspace(this, workspaceXml);
+            WorkspaceLoading.loadWorkspace(this, workspaceXml);
             this.processList = new ProcessList(this, processList);
         }
         setDefinitions(types, systemProcesses, userProcesses) {
@@ -17,7 +17,7 @@
             this.userProcesses = userProcesses;
         }
         loadProcesses(processXml) {
-            ProcessSerialization.loadProcesses(this.userProcesses, processXml);
+            ProcessLoading.loadProcesses(this.userProcesses, processXml);
             this.processList.populateList();
         }
         saveProcesses() {
@@ -25,7 +25,7 @@
                 this.showError('<h3>Unable to save workspace</h3>Some of your processes are not valid. Please ensure all inputs, outputs and return paths are connected.');
                 return null;    
             }
-            return ProcessSerialization.saveProcesses(this.userProcesses);
+            return ProcessSaving.saveProcesses(this.userProcesses);
         }
         validate() {
             let valid = true;

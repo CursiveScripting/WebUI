@@ -1,9 +1,5 @@
 ﻿namespace Cursive {
-    export class ProcessSerialization {
-        static loadProcesses(processes, processXml: HTMLElement) {
-            // TODO: parse XML, add to existing processes
-        }
-
+    export class ProcessSaving {
         static saveProcesses(processes) {
             let saveDoc = document.implementation.createDocument(null, 'processes', null);
             let rootNode = saveDoc.createElement('Processes');
