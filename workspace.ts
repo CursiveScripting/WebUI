@@ -55,9 +55,13 @@
             }
             else
                 this.editor.popupEventListener = null;
-        
+
             this.editor.popup.style.display = '';
             this.editor.overlay.style.display = '';
+
+            let firstInput = this.editor.popup.querySelector('input') as HTMLElement;
+            if (firstInput !== null)
+                firstInput.focus();
         }
         getScrollbarSize() {
             let outer = document.createElement('div');
