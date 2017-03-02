@@ -393,7 +393,7 @@
 
                 if (input.links.length > 0) {
                     let linkedVar = input.links[0];
-                    let indexOnVar = linkedVar.links.indexOf(input);
+                    let indexOnVar = linkedVar.links.indexOf(connector);
                     if (indexOnVar != -1)
                         linkedVar.links.splice(indexOnVar, 1); 
                     input.links = [];

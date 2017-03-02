@@ -139,7 +139,14 @@
             ctx.lineTo(sidePos2.x, sidePos2.y);
         
             ctx.stroke();
-        
+
+            if (this.param.initialValue !== null) {
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(startPos.x, startPos.y, this.linkBranchLength * 0.75, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
             if (this.step.drawText) {
                 let pos = this.offset(this.step.x, this.step.y, this.textDistance + this.step.radius, this.angle);
                 ctx.fillText(this.param.name, pos.x, pos.y);
