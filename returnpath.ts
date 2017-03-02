@@ -185,7 +185,12 @@
             // need to curve if near horizontal (and i/o connectors will get in the way)
             let minCurveGradient = 0.1;
             m = Math.abs(m);
-            if (m < minCurveGradient) {
+            if (this.fromStep === this.toStep) {
+                cp1x = cp2x = fromX + 140;
+                cp1y += 200;
+                cp2y -= 200;
+            }
+            else if (m < minCurveGradient) {
                 let curveScale = (minCurveGradient - m) / minCurveGradient;
                 let yOffset = 50 * curveScale;
 
