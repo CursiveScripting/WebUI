@@ -89,11 +89,13 @@
         }
 
         private static saveStepParameter(parameter: Variable, parent, nodeName, variableAttributeName) {
-            let element = parent.ownerDocument.createElement(nodeName);
+            let element = parent.ownerDocument.createElement(parameter.initialValue === null ? nodeName : 'FixedInput');
             element.setAttribute('name', parameter.name);
             parent.appendChild(element);
-            
-            if (parameter.links.length >= 0)
+
+            if (element.initialValue !== null)
+                element.setAttribute('value', element.initialValue);
+            else if (parameter.links.length >= 0)
                 element.setAttribute(variableAttributeName, parameter.links[0].name);
         }
 

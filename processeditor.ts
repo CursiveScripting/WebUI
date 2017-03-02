@@ -375,6 +375,34 @@
             this.textDisplay.innerHTML = text;
             this.showCanvas(false);
         }
+        showFixedInput(connector, input: Variable) {
+            // TODO: properly implement this
+            let content = 'Specify a fixed value for this input. '
+            if (input.type.guidance != null)
+                content += input.type.guidance;
+            content += ' <br/><input type="text" class="value" value="';
+
+            if (input.initialValue !== null)
+                content += input.initialValue;
+            content += ' " />';
+            
+            let action = function () {
+                let value = this.popupContent.querySelector('.value').value;
+                if (!input.type.isValid(value))
+                    return false; // TODO: stop the popup from closing
+
+                if (input.links.length > 0) {
+                    let linkedVar = input.links[0];
+                    let indexOnVar = linkedVar.links.indexOf(input);
+                    if (indexOnVar != -1)
+                        linkedVar.links.splice(indexOnVar, 1); 
+                    input.links = [];
+                }
+                input.initialValue = value;
+            }.bind(this);
+            
+            this.workspace.showPopup(content, action);
+        }
         showProcessOptions(process) {
             this.currentProcess = process;
         

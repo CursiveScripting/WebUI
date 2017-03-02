@@ -11,12 +11,13 @@
         private outputBranchAngle: number;
         private inputBranchAngle: number;
         private textDistance: number;
+        private mouseDown: boolean;
         private dragging: boolean;
 
         private dragEndX: number;
         private dragEndY: number;
 
-        constructor(step: Step, angle: number, param, isInput: boolean) {
+        constructor(step: Step, angle: number, param: Variable, isInput: boolean) {
             this.step = step;
             this.angle = angle;
             this.param = param;
@@ -27,6 +28,7 @@
             this.outputBranchAngle = Math.PI * 0.8;
             this.inputBranchAngle = Math.PI - this.outputBranchAngle;
             this.textDistance = 24;
+            this.mouseDown = false;
             this.dragging = false;
     
             this.createRegion();
@@ -41,15 +43,19 @@
             this.region.unhover = function () { this.step.drawText = false; return true; }.bind(this);
         
             this.region.mousedown = function (x,y) {
-                this.dragging = true;
+                this.mouseDown = true;
                 let editor = this.step.parentProcess.workspace.editor;
                 editor.highlightVariables(this.param.type);
                 editor.draw();
                 return true;
             }.bind(this);
             this.region.mouseup = function (x,y) {
-                if (!this.dragging)
+                this.mouseDown = false;
+
+                if (!this.dragging && this.input && this.param.type.allowInput) {
+                    this.step.process.workspace.editor.showFixedInput(this, this.param);
                     return false;
+                }
                 
                 let editor = this.step.parentProcess.workspace.editor;
                 editor.highlightVariables(null);
@@ -75,6 +81,7 @@
                             oldVarLinks.splice(index, 1);
                     }
                     this.param.links = [variable];
+                    this.param.initialValue = null;
                     variable.links.push(this);
                 }
             
@@ -85,9 +92,11 @@
                 return true;
             }.bind(this);
             this.region.move = function (x,y) {
-                if (!this.dragging)
+                if (!this.mouseDown)
                     return false;
-            
+
+                this.dragging = true;
+
                 this.dragEndX = x;
                 this.dragEndY = y;
                 return true;
