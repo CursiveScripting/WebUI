@@ -231,7 +231,11 @@
 
             this.updateOffset(x, y);
             this.dragging = false;
-            this._toStep = this.fromStep.parentProcess.workspace.editor.getStep(x, y);
+            let otherStep = this.fromStep.parentProcess.workspace.editor.getStep(x, y);
+            if (otherStep instanceof StartStep)
+                return false;
+
+            this._toStep = otherStep;
             // TODO: if other return paths from this step already go to the same destination, combine them into one somehow
             return true;
         }
