@@ -185,7 +185,7 @@
                 'move'
             );
             stopStep.mousedown = function (x, y) {
-                let step = new StopStep(this.currentProcess, null, this.canvasWidth - 30, 30);
+                let step = new StopStep(this.currentProcess.getNextStepID(), this.currentProcess, null, this.canvasWidth - 30, 30);
                 this.currentProcess.steps.push(step);
                 step.dragging = true;
                 step.bodyRegion.mousedown(x, y - 35);
@@ -560,7 +560,7 @@
                     this.currentProcess.name = name;
                 }
 
-                this.currentProcess = new UserProcess(name, [], [], [], false);
+                this.currentProcess = new UserProcess(name, [], [], [], [], false);
                 this.currentProcess.createDefaultSteps();
                 this.currentProcess.workspace = this.workspace;
                 this.workspace.userProcesses[name] = this.currentProcess;
@@ -586,7 +586,7 @@
                 return;
             }
 
-            let step = new Step(process, this.currentProcess, x, y)
+            let step = new Step(this.currentProcess.getNextStepID(), process, this.currentProcess, x, y)
             step.createDanglingReturnPaths();
             this.currentProcess.steps.push(step);
             this.draw();

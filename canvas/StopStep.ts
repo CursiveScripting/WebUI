@@ -1,8 +1,8 @@
 ﻿namespace Cursive {
     export class StopStep extends Step {
         returnPath: string;
-        constructor(parentProcess: UserProcess, returnPath: string, x: number, y: number) {
-            super(null, parentProcess, x, y);
+        constructor(uniqueID: number, parentProcess: UserProcess, returnPath: string, x: number, y: number) {
+            super(uniqueID, null, parentProcess, x, y);
             this.returnPath = returnPath;
         }
         protected writeText(ctx) {

@@ -2,7 +2,7 @@
     export class Workspace {
         readonly processList: ProcessList;
         readonly editor: ProcessEditor;
-        private types: Type[];
+        types: {[key:string]:Type};
         systemProcesses: {[key:string]:SystemProcess};
         userProcesses: {[key:string]:UserProcess};
 
@@ -17,7 +17,7 @@
             this.userProcesses = userProcesses;
         }
         loadProcesses(processXml) {
-            ProcessLoading.loadProcesses(this.userProcesses, processXml);
+            ProcessLoading.loadProcesses(this, processXml);
             this.processList.populateList();
         }
         saveProcesses() {

@@ -4,11 +4,11 @@
         variables: Variable[];
         private valid: boolean;
         private nextStepID: number;
-        constructor(name, inputs, outputs, returnPaths, readonly fixedSignature: boolean) {
+        constructor(name, inputs, outputs, variables, returnPaths, readonly fixedSignature: boolean) {
             super(name, inputs, outputs, returnPaths);
         
             this.steps = [];
-            this.variables = [];
+            this.variables = variables;
             this.valid = false;
             this.nextStepID = 1;
         }
@@ -36,7 +36,7 @@
         }
 
         createDefaultSteps() {
-            let step: Step = new StartStep(this, 75, 125);
+            let step: Step = new StartStep(this.getNextStepID(), this, 75, 125);
             step.createDanglingReturnPaths();
             this.steps.push(step);
         }

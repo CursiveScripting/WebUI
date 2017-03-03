@@ -1,7 +1,7 @@
 ﻿namespace Cursive {
     export class StartStep extends Step {
-        constructor(parentProcess: UserProcess, x: number, y: number) {
-            super(null, parentProcess, x, y);
+        constructor(uniqueID: number, parentProcess: UserProcess, x: number, y: number) {
+            super(uniqueID, null, parentProcess, x, y);
         }
         protected writeText(ctx) {
             ctx.font = '16px sans-serif';
