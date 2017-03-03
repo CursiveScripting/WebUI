@@ -561,7 +561,8 @@
                 }
 
                 this.currentProcess = new UserProcess(name, [], [], [], false);
-                this.currentProcess.createDefaultSteps(this);
+                this.currentProcess.createDefaultSteps();
+                this.currentProcess.workspace = this.workspace;
                 this.workspace.userProcesses[name] = this.currentProcess;
             
                 updateParameters(this.currentProcess.inputs, inputs);
