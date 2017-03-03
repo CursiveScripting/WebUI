@@ -24,25 +24,25 @@
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
   </ItemGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="Connector.ts" />
-    <TypeScriptCompile Include="Drawing.ts" />
-    <TypeScriptCompile Include="ProcessLoading.ts" />
-    <TypeScriptCompile Include="UserProcess.ts" />
-    <TypeScriptCompile Include="Transform.ts" />
-    <TypeScriptCompile Include="Variable.ts" />
-    <TypeScriptCompile Include="Process.ts" />
-    <TypeScriptCompile Include="Region.ts" />
-    <TypeScriptCompile Include="ReturnPath.ts" />
-    <TypeScriptCompile Include="StartStep.ts" />
-    <TypeScriptCompile Include="StopStep.ts" />
-    <TypeScriptCompile Include="Step.ts" />
+    <TypeScriptCompile Include="canvas\Connector.ts" />
+    <TypeScriptCompile Include="canvas\Drawing.ts" />
+    <TypeScriptCompile Include="io\ProcessLoading.ts" />
+    <TypeScriptCompile Include="data\UserProcess.ts" />
+    <TypeScriptCompile Include="canvas\Transform.ts" />
+    <TypeScriptCompile Include="data\Variable.ts" />
+    <TypeScriptCompile Include="data\Process.ts" />
+    <TypeScriptCompile Include="canvas\Region.ts" />
+    <TypeScriptCompile Include="canvas\ReturnPath.ts" />
+    <TypeScriptCompile Include="canvas\StartStep.ts" />
+    <TypeScriptCompile Include="canvas\StopStep.ts" />
+    <TypeScriptCompile Include="canvas\Step.ts" />
     <TypeScriptCompile Include="ProcessEditor.ts" />
-    <TypeScriptCompile Include="ProcessList.ts" />
-    <TypeScriptCompile Include="ProcessSaving.ts" />
-    <TypeScriptCompile Include="WorkspaceLoading.ts" />
+    <TypeScriptCompile Include="ui\ProcessList.ts" />
+    <TypeScriptCompile Include="io\ProcessSaving.ts" />
+    <TypeScriptCompile Include="io\WorkspaceLoading.ts" />
     <TypeScriptCompile Include="Workspace.ts" />
     <TypeScriptCompile Include="_references.ts" />
-    <TypeScriptCompile Include="Type.ts" />
+    <TypeScriptCompile Include="data\Type.ts" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
