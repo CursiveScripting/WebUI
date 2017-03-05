@@ -39,70 +39,80 @@
                 this.draw.bind(this),
                 'crosshair'
             );
-            this.region.hover = function () { this.step.drawText = true; return true; }.bind(this);
-            this.region.unhover = function () { this.step.drawText = false; return true; }.bind(this);
-        
-            this.region.mousedown = function (x,y) {
-                this.mouseDown = true;
-                let editor = this.step.parentProcess.workspace.editor;
-                editor.highlightVariables(this.param.type);
-                editor.draw();
-                return true;
-            }.bind(this);
-            this.region.mouseup = function (x,y) {
-                this.mouseDown = false;
-
-                if (!this.dragging && this.input && this.param.type.allowInput) {
-                    this.step.process.workspace.editor.showFixedInput(this, this.param);
-                    return false;
-                }
-                
-                let editor = this.step.parentProcess.workspace.editor;
-                editor.highlightVariables(null);
-
-                let ctx = editor.canvas.getContext('2d');
-                let variables = editor.currentProcess.variables;
-                for (let i=0; i<editor.variableRegions.length; i++) {
-                    let region = editor.variableRegions[i];
-                
-                    if (!region.containsPoint(ctx, x, y))
-                        continue;
-                
-                    let variableIndex = i % 2 == 0 ? i / 2 : (i-1) / 2; // there's two regions for each
-                    let variable = variables[variableIndex];
-                
-                    if (variable.type !== this.param.type)
-                        break;
-                
-                    for (let j=0; j<this.param.links.length; j++) {
-                        let oldVarLinks = this.param.links[j].links;
-                        let index = oldVarLinks.indexOf(this);
-                        if (index > -1)
-                            oldVarLinks.splice(index, 1);
-                    }
-                    this.param.links = [variable];
-                    this.param.initialValue = null;
-                    variable.links.push(this);
-                }
-            
-                this.dragEndX = undefined;
-                this.dragEndY = undefined;
-                this.dragging = false;
-                editor.draw();
-                return true;
-            }.bind(this);
-            this.region.move = function (x,y) {
-                if (!this.mouseDown)
-                    return false;
-
-                this.dragging = true;
-
-                this.dragEndX = x;
-                this.dragEndY = y;
-                return true;
-            }.bind(this);
+            this.region.hover = this.regionHover.bind(this);
+            this.region.unhover = this.regionUnhover.bind(this);
+            this.region.mousedown = this.regionMouseDown.bind(this);
+            this.region.mouseup = this.regionMouseUp.bind(this);
+            this.region.move = this.regionMove.bind(this);
         }
-        outline(ctx) {
+        private regionHover() {
+            this.step.drawText = true;
+            return true;
+        }
+        private regionUnhover() {
+            this.step.drawText = false;
+            return true;
+        }
+        private regionMouseDown(x: number, y: number) {
+            this.mouseDown = true;
+            let editor = this.step.parentProcess.workspace.editor;
+            editor.highlightVariables(this.param.type);
+            editor.draw();
+            return true;
+        }
+        private regionMouseUp(x: number, y: number) {
+            this.mouseDown = false;
+
+            if (!this.dragging && this.input && this.param.type.allowInput) {
+                this.step.process.workspace.editor.showFixedInput(this, this.param);
+                return false;
+            }
+
+            let editor = this.step.parentProcess.workspace.editor;
+            editor.highlightVariables(null);
+
+            let ctx = editor.getContext();
+            let variables = editor.currentProcess.variables;
+            for (let i = 0; i < editor.variableRegions.length; i++) {
+                let region = editor.variableRegions[i];
+
+                if (!region.containsPoint(ctx, x, y))
+                    continue;
+
+                let variableIndex = i % 2 == 0 ? i / 2 : (i - 1) / 2; // there's two regions for each
+                let variable = variables[variableIndex];
+
+                if (variable.type !== this.param.type)
+                    break;
+
+                for (let j = 0; j < this.param.links.length; j++) {
+                    let oldVarLinks = this.param.links[j].links;
+                    let index = oldVarLinks.indexOf(this);
+                    if (index > -1)
+                        oldVarLinks.splice(index, 1);
+                }
+                this.param.links = [variable];
+                this.param.initialValue = null;
+                variable.links.push(this);
+            }
+
+            this.dragEndX = undefined;
+            this.dragEndY = undefined;
+            this.dragging = false;
+            editor.draw();
+            return true;
+        }
+        private regionMove(x: number, y: number) {
+            if (!this.mouseDown)
+                return false;
+
+            this.dragging = true;
+
+            this.dragEndX = x;
+            this.dragEndY = y;
+            return true;
+        }
+        outline(ctx: CanvasRenderingContext2D) {
             let halfAngle = Math.PI / 24;
             let pos = this.offset(this.step.x, this.step.y, this.step.radius + 2, this.angle - halfAngle);
             ctx.moveTo(pos.x, pos.y);
@@ -113,7 +123,7 @@
             pos = this.offset(this.step.x, this.step.y, this.step.radius + this.textDistance, this.angle - halfAngle);
             ctx.lineTo(pos.x, pos.y);
         }
-        draw(ctx, isMouseOver, isMouseDown) {
+        draw(ctx: CanvasRenderingContext2D, isMouseOver: boolean, isMouseDown: boolean) {
             ctx.fillStyle = ctx.strokeStyle = this.param.type.color;
             ctx.font = '12px sans-serif';
             ctx.textAlign = this.input ? 'right' : 'left';
@@ -155,13 +165,13 @@
             if (this.dragging)
                 Connector.drawPath(ctx, this, this.dragEndX, this.dragEndY);
         }
-        offset(x, y, distance, angle) {
+        offset(x: number, y: number, distance: number, angle: number) {
             return {
                 x: x + distance * Math.cos(angle),
                 y: y + distance * Math.sin(angle)
             };
         }
-        static drawPath(ctx, connector, toX, toY) {
+        static drawPath(ctx: CanvasRenderingContext2D, connector: Connector, toX: number, toY: number) {
             ctx.strokeStyle = connector.param.type.color;
             ctx.lineWidth = 3;
 

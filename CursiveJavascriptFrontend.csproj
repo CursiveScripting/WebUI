@@ -26,6 +26,7 @@
   <ItemGroup>
     <TypeScriptCompile Include="canvas\Connector.ts" />
     <TypeScriptCompile Include="canvas\Drawing.ts" />
+    <TypeScriptCompile Include="data\Dictionary.ts" />
     <TypeScriptCompile Include="io\ProcessLoading.ts" />
     <TypeScriptCompile Include="data\UserProcess.ts" />
     <TypeScriptCompile Include="canvas\Transform.ts" />

@@ -1,12 +1,11 @@
 ﻿namespace Cursive {
     export class ProcessSaving {
-        static saveProcesses(processes) {
+        static saveProcesses(processes: Dictionary<UserProcess>) {
             let saveDoc = document.implementation.createDocument(null, 'processes', null);
             let rootNode = saveDoc.createElement('Processes');
 
-            for (let name in processes) {
-                let process = processes[name];
-                this.saveProcess(process, rootNode);
+            for (let i = 0; i < processes.count; i++) {
+                this.saveProcess(processes.getByIndex(i), rootNode);
             }
             return rootNode.outerHTML;
         }
@@ -75,7 +74,7 @@
             }
         }
 
-        private static saveStepParameters(parameters: Variable[], parent, nodeName, variableAttributeName) {
+        private static saveStepParameters(parameters: Variable[], parent: Element, nodeName: string, variableAttributeName: string) {
             if (parameters === null)
                 return;
 
@@ -84,18 +83,18 @@
             }
         }
 
-        private static saveStepParameter(parameter: Variable, parent, nodeName, variableAttributeName) {
+        private static saveStepParameter(parameter: Variable, parent: Element, nodeName: string, variableAttributeName: string) {
             let element = parent.ownerDocument.createElement(parameter.initialValue === null ? nodeName : 'FixedInput');
             element.setAttribute('name', parameter.name);
             parent.appendChild(element);
 
-            if (element.initialValue !== null)
-                element.setAttribute('value', element.initialValue);
+            if (parameter.initialValue !== null)
+                element.setAttribute('value', parameter.initialValue);
             else if (parameter.links.length >= 0)
                 element.setAttribute(variableAttributeName, parameter.links[0].name);
         }
 
-        private static saveProcessParameter(parameter: Variable, parent, nodeName) {
+        private static saveProcessParameter(parameter: Variable, parent: Element, nodeName: string) {
             let element = parent.ownerDocument.createElement(nodeName);
             element.setAttribute('name', parameter.name);
             element.setAttribute('type', parameter.type.name);

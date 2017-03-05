@@ -2,6 +2,8 @@
     export class Step {
         x: number;
         y: number;
+        private moveOffsetX: number;
+        private moveOffsetY: number;
         readonly returnPaths: ReturnPath[];
         readonly radius: number;
         drawText: boolean;
@@ -23,87 +25,91 @@
             this.connectors = [];
             this.regions = [];
 
-            this.bodyRegion = this.createBodyRegion();
-        
-            this.bodyRegion.mousedown = function (x,y) {
-                this.dragging = true;
-                this.moveOffsetX = this.x - x;
-                this.moveOffsetY = this.y - y;
-                return true;
-            }.bind(this);
-        
-            this.bodyRegion.mouseup = function (x,y) {
-                this.dragging = false;
-                return true;
-            }.bind(this);
-        
-            this.bodyRegion.hover = function () {
-                this.drawText = true; return true;
-            }.bind(this);
-        
-            this.bodyRegion.move = function (x,y) {
-                if (!this.dragging)
-                    return false;
-            
-                // test for collisions
-                let steps = this.parentProcess.steps;
-                let ctx = this.parentProcess.workspace.editor.canvas.getContext('2d');
-
-                for (let i=0; i<steps.length; i++) {
-                    if (steps[i] === this)
-                        continue;
-                
-                    if (steps[i].collisionRegion.containsPoint(ctx, x + this.moveOffsetX, y + this.moveOffsetY))
-                        return;
-                }
-            
-                this.x = x + this.moveOffsetX;
-                this.y = y + this.moveOffsetY;
-                return true;
-            }.bind(this);
-        
-            this.bodyRegion.unhover = function (x, y) {
-                if (!this.dragging)
-                    this.drawText = false;
-            
-                return true;
-            }.bind(this);
+            this.bodyRegion = new Region(
+                this.defineBodyRegion.bind(this),
+                this.drawBody.bind(this),
+                'move'
+            );
+            this.bodyRegion.mousedown = this.bodyRegionMouseDown.bind(this);
+            this.bodyRegion.mouseup = this.bodyRegionMouseUp.bind(this);
+            this.bodyRegion.hover = this.bodyRegionHover.bind(this);
+            this.bodyRegion.move = this.bodyRegionMove.bind(this);
+            this.bodyRegion.unhover = this.bodyRegionUnhover.bind(this);
         
             this.regions.push(this.bodyRegion);
-        
-            this.collisionRegion = this.createCollisionRegion();
+
+            // twice the normal radius, so that another step can't overlap this one
+            this.collisionRegion = new Region(
+                this.defineCollisionRegion.bind(this)
+            );
             this.createConnectors(this.getInputs(), true);
             this.createConnectors(this.getOutputs(), false);
         }
-        protected drawBody(ctx) {
+        private bodyRegionMouseDown(x: number, y: number) {
+            this.dragging = true;
+            this.moveOffsetX = this.x - x;
+            this.moveOffsetY = this.y - y;
+            return true;
+        }
+        private bodyRegionMouseUp(x: number, y: number) {
+            this.dragging = false;
+            return true;
+        }
+        private bodyRegionHover() {
+            this.drawText = true; return true;
+        }
+        private bodyRegionMove(x, y) {
+            if (!this.dragging)
+                return false;
+
+            // test for collisions
+            let steps = this.parentProcess.steps;
+            let ctx = this.parentProcess.workspace.editor.getContext();
+
+            for (let i = 0; i < steps.length; i++) {
+                if (steps[i] === this)
+                    continue;
+
+                if (steps[i].collisionRegion.containsPoint(ctx, x + this.moveOffsetX, y + this.moveOffsetY))
+                    return;
+            }
+
+            this.x = x + this.moveOffsetX;
+            this.y = y + this.moveOffsetY;
+            return true;
+        }
+        private bodyRegionUnhover(x, y) {
+            if (!this.dragging)
+                this.drawText = false;
+
+            return true;
+        }
+        protected drawBody(ctx: CanvasRenderingContext2D) {
             ctx.strokeStyle = '#000';
             ctx.fillStyle = '#fff';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            this.bodyRegion.define(ctx);
+            this.defineRegion(ctx, 1);
             ctx.fill();
             ctx.stroke();
 
             this.writeText(ctx);
         }
-        protected writeText(ctx) {
+        protected writeText(ctx: CanvasRenderingContext2D) {
             ctx.font = '16px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = '#000';
             ctx.fillText(this.process.name, this.x, this.y);
         }
-        protected createBodyRegion() {
-            return new Region(
-                function (ctx) { ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); }.bind(this),
-                this.drawBody.bind(this),
-                'move'
-            )
+        private defineBodyRegion(ctx: CanvasRenderingContext2D) {
+            this.defineRegion(ctx, 1);
         }
-        protected createCollisionRegion() {
-            return new Region( // twice the normal radius, so that another step can't overlap this one
-                function (ctx) { ctx.arc(this.x, this.y, this.radius * 2, 0, 2 * Math.PI); }.bind(this)
-            )
+        private defineCollisionRegion(ctx: CanvasRenderingContext2D) {
+            this.defineRegion(ctx, 2);
+        }
+        protected defineRegion(ctx: CanvasRenderingContext2D, scale: number) {
+            ctx.arc(this.x, this.y, this.radius * scale, 0, 2 * Math.PI);
         }
         getInputs() {
             return this.process.inputs;
@@ -111,7 +117,7 @@
         getOutputs() {
             return this.process.outputs;
         }
-        private createConnectors(params, input) {
+        private createConnectors(params: Variable[], input: boolean) {
             if (params === null)
                 return;
             let angularSpread;

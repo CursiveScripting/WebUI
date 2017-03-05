@@ -2,21 +2,21 @@
     export class Workspace {
         readonly processList: ProcessList;
         readonly editor: ProcessEditor;
-        types: {[key:string]:Type};
-        systemProcesses: {[key:string]:SystemProcess};
-        userProcesses: {[key:string]:UserProcess};
+        types: Dictionary<Type>;
+        systemProcesses: Dictionary<SystemProcess>;
+        userProcesses: Dictionary<UserProcess>;
 
         constructor(workspaceXml: HTMLElement, processList: HTMLElement, mainContainer: HTMLElement) {
             this.editor = new ProcessEditor(this, mainContainer);
             WorkspaceLoading.loadWorkspace(this, workspaceXml);
             this.processList = new ProcessList(this, processList);
         }
-        setDefinitions(types, systemProcesses, userProcesses) {
+        setDefinitions(types: Dictionary<Type>, systemProcesses: Dictionary<SystemProcess>, userProcesses: Dictionary<UserProcess>) {
             this.types = types;
             this.systemProcesses = systemProcesses;
             this.userProcesses = userProcesses;
         }
-        loadProcesses(processXml) {
+        loadProcesses(processXml: HTMLElement) {
             ProcessLoading.loadProcesses(this, processXml);
             this.processList.populateList();
         }
@@ -31,7 +31,7 @@
             let valid = true;
 
             for (let name in this.userProcesses) {
-                let process = this.userProcesses[name];
+                let process = this.userProcesses.getByName(name);
                 if (!process.validate())
                     valid = false;
             }
@@ -39,11 +39,11 @@
             this.processList.populateList();
             return valid;
         }
-        showError(message) {
+        showError(message: string) {
             this.editor.showText('<h3>An error has occurred</h3><p>Sorry. You might need to reload the page to continue.</p><p>The following error was encountered - you might want to report this:</p><pre>' + message + '</pre>');
             console.error(message);
         }
-        showPopup(contents, okAction) {
+        showPopup(contents: string, okAction: () => void = null) {
             this.editor.popupContent.innerHTML = contents;
         
             if (this.editor.popupEventListener != null)

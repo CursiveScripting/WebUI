@@ -1,38 +1,38 @@
 ﻿namespace Cursive {
     export class WorkspaceLoading {
         static loadWorkspace(workspace: Workspace, workspaceXml: HTMLElement) {
-            let systemProcesses: {[key:string]:SystemProcess} = {};
-            let userProcesses: {[key:string]:UserProcess} = {};
+            let systemProcesses = new Dictionary<SystemProcess>();
+            let userProcesses = new Dictionary<UserProcess>();
 
-            let typesByName: {[key:string]:Type} = {};
+            let types = new Dictionary<Type>();
             let typeNodes = workspaceXml.getElementsByTagName('Type');
-        
+            
             for (let i=0; i<typeNodes.length; i++) {
-                let type = this.loadType(typeNodes[i], workspace, typesByName);
+                let type = this.loadType(typeNodes[i], workspace, types);
                 
-                if (typesByName.hasOwnProperty(type.name)) {
-                    workspace.showError('There are two types in the workspace with the same name: ' + name + '. Type names must be unique.');
+                if (types.contains(type.name)) {
+                    workspace.showError('There are two types in the workspace with the same name: ' + type.name + '. Type names must be unique.');
                     continue;
                 }
 
-                typesByName[type.name] = type;
+                types.add(type.name, type);
             }
         
             let procNodes = workspaceXml.getElementsByTagName('SystemProcess');
             for (let i=0; i<procNodes.length; i++) {
-                let process = <SystemProcess>this.loadProcessDefinition(workspace, procNodes[i], typesByName, true);
-                systemProcesses[process.name] = process;
+                let process = this.loadProcessDefinition(workspace, procNodes[i], types, true) as SystemProcess;
+                systemProcesses.add(process.name, process);
             }
 
             procNodes = workspaceXml.getElementsByTagName('RequiredProcess');
             for (let i=0; i<procNodes.length; i++) {
-                let process = <UserProcess>this.loadProcessDefinition(workspace, procNodes[i], typesByName, false);
-                userProcesses[process.name] = process;
+                let process = this.loadProcessDefinition(workspace, procNodes[i], types, false) as UserProcess;
+                userProcesses.add(process.name, process);
             }
 
-            workspace.setDefinitions(typesByName, systemProcesses, userProcesses);
+            workspace.setDefinitions(types, systemProcesses, userProcesses);
         }
-        private static loadType(typeNode, workspace, typesByName) {
+        private static loadType(typeNode: Element, workspace: Workspace, types: Dictionary<Type>) {
             let name = typeNode.getAttribute('name');
 
             let color = typeNode.getAttribute('color');
@@ -48,8 +48,8 @@
             let extendsType: Type;
             if (typeNode.hasAttribute('extends')) {
                 let extendsName = typeNode.getAttribute('extends');
-                if (typesByName.hasOwnProperty(extendsName))
-                    extendsType = typesByName[extendsName];
+                if (types.contains(extendsName))
+                    extendsType = types.getByName(extendsName);
                 else {
                     extendsType = null;
                     workspace.showError('Type ' + name + ' extends a type which has not been defined: ' + extendsName + '.');
@@ -65,19 +65,18 @@
 
             return new Type(name, color, extendsType, validationExpression, guidance);
         }
-        private static loadProcessDefinition(workspace, procNode, typesByName, isSystemProcess): Process {
-            let name = procNode.getAttribute('name');
-            
+        private static loadProcessDefinition(workspace: Workspace, procNode: Element, types: Dictionary<Type>, isSystemProcess: boolean): Process {
+            let processName = procNode.getAttribute('name');
             let inputs: Variable[] = [];
             let outputs: Variable[] = [];
             let returnPaths: string[] = [];
             let procTypeName = isSystemProcess ? 'system' : 'fixed';
             
             let paramNodes = procNode.getElementsByTagName('Input');
-            this.loadParameters(workspace, typesByName, paramNodes, inputs, 'input', procTypeName);
+            this.loadParameters(workspace, processName, types, paramNodes, inputs, 'input', procTypeName);
 
             paramNodes = procNode.getElementsByTagName('Output');
-            this.loadParameters(workspace, typesByName, paramNodes, outputs, 'output', procTypeName);
+            this.loadParameters(workspace, processName, types, paramNodes, outputs, 'output', procTypeName);
             
             let returnPathParents = procNode.getElementsByTagName('ReturnPaths');
             if (returnPathParents.length > 0) {
@@ -88,7 +87,7 @@
                     let path = returnPathNodes[j].getAttribute('name');
                     
                     if (usedNames.hasOwnProperty(path))
-                        workspace.showError('The \'' + name + '\' ' + procTypeName + ' process has two return paths with the same name: ' + name + '. Return path names must be unique within a process.');
+                        workspace.showError('The \'' + processName + '\' ' + procTypeName + ' process has two return paths with the same name: ' + processName + '. Return path names must be unique within a process.');
                     else {
                         usedNames[path] = null;
                         returnPaths.push(path);    
@@ -98,16 +97,17 @@
                 
             let process: Process;
             if (isSystemProcess)
-                process = new SystemProcess(name, inputs, outputs, returnPaths);
+                process = new SystemProcess(processName, inputs, outputs, returnPaths);
             else {
-                process = new UserProcess(name, inputs, outputs, [], returnPaths, true);
+                process = new UserProcess(processName, inputs, outputs, [], returnPaths, true);
                 (process as UserProcess).createDefaultSteps();
             }
             
             process.workspace = workspace;
             return process;
         }
-        private static loadParameters(workspace: Workspace, typesByName: {[key:string]:Type}, paramNodes: HTMLCollection, parameters: Variable[], paramTypeName: string, procTypeName: string) {
+
+        private static loadParameters(workspace: Workspace, processName: string, types: Dictionary<Type>, paramNodes: NodeListOf<Element>, parameters: Variable[], inputOrOutput: 'input' | 'output', procTypeName: string) {
             let usedNames: {[key:string]:boolean} = {};
 
             for (let i=0; i<paramNodes.length; i++) {
@@ -115,15 +115,15 @@
                 let paramTypeName = paramNodes[i].getAttribute('type');
                 
                 let paramType;
-                if (typesByName.hasOwnProperty(paramTypeName))
-                    paramType = typesByName[paramTypeName];
+                if (types.contains(paramTypeName))
+                    paramType = types.getByName(paramTypeName);
                 else {
-                    workspace.showError('The \'' + name + '\' ' + procTypeName + ' process has an ' + paramTypeName + ' (' + paramName + ') with an unrecognised type: ' + paramTypeName + '.');
+                    workspace.showError('The \'' + processName + '\' ' + procTypeName + ' process has an ' + inputOrOutput + ' (' + paramName + ') with an unrecognised type: ' + paramTypeName + '.');
                     paramType = null;
                 }    
                 
                 if (usedNames.hasOwnProperty(paramName))
-                    workspace.showError('The \'' + name + '\' ' + procTypeName + ' process has two ' + paramTypeName + 's with the same name: ' + paramName + '. The names of ' + paramTypeName + 's must be unique within a process.');
+                    workspace.showError('The \'' + processName + '\' ' + procTypeName + ' process has two ' + inputOrOutput + 's with the same name: ' + paramName + '. The names of ' + paramTypeName + 's must be unique within a process.');
                 else {
                     usedNames[paramName] = null;
                     parameters.push(new Variable(paramName, paramType));

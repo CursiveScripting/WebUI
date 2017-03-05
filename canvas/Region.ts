@@ -8,7 +8,7 @@
         move: (x: number, y: number) => boolean;
         readonly define: (ctx: CanvasRenderingContext2D) => boolean;
         private readonly draw: (ctx: CanvasRenderingContext2D, hover: boolean, mouseDown: boolean) => void;
-        private cursor: string;
+        readonly cursor: string;
 
         centerX: number;
 

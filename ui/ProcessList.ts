@@ -13,43 +13,45 @@
             if (this.workspace.editor.currentProcess === null)
                 content += ' active';
             content += '">add new process</li>';
-        
-            let procs: {[key:string]:Process} = this.workspace.userProcesses;
-            for (let name in procs) {
-                let proc = procs[name];
-                content += this.writeListItem(proc, true, (proc as UserProcess).isValid);
+
+            let userProcs = this.workspace.userProcesses;
+            for (let i = 0; i < userProcs.count; i++) {
+                let proc = userProcs.getByIndex(i);
+                content += this.writeListItem(proc, true, proc.isValid);
             }
             
-            procs = this.workspace.systemProcesses;
-            for (let proc in procs)
-                content += this.writeListItem(procs[proc], false, true);
-        
+            let sysProcs = this.workspace.systemProcesses;
+            for (let i = 0; i < sysProcs.count; i++) {
+                let proc = sysProcs.getByIndex(i);
+                content += this.writeListItem(proc, false, true);
+            }
+
             this.listElement.innerHTML = content;
-        
+
             let dragStart = function (e) {
                 e.dataTransfer.setData('process', e.target.getAttribute('data-process'));
             };
-        
+
             let openUserProcess = function (e) {
                 let name = e.currentTarget.getAttribute('data-process');
-                let process = this.userProcesses[name];
+                let process = this.userProcesses.getByName(name);
                 if (process === undefined) {
                     this.showError('Clicked unrecognised process: ' + name);
                     return;
                 }
-            
+                
                 this.editor.loadProcess(process);
                 this.processList.populateList();
             }.bind(this.workspace);
-        
+
             this.listElement.childNodes[0].addEventListener('dblclick', this.workspace.editor.showProcessOptions.bind(this.workspace.editor, null));
-        
-            let userProcessCutoff = Object.keys(this.workspace.userProcesses).length;
-        
+
+            let userProcessCutoff = this.workspace.userProcesses.count;
+
             for (let i=1; i<this.listElement.childNodes.length; i++) {
                 let item = this.listElement.childNodes[i];
                 item.addEventListener('dragstart', dragStart);
-            
+                
                 if (i <= userProcessCutoff)
                     item.addEventListener('dblclick', openUserProcess);
             }
@@ -88,7 +90,7 @@
             desc += '</li>';
             return desc;
         }
-        private writeItemFields(variables) {
+        private writeItemFields(variables: Variable[]) {
             var output = '';
             for (let i=0; i<variables.length; i++) {
                 if (i > 0)

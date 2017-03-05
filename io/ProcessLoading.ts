@@ -28,7 +28,7 @@
         }
 
         private static loadProcessDefinition(workspace: Workspace, processNode: Element): UserProcess {
-            let name = processNode.getAttribute('name');
+            let processName = processNode.getAttribute('name');
 
             let inputs: Variable[] = [];
             let paramNodes = processNode.getElementsByTagName('Input');
@@ -51,7 +51,7 @@
                     returnPaths.push(stopName);
             }
             
-            return new UserProcess(name, inputs, outputs, variables, returnPaths, true);
+            return new UserProcess(processName, inputs, outputs, variables, returnPaths, true);
         }
 
         private static loadProcessParameters(workspace: Workspace, paramNodes, parameters: Variable[], paramTypeName: string) {
@@ -64,9 +64,9 @@
                     workspace.showError('The ' + paramName + ' ' + paramTypeName + ' has an invalid type: ' + name + '. That type doesn\'t exist in this workspace.');
                     continue;
                 }
-                let type = workspace.types[typeName];
+                let dataType = workspace.types.getByName(typeName);
 
-                let parameter = new Variable(name, type);
+                let parameter = new Variable(name, dataType);
 
                 if (node.hasAttribute('initialValue')) {
                     let initial = node.getAttribute('initialValue');
@@ -77,12 +77,12 @@
             }
         }
 
-        private static loadProcessSteps(workspace: Workspace, processNode: Element, userProcessesByName, systemProcessesByName) {
+        private static loadProcessSteps(workspace: Workspace, processNode: Element, userProcesses: Dictionary<UserProcess>, systemProcesses: Dictionary<SystemProcess>) {
             let name = processNode.getAttribute('name');
-            if (!userProcessesByName.hasOwnProperty(name))
+            if (!userProcesses.contains(name))
                 return;
             
-            let process = userProcessesByName[name];
+            let process = userProcesses.getByName(name);
             let stepsByID: {[key: number]: Step} = {};
             let returnPathsToProcess: [Step, Element][] = [];
 
@@ -124,10 +124,10 @@
 
                 let childProcess: Process;
                 let childProcessName = stepNode.getAttribute('process');
-                if (systemProcessesByName.hasOwnProperty(childProcessName))
-                    childProcess = systemProcessesByName[childProcessName];
-                else if (userProcessesByName.hasOwnProperty(childProcessName))
-                    childProcess = userProcessesByName[childProcessName];
+                if (systemProcesses.contains(childProcessName))
+                    childProcess = systemProcesses.getByName(childProcessName);
+                else if (userProcesses.contains(childProcessName))
+                    childProcess = userProcesses.getByName(childProcessName);
                 else {
                     workspace.showError('Step ' + id + ' of the "' + process.name + '" process wraps an unknown process: ' + name + '. That process doesn\'t exist in this workspace.');
                     continue;
@@ -152,8 +152,15 @@
         }
 
         private static loadStepOutputs(workspace: Workspace, process: Process, destination: Variable[], step: Step, stepNode: Element) {
-            // TODO: parse a number of MapOutput nodes
-            // destinations could be this process's inputs or its variables
+            let mapNodes = stepNode.getElementsByTagName('MapOutput');
+            for (let i = 0; i < mapNodes.length; i++) {
+                let mapNode = mapNodes[i];
+
+                let name = mapNode.getAttribute('name');
+                let destination = mapNode.getAttribute('destination');
+                // TODO: create output nodes
+                // destination could be this process's inputs or its variables
+            }
         }
 
         private static loadReturnPaths(workspace: Workspace, step: Step, stepNode: Element, stepsByID: {[key: number]: Step}) {

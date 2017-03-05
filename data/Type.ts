@@ -7,7 +7,7 @@
         private readonly validation?: RegExp;
         readonly guidance?: string;
         readonly allowInput: boolean;
-        constructor(name, color, extendsType, validation, guidance) {
+        constructor(name: string, color: string, extendsType: Type, validation: RegExp, guidance: string) {
             this.name = name;
             this.extendsType = extendsType;
             this.color = color;

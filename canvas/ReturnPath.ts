@@ -14,7 +14,7 @@
         private midArrowTransform: Transform;
         private endConnectorTranform: Transform;
 
-        constructor(fromStep, toStep, name, endOffsetX?: number, endOffsetY?: number) {
+        constructor(fromStep: Step, toStep: Step, name: string, endOffsetX?: number, endOffsetY?: number) {
             this.fromStep = fromStep;
             this._toStep = toStep;
             this.endOffsetX = endOffsetX;
@@ -22,37 +22,14 @@
             this.name = name;
     
             let pathName = new Region(
-                function (ctx) {
-                    if (this.getNameToWrite() === null)
-                        return;
-            
-                    ctx.save();
-            
-                    this.midArrowTransform.apply(ctx);
-                    ctx.translate(-26, 0);
-            
-                    ctx.rect(-this.nameLength - 5, -10, this.nameLength + 10, 20);
-            
-                    ctx.restore();
-                }.bind(this),
+                this.definePathNameRegion.bind(this),
                 this.drawName.bind(this),
                 'default'
             );
     
             let midArrow = new Region(
-                function (ctx) {
-                    ctx.save();
-                    this.midArrowTransform.apply(ctx);
-                    let halfWidth = 8, arrowLength = 20;
-                    ctx.rect(-arrowLength - 1, -halfWidth - 1, arrowLength + 2, halfWidth * 2 + 2);
-                    ctx.restore();
-                }.bind(this),
-                function (ctx) {
-                    ctx.save();
-                    this.midArrowTransform.apply(ctx);
-                    this.drawMidArrow(ctx);
-                    ctx.restore();
-                }.bind(this),
+                this.defineMidArrowRegion.bind(this),
+                this.drawMidArrowRegion.bind(this),
                 'move'
             );
             midArrow.hover = function () { return true; };
@@ -62,25 +39,8 @@
             midArrow.move = this.dragMove.bind(this);
 
             let endConnector = new Region(
-                function (ctx) {
-                    if (this._toStep != null)
-                        return;
-
-                    ctx.save();
-                    this.endConnectorTranform.apply(ctx);
-                    let radius = 8;
-                    ctx.arc(0, 0, radius, 0, Math.PI * 2);
-                    ctx.restore();
-                }.bind(this),
-                function (ctx) {
-                    if (this._toStep != null)
-                        return;
-
-                    ctx.save();
-                    this.endConnectorTranform.apply(ctx);
-                    this.drawUnconnectedHandle(ctx);
-                    ctx.restore();
-                }.bind(this),
+                this.defineEndConnectorRegion.bind(this),
+                this.drawEndConnectorRegion.bind(this),
                 'move'
             );
             endConnector.hover = function () { return true; };
@@ -97,7 +57,27 @@
         private getNameToWrite() {
             return this.name !== null ? this.name : this.onlyPath ? null : 'default';
         }
-        private drawName(ctx) {
+        private defineMidArrowRegion(ctx: CanvasRenderingContext2D) {
+            ctx.save();
+            this.midArrowTransform.apply(ctx);
+            let halfWidth = 8, arrowLength = 20;
+            ctx.rect(-arrowLength - 1, -halfWidth - 1, arrowLength + 2, halfWidth * 2 + 2);
+            ctx.restore();
+        }
+        private definePathNameRegion(ctx: CanvasRenderingContext2D) {
+            if (this.getNameToWrite() === null)
+                return;
+
+            ctx.save();
+
+            this.midArrowTransform.apply(ctx);
+            ctx.translate(-26, 0);
+
+            ctx.rect(-this.nameLength - 5, -10, this.nameLength + 10, 20);
+
+            ctx.restore();
+        }
+        private drawName(ctx: CanvasRenderingContext2D) {
             let writeName = this.getNameToWrite();
             if (writeName === null)
                 return;
@@ -131,7 +111,23 @@
         
             ctx.restore();
         }
-        private drawUnconnectedHandle(ctx) {
+        private defineEndConnectorRegion(ctx: CanvasRenderingContext2D) {
+            if (this._toStep != null)
+                return;
+
+            ctx.save();
+            this.endConnectorTranform.apply(ctx);
+            let radius = 8;
+            ctx.arc(0, 0, radius, 0, Math.PI * 2);
+            ctx.restore();
+        }
+        private drawEndConnectorRegion(ctx: CanvasRenderingContext2D) {
+            if (this._toStep != null)
+                return;
+
+            ctx.save();
+            this.endConnectorTranform.apply(ctx);
+
             let radius = 8;
 
             ctx.beginPath();
@@ -141,8 +137,13 @@
             ctx.arc(0, 0, radius, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
+            
+            ctx.restore();
         }
-        private drawMidArrow(ctx) {
+        private drawMidArrowRegion(ctx: CanvasRenderingContext2D) {
+            ctx.save();
+            this.midArrowTransform.apply(ctx);
+
             let halfWidth = 8, arrowLength = 20;
     
             ctx.shadowOffsetX = 0; 
@@ -163,8 +164,10 @@
             ctx.lineTo(-arrowLength, -halfWidth);
             ctx.closePath();
             ctx.stroke();
+
+            ctx.restore();
         }
-        draw(ctx) {
+        draw(ctx: CanvasRenderingContext2D) {
             let fromX = this.fromStep.x, fromY = this.fromStep.y;
             let toX: number, toY: number;
             if (this._toStep == null) {
@@ -224,13 +227,13 @@
             ty = (mid1y + mid2y) / 2;
             this.midArrowTransform = new Transform(tx, ty, angle);
         }
-        private dragStart(x, y) {
+        private dragStart(x: number, y: number) {
             this._toStep = null;
             this.updateOffset(x, y);
             this.dragging = true;
             return true;
         }
-        private dragStop(x, y) {
+        private dragStop(x: number, y: number) {
             if (!this.dragging)
                 return false;
 
@@ -244,14 +247,14 @@
             // TODO: if other return paths from this step already go to the same destination, combine them into one somehow
             return true;
         }
-        private dragMove(x, y) {
+        private dragMove(x: number, y: number) {
             if (!this.dragging)
                 return false;
         
             this.updateOffset(x, y);
             return true;
         }
-        private updateOffset(x, y) {
+        private updateOffset(x: number, y: number) {
             this.endOffsetX = x - this.fromStep.x;
             this.endOffsetY = y - this.fromStep.y;
         }

@@ -1,13 +1,13 @@
 ﻿namespace Cursive {
     export class Drawing {
-        static drawCurve(ctx, startX, startY, cp1x, cp1y, cp2x, cp2y, endX, endY) {
+        static drawCurve(ctx: CanvasRenderingContext2D, startX: number, startY: number, cp1x: number, cp1y: number, cp2x: number, cp2y: number, endX: number, endY: number) {
             ctx.beginPath();
             ctx.moveTo(startX, startY);
             ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
             ctx.stroke();
         }
 
-        static underlineText(ctx, text, x, y, drawLine) {
+        static underlineText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, drawLine: boolean) {
             ctx.fillText(text, x, y);
 
             if (drawLine) {
