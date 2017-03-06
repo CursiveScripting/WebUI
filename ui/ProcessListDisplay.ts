@@ -1,5 +1,5 @@
 ﻿namespace Cursive {
-    export class ProcessList {
+    export class ProcessListDisplay {
         private readonly workspace: Workspace;
         private readonly listElement: HTMLElement;
         
@@ -17,13 +17,13 @@
             let userProcs = this.workspace.userProcesses;
             for (let i = 0; i < userProcs.count; i++) {
                 let proc = userProcs.getByIndex(i);
-                content += this.writeListItem(proc, true, proc.isValid);
+                content += this.writeListItem(proc, true, proc.fixedSignature, proc.isValid);
             }
             
             let sysProcs = this.workspace.systemProcesses;
             for (let i = 0; i < sysProcs.count; i++) {
                 let proc = sysProcs.getByIndex(i);
-                content += this.writeListItem(proc, false, true);
+                content += this.writeListItem(proc, false, true, true);
             }
 
             this.listElement.innerHTML = content;
@@ -31,18 +31,6 @@
             let dragStart = function (e) {
                 e.dataTransfer.setData('process', e.target.getAttribute('data-process'));
             };
-
-            let openUserProcess = function (e) {
-                let name = e.currentTarget.getAttribute('data-process');
-                let process = this.userProcesses.getByName(name);
-                if (process === undefined) {
-                    this.showError('Clicked unrecognised process: ' + name);
-                    return;
-                }
-                
-                this.editor.loadProcess(process);
-                this.processList.populateList();
-            }.bind(this.workspace);
 
             this.listElement.childNodes[0].addEventListener('dblclick', this.workspace.editor.showProcessOptions.bind(this.workspace.editor, null));
 
@@ -53,14 +41,16 @@
                 item.addEventListener('dragstart', dragStart);
                 
                 if (i <= userProcessCutoff)
-                    item.addEventListener('dblclick', openUserProcess);
+                    item.addEventListener('dblclick', this.openUserProcess.bind(this));
             }
         }
-        private writeListItem(process: Process, editable: boolean, valid: boolean) {
+        private writeListItem(process: Process, openable: boolean, fixedSignature: boolean, valid: boolean) {
             let desc = '<li draggable="true" data-process="' + process.name + '" class="';
         
-            if (!editable)
-                desc += 'readonly ';
+            if (!openable)
+                desc += 'cantOpen ';
+            if (fixedSignature)
+                desc += 'fixed ';
             if (!valid)
                 desc += 'invalid ';
             else if (process == this.workspace.editor.currentProcess)
@@ -98,6 +88,17 @@
                 output += '<span class="prop" style="color: ' + variables[i].type.color + '">' + variables[i].name + '</span>';
             }
             return output;
+        }
+        private openUserProcess(e: MouseEvent) {
+            let name = (e.currentTarget as HTMLElement).getAttribute('data-process');
+            let process = this.workspace.userProcesses.getByName(name);
+            if (process === undefined) {
+                this.workspace.showError('Clicked unrecognised process: ' + name);
+                return;
+            }
+
+            this.workspace.editor.loadProcess(process);
+            this.populateList();
         }
     }
 }

@@ -1,15 +1,17 @@
 ﻿namespace Cursive {
     export class Workspace {
-        readonly processList: ProcessList;
-        readonly editor: ProcessEditor;
+        readonly processListDisplay: ProcessListDisplay;
+        readonly variableListDisplay: VariableListDisplay;
+        readonly editor: EditorCanvas;
         types: Dictionary<Type>;
         systemProcesses: Dictionary<SystemProcess>;
         userProcesses: Dictionary<UserProcess>;
 
-        constructor(workspaceXml: HTMLElement, processList: HTMLElement, mainContainer: HTMLElement) {
-            this.editor = new ProcessEditor(this, mainContainer);
+        constructor(workspaceXml: HTMLElement, processList: HTMLElement, variableList: HTMLElement, canvasWrapper: HTMLElement) {
+            this.editor = new EditorCanvas(this, canvasWrapper);
             WorkspaceLoading.loadWorkspace(this, workspaceXml);
-            this.processList = new ProcessList(this, processList);
+            this.processListDisplay = new ProcessListDisplay(this, processList);
+            this.variableListDisplay = new VariableListDisplay(this, variableList);
         }
         setDefinitions(types: Dictionary<Type>, systemProcesses: Dictionary<SystemProcess>, userProcesses: Dictionary<UserProcess>) {
             this.types = types;
@@ -18,7 +20,7 @@
         }
         loadProcesses(processXml: HTMLElement) {
             ProcessLoading.loadProcesses(this, processXml);
-            this.processList.populateList();
+            this.processListDisplay.populateList();
         }
         saveProcesses() {
             if (!this.validate()) {
@@ -36,7 +38,7 @@
                     valid = false;
             }
 
-            this.processList.populateList();
+            this.processListDisplay.populateList();
             return valid;
         }
         showError(message: string) {

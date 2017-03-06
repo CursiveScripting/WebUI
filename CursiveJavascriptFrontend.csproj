@@ -37,8 +37,10 @@
     <TypeScriptCompile Include="canvas\StartStep.ts" />
     <TypeScriptCompile Include="canvas\StopStep.ts" />
     <TypeScriptCompile Include="canvas\Step.ts" />
-    <TypeScriptCompile Include="ProcessEditor.ts" />
-    <TypeScriptCompile Include="ui\ProcessList.ts" />
+    <TypeScriptCompile Include="ui\EditorCanvas.ts" />
+    <TypeScriptCompile Include="ui\VariableEdit.ts" />
+    <TypeScriptCompile Include="ui\VariableListDisplay.ts" />
+    <TypeScriptCompile Include="ui\ProcessListDisplay.ts" />
     <TypeScriptCompile Include="io\ProcessSaving.ts" />
     <TypeScriptCompile Include="io\WorkspaceLoading.ts" />
     <TypeScriptCompile Include="Workspace.ts" />

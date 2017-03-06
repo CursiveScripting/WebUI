@@ -1,5 +1,5 @@
 ﻿namespace Cursive {
-    export class ProcessEditor {
+    export class EditorCanvas {
         private readonly workspace: Workspace;
         private readonly root: HTMLElement;
         currentProcess: UserProcess;
@@ -463,7 +463,7 @@
             document.getElementById('btnSaveProcess').addEventListener('click', this.saveProcessClicked.bind(this));
 
             this.showCanvas(false);
-            this.workspace.processList.populateList();
+            this.workspace.processListDisplay.populateList();
         }
         private writeProcessParameter(param: Variable) {
             let output = '<input type="text" class="name" value="'
@@ -552,7 +552,7 @@
             this.updateProcessParameters(this.currentProcess.inputs, inputs);
             this.updateProcessParameters(this.currentProcess.outputs, outputs);
 
-            this.workspace.processList.populateList();
+            this.workspace.processListDisplay.populateList();
             this.showCanvas(true);
             this.draw();
         }

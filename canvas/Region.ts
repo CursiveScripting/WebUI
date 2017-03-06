@@ -26,7 +26,7 @@
         
             return ctx.isPointInPath(x,y);
         }
-        callDraw(ctx: CanvasRenderingContext2D, editor: ProcessEditor) {
+        callDraw(ctx: CanvasRenderingContext2D, editor: EditorCanvas) {
             this.draw(ctx, editor.hoverRegion === this, editor.mouseDownRegion === this);
         }
     }
