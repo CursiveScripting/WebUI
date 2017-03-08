@@ -10,7 +10,7 @@
         }
         populateList() {
             let content = '<li class="addNew';
-            if (this.workspace.editor.currentProcess === null)
+            if (this.workspace.processEditor.currentProcess === null)
                 content += ' active';
             content += '">add new process</li>';
 
@@ -32,7 +32,7 @@
                 e.dataTransfer.setData('process', e.target.getAttribute('data-process'));
             };
 
-            this.listElement.childNodes[0].addEventListener('dblclick', this.workspace.editor.showProcessOptions.bind(this.workspace.editor, null));
+            this.listElement.childNodes[0].addEventListener('dblclick', this.addNewProcessClicked.bind(this));
 
             let userProcessCutoff = this.workspace.userProcesses.count;
 
@@ -44,6 +44,11 @@
                     item.addEventListener('dblclick', this.openUserProcess.bind(this));
             }
         }
+        private addNewProcessClicked() {
+            this.workspace.processEditor.hide();
+            this.workspace.variableListDisplay.hide();
+            this.workspace.processSignatureEditor.showNew();
+        }
         private writeListItem(process: Process, openable: boolean, fixedSignature: boolean, valid: boolean) {
             let desc = '<li draggable="true" data-process="' + process.name + '" class="';
         
@@ -53,7 +58,7 @@
                 desc += 'fixed ';
             if (!valid)
                 desc += 'invalid ';
-            else if (process == this.workspace.editor.currentProcess)
+            else if (process === this.workspace.processEditor.currentProcess)
                 desc += 'active';
         
             desc += '"><div class="name">' + process.name + '</div>';
@@ -97,8 +102,7 @@
                 return;
             }
 
-            this.workspace.editor.loadProcess(process);
-            this.populateList();
+            this.workspace.openProcess(process);
         }
     }
 }

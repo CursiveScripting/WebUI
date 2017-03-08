@@ -38,6 +38,11 @@
     <TypeScriptCompile Include="canvas\StopStep.ts" />
     <TypeScriptCompile Include="canvas\Step.ts" />
     <TypeScriptCompile Include="ui\EditorCanvas.ts" />
+    <TypeScriptCompile Include="ui\ErrorDisplay.ts" />
+    <TypeScriptCompile Include="ui\ReturnPathEdit.ts" />
+    <TypeScriptCompile Include="ui\ProcessSignatureEdit.ts" />
+    <TypeScriptCompile Include="ui\EditorPopup.ts" />
+    <TypeScriptCompile Include="ui\ParameterEdit.ts" />
     <TypeScriptCompile Include="ui\VariableEdit.ts" />
     <TypeScriptCompile Include="ui\VariableListDisplay.ts" />
     <TypeScriptCompile Include="ui\ProcessListDisplay.ts" />

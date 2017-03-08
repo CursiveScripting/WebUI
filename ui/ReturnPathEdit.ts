@@ -1,17 +1,32 @@
 ﻿namespace Cursive {
-    export class VariableEdit {
+    export class ReturnPathEdit {
         private readonly workspace: Workspace;
         private readonly popup: EditorPopup;
         private promptElement: HTMLDivElement;
         private nameInput: HTMLInputElement;
         private typeSelect: HTMLSelectElement;
-        private editingVariable: Variable;
+        private editingStep: StopStep;
 
         constructor(workspace: Workspace, popup: EditorPopup) {
             this.workspace = workspace;
             this.popup = popup;
-            this.editingVariable = null;
+            this.editingStep = null;
         }
+        show(stopStep: StopStep) {
+            this.editingStep = stopStep;
+            
+/*
+let content = 'Name a return path for this process, or leave blank to use none:<br/><input type="text" class="name" value="'
+content += this.returnPath == null ? '' : this.returnPath
+content += '" />';
+private nameChangeConfirmed() {
+    let nameInput = this.parentProcess.workspace.processEditor.popupContent.querySelector('.name') as HTMLInputElement;
+    let name = nameInput.value.trim();
+    this.returnPath = name == '' ? null : name;
+}
+*/
+        }
+        /*
         populateContent() {
             this.popup.popupContent.innerHTML = '';
 
@@ -21,7 +36,7 @@
             let fieldRow = this.addField('name');
             this.nameInput = document.createElement('input');
             this.nameInput.setAttribute('type', 'text');
-            fieldRow.appendChild(this.nameInput);
+            fieldRow.appendChild(fieldRow);
 
             fieldRow = this.addField('type');
             this.typeSelect = document.createElement('select');
@@ -37,16 +52,13 @@
             }
 
             fieldRow = this.addField(null);
-            fieldRow.classList.add('buttons');
 
             let okButton = document.createElement('button');
             okButton.addEventListener('click', this.okClicked.bind(this));
-            okButton.innerText = 'OK';
             fieldRow.appendChild(okButton);
 
             let cancelButton = document.createElement('button');
             cancelButton.addEventListener('click', this.hide.bind(this));
-            cancelButton.innerText = 'cancel';
             fieldRow.appendChild(cancelButton);
         }
         private addField(name: string) {
@@ -78,12 +90,11 @@
             this.nameInput.focus();
         }
         showExisting(variable: Variable) {
-            this.editingVariable = variable;
             this.populateContent();
             this.popup.show();
             this.promptElement.innerText = 'You can rename a variable, but you can\'t change its type:';
             this.nameInput.value = variable.name;
-            this.typeSelect.value = variable.type.name;
+            this.typeSelect.selectedIndex = this.typeSelect.options.namedItem(variable.type.name).index;
             this.typeSelect.disabled = true;
             this.editingVariable = variable;
             this.nameInput.focus();
@@ -92,14 +103,8 @@
             this.popup.hide();
         }
         private okClicked() {
-            if (this.nameInput.value == '') {
-                EditorPopup.showError(this.nameInput, 'Please enter a name for this variable.');
-                return;
-            }
-            else if (this.typeSelect.value == '') {
-                EditorPopup.showError(this.typeSelect, 'Please select a data type.');
-                return;
-            }
+            if (this.nameInput.value == '' || this.typeSelect.selectedIndex == 0)
+                return; // required field is blank, so cancel. TODO: highlight error.
 
             if (this.editingVariable !== null)
                 this.updateExistingVariable(this.editingVariable);
@@ -111,15 +116,14 @@
         }
         private createNewVariable() {
             let dataType = this.workspace.types.getByName(this.typeSelect.value);
-            if (dataType === null) {
-                EditorPopup.showError(this.typeSelect, 'Please select a data type.');
+            if (dataType == null)
                 return false;
-            }
 
             let variableName = this.nameInput.value;
+
             for (let existing of this.workspace.processEditor.currentProcess.variables)
                 if (existing.name == variableName) {
-                    EditorPopup.showError(this.nameInput, 'Another variable already uses this name. Please enter a different name.');
+                    // TODO: highlight name in use error
                     return;
                 }
             
@@ -130,5 +134,6 @@
         private updateExistingVariable(variable: Variable) {
             variable.name = this.nameInput.value;
         }
+        */
     }
 }

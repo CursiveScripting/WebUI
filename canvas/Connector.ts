@@ -55,7 +55,7 @@
         }
         private regionMouseDown(x: number, y: number) {
             this.mouseDown = true;
-            let editor = this.step.parentProcess.workspace.editor;
+            let editor = this.step.parentProcess.workspace.processEditor;
             editor.highlightVariables(this.param.type);
             editor.draw();
             return true;
@@ -64,11 +64,11 @@
             this.mouseDown = false;
 
             if (!this.dragging && this.input && this.param.type.allowInput) {
-                this.step.process.workspace.editor.showFixedInput(this, this.param);
+                this.step.process.workspace.processEditor.showFixedInput(this, this.param);
                 return false;
             }
 
-            let editor = this.step.parentProcess.workspace.editor;
+            let editor = this.step.parentProcess.workspace.processEditor;
             editor.highlightVariables(null);
 
             let ctx = editor.getContext();

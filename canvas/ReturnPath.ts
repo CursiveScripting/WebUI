@@ -239,7 +239,7 @@
 
             this.updateOffset(x, y);
             this.dragging = false;
-            let otherStep = this.fromStep.parentProcess.workspace.editor.getStep(x, y);
+            let otherStep = this.fromStep.parentProcess.workspace.processEditor.getStep(x, y);
             if (otherStep instanceof StartStep)
                 return false;
 

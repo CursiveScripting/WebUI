@@ -1,28 +1,37 @@
 ﻿namespace Cursive {
     export class VariableListDisplay {
         private readonly workspace: Workspace;
-        private readonly listElement: HTMLElement;
+        private readonly rootElement: HTMLElement;
         
         constructor(workspace: Workspace, variableList: HTMLElement) {
             this.workspace = workspace;
-            this.listElement = variableList;
-            this.populateList();
+            this.rootElement = variableList;
         }
         populateList() {
-            this.listElement.innerHTML = '';
+            this.rootElement.innerHTML = '';
 
-            if (this.workspace.editor.currentProcess == null) {
-                this.listElement.removeAttribute('data-process-name');
+            if (this.workspace.currentProcess == null) {
+                this.rootElement.removeAttribute('data-process-name');
                 return;
             }
 
-            this.listElement.setAttribute('data-process-name', this.workspace.editor.currentProcess.name);
+            this.rootElement.setAttribute('data-process-name', this.workspace.currentProcess.name);
 
-            this.listElement.appendChild(this.createAddVariableLink());
+            if (!this.workspace.currentProcess.fixedSignature)
+                this.rootElement.appendChild(this.createEditProcessLink());
+            this.rootElement.appendChild(this.createAddVariableLink());
 
-            for (let variable of this.workspace.editor.currentProcess.variables) {
-                this.listElement.appendChild(this.createVariableLink(variable));
+            for (let variable of this.workspace.currentProcess.variables) {
+                this.rootElement.appendChild(this.createVariableLink(variable));
             }
+        }
+        private createEditProcessLink() {
+            let link = document.createElement('li');
+            link.className = 'link editProcess';
+            link.innerText = 'edit process';
+
+            link.addEventListener("click", this.editProcessLinkClicked.bind(this));
+            return link;
         }
         private createAddVariableLink() {
             let link = document.createElement('li');
@@ -45,17 +54,29 @@
             link.addEventListener("mouseout", this.variableLinkMouseOut.bind(this, link, variable));
             return link;
         }
+        private editProcessLinkClicked(link: HTMLElement, variable: Variable) {
+            if (this.workspace.currentProcess.fixedSignature)
+                return;
+
+            // TODO: show edit process display
+        }
         private addVariableLinkClicked(link: HTMLElement, variable: Variable) {
-            // TODO: open popup
+            this.workspace.variableEditor.showNew();
         }
         private variableLinkClicked(link: HTMLElement, variable: Variable) {
-            // TODO: open & populate popup
+            this.workspace.variableEditor.showExisting(variable);
         }
         private variableLinkMouseOver(link: HTMLElement, variable: Variable) {
             // TODO: highlight link and variables
         }
         private variableLinkMouseOut(link: HTMLElement, variable: Variable) {
             // TODO: unhighlight link and variables
+        }
+        show() {
+            this.rootElement.style.removeProperty('display');
+        }
+        hide() {
+            this.rootElement.style.display = 'none';
         }
     }
 }

@@ -64,7 +64,7 @@
 
             // test for collisions
             let steps = this.parentProcess.steps;
-            let ctx = this.parentProcess.workspace.editor.getContext();
+            let ctx = this.parentProcess.workspace.processEditor.getContext();
 
             for (let i = 0; i < steps.length; i++) {
                 if (steps[i] === this)

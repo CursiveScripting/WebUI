@@ -2,16 +2,41 @@
     export class Workspace {
         readonly processListDisplay: ProcessListDisplay;
         readonly variableListDisplay: VariableListDisplay;
-        readonly editor: EditorCanvas;
+        private readonly errorDisplay: ErrorDisplay;
+        readonly variableEditor: VariableEdit;
+        readonly parameterEditor: ParameterEdit;
+        readonly returnPathEditor: ReturnPathEdit;
+        readonly processSignatureEditor: ProcessSignatureEdit;
+        readonly processEditor: EditorCanvas;
         types: Dictionary<Type>;
         systemProcesses: Dictionary<SystemProcess>;
         userProcesses: Dictionary<UserProcess>;
+        currentProcess: UserProcess;
 
         constructor(workspaceXml: HTMLElement, processList: HTMLElement, variableList: HTMLElement, canvasWrapper: HTMLElement) {
-            this.editor = new EditorCanvas(this, canvasWrapper);
             WorkspaceLoading.loadWorkspace(this, workspaceXml);
+            canvasWrapper.classList.add('editorWrapper');
+
+            let canvas = document.createElement('canvas');
+            canvasWrapper.appendChild(canvas);
+
+            let processEditRoot = document.createElement('div');
+            canvasWrapper.appendChild(processEditRoot);
+
+            let popupRoot = document.createElement('div');
+            canvasWrapper.appendChild(popupRoot);
+
+            let popup = new EditorPopup(popupRoot);
+
+            this.errorDisplay = new ErrorDisplay(this, popup);
+            this.processEditor = new EditorCanvas(this, canvas);
             this.processListDisplay = new ProcessListDisplay(this, processList);
             this.variableListDisplay = new VariableListDisplay(this, variableList);
+            this.variableEditor = new VariableEdit(this, popup);
+            this.parameterEditor = new ParameterEdit(this, popup);
+            this.returnPathEditor = new ReturnPathEdit(this, popup);
+            this.processSignatureEditor = new ProcessSignatureEdit(this, processEditRoot);
+            this.currentProcess = null;
         }
         setDefinitions(types: Dictionary<Type>, systemProcesses: Dictionary<SystemProcess>, userProcesses: Dictionary<UserProcess>) {
             this.types = types;
@@ -29,6 +54,14 @@
             }
             return ProcessSaving.saveProcesses(this.userProcesses);
         }
+        openProcess(process: UserProcess) {
+            this.currentProcess = process;
+            this.processListDisplay.populateList();
+            this.variableListDisplay.populateList();
+            this.processEditor.loadProcess(process);
+            this.variableListDisplay.show();
+            this.processSignatureEditor.hide();
+        }
         validate() {
             let valid = true;
 
@@ -42,28 +75,8 @@
             return valid;
         }
         showError(message: string) {
-            this.editor.showText('<h3>An error has occurred</h3><p>Sorry. You might need to reload the page to continue.</p><p>The following error was encountered - you might want to report this:</p><pre>' + message + '</pre>');
+            this.errorDisplay.showError(message);
             console.error(message);
-        }
-        showPopup(contents: string, okAction: () => void = null) {
-            this.editor.popupContent.innerHTML = contents;
-        
-            if (this.editor.popupEventListener != null)
-                this.editor.popupOkButton.removeEventListener('click', this.editor.popupEventListener);
-        
-            if (okAction != null) {
-                this.editor.popupOkButton.addEventListener('click', okAction);
-                this.editor.popupEventListener = okAction;
-            }
-            else
-                this.editor.popupEventListener = null;
-
-            this.editor.popup.style.display = '';
-            this.editor.overlay.style.display = '';
-
-            let firstInput = this.editor.popup.querySelector('input') as HTMLElement;
-            if (firstInput !== null)
-                firstInput.focus();
         }
         getScrollbarSize() {
             let outer = document.createElement('div');

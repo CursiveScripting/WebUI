@@ -42,16 +42,7 @@
             Drawing.underlineText(ctx, displayName, this.x, this.y + this.radius / 2, isMouseOver);
         }
         private pathNameRegionClick() {
-            let content = 'Name a return path for this process, or leave blank to use none:<br/><input type="text" class="name" value="'
-            content += this.returnPath == null ? '' : this.returnPath
-            content += '" />';
-            
-            this.parentProcess.workspace.showPopup(content, this.nameChangeConfirmed.bind(this));
-        }
-        private nameChangeConfirmed() {
-            let nameInput = this.parentProcess.workspace.editor.popupContent.querySelector('.name') as HTMLInputElement;
-            let name = nameInput.value.trim();
-            this.returnPath = name == '' ? null : name;
+            this.parentProcess.workspace.returnPathEditor.show(this);
         }
         createDanglingReturnPaths() { }
         getInputs() { return this.parentProcess.outputs; }
