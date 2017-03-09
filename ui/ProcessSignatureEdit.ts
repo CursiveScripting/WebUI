@@ -13,7 +13,6 @@
             this.workspace = workspace;
             this.rootElement = popupRoot;
             this.editingProcess = null;
-            this.populateContent();
         }
         private populateContent() {
             this.rootElement.innerHTML = '';
@@ -26,15 +25,13 @@
             p.appendChild(label);
 
             this.processNameInput = document.createElement('input');
-            this.processNameInput.setAttribute('id', 'txtProcessName');
-            this.processNameInput.setAttribute('type', 'text');
+            this.processNameInput.id = 'txtProcessName';
+            this.processNameInput.type = 'text';
             p.appendChild(this.processNameInput);
 
             this.inputListElement = this.createListElement('inputs', 'inputs', 'input');
-            this.inputListElement.setAttribute('id', 'inputList');
 
             this.outputListElement = this.createListElement('outputs', 'outputs', 'output');
-            this.outputListElement.setAttribute('id', 'outputList');
 
             p = document.createElement('p');
             p.className = 'returnPathNote';
@@ -71,24 +68,130 @@
             addLink.className = "link add" + nameSingular;
             addLink.innerText = 'add new ' + nameSingular;
             fieldSet.appendChild(addLink);
-
-            // TODO: hook up add link behaviour
+            
+            addLink.addEventListener('click', this.addParameterClicked.bind(this, listElement));
 
             return listElement;
         }
+        private addParameterClicked(listElement: HTMLOListElement) {
+            listElement.appendChild(this.createProcessParameter(null));
+        }
         private saveButtonClicked() {
-            // TODO: implement
+            EditorPopup.clearErrors(this.rootElement);
+            let processName = this.checkProcessName();
+            if (processName === null)
+                return;
+
+            if (!this.checkParameterNames(this.inputListElement, 'input'))
+                return;
+            if (!this.checkParameterNames(this.outputListElement, 'output'))
+                return;
+
+            let isNew = false;
+            if (this.editingProcess === null) {
+                this.editingProcess = new UserProcess(processName, [], [], [], [], false);
+                this.editingProcess.workspace = this.workspace;
+                this.workspace.userProcesses.add(processName, this.editingProcess);
+                isNew = true;
+            }
+            else if (this.editingProcess.name != processName) {
+                this.workspace.userProcesses.remove(this.editingProcess.name)
+                this.editingProcess.name = processName;
+                this.workspace.userProcesses.add(processName, this.editingProcess);
+            }
+
+            this.updateProcessParameters(this.editingProcess.inputs, this.inputListElement.childNodes);
+            this.updateProcessParameters(this.editingProcess.outputs, this.outputListElement.childNodes);
+
+            if (isNew) // input step needs the parameters to have been created
+                this.editingProcess.createDefaultSteps();
+
+            this.hide();
+            this.workspace.processListDisplay.populateList();
+            this.workspace.openProcess(this.editingProcess);
+        }
+        private checkProcessName() {
+            let processName = this.processNameInput.value.trim();
+            if (processName == '') {
+                EditorPopup.showError(this.processNameInput, 'Please enter a name for this process.');
+                return null;
+            }
+            let existingProcess: Process = this.workspace.userProcesses.getByName(processName);
+            let existingProcessType: string;
+            if (existingProcess !== null) {
+                existingProcessType = 'user';
+            }
+            else {
+                existingProcess = this.workspace.systemProcesses.getByName(processName);
+                existingProcessType = 'system';
+            }
+
+            if (existingProcess !== undefined && existingProcess !== this.editingProcess) {
+                EditorPopup.showError(this.processNameInput, 'There is already a ' + existingProcessType + ' process with this name. Please enter a different name.');
+                return null;
+            }
+            return processName;
+        }
+        private checkParameterNames(listElement: HTMLOListElement, parameterType: 'input' | 'output'): boolean {
+            let nameInputs = listElement.querySelectorAll('input.name');
+            let ok = true;
+            let usedNames: { [key: string]: boolean } = {};
+            for (let i = 0; i < nameInputs.length; i++) {
+                let nameInput = nameInputs[i] as HTMLInputElement;
+                if (usedNames.hasOwnProperty(nameInput.value)) {
+                    EditorPopup.showError(nameInput, 'Multiple ' + parameterType + 's have the same name. Please give this ' + parameterType + ' a different name.');
+                    ok = false;
+                }
+                else
+                    usedNames[nameInput.value] = true;
+            }
+            return ok;
+        }
+        private updateProcessParameters(parameters: Variable[], listItems: NodeList) {
+            let oldParameters = parameters.slice();
+
+            for (let i = 0; i < listItems.length; i++) {
+                let item = listItems[i] as Element;
+
+                let typeInput = item.querySelector('.type') as HTMLSelectElement;
+                let dataType = this.workspace.types.getByName(typeInput.value);
+
+                let nameInput = item.querySelector('.name') as HTMLInputElement;
+                let name = nameInput.value.trim();
+
+                let origName = nameInput.getAttribute('data-orig');
+                if (origName === null || origName == '') {
+                    parameters.push(new Variable(name, dataType));
+                    continue; // new parameter
+                }
+
+                let origParam = null; // existing parameter
+                for (let j = 0; j < oldParameters.length; j++) {
+                    let origParam = oldParameters[j];
+                    if (origParam.name == origName) {
+                        origParam.name = name;
+                        origParam.type = dataType;
+                        oldParameters.splice(j, 1);
+                        break;
+                    }
+                }
+            }
+
+            // remove any parameters which weren't in the UI (cos they must have been removed)
+            for (let i = 0; i < oldParameters.length; i++) {
+                let oldParam = oldParameters[i];
+                for (let j = 0; j < parameters.length; j++)
+                    if (parameters[j] === oldParam)
+                        parameters.splice(j, 1);
+            }
         }
         private cancelButtonClicked() {
-            // TODO: implement
-        }
-        private addInputClicked() {
-            // TODO: implement
-        }
-        private addOutputClicked() {
-            // TODO: implement
+            this.hide();
+            this.workspace.processEditor.show();
+            this.workspace.variableListDisplay.show();
         }
         private show() {
+            this.populateContent();
             this.inputListElement.innerHTML = '';
             this.outputListElement.innerHTML = '';
 
@@ -108,20 +211,21 @@
             this.saveButton.innerText = 'update process';
             this.cancelButton.style.removeProperty('display');
             this.editingProcess = process;
+            this.processNameInput.value = process.name;
             
             if (process.inputs !== null)
                 for (let i = 0; i < process.inputs.length; i++)
-                    this.inputListElement.appendChild(this.writeProcessParameter(process.inputs[i]));
+                    this.inputListElement.appendChild(this.createProcessParameter(process.inputs[i]));
 
             if (process.outputs !== null)
                 for (let i = 0; i < process.outputs.length; i++)
-                    this.outputListElement.appendChild(this.writeProcessParameter(process.outputs[i]));
+                    this.outputListElement.appendChild(this.createProcessParameter(process.outputs[i]));
         }
-        private writeProcessParameter(param: Variable) {
+        private createProcessParameter(param: Variable) {
             let element = document.createElement('li');
 
             let nameInput = document.createElement('input');
-            nameInput.setAttribute('type', 'text');
+            nameInput.type = 'text';
             nameInput.className = 'name';
             element.appendChild(nameInput);
 
@@ -135,11 +239,12 @@
             let typeSelect = document.createElement('select');
             typeSelect.className = 'type';
             element.appendChild(typeSelect);
-            
+
             for (let i = 0; i < this.workspace.types.count; i++) {
                 let dataType = this.workspace.types.getByIndex(i);
                 let option = document.createElement('option');
                 option.value = dataType.name;
+                option.text = dataType.name;
                 option.style.color = dataType.color;
 
                 if (param !== null && param.type === dataType)
@@ -161,123 +266,5 @@
         private removeParameterClicked(paramElement: HTMLElement) {
             paramElement.parentElement.removeChild(paramElement);
         }
-
-
-        /*
-        private addInputClicked() {
-            let item = document.createElement('li');
-            item.innerHTML = this.writeProcessParameter(null);
-            document.getElementById('inputList').appendChild(item);
-            return false;
-        }
-        private addOutputClicked() {
-            let item = document.createElement('li');
-            item.innerHTML = this.writeProcessParameter(null);
-            document.getElementById('outputList').appendChild(item);
-            return false;
-        }
-        private saveProcessClicked() {
-            let name = (<HTMLInputElement>document.getElementById('txtProcessName')).value.trim();
-
-            let processes = this.workspace.systemProcesses;
-            for (let i = 0; i < processes.count; i++)
-                if (processes.getByIndex(i).name.trim() == name) {
-                    this.workspace.showPopup('A system process already uses the name \'' + name + '\'. Please use a different one.');
-                    return;
-                }
-
-            processes = this.workspace.userProcesses;
-            for (let i = 0; i < processes.count; i++)
-                if (processes.getByIndex(i) != this.currentProcess && processes.getByIndex(i).name.trim() == name) {
-                    this.workspace.showPopup('Another process already uses the name \'' + name + '\'. Please use a different one.');
-                    return;
-                }
-
-            let inputs = this.textDisplay.querySelectorAll('#inputList li');
-            let outputs = this.textDisplay.querySelectorAll('#outputList li');
-
-            let paramNames = {};
-            for (let i = 0; i < inputs.length; i++) {
-                let nameInput = inputs[i].querySelector('.name') as HTMLInputElement;
-                let paramName = nameInput.value.trim();
-                if (paramNames.hasOwnProperty(paramName)) {
-                    this.workspace.showPopup('Multiple inputs have the same name: \'' + paramName + '\'. Please ensure input are unique.');
-                    return;
-                }
-                else
-                    paramNames[paramName] = true;
-            }
-            paramNames = {};
-            for (let i = 0; i < outputs.length; i++) {
-                let nameInput = outputs[i].querySelector('.name') as HTMLInputElement;
-                let paramName = nameInput.value.trim();
-                if (paramNames.hasOwnProperty(paramName)) {
-                    this.workspace.showPopup('Multiple outputs have the same name: \'' + paramName + '\'. Please ensure output are unique.');
-                    return;
-                }
-                else
-                    paramNames[paramName] = true;
-            }
-
-            if (this.currentProcess !== null) {
-                this.workspace.userProcesses.remove(this.currentProcess.name);
-                this.currentProcess.name = name;
-            }
-
-            this.currentProcess = new UserProcess(name, [], [], [], [], false);
-            this.currentProcess.createDefaultSteps();
-            this.currentProcess.workspace = this.workspace;
-            this.workspace.userProcesses.add(name, this.currentProcess);
-
-            this.updateProcessParameters(this.currentProcess.inputs, inputs);
-            this.updateProcessParameters(this.currentProcess.outputs, outputs);
-
-            this.workspace.processListDisplay.populateList();
-            this.showCanvas(true);
-            this.draw();
-        }
-        private updateProcessParameters(parameters: Variable[], listItems: NodeListOf<Element>) {
-            let oldParameters = parameters.slice();
-
-            for (let i = 0; i < listItems.length; i++) {
-                let item = listItems[i];
-
-                let typeInput = item.querySelector('.type') as HTMLSelectElement;
-                let typeIndex = parseInt(typeInput.value);
-                if (isNaN(typeIndex) || typeIndex < 0 || typeIndex >= this.workspace.types.count) {
-                    continue;
-                }
-                let type = this.workspace.types.getByIndex(typeIndex);
-
-                let nameInput = item.querySelector('.name') as HTMLInputElement;
-                let name = nameInput.value.trim();
-
-                let origName = nameInput.getAttribute('data-orig');
-                if (origName === null || origName == '') {
-                    parameters.push(new Variable(name, type));
-                    continue; // new parameter
-                }
-
-                let origParam = null; // existing parameter
-                for (let j = 0; j < oldParameters.length; j++) {
-                    let origParam = oldParameters[j];
-                    if (origParam.name == origName) {
-                        origParam.name = name;
-                        origParam.type = type;
-                        oldParameters.splice(j, 1);
-                        break;
-                    }
-                }
-            }
-
-            // remove any parameters which weren't in the UI (cos they must have been removed)
-            for (let i = 0; i < oldParameters.length; i++) {
-                let oldParam = oldParameters[i];
-                for (let j = 0; j < parameters.length; j++)
-                    if (parameters[j] === oldParam)
-                        parameters.splice(j, 1);
-            }
-        }
-        */
     }
 }

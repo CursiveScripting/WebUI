@@ -106,8 +106,10 @@
             let pos = this.getCanvasCoords(e);
             let region = this.getRegion(pos.x, pos.y);
             this.mouseDownRegion = region;
-            if (region != null && region.mousedown(pos.x, pos.y))
+            if (region != null && region.mousedown(pos.x, pos.y)) {
+                this.processChanged();
                 this.draw();
+            }
         }
         private canvasMouseUp(e: MouseEvent) {
             let pos = this.getCanvasCoords(e);
@@ -127,8 +129,10 @@
                 draw = true;
             }
 
-            if (draw)
+            if (draw) {
+                this.processChanged();
                 this.draw();
+            }
         }
         private canvasMouseOut(e: MouseEvent) {
             if (this.hoverRegion != null) {
@@ -140,8 +144,10 @@
                     this.hoverRegion = null;
                     this.canvas.style.cursor = '';
 
-                    if (draw)
+                    if (draw) {
+                        this.processChanged();
                         this.draw();
+                    }
                 }
             }
         }
@@ -181,8 +187,10 @@
             if (this.mouseDownRegion != null && this.mouseDownRegion != region)
                 draw = this.mouseDownRegion.move(pos.x, pos.y) || draw;
 
-            if (draw)
+            if (draw) {
+                this.processChanged();
                 this.draw();
+            }
         }
         getContext() {
             return this.canvas.getContext('2d');
@@ -295,6 +303,7 @@
             let step = new Step(this.currentProcess.getNextStepID(), process, this.currentProcess, x, y)
             step.createDanglingReturnPaths();
             this.currentProcess.steps.push(step);
+            this.processChanged();
             this.draw();
         }
         highlightVariables(type) {
@@ -343,6 +352,10 @@
                 for (let i=0; i<this.hoverVariable.links.length; i++)
                     Connector.drawPath(ctx, this.hoverVariable.links[i], fromX, fromY);
             }
+        }
+        private processChanged() {
+            this.currentProcess.validate();
+            this.workspace.processListDisplay.populateList();
         }
     }
 }

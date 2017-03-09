@@ -10,7 +10,7 @@
         }
         populateList() {
             let content = '<li class="addNew';
-            if (this.workspace.processEditor.currentProcess === null)
+            if (this.workspace.currentProcess === null)
                 content += ' active';
             content += '">add new process</li>';
 
@@ -58,7 +58,7 @@
                 desc += 'fixed ';
             if (!valid)
                 desc += 'invalid ';
-            else if (process === this.workspace.processEditor.currentProcess)
+            else if (process === this.workspace.currentProcess)
                 desc += 'active';
         
             desc += '"><div class="name">' + process.name + '</div>';

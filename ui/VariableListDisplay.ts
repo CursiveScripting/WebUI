@@ -58,7 +58,9 @@
             if (this.workspace.currentProcess.fixedSignature)
                 return;
 
-            // TODO: show edit process display
+            this.hide();
+            this.workspace.processEditor.hide();
+            this.workspace.processSignatureEditor.showExisting(this.workspace.currentProcess);
         }
         private addVariableLinkClicked(link: HTMLElement, variable: Variable) {
             this.workspace.variableEditor.showNew();

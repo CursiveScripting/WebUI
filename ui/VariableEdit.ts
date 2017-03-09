@@ -18,12 +18,12 @@
             this.promptElement = document.createElement('div');
             this.popup.popupContent.appendChild(this.promptElement);
 
-            let fieldRow = this.addField('name');
+            let fieldRow = this.popup.addField('name');
             this.nameInput = document.createElement('input');
-            this.nameInput.setAttribute('type', 'text');
+            this.nameInput.type = 'text';
             fieldRow.appendChild(this.nameInput);
 
-            fieldRow = this.addField('type');
+            fieldRow = this.popup.addField('type');
             this.typeSelect = document.createElement('select');
             fieldRow.appendChild(this.typeSelect);
 
@@ -36,7 +36,7 @@
                 this.typeSelect.options.add(typeOption);
             }
 
-            fieldRow = this.addField(null);
+            fieldRow = this.popup.addField(null);
             fieldRow.classList.add('buttons');
 
             let okButton = document.createElement('button');
@@ -49,24 +49,7 @@
             cancelButton.innerText = 'cancel';
             fieldRow.appendChild(cancelButton);
         }
-        private addField(name: string) {
-            let row = document.createElement('div');
-            row.className = 'row';
-            this.popup.popupContent.appendChild(row);
-
-            if (name !== null) {
-                let label = document.createElement('span');
-                label.className = 'label';
-                label.innerText = name;
-                row.appendChild(label);
-            }
-
-            let wrapper = document.createElement('span');
-            wrapper.className = 'value';
-            row.appendChild(wrapper);
-
-            return row;
-        }
+        
         showNew() {
             this.populateContent();
             this.popup.show();
@@ -92,6 +75,7 @@
             this.popup.hide();
         }
         private okClicked() {
+            EditorPopup.clearErrors(this.popup.popupContent);
             if (this.nameInput.value == '') {
                 EditorPopup.showError(this.nameInput, 'Please enter a name for this variable.');
                 return;
@@ -117,14 +101,14 @@
             }
 
             let variableName = this.nameInput.value;
-            for (let existing of this.workspace.processEditor.currentProcess.variables)
+            for (let existing of this.workspace.currentProcess.variables)
                 if (existing.name == variableName) {
                     EditorPopup.showError(this.nameInput, 'Another variable already uses this name. Please enter a different name.');
                     return;
                 }
             
             let variable = new Variable(variableName, dataType);
-            this.workspace.processEditor.currentProcess.variables.push(variable);
+            this.workspace.currentProcess.variables.push(variable);
             return true;
         }
         private updateExistingVariable(variable: Variable) {

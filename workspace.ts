@@ -21,6 +21,7 @@
             canvasWrapper.appendChild(canvas);
 
             let processEditRoot = document.createElement('div');
+            processEditRoot.className = 'processSignatureEdit';
             canvasWrapper.appendChild(processEditRoot);
 
             let popupRoot = document.createElement('div');
