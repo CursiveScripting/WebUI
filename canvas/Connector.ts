@@ -3,7 +3,7 @@
         readonly step: Step;
         private readonly angle: number;
         readonly param: Variable;
-        private readonly input: boolean;
+        readonly input: boolean;
         region: Region;
 
         private linkLength: number;
@@ -11,11 +11,6 @@
         private outputBranchAngle: number;
         private inputBranchAngle: number;
         private textDistance: number;
-        private mouseDown: boolean;
-        private dragging: boolean;
-
-        private dragEndX: number;
-        private dragEndY: number;
 
         constructor(step: Step, angle: number, param: Variable, isInput: boolean) {
             this.step = step;
@@ -28,8 +23,6 @@
             this.outputBranchAngle = Math.PI * 0.8;
             this.inputBranchAngle = Math.PI - this.outputBranchAngle;
             this.textDistance = 24;
-            this.mouseDown = false;
-            this.dragging = false;
     
             this.createRegion();
         }
@@ -37,13 +30,12 @@
             this.region = new Region(
                 this.outline.bind(this),
                 this.draw.bind(this),
-                'crosshair'
+                'pointer'
             );
             this.region.hover = this.regionHover.bind(this);
             this.region.unhover = this.regionUnhover.bind(this);
             this.region.mousedown = this.regionMouseDown.bind(this);
             this.region.mouseup = this.regionMouseUp.bind(this);
-            this.region.move = this.regionMove.bind(this);
         }
         private regionHover() {
             this.step.drawText = true;
@@ -54,62 +46,13 @@
             return true;
         }
         private regionMouseDown(x: number, y: number) {
-            this.mouseDown = true;
             let editor = this.step.parentProcess.workspace.processEditor;
             editor.highlightVariables(this.param.type);
             editor.draw();
             return true;
         }
         private regionMouseUp(x: number, y: number) {
-            this.mouseDown = false;
-
-            if (!this.dragging && this.input && this.param.type.allowInput) {
-                this.step.process.workspace.processEditor.showFixedInput(this, this.param);
-                return false;
-            }
-
-            let editor = this.step.parentProcess.workspace.processEditor;
-            editor.highlightVariables(null);
-
-            let ctx = editor.getContext();
-            let variables = editor.currentProcess.variables;
-            for (let i = 0; i < editor.variableRegions.length; i++) {
-                let region = editor.variableRegions[i];
-
-                if (!region.containsPoint(ctx, x, y))
-                    continue;
-
-                let variableIndex = i % 2 == 0 ? i / 2 : (i - 1) / 2; // there's two regions for each
-                let variable = variables[variableIndex];
-
-                if (variable.type !== this.param.type)
-                    break;
-
-                for (let j = 0; j < this.param.links.length; j++) {
-                    let oldVarLinks = this.param.links[j].links;
-                    let index = oldVarLinks.indexOf(this);
-                    if (index > -1)
-                        oldVarLinks.splice(index, 1);
-                }
-                this.param.links = [variable];
-                this.param.initialValue = null;
-                variable.links.push(this);
-            }
-
-            this.dragEndX = undefined;
-            this.dragEndY = undefined;
-            this.dragging = false;
-            editor.draw();
-            return true;
-        }
-        private regionMove(x: number, y: number) {
-            if (!this.mouseDown)
-                return false;
-
-            this.dragging = true;
-
-            this.dragEndX = x;
-            this.dragEndY = y;
+            this.step.parentProcess.workspace.parameterEditor.show(this);
             return true;
         }
         outline(ctx: CanvasRenderingContext2D) {
@@ -161,25 +104,12 @@
                 let pos = this.offset(this.step.x, this.step.y, this.textDistance + this.step.radius, this.angle);
                 ctx.fillText(this.param.name, pos.x, pos.y);
             }
-        
-            if (this.dragging)
-                Connector.drawPath(ctx, this, this.dragEndX, this.dragEndY);
         }
         offset(x: number, y: number, distance: number, angle: number) {
             return {
                 x: x + distance * Math.cos(angle),
                 y: y + distance * Math.sin(angle)
             };
-        }
-        static drawPath(ctx: CanvasRenderingContext2D, connector: Connector, toX: number, toY: number) {
-            ctx.strokeStyle = connector.param.type.color;
-            ctx.lineWidth = 3;
-
-            let edgePos = connector.offset(connector.step.x, connector.step.y, connector.step.radius + connector.linkLength, connector.angle);
-            let cp1 = connector.offset(connector.step.x, connector.step.y, connector.step.radius * 5, connector.angle);
-            let cp2x = toX, cp2y = toY + 200;
-    
-            Drawing.drawCurve(ctx, edgePos.x, edgePos.y, cp1.x, cp1.y, cp2x, cp2y, toX, toY);
         }
     }
 }

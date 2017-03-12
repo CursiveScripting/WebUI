@@ -29,7 +29,7 @@
 
             let popup = new EditorPopup(popupRoot);
 
-            this.errorDisplay = new ErrorDisplay(this, popup);
+            this.errorDisplay = new ErrorDisplay(popup);
             this.processEditor = new EditorCanvas(this, canvas);
             this.processListDisplay = new ProcessListDisplay(this, processList);
             this.variableListDisplay = new VariableListDisplay(this, variableList);

@@ -260,36 +260,6 @@
         hide() {
             this.canvas.style.display = 'none';
         }
-        showFixedInput(connector: Connector, input: Variable) {
-            // TODO: properly implement this
-            let content = 'Specify a fixed value for this input. '
-            if (input.type.guidance != null)
-                content += input.type.guidance;
-            content += ' <br/><input type="text" class="value" value="';
-
-            if (input.initialValue !== null)
-                content += input.initialValue;
-            content += ' " />';
-            
-            //this.workspace.showPopup(content, this.fixedInputPopupConfirmed.bind(this, connector, input));
-        }
-        /*
-        private fixedInputPopupConfirmed(connector: Variable, input: Variable) {
-            let valueInput = this.popupContent.querySelector('.value') as HTMLInputElement;
-            let value = valueInput.value;
-            if (!input.type.isValid(value))
-                return false; // TODO: stop the popup from closing
-
-            if (input.links.length > 0) {
-                let linkedVar = input.links[0];
-                let indexOnVar = linkedVar.links.indexOf(connector);
-                if (indexOnVar != -1)
-                    linkedVar.links.splice(indexOnVar, 1);
-                input.links = [];
-            }
-            input.initialValue = value;
-        }
-        */
         private dropProcess(name: string, x: number, y: number) {
             let process: Process = this.workspace.systemProcesses.getByName(name);
             if (process === undefined)
@@ -349,8 +319,8 @@
                 let region = this.variableRegions[varNumber * 2];
                 let fromX = region.centerX, fromY = 50;
             
-                for (let i=0; i<this.hoverVariable.links.length; i++)
-                    Connector.drawPath(ctx, this.hoverVariable.links[i], fromX, fromY);
+                for (let i = 0; i < this.hoverVariable.links.length; i++)
+                    ; // TODO: highlight this.hoverVariable.links[i]
             }
         }
         private processChanged() {
