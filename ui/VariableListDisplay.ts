@@ -41,7 +41,7 @@
             link.addEventListener("click", this.addVariableLinkClicked.bind(this));
             return link;
         }
-        private createVariableLink(variable: Variable) {
+        private createVariableLink(variable: DataField) {
             let link = document.createElement('li');
             link.className = 'link variable';
             link.setAttribute('data-name', variable.name);
@@ -49,12 +49,12 @@
             link.style.color = variable.type.color;
             link.innerText = variable.name;
 
-            link.addEventListener("click", this.variableLinkClicked.bind(this, link, variable));
-            link.addEventListener("mouseover", this.variableLinkMouseOver.bind(this, link, variable));
-            link.addEventListener("mouseout", this.variableLinkMouseOut.bind(this, link, variable));
+            link.addEventListener("click", this.variableLinkClicked.bind(this, variable, link));
+            link.addEventListener("mouseover", this.highlight.bind(this, variable, link));
+            link.addEventListener("mouseout", this.highlight.bind(this, null, link));
             return link;
         }
-        private editProcessLinkClicked(link: HTMLElement, variable: Variable) {
+        private editProcessLinkClicked() {
             if (this.workspace.currentProcess.fixedSignature)
                 return;
 
@@ -62,17 +62,31 @@
             this.workspace.processEditor.hide();
             this.workspace.processSignatureEditor.showExisting(this.workspace.currentProcess);
         }
-        private addVariableLinkClicked(link: HTMLElement, variable: Variable) {
+        private addVariableLinkClicked() {
             this.workspace.variableEditor.showNew();
         }
-        private variableLinkClicked(link: HTMLElement, variable: Variable) {
+        private variableLinkClicked(variable: Variable, link: HTMLElement) {
             this.workspace.variableEditor.showExisting(variable);
         }
-        private variableLinkMouseOver(link: HTMLElement, variable: Variable) {
-            // TODO: highlight link and variables
-        }
-        private variableLinkMouseOut(link: HTMLElement, variable: Variable) {
-            // TODO: unhighlight link and variables
+        highlight(variable: Variable, hoverLink?: HTMLElement) {
+            if (hoverLink === undefined) {
+                let selector: string;
+                if (variable === null)
+                    selector = '.link.variable.highlight';
+                else
+                    selector = '.link.variable[data-name="' + variable.name + '"]';
+
+                hoverLink = this.rootElement.querySelector(selector) as HTMLElement;
+            }
+
+            if (hoverLink != null) {
+                if (variable === null)
+                    hoverLink.classList.remove('highlight');
+                else
+                    hoverLink.classList.add('highlight');
+            }
+
+            this.workspace.processEditor.highlightConnectors(variable);
         }
         show() {
             this.rootElement.style.removeProperty('display');

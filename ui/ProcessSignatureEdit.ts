@@ -147,7 +147,7 @@
             }
             return ok;
         }
-        private updateProcessParameters(parameters: Variable[], listItems: NodeList) {
+        private updateProcessParameters(parameters: DataField[], listItems: NodeList) {
             let oldParameters = parameters.slice();
 
             for (let i = 0; i < listItems.length; i++) {
@@ -161,7 +161,7 @@
 
                 let origName = nameInput.getAttribute('data-orig');
                 if (origName === null || origName == '') {
-                    parameters.push(new Variable(name, dataType));
+                    parameters.push(new Parameter(name, dataType));
                     continue; // new parameter
                 }
 
@@ -221,7 +221,7 @@
                 for (let i = 0; i < process.outputs.length; i++)
                     this.outputListElement.appendChild(this.createProcessParameter(process.outputs[i]));
         }
-        private createProcessParameter(param: Variable) {
+        private createProcessParameter(param: DataField) {
             let element = document.createElement('li');
 
             let nameInput = document.createElement('input');

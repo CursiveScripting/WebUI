@@ -74,7 +74,7 @@
             }
         }
 
-        private static saveStepParameters(parameters: Variable[], parent: Element, nodeName: string, variableAttributeName: string) {
+        private static saveStepParameters(parameters: Parameter[], parent: Element, nodeName: string, variableAttributeName: string) {
             if (parameters === null)
                 return;
 
@@ -83,18 +83,18 @@
             }
         }
 
-        private static saveStepParameter(parameter: Variable, parent: Element, nodeName: string, variableAttributeName: string) {
+        private static saveStepParameter(parameter: Parameter, parent: Element, nodeName: string, variableAttributeName: string) {
             let element = parent.ownerDocument.createElement(parameter.initialValue === null ? nodeName : 'FixedInput');
             element.setAttribute('name', parameter.name);
             parent.appendChild(element);
 
             if (parameter.initialValue !== null)
                 element.setAttribute('value', parameter.initialValue);
-            else if (parameter.links.length >= 0)
-                element.setAttribute(variableAttributeName, parameter.links[0].name);
+            else if (parameter.link != null)
+                element.setAttribute(variableAttributeName, parameter.link.name);
         }
 
-        private static saveProcessParameter(parameter: Variable, parent: Element, nodeName: string) {
+        private static saveProcessParameter(parameter: DataField, parent: Element, nodeName: string) {
             let element = parent.ownerDocument.createElement(nodeName);
             element.setAttribute('name', parameter.name);
             element.setAttribute('type', parameter.type.name);

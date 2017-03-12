@@ -5,7 +5,7 @@
         private promptElement: HTMLDivElement;
         private nameInput: HTMLInputElement;
         private typeSelect: HTMLSelectElement;
-        private editingVariable: Variable;
+        private editingVariable: DataField;
 
         constructor(workspace: Workspace, popup: EditorPopup) {
             this.workspace = workspace;
@@ -60,7 +60,7 @@
             this.editingVariable = null;
             this.nameInput.focus();
         }
-        showExisting(variable: Variable) {
+        showExisting(variable: DataField) {
             this.editingVariable = variable;
             this.populateContent();
             this.popup.show();
@@ -111,7 +111,7 @@
             this.workspace.currentProcess.variables.push(variable);
             return true;
         }
-        private updateExistingVariable(variable: Variable) {
+        private updateExistingVariable(variable: DataField) {
             variable.name = this.nameInput.value;
         }
     }

@@ -85,7 +85,7 @@
             desc += '</li>';
             return desc;
         }
-        private writeItemFields(variables: Variable[]) {
+        private writeItemFields(variables: DataField[]) {
             var output = '';
             for (let i=0; i<variables.length; i++) {
                 if (i > 0)

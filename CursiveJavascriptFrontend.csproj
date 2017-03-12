@@ -30,7 +30,7 @@
     <TypeScriptCompile Include="io\ProcessLoading.ts" />
     <TypeScriptCompile Include="data\UserProcess.ts" />
     <TypeScriptCompile Include="canvas\Transform.ts" />
-    <TypeScriptCompile Include="data\Variable.ts" />
+    <TypeScriptCompile Include="data\DataField.ts" />
     <TypeScriptCompile Include="data\Process.ts" />
     <TypeScriptCompile Include="canvas\Region.ts" />
     <TypeScriptCompile Include="canvas\ReturnPath.ts" />

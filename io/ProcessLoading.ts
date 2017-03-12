@@ -30,11 +30,11 @@
         private static loadProcessDefinition(workspace: Workspace, processNode: Element): UserProcess {
             let processName = processNode.getAttribute('name');
 
-            let inputs: Variable[] = [];
+            let inputs: Parameter[] = [];
             let paramNodes = processNode.getElementsByTagName('Input');
             this.loadProcessParameters(workspace, paramNodes, inputs, 'input');
 
-            let outputs: Variable[] = [];
+            let outputs: Parameter[] = [];
             paramNodes = processNode.getElementsByTagName('Output');
             this.loadProcessParameters(workspace, paramNodes, outputs, 'output');
 
@@ -54,7 +54,7 @@
             return new UserProcess(processName, inputs, outputs, variables, returnPaths, true);
         }
 
-        private static loadProcessParameters(workspace: Workspace, paramNodes, parameters: Variable[], paramTypeName: string) {
+        private static loadProcessParameters(workspace: Workspace, paramNodes, dataFields: DataField[], paramTypeName: 'input' | 'output' | 'variable') {
             for (let i=0; i<paramNodes.length; i++) {
                 let node = paramNodes[i];
                 let paramName = node.getAttribute('name');
@@ -66,14 +66,18 @@
                 }
                 let dataType = workspace.types.getByName(typeName);
 
-                let parameter = new Variable(name, dataType);
+                let dataField: DataField;
+                if (paramTypeName == 'variable')
+                    dataField = new Variable(name, dataType);
+                else
+                    dataField = new Parameter(name, dataType);
 
                 if (node.hasAttribute('initialValue')) {
                     let initial = node.getAttribute('initialValue');
-                    parameter.initialValue = initial;
+                    dataField.initialValue = initial;
                 }
 
-                return parameter;
+                dataFields.push(dataField);
             }
         }
 
@@ -146,12 +150,12 @@
             }
         }
 
-        private static loadStepInputs(workspace: Workspace, process: Process, sources: Variable[], step: Step, stepNode: Element) {
+        private static loadStepInputs(workspace: Workspace, process: Process, sources: DataField[], step: Step, stepNode: Element) {
             // TODO: parse a number of MapInput and FixedInput nodes
             // sources could be this process's outputs or its variables
         }
 
-        private static loadStepOutputs(workspace: Workspace, process: Process, destination: Variable[], step: Step, stepNode: Element) {
+        private static loadStepOutputs(workspace: Workspace, process: Process, destination: DataField[], step: Step, stepNode: Element) {
             let mapNodes = stepNode.getElementsByTagName('MapOutput');
             for (let i = 0; i < mapNodes.length; i++) {
                 let mapNode = mapNodes[i];

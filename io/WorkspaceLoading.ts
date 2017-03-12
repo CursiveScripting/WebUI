@@ -67,8 +67,8 @@
         }
         private static loadProcessDefinition(workspace: Workspace, procNode: Element, types: Dictionary<Type>, isSystemProcess: boolean): Process {
             let processName = procNode.getAttribute('name');
-            let inputs: Variable[] = [];
-            let outputs: Variable[] = [];
+            let inputs: Parameter[] = [];
+            let outputs: Parameter[] = [];
             let returnPaths: string[] = [];
             let procTypeName = isSystemProcess ? 'system' : 'fixed';
             
@@ -107,7 +107,7 @@
             return process;
         }
 
-        private static loadParameters(workspace: Workspace, processName: string, types: Dictionary<Type>, paramNodes: NodeListOf<Element>, parameters: Variable[], inputOrOutput: 'input' | 'output', procTypeName: string) {
+        private static loadParameters(workspace: Workspace, processName: string, types: Dictionary<Type>, paramNodes: NodeListOf<Element>, parameters: Parameter[], inputOrOutput: 'input' | 'output', procTypeName: string) {
             let usedNames: {[key:string]:boolean} = {};
 
             for (let i=0; i<paramNodes.length; i++) {
@@ -126,7 +126,7 @@
                     workspace.showError('The \'' + processName + '\' ' + procTypeName + ' process has two ' + inputOrOutput + 's with the same name: ' + paramName + '. The names of ' + paramTypeName + 's must be unique within a process.');
                 else {
                     usedNames[paramName] = null;
-                    parameters.push(new Variable(paramName, paramType));
+                    parameters.push(new Parameter(paramName, paramType));
                 }
             }
         }

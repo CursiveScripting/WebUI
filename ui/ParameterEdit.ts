@@ -49,12 +49,13 @@
             this.populateContent();
             this.connector = connector;
 
-            if (connector.input && connector.param.type.allowInput) {
+            if (connector.isInput && connector.param.type.allowInput) {
                 this.fixedInputRow.style.removeProperty('display');
                 this.prompt.innerText = 'Enter a fixed variable for this input, or select a variable to map from. ';
                 if (connector.param.type.guidance != null)
                     this.prompt.innerText += connector.param.type.guidance;
-                this.prompt.classList.add('input fixed');
+                this.prompt.classList.add('input');
+                this.prompt.classList.add('fixed');
                 this.prompt.classList.remove('output');
 
                 if (connector.param.initialValue !== null)
@@ -65,7 +66,7 @@
             else {
                 this.fixedInputRow.style.display = 'none';
                 this.prompt.classList.remove('fixed');
-                if (this.connector.input) {
+                if (this.connector.isInput) {
                     this.prompt.innerText = 'Select a variable to map this input from.';
                     this.prompt.classList.add('input');
                     this.prompt.classList.remove('output');
@@ -85,7 +86,7 @@
             this.variableSelect.options.add(varOption);
 
             for (let variable of this.workspace.currentProcess.variables) {
-                if (this.connector.input) {
+                if (this.connector.isInput) {
                     // for inputs, the variable type must be assignable from the input type
                     if (!variable.type.isAssignableFrom(this.connector.param.type))
                         continue;
@@ -100,10 +101,10 @@
                 varOption.value = variable.name;
                 varOption.text = variable.name;
                 varOption.style.color = variable.type.color;
+                varOption.selected = variable === connector.param.link;
                 this.variableSelect.options.add(varOption);
             }
-
-            // TODO: select currently-linked variable, if present
+            
             this.popup.show();
         }
         hide() {
@@ -122,7 +123,7 @@
             if (hasFixed == hasVar) {
                 if (hasFixed)
                     EditorPopup.showError(this.fixedInputValue, 'Please provide either a fixed input value or a variable, not both.');
-                else if (this.connector.input && this.connector.param.type.allowInput)
+                else if (this.connector.isInput && this.connector.param.type.allowInput)
                     EditorPopup.showError(this.fixedInputValue, 'Please provide either a fixed input value or select a variable.');
                 else
                     EditorPopup.showError(this.variableSelect, 'Please select a variable.');
@@ -135,20 +136,16 @@
                 return;
             }
 
-            /*
-            TODO: unlink from existing variables this may be hooked up to
-            if (input.links.length > 0) {
-                let linkedVar = input.links[0];
-                let indexOnVar = linkedVar.links.indexOf(connector);
+            let previousVar = this.connector.param.link;
+            if (previousVar !== null && previousVar.name != selectedVariableName) {
+                let indexOnVar = previousVar.links.indexOf(this.connector.param);
                 if (indexOnVar != -1)
-                    linkedVar.links.splice(indexOnVar, 1);
-                input.links = [];
+                    previousVar.links.splice(indexOnVar, 1);
             }
-            */
-
+            
             if (hasFixed) {
                 this.connector.param.initialValue = fixedInput;
-                this.connector.param.links = [];
+                this.connector.param.link = null;
             }
             else {
                 let variable: Variable = null;
@@ -163,7 +160,11 @@
                     return;
                 }
                 this.connector.param.initialValue = null;
-                this.connector.param.links = [variable];
+                this.connector.param.link = variable;
+
+                if (variable !== previousVar) {
+                    variable.links.push(this.connector.param);
+                }
             }
 
             this.hide();

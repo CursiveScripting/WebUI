@@ -1,14 +1,12 @@
 ﻿namespace Cursive {
     export class UserProcess extends Process {
         steps: Step[];
-        variables: Variable[];
         private valid: boolean;
         private nextStepID: number;
-        constructor(name: string, inputs: Variable[], outputs: Variable[], variables: Variable[], returnPaths: string[], readonly fixedSignature: boolean) {
+        constructor(name: string, inputs: Parameter[], outputs: Parameter[], public variables: Variable[], returnPaths: string[], readonly fixedSignature: boolean) {
             super(name, inputs, outputs, returnPaths);
         
             this.steps = [];
-            this.variables = variables;
             this.valid = false;
             this.nextStepID = 1;
         }

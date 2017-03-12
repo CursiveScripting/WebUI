@@ -117,7 +117,7 @@
         getOutputs() {
             return this.process.outputs;
         }
-        private createConnectors(params: Variable[], input: boolean) {
+        private createConnectors(params: Parameter[], input: boolean) {
             if (params === null)
                 return;
             let angularSpread;
@@ -140,8 +140,8 @@
             if (input)
                 stepSize = -stepSize;
                 
-            for (let i=0; i<params.length; i++) {
-                let connector = new Connector(this, currentAngle, params[i], input);
+            for (let param of params) {
+                let connector = new Connector(this, currentAngle, param, input);
                 this.connectors.push(connector);
                 this.regions.push(connector.region);
                 currentAngle += stepSize;

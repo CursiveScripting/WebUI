@@ -20,6 +20,7 @@
             this.cursor = cursor == null ? '' : cursor;
         }
         containsPoint(ctx: CanvasRenderingContext2D, x: number, y: number) {
+            ctx.strokeStyle = 'rgba(0,0,0,0)';
             ctx.beginPath();
             this.define(ctx);
             ctx.stroke();

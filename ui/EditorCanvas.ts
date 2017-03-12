@@ -2,12 +2,10 @@
     export class EditorCanvas {
         private readonly workspace: Workspace;
         currentProcess: UserProcess;
-        private highlightType: Type;
-        private hoverVariable: Variable;
+        highlightVariable: Variable;
         hoverRegion: Region;
         mouseDownRegion: Region;
         fixedRegions: Region[];
-        variableRegions: Region[];
         private canvas: HTMLCanvasElement;
         private canvasWidth: number;
         private headerCutoff: number;
@@ -15,8 +13,7 @@
         constructor(workspace: Workspace, canvas: HTMLCanvasElement) {
             this.workspace = workspace;
             this.canvas = canvas;
-            this.highlightType = null;
-            this.hoverVariable = null;
+            this.highlightVariable = null;
             this.setupUI();
         }
         loadProcess(process) {
@@ -49,7 +46,6 @@
             stopStep.mousedown = this.stopStepRegionMouseDown.bind(this);
 
             this.fixedRegions = [stopStep];
-            this.variableRegions = [];
             this.hoverRegion = null;
             this.mouseDownRegion = null;
 
@@ -203,23 +199,16 @@
             if (this.currentProcess == null)
                 return null;
             let ctx = this.canvas.getContext('2d');
-            ctx.strokeStyle = 'rgba(0,0,0,0)';
         
             // check regions from steps
-            let steps = this.currentProcess.steps;
-            for (let i=0; i<steps.length; i++) {
-                let step = steps[i];
-                let regions = step.regions;
-                for (let j=0; j<regions.length; j++) {
-                    let region = regions[j];
+            for (let step of this.currentProcess.steps) {
+                for (let region of step.regions) {
                     if (region.containsPoint(ctx, x, y))
                         return region;
                 }
-                let paths = step.returnPaths;
-                for (let j=0; j<paths.length; j++) {
-                    let path = paths[j];
-                    for (let k=0; k<path.regions.length; k++) {
-                        let region = path.regions[k];
+
+                for (let path of step.returnPaths) {
+                    for (let region of path.regions) {
                         if (region.containsPoint(ctx, x, y))
                             return region;
                     }
@@ -227,18 +216,11 @@
             }
         
             // check fixed regions
-            for (let i=0; i<this.fixedRegions.length; i++) {
-                let region = this.fixedRegions[i];
+            for (let region of this.fixedRegions) {
                 if (region.containsPoint(ctx, x, y))
                     return region;
             }
-        
-            // check variable regions
-            for (let i=0; i<this.variableRegions.length; i++) {
-                let region = this.variableRegions[i];
-                if (region.containsPoint(ctx, x, y))
-                    return region;
-            }
+
             return null;
         }
         getStep(x: number, y: number) {
@@ -276,9 +258,6 @@
             this.processChanged();
             this.draw();
         }
-        highlightVariables(type) {
-            this.highlightType = type;
-        }
         draw() {
             if (this.currentProcess == null)
                 return;
@@ -310,22 +289,14 @@
 
             for (let i=this.fixedRegions.length - 1; i>=0; i--)
                 this.fixedRegions[i].callDraw(ctx, this);
-            
-            for (let i=this.variableRegions.length - 1; i>=0; i--)
-                this.variableRegions[i].callDraw(ctx, this);
-        
-            if (this.hoverVariable !== null) {
-                let varNumber = this.currentProcess.variables.indexOf(this.hoverVariable);
-                let region = this.variableRegions[varNumber * 2];
-                let fromX = region.centerX, fromY = 50;
-            
-                for (let i = 0; i < this.hoverVariable.links.length; i++)
-                    ; // TODO: highlight this.hoverVariable.links[i]
-            }
         }
         private processChanged() {
             this.currentProcess.validate();
             this.workspace.processListDisplay.populateList();
+        }
+        highlightConnectors(variable: Variable) {
+            this.highlightVariable = variable;
+            this.draw();
         }
     }
 }
