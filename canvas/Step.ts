@@ -8,7 +8,7 @@
         readonly radius: number;
         drawText: boolean;
         dragging: boolean;
-        private connectors: Connector[];
+        private connectors: ParameterDisplay[];
         regions: Region[];
         bodyRegion: Region;
         private collisionRegion: Region;
@@ -141,7 +141,7 @@
                 stepSize = -stepSize;
                 
             for (let param of params) {
-                let connector = new Connector(this, currentAngle, param, input);
+                let connector = new ParameterDisplay(this, currentAngle, param, input);
                 this.connectors.push(connector);
                 this.regions.push(connector.region);
                 currentAngle += stepSize;
@@ -179,7 +179,17 @@
                 if (!path.isConnected())
                     return false;
 
-            // TODO: check if all I/O parameters are connected
+            let inputs = this.getInputs();
+            if (inputs !== null)
+                for (let input of inputs)
+                    if (input.initialValue === null && input.link === null)
+                        return false;
+            
+            let outputs = this.getOutputs();
+            if (outputs !== null)
+                for (let output of outputs)
+                    if (output.link === null)
+                        return false;
 
             return true;
         }

@@ -98,7 +98,7 @@
                 let y = parseInt(stepNode.getAttribute('y'));
 
                 let step = new StartStep(id, process, x, y);
-                this.loadStepOutputs(workspace, process, process.inputs, step, stepNode);
+                this.loadStepOutputs(workspace, process, step, stepNode);
                 process.steps.push(step);
                 stepsByID[step.uniqueID] = step;
                 returnPathsToProcess.push([step, stepNode]);
@@ -113,7 +113,7 @@
                 let returnPath = stepNode.getAttribute('name');
 
                 let step = new StopStep(id, process, returnPath, x, y);
-                this.loadStepInputs(workspace, process, process.outputs, step, stepNode);
+                this.loadStepInputs(workspace, process, step, stepNode);
                 process.steps.push(step);
                 stepsByID[step.uniqueID] = step;
                 returnPathsToProcess.push([step, stepNode]);
@@ -138,8 +138,8 @@
                 }
 
                 let step = new Step(id, childProcess, process, x, y);
-                this.loadStepInputs(workspace, process, process.variables, step, stepNode);
-                this.loadStepOutputs(workspace, process, process.variables, step, stepNode);
+                this.loadStepInputs(workspace, process, step, stepNode);
+                this.loadStepOutputs(workspace, process, step, stepNode);
                 process.steps.push(step);
                 stepsByID[step.uniqueID] = step;
                 returnPathsToProcess.push([step, stepNode]);
@@ -150,25 +150,97 @@
             }
         }
 
-        private static loadStepInputs(workspace: Workspace, process: Process, sources: DataField[], step: Step, stepNode: Element) {
-            // TODO: parse a number of MapInput and FixedInput nodes
-            // sources could be this process's outputs or its variables
-        }
+        private static loadStepInputs(workspace: Workspace, process: UserProcess, step: Step, stepNode: Element) {
+            let inputNodes = stepNode.getElementsByTagName('MapInput');
+            let inputs = step.getInputs();
+            for (let i = 0; i < inputNodes.length; i++) {
+                let mapNode = inputNodes[i];
 
-        private static loadStepOutputs(workspace: Workspace, process: Process, destination: DataField[], step: Step, stepNode: Element) {
-            let mapNodes = stepNode.getElementsByTagName('MapOutput');
-            for (let i = 0; i < mapNodes.length; i++) {
-                let mapNode = mapNodes[i];
+                let paramName = mapNode.getAttribute('name');
+                let destinationName = mapNode.getAttribute('source');
 
-                let name = mapNode.getAttribute('name');
-                let destination = mapNode.getAttribute('destination');
-                // TODO: create output nodes
-                // destination could be this process's inputs or its variables
+                let parameter = this.getNamed(inputs, paramName) as Parameter;
+                let source = this.getNamed(process.variables, destinationName) as Variable;
+
+                if (parameter === null || source === null)
+                    continue;
+
+                parameter.link = source;
+                source.links.push(parameter);
+            }
+
+            inputNodes = stepNode.getElementsByTagName('FixedInput');
+            for (let i = 0; i < inputNodes.length; i++) {
+                let mapNode = inputNodes[i];
+
+                let paramName = mapNode.getAttribute('name');
+                let value = mapNode.getAttribute('value');
+
+                let parameter = this.getNamed(inputs, paramName) as Parameter;
+                if (parameter === null)
+                    continue;
+
+                if (!parameter.type.isValid(value))
+                    continue;
+                
+                parameter.initialValue = value;
             }
         }
 
-        private static loadReturnPaths(workspace: Workspace, step: Step, stepNode: Element, stepsByID: {[key: number]: Step}) {
-            // TODO: parse either a ReturnPath node or a number of NamedReturnPath nodes
+        private static loadStepOutputs(workspace: Workspace, process: UserProcess, step: Step, stepNode: Element) {
+            let outputNodes = stepNode.getElementsByTagName('MapOutput');
+            let outputs = step.getOutputs();
+            for (let i = 0; i < outputNodes.length; i++) {
+                let mapNode = outputNodes[i];
+                
+                let paramName = mapNode.getAttribute('name');
+                let destinationName = mapNode.getAttribute('destination');
+
+                let parameter = this.getNamed(outputs, paramName) as Parameter;
+                let destination = this.getNamed(process.variables, destinationName) as Variable;
+
+                parameter.link = destination;
+                destination.links.push(parameter);
+            }
+        }
+
+        private static getNamed(options: DataField[], name: string) {
+            for (let option of options)
+                if (option.name == name)
+                    return option;
+
+            return null;
+        }
+
+        private static loadReturnPaths(workspace: Workspace, step: Step, stepNode: Element, stepsByID: { [key: number]: Step }) {
+            let returnPathNodes = stepNode.getElementsByTagName('ReturnPath');
+            
+            for (let i = 0; i < returnPathNodes.length; i++) {
+                let returnPathNode = returnPathNodes[i];
+                let targetStepID = returnPathNode.getAttribute('targetStepID');
+                let targetStep = stepsByID[targetStepID];
+
+                if (targetStep === undefined)
+                    continue;
+
+                let returnPath = new ReturnPath(step, targetStep, null);
+                step.returnPaths.push(returnPath);
+            }
+
+            returnPathNodes = stepNode.getElementsByTagName('NamedReturnPath');
+
+            for (let i = 0; i < returnPathNodes.length; i++) {
+                let returnPathNode = returnPathNodes[i];
+                let targetStepID = returnPathNode.getAttribute('targetStepID');
+                let targetStep = stepsByID[targetStepID];
+
+                if (targetStep === undefined)
+                    continue;
+
+                let name = returnPathNode.getAttribute('name');
+                let returnPath = new ReturnPath(step, targetStep, name);
+                step.returnPaths.push(returnPath);
+            }
         }
     }
 }

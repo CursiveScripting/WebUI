@@ -1,5 +1,5 @@
 ﻿namespace Cursive {
-    export class Connector {
+    export class ParameterDisplay {
         region: Region;
 
         private linkLength: number;

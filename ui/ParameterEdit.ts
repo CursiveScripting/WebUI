@@ -6,7 +6,7 @@
         private fixedInputRow: HTMLElement;
         private fixedInputValue: HTMLInputElement;
         private variableSelect: HTMLSelectElement;
-        private connector: Connector;
+        private connector: ParameterDisplay;
 
         constructor(workspace: Workspace, popup: EditorPopup) {
             this.workspace = workspace;
@@ -45,7 +45,7 @@
             fieldRow.appendChild(cancelButton);
         }
 
-        show(connector: Connector) {
+        show(connector: ParameterDisplay) {
             this.populateContent();
             this.connector = connector;
 
@@ -59,7 +59,7 @@
                 this.prompt.classList.remove('output');
 
                 if (connector.param.initialValue !== null)
-                    this.fixedInputValue.value = connector.param.initialValue
+                    this.fixedInputValue.value = connector.param.initialValue;
                 else
                     this.fixedInputValue.value = '';
             }

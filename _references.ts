@@ -14,6 +14,6 @@
 /// <reference path="canvas/Step.ts" />
 /// <reference path="canvas/StartStep.ts" />
 /// <reference path="canvas/StopStep.ts" />
-/// <reference path="canvas/Connector.ts" />
+/// <reference path="canvas/ParameterDisplay.ts" />
 /// <reference path="canvas/ReturnPath.ts" />
 /// <reference path="canvas/Region.ts" />
