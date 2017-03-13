@@ -5,7 +5,8 @@
         private promptElement: HTMLDivElement;
         private nameInput: HTMLInputElement;
         private typeSelect: HTMLSelectElement;
-        private editingVariable: DataField;
+        private deleteRow: HTMLDivElement;
+        private editingVariable: Variable;
         private showParameterOnClose: ParameterDisplay;
 
         constructor(workspace: Workspace, popup: EditorPopup) {
@@ -37,6 +38,14 @@
                 this.typeSelect.options.add(typeOption);
             }
 
+            this.deleteRow = this.popup.addField(null);
+            this.deleteRow.classList.add('delete');
+            let deleteLink = document.createElement('span');
+            deleteLink.className = 'link delete';
+            deleteLink.innerText = 'remove this variable';
+            this.deleteRow.appendChild(deleteLink);
+            deleteLink.addEventListener('click', this.deleteClicked.bind(this));
+
             fieldRow = this.popup.addField(null);
             fieldRow.classList.add('buttons');
 
@@ -59,10 +68,11 @@
             this.nameInput.value = '';
             this.typeSelect.selectedIndex = 0;
             this.typeSelect.disabled = false;
+            this.deleteRow.style.display = 'none';
             this.editingVariable = null;
             this.nameInput.focus();
         }
-        showExisting(variable: DataField) {
+        showExisting(variable: Variable) {
             this.editingVariable = variable;
             this.populateContent();
             this.popup.show();
@@ -70,6 +80,7 @@
             this.nameInput.value = variable.name;
             this.typeSelect.value = variable.type.name;
             this.typeSelect.disabled = true;
+            this.deleteRow.style.removeProperty('display');
             this.editingVariable = variable;
             this.nameInput.focus();
         }
@@ -120,6 +131,24 @@
         }
         private updateExistingVariable(variable: DataField) {
             variable.name = this.nameInput.value;
+        }
+        private deleteClicked() {
+            if (this.editingVariable === null)
+                return;
+
+            // TODO: confirm deletion
+            
+            let index = this.workspace.currentProcess.variables.indexOf(this.editingVariable);
+            this.workspace.currentProcess.variables.splice(index, 1);
+
+            // unlink from any linked parameters
+            for (let param of this.editingVariable.links)
+                param.link = null;
+
+            this.workspace.variableListDisplay.populateList();
+            this.workspace.currentProcess.validate();
+            this.workspace.processEditor.draw();
+            this.hide();
         }
     }
 }
