@@ -80,10 +80,14 @@
             }
 
             if (hoverLink != null) {
-                if (variable === null)
+                if (variable === null) {
                     hoverLink.classList.remove('highlight');
-                else
+                    hoverLink.style.textShadow = '';
+                }
+                else {
                     hoverLink.classList.add('highlight');
+                    hoverLink.style.textShadow = '0 0 1px ' + hoverLink.style.color;
+                }
             }
 
             this.workspace.processEditor.highlightConnectors(variable);
