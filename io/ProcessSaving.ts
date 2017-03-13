@@ -55,7 +55,6 @@
             element.setAttribute('x', step.x.toString());
             element.setAttribute('y', step.y.toString());
 
-            // TODO: write fixed input values
             this.saveStepParameters(step.getInputs(), element, 'MapInput', 'source');
             this.saveStepParameters(step.getOutputs(), element, 'MapOutput', 'destination');
 

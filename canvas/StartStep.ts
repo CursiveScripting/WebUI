@@ -23,5 +23,10 @@
         }
         getInputs() { return null; }
         getOutputs() { return this.parentProcess.inputs; }
+        protected bodyRegionMouseUp(x: number, y: number) {
+            this.dragging = false;
+            // DON'T call stepMouseUp, unlike regular Steps and StopSteps
+            return true;
+        }
     }
 }

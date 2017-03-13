@@ -9,6 +9,7 @@
         private canvas: HTMLCanvasElement;
         private canvasWidth: number;
         private headerCutoff: number;
+        private deleteStepRegion: Region;
 
         constructor(workspace: Workspace, canvas: HTMLCanvasElement) {
             this.workspace = workspace;
@@ -38,14 +39,20 @@
             this.headerCutoff = 68;
             this.canvasWidth = 999;
         
-            let stopStep = new Region(
+            let addStopStep = new Region(
                 this.defineStopStepRegion.bind(this),
                 this.drawStopStepRegion.bind(this),
                 'move'
             );
-            stopStep.mousedown = this.stopStepRegionMouseDown.bind(this);
+            addStopStep.mousedown = this.stopStepRegionMouseDown.bind(this);
 
-            this.fixedRegions = [stopStep];
+            this.deleteStepRegion = new Region(
+                this.defineDeleteStepRegion.bind(this),
+                this.drawDeleteStepRegion.bind(this),
+                'not-allowed'
+            );
+
+            this.fixedRegions = [addStopStep, this.deleteStepRegion];
             this.hoverRegion = null;
             this.mouseDownRegion = null;
 
@@ -60,29 +67,60 @@
             setTimeout(this.updateSize.bind(this), 0);
         }
         private defineStopStepRegion(ctx: CanvasRenderingContext2D) {
-            ctx.rect(this.canvasWidth - 50, 10, 40, 40);
+            ctx.rect(this.canvasWidth - 110, 10, 40, 40);
         }
         private drawStopStepRegion(ctx: CanvasRenderingContext2D, isMouseOver: boolean, isMouseDown: boolean) {
             ctx.strokeStyle = '#000';
             ctx.fillStyle = '#fff';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.rect(this.canvasWidth - 50, 10, 40, 40);
+            ctx.rect(this.canvasWidth - 110, 10, 40, 40);
             ctx.fill();
             ctx.stroke();
 
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.font = '32px sans-serif';
-            ctx.strokeStyle = ctx.fillStyle = isMouseDown ? '#000' : '#a00';
-            ctx.fillText('+', this.canvasWidth - 30, 30);
+            ctx.fillStyle = isMouseDown ? '#000' : '#a00';
+            ctx.fillText('+', this.canvasWidth - 90, 30);
         }
         private stopStepRegionMouseDown(x: number, y: number) {
-            let step = new StopStep(this.currentProcess.getNextStepID(), this.currentProcess, null, this.canvasWidth - 30, 30);
+            let step = new StopStep(this.currentProcess.getNextStepID(), this.currentProcess, null, this.canvasWidth - 90, 30);
             this.currentProcess.steps.push(step);
             step.dragging = true;
+            this.mouseDownRegion = step.bodyRegion;
             step.bodyRegion.mousedown(x, y - 35);
             return false;
+        }
+        private defineDeleteStepRegion(ctx: CanvasRenderingContext2D) {
+            ctx.rect(this.canvasWidth - 50, 10, 40, 40);
+        }
+        private drawDeleteStepRegion(ctx: CanvasRenderingContext2D, isMouseOver: boolean, isMouseDown: boolean) {
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(this.canvasWidth - 50, 10);
+            ctx.lineTo(this.canvasWidth - 45, 50);
+            ctx.lineTo(this.canvasWidth - 20, 50);
+            ctx.lineTo(this.canvasWidth - 15, 10);
+            ctx.stroke();
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = '12px sans-serif';
+            ctx.fillStyle = '#a00';
+            ctx.fillText('bin', this.canvasWidth - 32.5, 30);
+        }
+        stepMouseUp(x: number, y: number, step: Step) {
+            let ctx = this.getContext();
+            if (!this.deleteStepRegion.containsPoint(ctx, x, y))
+                return;
+
+            // TODO: confirm step deletion
+
+            this.workspace.currentProcess.removeStep(step);
+            this.processChanged();
+            this.draw();
         }
         private canvasDragOver(e: Event) {
             if (this.currentProcess == null)
@@ -133,7 +171,7 @@
         private canvasMouseOut(e: MouseEvent) {
             if (this.hoverRegion != null) {
                 let pos = this.getCanvasCoords(e);
-                let ctx = this.canvas.getContext('2d');
+                let ctx = this.getContext();
 
                 if (!this.hoverRegion.containsPoint(ctx, pos.x, pos.y)) {
                     let draw = this.hoverRegion.unhover();
@@ -153,7 +191,7 @@
 
             let pos = this.getCanvasCoords(e);
 
-            let ctx = this.canvas.getContext('2d');
+            let ctx = this.getContext();
             ctx.strokeStyle = 'rgba(0,0,0,0)';
 
             // check for "unhovering"
@@ -198,7 +236,7 @@
         getRegion(x: number, y: number) {
             if (this.currentProcess == null)
                 return null;
-            let ctx = this.canvas.getContext('2d');
+            let ctx = this.getContext();
         
             // check regions from steps
             for (let step of this.currentProcess.steps) {
@@ -224,7 +262,7 @@
             return null;
         }
         getStep(x: number, y: number) {
-            let ctx = this.canvas.getContext('2d');
+            let ctx = this.getContext();
             let steps = this.currentProcess.steps;
             for (let i=0; i<steps.length; i++) {
                 let regions = steps[i].regions;
@@ -261,7 +299,7 @@
         draw() {
             if (this.currentProcess == null)
                 return;
-            let ctx = this.canvas.getContext('2d');
+            let ctx = this.getContext();
             ctx.clearRect(0, 0, this.canvas.offsetWidth, this.canvas.offsetHeight);
             ctx.lineCap = 'round';
         

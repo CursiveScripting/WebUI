@@ -8,7 +8,7 @@
         readonly radius: number;
         drawText: boolean;
         dragging: boolean;
-        private connectors: ParameterDisplay[];
+        connectors: ParameterDisplay[];
         regions: Region[];
         bodyRegion: Region;
         private collisionRegion: Region;
@@ -51,8 +51,9 @@
             this.moveOffsetY = this.y - y;
             return true;
         }
-        private bodyRegionMouseUp(x: number, y: number) {
+        protected bodyRegionMouseUp(x: number, y: number) {
             this.dragging = false;
+            this.parentProcess.workspace.processEditor.stepMouseUp(x, y, this);
             return true;
         }
         private bodyRegionHover() {
@@ -78,7 +79,7 @@
             this.y = y + this.moveOffsetY;
             return true;
         }
-        private bodyRegionUnhover(x, y) {
+        private bodyRegionUnhover() {
             if (!this.dragging)
                 this.drawText = false;
 

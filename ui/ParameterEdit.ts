@@ -29,7 +29,12 @@
             this.variableSelect.className = 'variable value';
             variableContainer.appendChild(this.variableSelect);
 
-            // TODO: add variable link
+            let addVariable = document.createElement('span');
+            addVariable.className = 'link addVariable';
+            addVariable.innerText = 'add new variable';
+            addVariable.addEventListener('click', this.addVariableClicked.bind(this));
+            variableContainer.appendChild(document.createTextNode(' '));
+            variableContainer.appendChild(addVariable);
             
             let fieldRow = this.popup.addField(null);
             fieldRow.classList.add('buttons');
@@ -85,6 +90,7 @@
             varOption.text = '';
             this.variableSelect.options.add(varOption);
 
+            let anyVariables = false;
             for (let variable of this.workspace.currentProcess.variables) {
                 if (this.connector.isInput) {
                     // for inputs, the variable type must be assignable from the input type
@@ -103,8 +109,16 @@
                 varOption.style.color = variable.type.color;
                 varOption.selected = variable === connector.param.link;
                 this.variableSelect.options.add(varOption);
+                anyVariables = true;
             }
             
+            if (anyVariables) {
+                this.variableSelect.style.removeProperty('display');
+            }
+            else {
+                this.variableSelect.style.display = 'none';
+            }
+
             this.popup.show();
         }
         hide() {
@@ -169,6 +183,9 @@
 
             this.hide();
             this.workspace.processEditor.draw();
+        }
+        addVariableClicked() {
+            this.workspace.variableEditor.showNew(this.connector);
         }
     }
 }

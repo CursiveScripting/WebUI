@@ -261,5 +261,11 @@
         isConnected() {
             return this._toStep !== null;
         }
+        disconnect() {
+            if (this._toStep !== null)
+                this.updateOffset(this._toStep.x, this._toStep.y);
+
+            this._toStep = null;
+        }
     }
 }

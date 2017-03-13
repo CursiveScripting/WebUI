@@ -36,7 +36,7 @@
         private createAddVariableLink() {
             let link = document.createElement('li');
             link.className = 'link addVariable';
-            link.innerText = 'add variable';
+            link.innerText = 'add new variable';
 
             link.addEventListener("click", this.addVariableLinkClicked.bind(this));
             return link;

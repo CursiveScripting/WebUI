@@ -6,6 +6,7 @@
         private nameInput: HTMLInputElement;
         private typeSelect: HTMLSelectElement;
         private editingVariable: DataField;
+        private showParameterOnClose: ParameterDisplay;
 
         constructor(workspace: Workspace, popup: EditorPopup) {
             this.workspace = workspace;
@@ -50,7 +51,8 @@
             fieldRow.appendChild(cancelButton);
         }
         
-        showNew() {
+        showNew(showOnClose: ParameterDisplay = null) {
+            this.showParameterOnClose = showOnClose;
             this.populateContent();
             this.popup.show();
             this.promptElement.innerText = 'Name your new variable, and select its type:';
@@ -73,6 +75,11 @@
         }
         hide() {
             this.popup.hide();
+
+            if (this.showParameterOnClose !== null) {
+                this.workspace.parameterEditor.show(this.showParameterOnClose);
+                this.showParameterOnClose = null;
+            }
         }
         private okClicked() {
             EditorPopup.clearErrors(this.popup.popupContent);
