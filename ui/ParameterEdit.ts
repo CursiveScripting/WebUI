@@ -86,8 +86,8 @@
 
             this.variableSelect.innerHTML = '';
             let varOption = document.createElement('option');
-            varOption.value = '(select a variable)';
-            varOption.text = '';
+            varOption.value = '';
+            varOption.text = '(please select)';
             this.variableSelect.options.add(varOption);
 
             let anyVariables = false;
