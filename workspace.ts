@@ -66,8 +66,8 @@
         validate() {
             let valid = true;
 
-            for (let name in this.userProcesses) {
-                let process = this.userProcesses.getByName(name);
+            for (let i = 0; i < this.userProcesses.count; i++) {
+                let process = this.userProcesses.getByIndex(i);
                 if (!process.validate())
                     valid = false;
             }

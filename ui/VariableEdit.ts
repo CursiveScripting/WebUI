@@ -145,8 +145,9 @@
             for (let param of this.editingVariable.links)
                 param.link = null;
 
-            this.workspace.variableListDisplay.populateList();
             this.workspace.currentProcess.validate();
+            this.workspace.variableListDisplay.populateList();
+            this.workspace.processListDisplay.populateList();
             this.workspace.processEditor.draw();
             this.hide();
         }

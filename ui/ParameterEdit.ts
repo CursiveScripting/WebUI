@@ -182,6 +182,8 @@
             }
 
             this.hide();
+            this.workspace.currentProcess.validate();
+            this.workspace.processListDisplay.populateList();
             this.workspace.processEditor.draw();
         }
         addVariableClicked() {

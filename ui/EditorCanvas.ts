@@ -227,36 +227,32 @@
         }
         private canvasInteractMove(pos: Position) {
             let ctx = this.getContext();
+            let draw = false;
 
             // check for "unhovering"
             if (this.hoverRegion != null) {
                 if (!this.hoverRegion.containsPoint(ctx, pos.x, pos.y)) {
-                    let draw = this.hoverRegion.unhover();
+                    draw = this.hoverRegion.unhover();
                     this.hoverRegion = null;
                     this.canvas.style.cursor = '';
-
-                    if (draw)
-                        this.draw();
                 }
             }
 
-            let draw = false;
             let region = this.getRegion(pos.x, pos.y);
             if (region != null) {
                 if (region != this.hoverRegion) {
-                    draw = region.hover();
+                    draw = region.hover() || draw;
                     this.hoverRegion = region;
                     this.canvas.style.cursor = region.cursor;
                 }
                 else
-                    draw = region.move(pos.x, pos.y);
+                    draw = region.move(pos.x, pos.y) || draw;
             }
 
             if (this.mouseDownRegion != null && this.mouseDownRegion != region)
                 draw = this.mouseDownRegion.move(pos.x, pos.y) || draw;
 
             if (draw) {
-                this.processChanged();
                 this.draw();
             }
         }
