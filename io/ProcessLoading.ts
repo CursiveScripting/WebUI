@@ -145,6 +145,7 @@
                     continue;
                 }
 
+                process.noteUsedStepID(id);
                 let step = new Step(id, childProcess, process, x, y);
                 this.loadStepInputs(workspace, process, step, stepNode);
                 this.loadStepOutputs(workspace, process, step, stepNode);

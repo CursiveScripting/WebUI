@@ -19,6 +19,10 @@
             return this.nextStepID++;
         }
 
+        noteUsedStepID(stepID) {
+            this.nextStepID = Math.max(this.nextStepID, stepID + 1);
+        }
+
         validate() : boolean {
             let valid = true;
             for (let step of this.steps)
