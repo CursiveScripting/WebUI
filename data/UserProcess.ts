@@ -50,6 +50,8 @@
 
             // any variables that used this step should have it removed
             for (let connector of step.connectors) {
+                if (connector.param.link === null)
+                    continue;
                 let variableLinks = connector.param.link.links;
                 let index = variableLinks.indexOf(connector.param);
                 variableLinks.splice(index, 1);

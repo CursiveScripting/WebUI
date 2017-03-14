@@ -32,7 +32,7 @@
                 e.dataTransfer.setData('process', e.target.getAttribute('data-process'));
             };
 
-            this.listElement.childNodes[0].addEventListener('dblclick', this.addNewProcessClicked.bind(this));
+            this.listElement.childNodes[0].addEventListener('click', this.addNewProcessClicked.bind(this));
 
             let userProcessCutoff = this.workspace.userProcesses.count;
 
@@ -41,7 +41,7 @@
                 item.addEventListener('dragstart', dragStart);
                 
                 if (i <= userProcessCutoff)
-                    item.addEventListener('dblclick', this.openUserProcess.bind(this));
+                    item.addEventListener('click', this.openUserProcess.bind(this));
             }
         }
         private addNewProcessClicked() {

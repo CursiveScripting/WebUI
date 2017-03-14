@@ -1,11 +1,7 @@
 ﻿namespace Cursive {
     export abstract class DataField {
-        name: string;
-        type: Type;
         initialValue: string;
-        constructor(name: string, dataType: Type) {
-            this.name = name;
-            this.type = dataType;
+        constructor(public name: string, public type: Type) {
             this.initialValue = null;
         }
     }
@@ -24,5 +20,10 @@
             super(name, dataType);
             this.links = [];
         }
+    }
+
+    export class Position
+    {
+        constructor(public x: number, public y: number) { }
     }
 }

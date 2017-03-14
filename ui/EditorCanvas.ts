@@ -62,6 +62,10 @@
             this.canvas.addEventListener('mouseup', this.canvasMouseUp.bind(this));
             this.canvas.addEventListener('mouseout', this.canvasMouseOut.bind(this));
             this.canvas.addEventListener('mousemove', this.canvasMouseMove.bind(this));
+            this.canvas.addEventListener('touchstart', this.canvasTouchStart.bind(this));
+            this.canvas.addEventListener('touchend', this.canvasTouchEnd.bind(this));
+            this.canvas.addEventListener('touchcancel', this.canvasTouchCancel.bind(this));
+            this.canvas.addEventListener('touchmove', this.canvasTouchMove.bind(this));
         
             window.addEventListener('resize', this.updateSize.bind(this));
             setTimeout(this.updateSize.bind(this), 0);
@@ -132,12 +136,19 @@
                 return;
             e.preventDefault();
             let process = e.dataTransfer.getData('process');
-            let pos = this.getCanvasCoords(e);
+            let pos = this.getCanvasMouseCoords(e);
 
             this.dropProcess(process, pos.x, pos.y);
         }
         private canvasMouseDown(e: MouseEvent) {
-            let pos = this.getCanvasCoords(e);
+            let pos = this.getCanvasMouseCoords(e);
+            this.canvasInteractStart(pos);
+        }
+        private canvasTouchStart(e: TouchEvent) {
+            let pos = this.getCanvasTouchCoords(e);
+            this.canvasInteractStart(pos);
+        }
+        private canvasInteractStart(pos: Position) {
             let region = this.getRegion(pos.x, pos.y);
             this.mouseDownRegion = region;
             if (region != null && region.mousedown(pos.x, pos.y)) {
@@ -146,7 +157,15 @@
             }
         }
         private canvasMouseUp(e: MouseEvent) {
-            let pos = this.getCanvasCoords(e);
+            let pos = this.getCanvasMouseCoords(e);
+            this.canvasInteractEnd(pos);
+        }
+        private canvasTouchEnd(e: TouchEvent) {
+            let pos = this.getCanvasTouchCoords(e);
+            this.canvasInteractEnd(pos);
+            e.preventDefault();
+        }
+        private canvasInteractEnd(pos: Position) {
             let region = this.getRegion(pos.x, pos.y);
             let draw = false;
 
@@ -169,8 +188,15 @@
             }
         }
         private canvasMouseOut(e: MouseEvent) {
+            let pos = this.getCanvasMouseCoords(e);
+            this.canvasInteractExit(pos);
+        }
+        private canvasTouchCancel(e: TouchEvent) {
+            let pos = this.getCanvasTouchCoords(e);
+            this.canvasInteractExit(pos);
+        }
+        private canvasInteractExit(pos: Position) {
             if (this.hoverRegion != null) {
-                let pos = this.getCanvasCoords(e);
                 let ctx = this.getContext();
 
                 if (!this.hoverRegion.containsPoint(ctx, pos.x, pos.y)) {
@@ -189,10 +215,18 @@
             if (this.currentProcess == null)
                 return;
 
-            let pos = this.getCanvasCoords(e);
+            let pos = this.getCanvasMouseCoords(e);
+            this.canvasInteractMove(pos);
+        }
+        private canvasTouchMove(e: TouchEvent) {
+            if (this.currentProcess == null)
+                return;
 
+            let pos = this.getCanvasTouchCoords(e);
+            this.canvasInteractMove(pos);
+        }
+        private canvasInteractMove(pos: Position) {
             let ctx = this.getContext();
-            ctx.strokeStyle = 'rgba(0,0,0,0)';
 
             // check for "unhovering"
             if (this.hoverRegion != null) {
@@ -229,9 +263,14 @@
         getContext() {
             return this.canvas.getContext('2d');
         }
-        getCanvasCoords(e: MouseEvent) {
+        private getCanvasMouseCoords(e: MouseEvent) {
             let canvasPos = this.canvas.getBoundingClientRect();
-            return { x: e.clientX - canvasPos.left, y: e.clientY - canvasPos.top };
+            return new Position(e.clientX - canvasPos.left, e.clientY - canvasPos.top);
+        }
+        private getCanvasTouchCoords(e: TouchEvent) {
+            let canvasPos = this.canvas.getBoundingClientRect();
+            let touch = e.changedTouches[0];
+            return new Position(touch.clientX - canvasPos.left, touch.clientY - canvasPos.top);
         }
         getRegion(x: number, y: number) {
             if (this.currentProcess == null)
