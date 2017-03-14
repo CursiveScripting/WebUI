@@ -45,7 +45,7 @@
             this.parentProcess.workspace.returnPathEditor.show(this);
         }
         createDanglingReturnPaths() { }
-        getInputs() { return this.parentProcess.outputs; }
-        getOutputs() { return null; }
+        protected getInputSource() { return this.parentProcess.outputs; }
+        protected getOutputSource() { return null; }
     }
 }

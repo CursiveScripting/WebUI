@@ -160,7 +160,7 @@
 
         private static loadStepInputs(workspace: Workspace, process: UserProcess, step: Step, stepNode: Element) {
             let inputNodes = stepNode.getElementsByTagName('MapInput');
-            let inputs = step.getInputs();
+            let inputs = step.inputs;
             for (let i = 0; i < inputNodes.length; i++) {
                 let mapNode = inputNodes[i];
 
@@ -203,7 +203,7 @@
 
         private static loadStepOutputs(workspace: Workspace, process: UserProcess, step: Step, stepNode: Element) {
             let outputNodes = stepNode.getElementsByTagName('MapOutput');
-            let outputs = step.getOutputs();
+            let outputs = step.outputs;
             for (let i = 0; i < outputNodes.length; i++) {
                 let mapNode = outputNodes[i];
                 

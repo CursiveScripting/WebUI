@@ -55,8 +55,8 @@
             element.setAttribute('x', step.x.toString());
             element.setAttribute('y', step.y.toString());
 
-            this.saveStepParameters(step.getInputs(), element, 'MapInput', 'source');
-            this.saveStepParameters(step.getOutputs(), element, 'MapOutput', 'destination');
+            this.saveStepParameters(step.inputs, element, 'MapInput', 'source');
+            this.saveStepParameters(step.outputs, element, 'MapOutput', 'destination');
 
             for (let path of step.returnPaths) {
                 let pathElement: HTMLElement;

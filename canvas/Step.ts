@@ -1,5 +1,7 @@
 ﻿namespace Cursive {
     export class Step {
+        readonly inputs: Parameter[];
+        readonly outputs: Parameter[];
         x: number;
         y: number;
         private moveOffsetX: number;
@@ -19,6 +21,9 @@
             this.returnPaths = [];
             this.radius = 45;
             this.drawText = this.dragging = false;
+
+            this.inputs = this.copyParameters(this.getInputSource());
+            this.outputs = this.copyParameters(this.getOutputSource());
             this.createRegions();
         }
         protected createRegions() {
@@ -42,8 +47,9 @@
             this.collisionRegion = new Region(
                 this.defineCollisionRegion.bind(this)
             );
-            this.createConnectors(this.getInputs(), true);
-            this.createConnectors(this.getOutputs(), false);
+
+            this.createConnectors(this.inputs, true);
+            this.createConnectors(this.outputs, false);
         }
         private bodyRegionMouseDown(x: number, y: number) {
             this.dragging = true;
@@ -112,11 +118,21 @@
         protected defineRegion(ctx: CanvasRenderingContext2D, scale: number) {
             ctx.arc(this.x, this.y, this.radius * scale, 0, 2 * Math.PI);
         }
-        getInputs() {
+        protected getInputSource() {
             return this.process.inputs;
         }
-        getOutputs() {
+        protected getOutputSource() {
             return this.process.outputs;
+        }
+        private copyParameters(sourceParams: Parameter[]) {
+            if (sourceParams === null)
+                return null;
+            let params: Parameter[] = [];
+            
+            for (let sourceParam of sourceParams)
+                params.push(new Parameter(sourceParam.name, sourceParam.type));
+    
+            return params;
         }
         private createConnectors(params: Parameter[], input: boolean) {
             if (params === null)
@@ -180,13 +196,13 @@
                 if (!path.isConnected())
                     return false;
 
-            let inputs = this.getInputs();
+            let inputs = this.inputs;
             if (inputs !== null)
                 for (let input of inputs)
                     if (input.initialValue === null && input.link === null)
                         return false;
             
-            let outputs = this.getOutputs();
+            let outputs = this.outputs;
             if (outputs !== null)
                 for (let output of outputs)
                     if (output.link === null)
