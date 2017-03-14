@@ -78,23 +78,19 @@
             paramNodes = procNode.getElementsByTagName('Output');
             this.loadParameters(workspace, processName, types, paramNodes, outputs, 'output', procTypeName);
             
-            let returnPathParents = procNode.getElementsByTagName('ReturnPaths');
-            if (returnPathParents.length > 0) {
-                let returnPathNodes = returnPathParents[0].getElementsByTagName('Path');
+            let returnPathNodes = procNode.getElementsByTagName('ReturnPath');
+            let usedNames: {[key:string]:boolean} = {};
+            for (let i=0; i<returnPathNodes.length; i++) {
+                let path = returnPathNodes[i].getAttribute('name');
                 
-                let usedNames: {[key:string]:boolean} = {};
-                for (let j=0; j<returnPathNodes.length; j++) {
-                    let path = returnPathNodes[j].getAttribute('name');
-                    
-                    if (usedNames.hasOwnProperty(path))
-                        workspace.showError('The \'' + processName + '\' ' + procTypeName + ' process has two return paths with the same name: ' + processName + '. Return path names must be unique within a process.');
-                    else {
-                        usedNames[path] = null;
-                        returnPaths.push(path);    
-                    }
+                if (usedNames.hasOwnProperty(path))
+                    workspace.showError('The \'' + processName + '\' ' + procTypeName + ' process has two return paths with the same name: ' + processName + '. Return path names must be unique within a process.');
+                else {
+                    usedNames[path] = null;
+                    returnPaths.push(path);    
                 }
             }
-                
+
             let process: Process;
             if (isSystemProcess)
                 process = new SystemProcess(processName, inputs, outputs, returnPaths);
