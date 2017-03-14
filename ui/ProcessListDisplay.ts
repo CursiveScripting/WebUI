@@ -54,7 +54,7 @@
         
             if (!openable)
                 desc += 'cantOpen ';
-            if (fixedSignature)
+            else if (fixedSignature)
                 desc += 'fixed ';
             if (!valid)
                 desc += 'invalid ';
