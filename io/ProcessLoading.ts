@@ -2,29 +2,36 @@
     export class ProcessLoading {
         static loadProcesses(workspace: Workspace, processXml: HTMLElement) {
             let processNodes = processXml.getElementsByTagName('Process');
-            let userProcessesByName = workspace.userProcesses;        
-            let systemProcessesByName = workspace.systemProcesses;
+            let userProcesses = workspace.userProcesses;        
+            let systemProcesses = workspace.systemProcesses;
             
             for (let i=0; i<processNodes.length; i++) {
                 let process = this.loadProcessDefinition(workspace, processNodes[i]);
                 
-                if (userProcessesByName.hasOwnProperty(process.name)) {
-                    workspace.showError('There are two user processes with the same name: ' + name + '. Process names must be unique.');
+                let existing = userProcesses.getByName(process.name);
+                if (existing !== undefined) {
+                    if (existing.fixedSignature) {
+                        existing.variables = process.variables;
+                    }
+                    else
+                        workspace.showError('There are two user processes with the same name: ' + name + '. Process names must be unique.');
                     continue;
                 }
 
-                if (systemProcessesByName.hasOwnProperty(process.name)) {
+                if (systemProcesses.contains(process.name)) {
                     workspace.showError('A user process has the same name as a system processes: ' + name + '. Process names must be unique.');
                     continue;
                 }
 
                 process.workspace = workspace;
-                userProcessesByName[process.name] = process;
+                userProcesses.add(process.name, process);
             }
 
             for (let i=0; i<processNodes.length; i++) {
-                this.loadProcessSteps(workspace, processNodes[i], userProcessesByName, systemProcessesByName);
+                this.loadProcessSteps(workspace, processNodes[i], userProcesses, systemProcesses);
             }
+
+            workspace.validate();
         }
 
         private static loadProcessDefinition(workspace: Workspace, processNode: Element): UserProcess {
@@ -59,18 +66,18 @@
                 let node = paramNodes[i];
                 let paramName = node.getAttribute('name');
                 let typeName = node.getAttribute('type');
+                let dataType = workspace.types.getByName(typeName);
 
-                if (!workspace.types.hasOwnProperty(typeName)) {
+                if (dataType === null) {
                     workspace.showError('The ' + paramName + ' ' + paramTypeName + ' has an invalid type: ' + name + '. That type doesn\'t exist in this workspace.');
                     continue;
                 }
-                let dataType = workspace.types.getByName(typeName);
 
                 let dataField: DataField;
                 if (paramTypeName == 'variable')
-                    dataField = new Variable(name, dataType);
+                    dataField = new Variable(paramName, dataType);
                 else
-                    dataField = new Parameter(name, dataType);
+                    dataField = new Parameter(paramName, dataType);
 
                 if (node.hasAttribute('initialValue')) {
                     let initial = node.getAttribute('initialValue');
@@ -87,6 +94,7 @@
                 return;
             
             let process = userProcesses.getByName(name);
+            process.steps = [];
             let stepsByID: {[key: number]: Step} = {};
             let returnPathsToProcess: [Step, Element][] = [];
 
@@ -157,13 +165,19 @@
                 let mapNode = inputNodes[i];
 
                 let paramName = mapNode.getAttribute('name');
-                let destinationName = mapNode.getAttribute('source');
+                let sourceName = mapNode.getAttribute('source');
 
                 let parameter = this.getNamed(inputs, paramName) as Parameter;
-                let source = this.getNamed(process.variables, destinationName) as Variable;
+                let source = this.getNamed(process.variables, sourceName) as Variable;
 
-                if (parameter === null || source === null)
+                if (parameter === null) {
+                    workspace.showError('Step #' + step.uniqueID + ' of the "' + process.name + '" process tries to map a non-existant output: ' + paramName);
                     continue;
+                }
+                if (source === null) {
+                    workspace.showError('Step #' + step.uniqueID + ' of the "' + process.name + '" process tries to map an input from a non-existant variable: ' + sourceName);
+                    continue;
+                }
 
                 parameter.link = source;
                 source.links.push(parameter);
@@ -199,6 +213,14 @@
                 let parameter = this.getNamed(outputs, paramName) as Parameter;
                 let destination = this.getNamed(process.variables, destinationName) as Variable;
 
+                if (parameter === null) {
+                    workspace.showError('Step #' + step.uniqueID + ' of the "' + process.name + '" process tries to map a non-existant output: ' + paramName);
+                    continue;
+                }
+                if (destination === null) {
+                    workspace.showError('Step #' + step.uniqueID + ' of the "' + process.name + '" process tries to map an output to a non-existant variable: ' + destinationName);
+                    continue;
+                }
                 parameter.link = destination;
                 destination.links.push(parameter);
             }
@@ -224,6 +246,7 @@
                     continue;
 
                 let returnPath = new ReturnPath(step, targetStep, null);
+                returnPath.onlyPath = true;
                 step.returnPaths.push(returnPath);
             }
 
@@ -239,6 +262,7 @@
 
                 let name = returnPathNode.getAttribute('name');
                 let returnPath = new ReturnPath(step, targetStep, name);
+                returnPath.onlyPath = false;
                 step.returnPaths.push(returnPath);
             }
         }
