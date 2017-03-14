@@ -9,90 +9,101 @@
             this.populateList();
         }
         populateList() {
-            let content = '<li class="addNew';
-            if (this.workspace.currentProcess === null)
-                content += ' active';
-            content += '">add new process</li>';
+            this.listElement.innerHTML = '';
+            this.createAddNewProcessItem();
 
             let userProcs = this.workspace.userProcesses;
             for (let i = 0; i < userProcs.count; i++) {
                 let proc = userProcs.getByIndex(i);
-                content += this.writeListItem(proc, true, proc.fixedSignature, proc.isValid);
+                this.createProcessItem(proc, true, proc.fixedSignature, proc.isValid);
             }
             
             let sysProcs = this.workspace.systemProcesses;
             for (let i = 0; i < sysProcs.count; i++) {
                 let proc = sysProcs.getByIndex(i);
-                content += this.writeListItem(proc, false, true, true);
+                this.createProcessItem(proc, false, true, true);
             }
+        }
+        private dragStart(e: DragEvent) {
+            e.dataTransfer.setData('process', (e.target as Element).getAttribute('data-process'));
+        }
+        private createAddNewProcessItem() {
+            let item = document.createElement('li');
 
-            this.listElement.innerHTML = content;
+            item.classList.add('addNew');
+            if (this.workspace.currentProcess === null)
+                item.classList.add('active');
 
-            let dragStart = function (e) {
-                e.dataTransfer.setData('process', e.target.getAttribute('data-process'));
-            };
-
-            this.listElement.childNodes[0].addEventListener('click', this.addNewProcessClicked.bind(this));
-
-            let userProcessCutoff = this.workspace.userProcesses.count;
-
-            for (let i=1; i<this.listElement.childNodes.length; i++) {
-                let item = this.listElement.childNodes[i];
-                item.addEventListener('dragstart', dragStart);
-                
-                if (i <= userProcessCutoff)
-                    item.addEventListener('click', this.openUserProcess.bind(this));
-            }
+            item.innerText = 'add new process';
+            this.listElement.appendChild(item);
+            
+            item.addEventListener('click', this.addNewProcessClicked.bind(this));
         }
         private addNewProcessClicked() {
             this.workspace.processEditor.hide();
             this.workspace.variableListDisplay.hide();
+            this.workspace.currentProcess = null;
             this.workspace.processSignatureEditor.showNew();
+            this.populateList();
         }
-        private writeListItem(process: Process, openable: boolean, fixedSignature: boolean, valid: boolean) {
-            let desc = '<li draggable="true" data-process="' + process.name + '" class="';
-        
+        private createProcessItem(process: Process, openable: boolean, fixedSignature: boolean, valid: boolean) {
+            let item = document.createElement('li');
+            item.setAttribute('draggable', 'true');
+            item.setAttribute('data-process', process.name);
+            this.listElement.appendChild(item);
+
             if (!openable)
-                desc += 'cantOpen ';
+                item.classList.add('cantOpen');
             else if (fixedSignature)
-                desc += 'fixed ';
+                item.classList.add('fixed');
             if (!valid)
-                desc += 'invalid ';
-            else if (process === this.workspace.currentProcess)
-                desc += 'active';
+                item.classList.add('invalid');
+            if (process === this.workspace.currentProcess)
+                item.classList.add('active');
         
-            desc += '"><div class="name">' + process.name + '</div>';
+            let element = document.createElement('div');
+            element.className = 'name';
+            element.innerText = process.name;
+            item.appendChild(element);
         
             if (process.inputs.length > 0) {
-                desc += '<div class="props inputs"><span class="separator">inputs: </span>'
-                        + this.writeItemFields(process.inputs);
-                        + '</div>';
+                element = document.createElement('div');
+                element.className = 'props inputs';
+                item.appendChild(element);
+                this.writeItemFields(process.inputs, element);
             }
             if (process.outputs.length > 0) {
-                desc += '<div class="props output"><span class="separator">outputs: </span>'
-                        + this.writeItemFields(process.outputs)
-                        + '</div>';
+                element = document.createElement('div');
+                element.className = 'props outputs';
+                item.appendChild(element);
+                this.writeItemFields(process.outputs, element);
             }
             if (process.returnPaths.length > 0) {
-                desc += '<div class="props paths"><span class="separator">return paths: </span>';
-                for (let i=0; i<process.returnPaths.length; i++) {
-                    if (i > 0)
-                        desc += '<span class="separator">, </span>';
-                    desc += '<span class="prop">' + process.returnPaths[i] + '</span>';
+                element = document.createElement('div');
+                element.className = 'props returnPaths';
+                item.appendChild(element);
+
+                for (let returnPath of process.returnPaths) {
+                    let prop = document.createElement('span');
+                    prop.className = 'prop';
+                    prop.innerText = returnPath;
+                    element.appendChild(prop);
                 }
-                desc += '</div>';
             }
-            desc += '</li>';
-            return desc;
+
+            item.addEventListener('dragstart', this.dragStart.bind(this));
+                
+            if (openable)
+                item.addEventListener('click', this.openUserProcess.bind(this));
         }
-        private writeItemFields(variables: DataField[]) {
-            var output = '';
-            for (let i=0; i<variables.length; i++) {
-                if (i > 0)
-                    output += '<span class="separator">, </span>';
-                output += '<span class="prop" style="color: ' + variables[i].type.color + '">' + variables[i].name + '</span>';
+        private writeItemFields(variables: DataField[], parent: HTMLElement) {
+            for (let variable of variables) {
+                let prop = document.createElement('span');
+                prop.className = 'prop';
+                prop.style.color = variable.type.color;
+                prop.innerText = variable.name;
+                parent.appendChild(prop);
             }
-            return output;
         }
         private openUserProcess(e: MouseEvent) {
             let name = (e.currentTarget as HTMLElement).getAttribute('data-process');
