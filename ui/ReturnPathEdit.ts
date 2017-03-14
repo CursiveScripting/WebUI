@@ -37,6 +37,7 @@
             fieldRow.appendChild(cancelButton);
         }
         show(stopStep: StopStep) {
+            this.populateContent();
             this.editingStep = stopStep;
             this.nameInput.value = stopStep.returnPath;
             this.popup.show();
