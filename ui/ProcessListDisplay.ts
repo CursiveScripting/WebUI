@@ -40,11 +40,7 @@
             item.addEventListener('click', this.addNewProcessClicked.bind(this));
         }
         private addNewProcessClicked() {
-            this.workspace.processEditor.hide();
-            this.workspace.variableListDisplay.hide();
-            this.workspace.currentProcess = null;
-            this.workspace.processSignatureEditor.showNew();
-            this.populateList();
+            this.workspace.showAddNewProcess();
         }
         private createProcessItem(process: Process, openable: boolean, fixedSignature: boolean, valid: boolean) {
             let item = document.createElement('li');

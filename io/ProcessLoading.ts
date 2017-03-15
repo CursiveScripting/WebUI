@@ -10,9 +10,8 @@
                 
                 let existing = userProcesses.getByName(process.name);
                 if (existing !== undefined) {
-                    if (existing.fixedSignature) {
+                    if (existing.fixedSignature)
                         existing.variables = process.variables;
-                    }
                     else
                         workspace.showError('There are two user processes with the same name: ' + name + '. Process names must be unique.');
                     continue;
@@ -53,12 +52,16 @@
             let usedNames: {[key:string]:boolean} = {};
             let stopNodes = processNode.getElementsByTagName('Stop');
             for (let i=0; i<stopNodes.length; i++) {
-                let stopName = stopNodes[i].getAttribute('name');
+                let stopNode = stopNodes[i];
+                if (!stopNode.hasAttribute('name'))
+                    continue;
+
+                let stopName = stopNode.getAttribute('name');
                 if (stopName !== '' && !usedNames.hasOwnProperty(stopName))
                     returnPaths.push(stopName);
             }
-            
-            return new UserProcess(processName, inputs, outputs, variables, returnPaths, true);
+
+            return new UserProcess(processName, inputs, outputs, variables, returnPaths, false);
         }
 
         private static loadProcessParameters(workspace: Workspace, paramNodes, dataFields: DataField[], paramTypeName: 'input' | 'output' | 'variable') {

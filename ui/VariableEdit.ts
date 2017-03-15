@@ -73,6 +73,7 @@
             this.nameInput.focus();
         }
         showExisting(variable: Variable) {
+            this.showParameterOnClose = null;
             this.editingVariable = variable;
             this.populateContent();
             this.popup.show();

@@ -46,7 +46,6 @@
         }
         loadProcesses(processXml: HTMLElement) {
             ProcessLoading.loadProcesses(this, processXml);
-            this.processListDisplay.populateList();
         }
         saveProcesses() {
             if (!this.validate()) {
@@ -110,6 +109,20 @@
                 width: widthNoScroll - widthWithScroll,
                 height: heightNoScroll - heightWithScroll
             }
+        }
+        showAddNewProcess() {
+            this.processEditor.hide();
+            this.variableListDisplay.hide();
+            this.currentProcess = null;
+            this.processSignatureEditor.showNew();
+            this.processListDisplay.populateList();
+        }
+        ready() {
+            // open the first user process, or the "add new" screen
+            if (this.userProcesses.count == 0)
+                this.showAddNewProcess();
+            else
+                this.openProcess(this.userProcesses.getByIndex(0));
         }
     }
 }
