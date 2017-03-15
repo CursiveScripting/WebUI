@@ -2,7 +2,7 @@
     export class ReturnPathEdit {
         private readonly workspace: Workspace;
         private readonly popup: EditorPopup;
-        private nameInput: HTMLInputElement;
+        private pathSelect: HTMLSelectElement;
         private editingStep: StopStep;
 
         constructor(workspace: Workspace, popup: EditorPopup) {
@@ -15,13 +15,12 @@
 
             let prompt = document.createElement('div');
             prompt.className = 'returnPath prompt';
-            prompt.innerText = 'Name a return path for this process, or leave blank to use none:';
+            prompt.innerText = 'Select a return path for this process:';
             this.popup.popupContent.appendChild(prompt);
 
-            this.nameInput = document.createElement('input');
-            this.nameInput.type = 'text';
-            this.nameInput.className = 'pathName';
-            this.popup.popupContent.appendChild(this.nameInput);
+            this.pathSelect = document.createElement('select');
+            this.pathSelect.className = 'pathName';
+            this.popup.popupContent.appendChild(this.pathSelect);
 
             let fieldRow = this.popup.addField(null);
             fieldRow.classList.add('buttons');
@@ -39,14 +38,28 @@
         show(stopStep: StopStep) {
             this.populateContent();
             this.editingStep = stopStep;
-            this.nameInput.value = stopStep.returnPath;
+            this.pathSelect.innerHTML = '';
+            
+            for (let path of stopStep.parentProcess.returnPaths) {
+                let pathOption = document.createElement('option');
+                pathOption.value = path;
+                pathOption.text = path;
+                this.pathSelect.options.add(pathOption);
+            }
+
+            this.pathSelect.value = stopStep.returnPath;
             this.popup.show();
         }
         hide() {
             this.popup.hide();
         }
         private okClicked() {
-            this.editingStep.returnPath = this.nameInput.value;
+            if (this.pathSelect.value == '') {
+                EditorPopup.showError(this.pathSelect, 'Please select a return path');
+                return;
+            }
+
+            this.editingStep.returnPath = this.pathSelect.value;
             this.hide();
             this.workspace.variableListDisplay.populateList();
             this.workspace.processEditor.draw();

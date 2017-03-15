@@ -6,6 +6,7 @@
         private processNameInput: HTMLInputElement;
         private inputListElement: HTMLOListElement;
         private outputListElement: HTMLOListElement;
+        private returnPathListElement: HTMLOListElement;
         private saveButton: HTMLButtonElement;
         private cancelButton: HTMLButtonElement;
         
@@ -33,10 +34,7 @@
 
             this.outputListElement = this.createListElement('outputs', 'outputs', 'output');
 
-            p = document.createElement('p');
-            p.className = 'returnPathNote';
-            p.innerText = 'Note that return paths are configured within the process, and aren\'t set up through this screen.';
-            this.rootElement.appendChild(p);
+            this.returnPathListElement = this.createListElement('returnPaths', 'return paths', 'return path');
 
             p = document.createElement('p');
             p.className = 'row buttons';
@@ -53,7 +51,7 @@
             this.cancelButton.innerText = 'cancel';
             this.cancelButton.addEventListener('click', this.cancelButtonClicked.bind(this));
         }
-        private createListElement(className: string, namePlural: string, nameSingular: string) {
+        private createListElement(className: 'inputs' | 'outputs' | 'returnPaths', namePlural: string, nameSingular: string) {
             let fieldSet = document.createElement('fieldset');
             fieldSet.className = className;
             this.rootElement.appendChild(fieldSet);
@@ -65,16 +63,21 @@
             fieldSet.appendChild(listElement);
 
             let addLink = document.createElement('div');
-            addLink.className = "link add" + nameSingular;
+            addLink.className = "link add" + className;
             addLink.innerText = 'add new ' + nameSingular;
             fieldSet.appendChild(addLink);
             
-            addLink.addEventListener('click', this.addParameterClicked.bind(this, listElement));
+            addLink.addEventListener('click',
+                className == 'returnPaths' ? this.addReturnPathClicked.bind(this, listElement) : this.addParameterClicked.bind(this, listElement)
+            );
 
             return listElement;
         }
         private addParameterClicked(listElement: HTMLOListElement) {
             listElement.appendChild(this.createProcessParameter(null));
+        }
+        private addReturnPathClicked(listElement: HTMLOListElement) {
+            listElement.appendChild(this.createReturnPath(null));
         }
         private saveButtonClicked() {
             EditorPopup.clearErrors(this.rootElement);
@@ -102,6 +105,7 @@
 
             this.updateProcessParameters(this.editingProcess.inputs, this.inputListElement.childNodes);
             this.updateProcessParameters(this.editingProcess.outputs, this.outputListElement.childNodes);
+            this.updateReturnPaths(this.editingProcess.returnPaths, this.returnPathListElement.childNodes);
 
             if (isNew) // input step needs the parameters to have been created
                 this.editingProcess.createDefaultSteps();
@@ -178,11 +182,42 @@
             }
 
             // remove any parameters which weren't in the UI (cos they must have been removed)
-            for (let i = 0; i < oldParameters.length; i++) {
-                let oldParam = oldParameters[i];
-                for (let j = 0; j < parameters.length; j++)
-                    if (parameters[j] === oldParam)
-                        parameters.splice(j, 1);
+            for (let oldParam of oldParameters) {
+                let pos = parameters.indexOf(oldParam);
+                if (pos != -1)
+                    parameters.splice(pos, 1);
+            }
+        }
+        private updateReturnPaths(returnPaths: string[], listItems: NodeList) {
+            let oldReturnPaths = returnPaths.slice();
+
+            for (let i = 0; i < listItems.length; i++) {
+                let item = listItems[i] as Element;
+
+                let nameInput = item.querySelector('.name') as HTMLInputElement;
+                let name = nameInput.value.trim();
+
+                if (nameInput.hasAttribute('data-orig')) {
+                    returnPaths.push(name);
+                    continue; // new return path
+                }
+
+                let origName = nameInput.getAttribute('data-orig');
+                let pos = oldReturnPaths.indexOf(origName);
+
+                if (name != origName) {
+                    returnPaths[pos] = name; // overwrite old path
+                    continue;
+                }
+                
+                oldReturnPaths.splice(pos, 1);
+            }
+
+            // remove any paths which weren't in the UI (cos they must have been removed)
+            for (let oldPath of oldReturnPaths) {
+                let pos = returnPaths.indexOf(oldPath);
+                if (pos != -1)
+                    returnPaths.splice(pos, 1);
             }
         }
         private cancelButtonClicked() {
@@ -194,6 +229,7 @@
             this.populateContent();
             this.inputListElement.innerHTML = '';
             this.outputListElement.innerHTML = '';
+            this.returnPathListElement.innerHTML = '';
 
             this.rootElement.style.removeProperty('display');
         }
@@ -214,12 +250,16 @@
             this.processNameInput.value = process.name;
             
             if (process.inputs !== null)
-                for (let i = 0; i < process.inputs.length; i++)
-                    this.inputListElement.appendChild(this.createProcessParameter(process.inputs[i]));
+                for (let input of process.inputs)
+                    this.inputListElement.appendChild(this.createProcessParameter(input));
 
             if (process.outputs !== null)
-                for (let i = 0; i < process.outputs.length; i++)
-                    this.outputListElement.appendChild(this.createProcessParameter(process.outputs[i]));
+                for (let output of process.outputs)
+                    this.outputListElement.appendChild(this.createProcessParameter(output));
+
+            if (process.returnPaths !== null)
+                for (let path of process.returnPaths)
+                    this.outputListElement.appendChild(this.createReturnPath(path));
         }
         private createProcessParameter(param: DataField) {
             let element = document.createElement('li');
@@ -253,6 +293,28 @@
                 typeSelect.appendChild(option);
             }
 
+            element.appendChild(document.createTextNode(' '));
+
+            let removeLink = document.createElement('span');
+            removeLink.className = 'remove link';
+            removeLink.innerText = 'remove';
+            element.appendChild(removeLink);
+
+            removeLink.addEventListener('click', this.removeParameterClicked.bind(this, element));
+            return element;
+        }
+        private createReturnPath(path: string) {
+            let element = document.createElement('li');
+
+            let nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.className = 'name';
+            element.appendChild(nameInput);
+
+            if (path !== null) {
+                nameInput.value = path;
+                nameInput.setAttribute('data-orig', path);
+            }
             element.appendChild(document.createTextNode(' '));
 
             let removeLink = document.createElement('span');

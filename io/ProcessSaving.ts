@@ -24,6 +24,8 @@
                 let varElement = this.saveProcessParameter(variable, element, 'Variable');
                 // TODO: write initialValue attribute if required
             }
+            for (let returnPath of process.returnPaths)
+                this.saveProcessReturnPath(returnPath, element);
 
             // write steps
             let steps = parent.ownerDocument.createElement('Steps');
@@ -99,6 +101,11 @@
             element.setAttribute('type', parameter.type.name);
             parent.appendChild(element);
             return element;
+        }
+        private static saveProcessReturnPath(returnPath: string, parent: Element) {
+            let element = parent.ownerDocument.createElement('ReturnPath');
+            element.setAttribute('name', returnPath);
+            parent.appendChild(element);
         }
     }
 }

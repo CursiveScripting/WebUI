@@ -50,15 +50,11 @@
 
             let returnPaths: string[] = [];
             let usedNames: {[key:string]:boolean} = {};
-            let stopNodes = processNode.getElementsByTagName('Stop');
-            for (let i=0; i<stopNodes.length; i++) {
-                let stopNode = stopNodes[i];
-                if (!stopNode.hasAttribute('name'))
-                    continue;
-
-                let stopName = stopNode.getAttribute('name');
-                if (stopName !== '' && !usedNames.hasOwnProperty(stopName))
-                    returnPaths.push(stopName);
+            paramNodes = processNode.getElementsByTagName('ReturnPath');
+            for (let i=0; i<paramNodes.length; i++) {
+                let returnPathName = paramNodes[i].getAttribute('name');
+                if (returnPathName !== '' && !usedNames.hasOwnProperty(returnPathName))
+                    returnPaths.push(returnPathName);
             }
 
             return new UserProcess(processName, inputs, outputs, variables, returnPaths, false);
@@ -121,7 +117,20 @@
                 let id = parseInt(stepNode.getAttribute('ID'));
                 let x = parseInt(stepNode.getAttribute('x'));
                 let y = parseInt(stepNode.getAttribute('y'));
-                let returnPath = stepNode.getAttribute('name');
+
+                let returnPath: string;
+                if (stepNode.hasAttribute('name')) {
+                    returnPath = stepNode.getAttribute('name');
+                    if (process.returnPaths.indexOf(returnPath) == -1) {
+                        workspace.showError('Step ' + id + ' of the "' + process.name + '" process uses an unspecified return path name: ' + name + '. That name isn\'t a return path on this process.');
+                    }
+                }
+                else {
+                    returnPath = null;
+                    if (process.returnPaths.length > 0) {
+                        workspace.showError('Step ' + id + ' of the "' + process.name + '" process has no return path name. This process uses named return paths, so a name is required.');
+                    }
+                }
 
                 let step = new StopStep(id, process, returnPath, x, y);
                 this.loadStepInputs(workspace, process, step, stepNode);

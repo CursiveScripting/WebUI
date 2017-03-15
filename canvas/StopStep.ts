@@ -28,8 +28,9 @@
             let pathName = new Region(
                 this.definePathNameRegion.bind(this),
                 this.drawPathNameRegion.bind(this),
-                'pointer'
+                this.parentProcess.returnPaths.length > 0 ? 'pointer' : 'not-allowed' // TODO: this needs to update when the condition does
             );
+
             pathName.click = this.pathNameRegionClick.bind(this);
             pathName.hover = function () { return true; }
             pathName.unhover = function () { return true; }
@@ -49,7 +50,8 @@
             Drawing.underlineText(ctx, displayName, this.x, this.y + this.radius / 2, isMouseOver);
         }
         private pathNameRegionClick() {
-            this.parentProcess.workspace.returnPathEditor.show(this);
+            if (this.parentProcess.returnPaths.length > 0)
+                this.parentProcess.workspace.returnPathEditor.show(this);
         }
         protected getInputSource() { return this.parentProcess.outputs; }
         protected getOutputSource() { return null; }
