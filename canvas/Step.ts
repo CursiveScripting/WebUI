@@ -9,6 +9,7 @@
         readonly returnPaths: ReturnPath[];
         drawText: boolean;
         dragging: boolean;
+        valid: boolean;
         connectors: ParameterDisplay[];
         regions: Region[];
         bodyRegion: Region;
@@ -97,7 +98,7 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            ctx.strokeStyle = '#000';
+            ctx.strokeStyle = this.valid ? '#000' : '#a00';
             ctx.fillStyle = '#fff';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -159,6 +160,8 @@
         }
         createDanglingReturnPaths() { }
         validate() {
+            this.valid = false;
+
             for (let path of this.returnPaths)
                 if (!path.isConnected())
                     return false;
@@ -175,6 +178,7 @@
                     if (output.link === null)
                         return false;
 
+            this.valid = true;
             return true;
         }
         abstract getEdgeDistance(angle: number): number;
