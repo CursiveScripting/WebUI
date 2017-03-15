@@ -44,10 +44,11 @@
             ctx.font = '16px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
-            ctx.fillStyle = '#000';
+            ctx.strokeStyle = ctx.fillStyle = '#000';
 
             let displayName = this.returnPath == null ? '[no name]' : '"' + this.returnPath + '"';
-            Drawing.underlineText(ctx, displayName, this.x, this.y + this.radius / 2, isMouseOver);
+            let underline = isMouseOver && this.parentProcess.returnPaths.length > 0;
+            Drawing.underlineText(ctx, displayName, this.x, this.y + this.radius / 2, underline);
         }
         private pathNameRegionClick() {
             if (this.parentProcess.returnPaths.length > 0)

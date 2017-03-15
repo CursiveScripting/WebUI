@@ -52,7 +52,10 @@
             let usedNames: {[key:string]:boolean} = {};
             paramNodes = processNode.getElementsByTagName('ReturnPath');
             for (let i=0; i<paramNodes.length; i++) {
-                let returnPathName = paramNodes[i].getAttribute('name');
+                let paramNode = paramNodes[i];
+                if (paramNode.parentElement !== processNode)
+                    continue;
+                let returnPathName = paramNode.getAttribute('name');
                 if (returnPathName !== '' && !usedNames.hasOwnProperty(returnPathName))
                     returnPaths.push(returnPathName);
             }
