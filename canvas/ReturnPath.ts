@@ -149,6 +149,8 @@
             ctx.shadowOffsetX = 0; 
             ctx.shadowOffsetY = 0; 
             
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
             ctx.fillStyle = this._toStep == null && !this.dragging ? '#f00' : '#fff';
     
             ctx.beginPath();
@@ -198,15 +200,15 @@
                 let yOffset = 50 * curveScale;
 
                 if (dx < 0) {
-                    if (this.fromStep.process != null && this.fromStep.process.inputs.length % 2 == 1)
+                    if (this.fromStep.inputs != null && this.fromStep.inputs.length % 2 == 1)
                         cp1y += dy > 0 ? yOffset : -yOffset;
-                    if (this._toStep != null && this._toStep.process != null && this._toStep.process.outputs.length % 2 == 1)
+                    if (this._toStep != null && this._toStep.outputs != null && this._toStep.outputs.length % 2 == 1)
                         cp2y += dy > 0 ? -yOffset : yOffset;
                 }
                 else {
-                    if (this.fromStep.process != null && this.fromStep.process.outputs.length % 2 == 1)
+                    if (this.fromStep.outputs != null && this.fromStep.outputs.length % 2 == 1)
                         cp1y += dy > 0 ? yOffset : -yOffset;
-                    if (this._toStep != null && this._toStep.process != null && this._toStep.process.inputs.length % 2 == 1)
+                    if (this._toStep != null && this._toStep.inputs != null && this._toStep.inputs.length % 2 == 1)
                         cp2y += dy > 0 ? -yOffset : yOffset;
                 }
             }

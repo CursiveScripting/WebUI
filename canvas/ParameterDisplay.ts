@@ -13,7 +13,7 @@
             this.linkBranchLength = 6;
             this.outputBranchAngle = Math.PI * 0.8;
             this.inputBranchAngle = Math.PI - this.outputBranchAngle;
-            this.textDistance = 24;
+            this.textDistance = 30;
     
             this.createRegion();
         }
@@ -47,13 +47,13 @@
         }
         outline(ctx: CanvasRenderingContext2D) {
             let halfAngle = Math.PI / 24;
-            let pos = this.offset(this.step.x, this.step.y, this.step.radius + 2, this.angle - halfAngle);
+            let pos = this.offsetStep(2, this.angle - halfAngle);
             ctx.moveTo(pos.x, pos.y);
-            pos = this.offset(this.step.x, this.step.y, this.step.radius + 2, this.angle + halfAngle);
+            pos = this.offsetStep(2, this.angle + halfAngle);
             ctx.lineTo(pos.x, pos.y);
-            pos = this.offset(this.step.x, this.step.y, this.step.radius + this.textDistance, this.angle + halfAngle);
+            pos = this.offsetStep(this.textDistance, this.angle + halfAngle);
             ctx.lineTo(pos.x, pos.y);
-            pos = this.offset(this.step.x, this.step.y, this.step.radius + this.textDistance, this.angle - halfAngle);
+            pos = this.offsetStep(this.textDistance, this.angle - halfAngle);
             ctx.lineTo(pos.x, pos.y);
         }
         draw(ctx: CanvasRenderingContext2D, isMouseOver: boolean, isMouseDown: boolean) {
@@ -64,9 +64,9 @@
             ctx.lineWidth = 4;
         
             ctx.beginPath();
-            let startPos = this.offset(this.step.x, this.step.y, this.step.radius + 2, this.angle);
+            let startPos = this.offsetStep(2, this.angle);
             ctx.moveTo(startPos.x, startPos.y);
-            let endPos = this.offset(this.step.x, this.step.y, this.step.radius + this.linkLength, this.angle);
+            let endPos = this.offsetStep(this.linkLength, this.angle);
             ctx.lineTo(endPos.x, endPos.y);
         
             if (this.isInput) {
@@ -91,9 +91,16 @@
             }
 
             if (this.step.drawText || (this.param.link !== null && this.step.parentProcess.workspace.processEditor.highlightVariable === this.param.link)) {
-                let pos = this.offset(this.step.x, this.step.y, this.textDistance + this.step.radius, this.angle);
+                let pos = this.offsetStep(this.textDistance, this.angle);
                 ctx.fillText(this.param.name, pos.x, pos.y);
             }
+        }
+        offsetStep(extraDistance: number, angle: number) {
+            let distance = this.step.getEdgeDistance(angle) + extraDistance;
+            return {
+                x: this.step.x + distance * Math.cos(angle),
+                y: this.step.y + distance * Math.sin(angle)
+            };
         }
         offset(x: number, y: number, distance: number, angle: number) {
             return {

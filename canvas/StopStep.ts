@@ -1,19 +1,26 @@
 ﻿namespace Cursive {
     export class StopStep extends Step {
+        readonly radius: number;
         returnPath: string;
         constructor(uniqueID: number, parentProcess: UserProcess, returnPath: string, x: number, y: number) {
             super(uniqueID, null, parentProcess, x, y);
             this.returnPath = returnPath;
+            this.radius = 45;
         }
         protected writeText(ctx: CanvasRenderingContext2D) {
-            ctx.font = '16px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
             ctx.fillStyle = '#a00';
-            ctx.fillText("Stop", this.x, this.y - this.radius / 4);
+            ctx.fillText('Stop', this.x, this.y - this.radius / 4);
         }
         protected defineRegion(ctx: CanvasRenderingContext2D, scale: number) {
             ctx.rect(this.x - this.radius * scale, this.y - this.radius * scale, this.radius * 2 * scale, this.radius * 2 * scale);
+        }
+        getEdgeDistance(angle: number) {
+            let abs_cos_angle = Math.abs(Math.cos(angle));
+            let abs_sin_angle = Math.abs(Math.sin(angle));
+            if (this.radius * abs_sin_angle <= this.radius * abs_cos_angle)
+                return this.radius / abs_cos_angle;
+            else
+                return this.radius / abs_sin_angle;
         }
         protected createRegions() {
             super.createRegions();
@@ -33,8 +40,6 @@
             ctx.rect(this.x - this.radius, this.y + this.radius / 8, this.radius * 2, this.radius / 3)
         }
         private drawPathNameRegion(ctx: CanvasRenderingContext2D, isMouseOver: boolean, isMouseDown: boolean) {
-            ctx.font = '16px sans-serif';
-            ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
             ctx.fillStyle = '#000';
 
@@ -44,7 +49,6 @@
         private pathNameRegionClick() {
             this.parentProcess.workspace.returnPathEditor.show(this);
         }
-        createDanglingReturnPaths() { }
         protected getInputSource() { return this.parentProcess.outputs; }
         protected getOutputSource() { return null; }
     }

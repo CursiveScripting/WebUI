@@ -1,20 +1,22 @@
 ﻿namespace Cursive {
     export class StartStep extends Step {
+        readonly radius: number;
         constructor(uniqueID: number, parentProcess: UserProcess, x: number, y: number) {
             super(uniqueID, null, parentProcess, x, y);
+            this.radius = 45;
         }
         protected writeText(ctx: CanvasRenderingContext2D) {
-            ctx.font = '16px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
             ctx.fillStyle = '#0a0';
-            ctx.fillText("Start", this.x - this.radius / 4, this.y);
+            ctx.fillText('Start', this.x - this.radius / 4, this.y);
         }
         protected defineRegion(ctx: CanvasRenderingContext2D, scale: number) {
             ctx.moveTo(this.x - this.radius * scale, this.y - this.radius * 0.75 * scale);
             ctx.lineTo(this.x + this.radius * scale, this.y);
             ctx.lineTo(this.x - this.radius * scale, this.y + this.radius * 0.75 * scale);
             ctx.closePath();
+        }
+        getEdgeDistance(angle: number) {
+            return this.radius;
         }
         createDanglingReturnPaths() {
             let returnPath = new ReturnPath(this, null, null, 150, 0);

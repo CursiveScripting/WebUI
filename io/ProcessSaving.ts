@@ -46,7 +46,7 @@
             }
             else {
                 element = parent.ownerDocument.createElement('Step');
-                element.setAttribute('process', step.process.name);
+                element.setAttribute('process', (step as ProcessStep).process.name);
             }
             parent.appendChild(element);
         

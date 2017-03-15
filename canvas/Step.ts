@@ -1,5 +1,5 @@
 ﻿namespace Cursive {
-    export class Step {
+    export abstract class Step {
         readonly inputs: Parameter[];
         readonly outputs: Parameter[];
         x: number;
@@ -7,7 +7,6 @@
         private moveOffsetX: number;
         private moveOffsetY: number;
         readonly returnPaths: ReturnPath[];
-        readonly radius: number;
         drawText: boolean;
         dragging: boolean;
         connectors: ParameterDisplay[];
@@ -19,7 +18,6 @@
             this.x = x === undefined ? 100 : x;
             this.y = y === undefined ? 100 : y;
             this.returnPaths = [];
-            this.radius = 45;
             this.drawText = this.dragging = false;
 
             this.inputs = this.copyParameters(this.getInputSource());
@@ -29,6 +27,9 @@
         protected createRegions() {
             this.connectors = [];
             this.regions = [];
+
+            this.createConnectors(this.inputs, true);
+            this.createConnectors(this.outputs, false);
 
             this.bodyRegion = new Region(
                 this.defineBodyRegion.bind(this),
@@ -47,9 +48,6 @@
             this.collisionRegion = new Region(
                 this.defineCollisionRegion.bind(this)
             );
-
-            this.createConnectors(this.inputs, true);
-            this.createConnectors(this.outputs, false);
         }
         private bodyRegionMouseDown(x: number, y: number) {
             this.dragging = true;
@@ -91,7 +89,14 @@
 
             return true;
         }
+        protected setFont(ctx: CanvasRenderingContext2D) {
+            ctx.font = '16px sans-serif';
+        }
         protected drawBody(ctx: CanvasRenderingContext2D) {
+            this.setFont(ctx);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
             ctx.strokeStyle = '#000';
             ctx.fillStyle = '#fff';
             ctx.lineWidth = 2;
@@ -102,28 +107,16 @@
 
             this.writeText(ctx);
         }
-        protected writeText(ctx: CanvasRenderingContext2D) {
-            ctx.font = '16px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#000';
-            ctx.fillText(this.process.name, this.x, this.y);
-        }
+        protected abstract writeText(ctx: CanvasRenderingContext2D);
         private defineBodyRegion(ctx: CanvasRenderingContext2D) {
             this.defineRegion(ctx, 1);
         }
         private defineCollisionRegion(ctx: CanvasRenderingContext2D) {
             this.defineRegion(ctx, 2);
         }
-        protected defineRegion(ctx: CanvasRenderingContext2D, scale: number) {
-            ctx.arc(this.x, this.y, this.radius * scale, 0, 2 * Math.PI);
-        }
-        protected getInputSource() {
-            return this.process.inputs;
-        }
-        protected getOutputSource() {
-            return this.process.outputs;
-        }
+        protected abstract defineRegion(ctx: CanvasRenderingContext2D, scale: number);
+        protected abstract getInputSource(): Parameter[];
+        protected abstract getOutputSource(): Parameter[];
         private copyParameters(sourceParams: Parameter[]) {
             if (sourceParams === null)
                 return null;
@@ -164,33 +157,7 @@
                 currentAngle += stepSize;
             }
         }
-        createDanglingReturnPaths() {
-            let distance = 150;
-            if (this.process.returnPaths.length == 0) {
-                let returnPath = new ReturnPath(this, null, null, 0, distance);
-                returnPath.onlyPath = true;
-                this.returnPaths.push(returnPath);
-            }
-            else {
-                let centerAngle = 7 * Math.PI / 16;
-                let targetSeparation = 3 * Math.PI / 16;
-                let maxSpread = 5 * Math.PI / 8;
-                let numSteps = this.process.returnPaths.length - 1;
-                let totalSpread = Math.min(maxSpread, numSteps * targetSeparation);
-
-                let currentAngle = centerAngle - totalSpread / 2;
-                let angularIncrement = totalSpread / numSteps;
-
-                for (let path of this.process.returnPaths) {
-                    let xOffset = distance * Math.cos(currentAngle);
-                    let yOffset = distance * Math.sin(currentAngle);
-                    currentAngle += angularIncrement;
-
-                    let returnPath = new ReturnPath(this, null, path, xOffset, yOffset);
-                    this.returnPaths.push(returnPath);
-                }
-            }
-        }
+        createDanglingReturnPaths() { }
         validate() {
             for (let path of this.returnPaths)
                 if (!path.isConnected())
@@ -210,5 +177,6 @@
 
             return true;
         }
+        abstract getEdgeDistance(angle: number): number;
     }
 }

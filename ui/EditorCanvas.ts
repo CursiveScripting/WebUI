@@ -325,7 +325,7 @@
                 return;
             }
 
-            let step = new Step(this.currentProcess.getNextStepID(), process, this.currentProcess, x, y)
+            let step = new ProcessStep(this.currentProcess.getNextStepID(), process, this.currentProcess, x, y)
             step.createDanglingReturnPaths();
             this.currentProcess.steps.push(step);
             this.processChanged();

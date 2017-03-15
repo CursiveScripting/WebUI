@@ -4,7 +4,7 @@
         private valid: boolean;
         private nextStepID: number;
         constructor(name: string, inputs: Parameter[], outputs: Parameter[], public variables: Variable[], returnPaths: string[], readonly fixedSignature: boolean) {
-            super(name, inputs, outputs, returnPaths);
+            super(name, inputs, outputs, returnPaths, true);
         
             this.steps = [];
             this.valid = false;
