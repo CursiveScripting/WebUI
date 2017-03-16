@@ -28,6 +28,7 @@
     <TypeScriptCompile Include="canvas\Drawing.ts" />
     <TypeScriptCompile Include="canvas\ProcessStep.ts" />
     <TypeScriptCompile Include="data\Dictionary.ts" />
+    <TypeScriptCompile Include="data\Position.ts" />
     <TypeScriptCompile Include="io\ProcessLoading.ts" />
     <TypeScriptCompile Include="data\UserProcess.ts" />
     <TypeScriptCompile Include="canvas\Transform.ts" />

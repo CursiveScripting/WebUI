@@ -41,21 +41,51 @@
             ctx.arcTo(this.x - length - radius, this.y - radius, this.x - length, this.y - radius, radius);
             ctx.closePath();
         }
-        getEdgeDistance(angle: number) {
-            let cornerAngle = this.extraLength == 0 ? Math.PI / 2 : Math.tan(this.radius / this.extraLength);
+        getPerpendicular(angle: number) {
+            let cornerAngle = this.extraLength == 0 ? Math.PI / 2 : Math.atan(this.radius / this.extraLength);
 
-            if (angle > Math.PI)
-                angle -= Math.PI;
-            if (angle > Math.PI / 2)
-                angle = Math.PI - angle;
+            let sin = Math.sin(angle);
+            let cos = Math.cos(angle);
             
-            if (angle == 0)
-                return this.extraLength + this.radius;
-            if (angle > cornerAngle)
-                return this.extraLength / Math.cos(angle);
+            let calcAngle = Math.abs(angle);
+            if (calcAngle > Math.PI)
+                calcAngle -= Math.PI;
+            if (calcAngle > Math.PI / 2)
+                calcAngle = Math.PI - calcAngle;         
 
-            let sine = Math.sin(angle);
-            return this.extraLength * Math.cos(angle) + Math.sqrt(this.radius * this.radius - this.extraLength * this.extraLength * sine * sine);
+            let dist: number;
+            let facingAngle: number;   
+
+            if (calcAngle > cornerAngle) {
+                dist = this.radius / Math.sin(calcAngle);
+
+                // on straight edge, so face straight up/down
+                if (angle < Math.PI)
+                    facingAngle = Math.PI / 2;
+                else
+                    facingAngle = 3 * Math.PI / 2;
+            }
+            else {
+                let calcSin = Math.sin(calcAngle);
+                let sqrt = Math.sqrt(this.radius * this.radius - this.extraLength * this.extraLength * calcSin * calcSin);
+                dist = this.extraLength * Math.cos(calcAngle) + sqrt;
+
+                // facing angle should be perpendicular to circle's edge, rather than just the given angle
+                let leftward = angle > Math.PI / 2 && angle < 3 * Math.PI / 2;
+                let cy = sin * dist;
+                if (leftward) {
+                    let cx = cos * dist + this.extraLength;
+                    facingAngle = Math.PI + Math.atan(cy / cx);
+                }
+                else {
+                    let cx = cos * dist - this.extraLength;
+                    facingAngle = Math.atan(cy / cx);
+                }
+            }
+
+            let x = this.x + dist * cos;
+            let y = this.y + dist * sin;
+            return new Orientation(x, y, facingAngle);
         }
         protected getInputSource() {
             return this.process.inputs;

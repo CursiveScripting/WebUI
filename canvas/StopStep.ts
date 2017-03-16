@@ -14,13 +14,35 @@
         protected defineRegion(ctx: CanvasRenderingContext2D, scale: number) {
             ctx.rect(this.x - this.radius * scale, this.y - this.radius * scale, this.radius * 2 * scale, this.radius * 2 * scale);
         }
-        getEdgeDistance(angle: number) {
-            let abs_cos_angle = Math.abs(Math.cos(angle));
-            let abs_sin_angle = Math.abs(Math.sin(angle));
-            if (this.radius * abs_sin_angle <= this.radius * abs_cos_angle)
-                return this.radius / abs_cos_angle;
+        getPerpendicular(angle: number) {
+            let sin = Math.sin(angle);
+            let cos = Math.cos(angle);
+            let absCos = Math.abs(cos);
+            let absSin = Math.abs(sin);
+            let dist: number;
+            if (this.radius * absSin <= this.radius * absCos)
+                dist = this.radius / absCos;
             else
-                return this.radius / abs_sin_angle;
+                dist = this.radius / absSin;
+
+            let x = this.x + dist * cos;
+            let y = this.y + dist * sin;
+            let facingAngle: number;
+
+            let halfPi = Math.PI / 2;
+            let quarterPi = Math.PI / 4;
+            if (angle < quarterPi)
+                facingAngle = 0;
+            else if (angle < 3 * quarterPi)
+                facingAngle = halfPi;
+            else if (angle < 5 * quarterPi)
+                facingAngle = Math.PI;
+            else if (angle < 7 * quarterPi)
+                facingAngle = Math.PI + halfPi;
+            else
+                facingAngle = 0;
+
+            return new Orientation(x, y, facingAngle);
         }
         protected createRegions() {
             super.createRegions();

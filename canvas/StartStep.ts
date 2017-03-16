@@ -15,8 +15,17 @@
             ctx.lineTo(this.x - this.radius * scale, this.y + this.radius * 0.75 * scale);
             ctx.closePath();
         }
-        getEdgeDistance(angle: number) {
-            return this.radius;
+        getPerpendicular(angle: number) {
+            let sin = Math.sin(angle);
+            let cos = Math.cos(angle);
+
+            // TODO: trace contours of actual shape
+
+            let dist = this.radius;
+            let x = this.x + dist * cos;
+            let y = this.y + dist * sin;
+            let facingAngle = angle;
+            return new Orientation(x, y, facingAngle);
         }
         createDanglingReturnPaths() {
             let returnPath = new ReturnPath(this, null, null, 150, 0);

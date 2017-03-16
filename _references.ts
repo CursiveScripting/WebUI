@@ -9,6 +9,7 @@
 /// <reference path="data/UserProcess.ts" />
 /// <reference path="data/Type.ts" />
 /// <reference path="data/DataField.ts" />
+/// <reference path="data/Position.ts" />
 /// <reference path="canvas/Drawing.ts" />
 /// <reference path="canvas/Transform.ts" />
 /// <reference path="canvas/Step.ts" />

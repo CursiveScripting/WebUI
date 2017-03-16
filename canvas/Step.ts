@@ -181,6 +181,6 @@
             this.valid = true;
             return true;
         }
-        abstract getEdgeDistance(angle: number): number;
+        abstract getPerpendicular(angle: number): Orientation;
     }
 }
