@@ -76,6 +76,20 @@
         }
         protected getInputSource() { return this.parentProcess.outputs; }
         protected getOutputSource() { return null; }
+
+        validate() {
+            let isValid = super.validate();
+            if (this.returnPath !== null) {
+                 if(this.parentProcess.returnPaths.indexOf(this.returnPath) == -1)
+                    isValid = false;
+            }
+            else if(this.parentProcess.returnPaths.length > 0)
+                isValid = false;
+
+            this.valid = isValid;
+            return isValid;
+        }
+
         handleProcessSignatureChanges() {
             super.handleProcessSignatureChanges();
             
