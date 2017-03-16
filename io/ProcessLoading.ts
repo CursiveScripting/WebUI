@@ -107,6 +107,7 @@
                 let x = parseInt(stepNode.getAttribute('x'));
                 let y = parseInt(stepNode.getAttribute('y'));
 
+                process.noteUsedStepID(id);
                 let step = new StartStep(id, process, x, y);
                 this.loadStepOutputs(workspace, process, step, stepNode);
                 process.steps.push(step);
@@ -135,6 +136,7 @@
                     }
                 }
 
+                process.noteUsedStepID(id);
                 let step = new StopStep(id, process, returnPath, x, y);
                 this.loadStepInputs(workspace, process, step, stepNode);
                 process.steps.push(step);
