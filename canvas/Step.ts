@@ -182,5 +182,63 @@
             return true;
         }
         abstract getPerpendicular(angle: number): Orientation;
+        processSignatureChanged() {
+            this.handleProcessSignatureChanges();
+            this.createRegions();
+            this.validate();
+        };
+        protected handleProcessSignatureChanges() {
+            let sourceParams = this.getInputSource();
+            if (sourceParams != null)
+                this.updateParameters(sourceParams, true);
+
+            sourceParams = this.getOutputSource();
+            if (sourceParams!= null)
+                this.updateParameters(sourceParams, false);
+        }
+        private updateParameters(sourceParams: Parameter[], isInput: boolean) {
+            // update existing parameters, add new ones and remove superfluous ones
+            let oldConnectors = this.connectors.slice();
+            let actualParams = isInput ? this.inputs : this.outputs;
+
+            for (let sourceParam of sourceParams) {
+                let foundExact = false;
+                for (let connector of this.connectors) {
+                    if (connector.isInput !== isInput)
+                        continue;
+                    if (connector.param.name == sourceParam.name && connector.param.type === sourceParam.type) {
+                        // forget about this one, it existed before and hasn't changed
+                        foundExact = true;
+                        let pos = oldConnectors.indexOf(connector);
+                        oldConnectors.splice(pos, 1);
+                        break;
+                    }
+                }
+
+                if (foundExact)
+                    continue;
+                
+                // this name / type is new, so recreate it
+                actualParams.push(new Parameter(sourceParam.name, sourceParam.type));
+            }
+
+            // remove any parameters which aren't in the new set (cos they must have been removed)
+            for (let oldConnector of oldConnectors) {
+                if (oldConnector.isInput !== isInput)
+                    continue;
+
+                let oldParam = oldConnector.param;
+                let pos = actualParams.indexOf(oldParam);
+                if (pos != -1)
+                    actualParams.splice(pos, 1);
+
+                // also unlink old param from any variables
+                if (oldParam.link !== null) {
+                    pos = oldParam.link.links.indexOf(oldParam);
+                    if (pos != -1)
+                        oldParam.link.links.splice(pos, 1);
+                }
+            }
+        }
     }
 }

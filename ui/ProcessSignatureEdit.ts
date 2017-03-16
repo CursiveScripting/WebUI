@@ -109,6 +109,8 @@
 
             if (isNew) // input step needs the parameters to have been created
                 this.editingProcess.createDefaultSteps();
+            else
+                this.workspace.processSignatureChanged(this.editingProcess);
 
             this.hide();
             this.workspace.processListDisplay.populateList();
@@ -197,7 +199,7 @@
                 let nameInput = item.querySelector('.name') as HTMLInputElement;
                 let name = nameInput.value.trim();
 
-                if (nameInput.hasAttribute('data-orig')) {
+                if (!nameInput.hasAttribute('data-orig')) {
                     returnPaths.push(name);
                     continue; // new return path
                 }

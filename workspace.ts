@@ -124,5 +124,23 @@
             else
                 this.openProcess(this.userProcesses.getByIndex(0));
         }
+        processSignatureChanged(process: UserProcess) {
+            for (let step of process.steps)
+                if (step instanceof StartStep || step instanceof StopStep)
+                    step.processSignatureChanged();
+            process.validate();
+
+            for (let i=0; i<this.userProcesses.count; i++) {
+                let otherProcess = this.userProcesses.getByIndex(i);
+                let changed = false;
+                for (let step of otherProcess.steps)
+                    if (step.process === process) {
+                        step.processSignatureChanged();
+                        changed = true;
+                    }
+                if (changed)
+                    otherProcess.validate();
+            }
+        }
     }
 }

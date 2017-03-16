@@ -120,5 +120,65 @@
                 }
             }
         }
+        handleProcessSignatureChanges() {
+            super.handleProcessSignatureChanges();
+
+            // check all required return paths exist, add them if necessary
+            let oldPaths = this.returnPaths.slice();
+            let createDistance = 150;
+            let angularIncrement = Math.PI / 8;
+            let createAngle = Math.PI / 4;
+
+            for (let path of this.process.returnPaths) {
+                let foundMatch = false;
+                for (let i=0; i<oldPaths.length; i++) {
+                    let oldPath = oldPaths[i];
+                    if (oldPath.name == path) {
+                        foundMatch = true;
+                        oldPaths.splice(i, 1);
+                        break;
+                    }
+                }
+
+                if (foundMatch)
+                    continue;
+
+                // create a new return path
+                let xOffset = createDistance * Math.cos(createAngle);
+                let yOffset = createDistance * Math.sin(createAngle);
+                createAngle += angularIncrement;
+
+                let returnPath = new ReturnPath(this, null, path, xOffset, yOffset);
+                this.returnPaths.push(returnPath);
+            }
+            // account for a single no-name path
+            if (this.process.returnPaths.length == 0) {
+                let foundMatch = false;
+                for (let i=0; i<oldPaths.length; i++) {
+                    let oldPath = oldPaths[i];
+                    if (oldPath.name === null) {
+                        foundMatch = true;
+                        oldPaths.splice(i, 1);
+                        break;
+                    }
+                }
+
+                if (!foundMatch) {
+                    // create a new return path
+                    let xOffset = createDistance * Math.cos(createAngle);
+                    let yOffset = createDistance * Math.sin(createAngle);
+
+                    let returnPath = new ReturnPath(this, null, null, xOffset, yOffset);
+                    this.returnPaths.push(returnPath);
+                }
+            }
+    
+            // remove return paths that are now invalid
+            for (let oldPath of oldPaths) {
+                let pos = this.returnPaths.indexOf(oldPath);
+                if (pos != -1)
+                    this.returnPaths.splice(pos, 1);
+            }
+        }
     }
 }

@@ -1,10 +1,8 @@
 ﻿namespace Cursive {
     export class StopStep extends Step {
         readonly radius: number;
-        returnPath: string;
-        constructor(uniqueID: number, parentProcess: UserProcess, returnPath: string, x: number, y: number) {
+        constructor(uniqueID: number, parentProcess: UserProcess, public returnPath: string, x: number, y: number) {
             super(uniqueID, null, parentProcess, x, y);
-            this.returnPath = returnPath;
             this.radius = 45;
         }
         protected writeText(ctx: CanvasRenderingContext2D) {
@@ -68,7 +66,7 @@
             ctx.textBaseline = 'bottom';
             ctx.strokeStyle = ctx.fillStyle = '#000';
 
-            let displayName = this.returnPath == null ? '[no name]' : '"' + this.returnPath + '"';
+            let displayName = this.returnPath === null ? '[no name]' : '"' + this.returnPath + '"';
             let underline = isMouseOver && this.parentProcess.returnPaths.length > 0;
             Drawing.underlineText(ctx, displayName, this.x, this.y + this.radius / 2, underline);
         }
@@ -78,5 +76,12 @@
         }
         protected getInputSource() { return this.parentProcess.outputs; }
         protected getOutputSource() { return null; }
+        handleProcessSignatureChanges() {
+            super.handleProcessSignatureChanges();
+            
+            // if this step has a named return path not present on its parent process, clear it
+            if (this.returnPath !== null && this.parentProcess.returnPaths.indexOf(this.returnPath) == -1)
+                this.returnPath = null;
+        }
     }
 }

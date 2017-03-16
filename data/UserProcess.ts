@@ -26,10 +26,8 @@
         validate() : boolean {
             let valid = true;
             for (let step of this.steps)
-                if (!step.validate()) {
+                if (!step.validate())
                     valid = false;
-                    break;
-                }
 
             // TODO: any other validation rules? e.g. All stop steps must have a return path name or not
             
