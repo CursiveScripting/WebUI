@@ -54,7 +54,8 @@
             this.populateContent();
             this.connector = connector;
 
-            if (connector.isInput && connector.param.type.allowInput) {
+            let allowFixedInput = connector.isInput && connector.param.type.allowInput;
+            if (allowFixedInput) {
                 this.fixedInputRow.style.removeProperty('display');
                 this.prompt.innerText = 'Enter a fixed variable for this input, or select a variable to map from. ';
                 if (connector.param.type.guidance != null)
@@ -87,7 +88,7 @@
             this.variableSelect.innerHTML = '';
             let varOption = document.createElement('option');
             varOption.value = '';
-            varOption.text = '(please select)';
+            varOption.text = allowFixedInput ? '(use fixed value)' : '(please select)';
             this.variableSelect.options.add(varOption);
 
             let anyVariables = false;
@@ -133,15 +134,14 @@
 
             let hasFixed = fixedInput != '';
             let hasVar = selectedVariableName != '';
+            let allowFixed = this.connector.isInput && this.connector.param.type.allowInput;
 
-            if (hasFixed == hasVar) {
-                if (hasFixed)
-                    EditorPopup.showError(this.fixedInputValue, 'Please provide either a fixed input value or a variable, not both.');
-                else if (this.connector.isInput && this.connector.param.type.allowInput)
-                    EditorPopup.showError(this.fixedInputValue, 'Please provide either a fixed input value or select a variable.');
-                else
-                    EditorPopup.showError(this.variableSelect, 'Please select a variable.');
-
+            if (hasVar && hasFixed) {
+                EditorPopup.showError(this.fixedInputValue, 'Please provide either a fixed input value or a variable, not both.');
+                return;
+            }
+            else if (!hasVar && !allowFixed) {
+                EditorPopup.showError(this.variableSelect, 'Please select a variable.');
                 return;
             }
 
@@ -157,11 +157,7 @@
                     previousVar.links.splice(indexOnVar, 1);
             }
             
-            if (hasFixed) {
-                this.connector.param.initialValue = fixedInput;
-                this.connector.param.link = null;
-            }
-            else {
+            if (hasVar) {
                 let variable: Variable = null;
                 for (let testVariable of this.workspace.currentProcess.variables)
                     if (testVariable.name == selectedVariableName) {
@@ -179,6 +175,10 @@
                 if (variable !== previousVar) {
                     variable.links.push(this.connector.param);
                 }
+            }
+            else {
+                this.connector.param.initialValue = fixedInput;
+                this.connector.param.link = null;
             }
 
             this.hide();
