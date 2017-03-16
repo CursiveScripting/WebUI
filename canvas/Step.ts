@@ -29,9 +29,6 @@
             this.connectors = [];
             this.regions = [];
 
-            this.createConnectors(this.inputs, true);
-            this.createConnectors(this.outputs, false);
-
             this.bodyRegion = new Region(
                 this.defineBodyRegion.bind(this),
                 this.drawBody.bind(this),
@@ -49,6 +46,9 @@
             this.collisionRegion = new Region(
                 this.defineCollisionRegion.bind(this)
             );
+
+            this.createConnectors(this.inputs, true);
+            this.createConnectors(this.outputs, false);
         }
         private bodyRegionMouseDown(x: number, y: number) {
             this.dragging = true;
