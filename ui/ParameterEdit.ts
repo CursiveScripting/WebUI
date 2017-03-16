@@ -31,7 +31,7 @@
 
             let addVariable = document.createElement('span');
             addVariable.className = 'link addVariable';
-            addVariable.innerText = 'add new variable';
+            addVariable.innerText = 'add new';
             addVariable.addEventListener('click', this.addVariableClicked.bind(this));
             variableContainer.appendChild(document.createTextNode(' '));
             variableContainer.appendChild(addVariable);
