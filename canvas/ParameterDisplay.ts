@@ -8,6 +8,7 @@
         private inputBranchAngle: number;
         private textDistance: number;
         private angle: number;
+        private drawText: boolean;
 
         constructor(readonly step: Step, angle: number, readonly param: Parameter, readonly isInput: boolean) {
             this.linkLength = 18;
@@ -16,6 +17,7 @@
             this.inputBranchAngle = Math.PI - this.outputBranchAngle;
             this.textDistance = 30;
             this.angle = angle < 0 ? Math.PI * 2 + angle : angle;
+            this.drawText = false;
 
             this.createRegion();
         }
@@ -31,12 +33,12 @@
             this.region.mouseup = this.regionMouseUp.bind(this);
         }
         private regionHover() {
-            this.step.drawText = true;
+            this.drawText = true;
             this.step.parentProcess.workspace.variableListDisplay.highlight(this.param.link);
             return true;
         }
         private regionUnhover() {
-            this.step.drawText = false;
+            this.drawText = false;
             this.step.parentProcess.workspace.variableListDisplay.highlight(null);
             return true;
         }
@@ -93,7 +95,7 @@
                 ctx.stroke();
             }
 
-            if (this.step.drawText || (this.param.link !== null && this.step.parentProcess.workspace.processEditor.highlightVariable === this.param.link)) {
+            if (this.step.drawText || this.drawText || (this.param.link !== null && this.step.parentProcess.workspace.processEditor.highlightVariable === this.param.link)) {
                 ctx.font = '12px sans-serif';
                 ctx.textAlign = this.isInput ? 'right' : 'left';
                 ctx.textBaseline = 'middle';
