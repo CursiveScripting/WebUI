@@ -61,6 +61,7 @@
 
             this.editingStep.returnPath = this.pathSelect.value;
             this.hide();
+            this.editingStep.parentProcess.validate();
             this.workspace.variableListDisplay.populateList();
             this.workspace.processEditor.draw();
         }
