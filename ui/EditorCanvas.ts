@@ -5,16 +5,21 @@
         highlightVariable: Variable;
         hoverRegion: Region;
         mouseDownRegion: Region;
+        private prevMouseDownRegion: Region;
         fixedRegions: Region[];
         private canvas: HTMLCanvasElement;
         private canvasWidth: number;
         private headerCutoff: number;
         private deleteStepRegion: Region;
+        private mouseDownTime: Date;
+        private prevMouseDownTime: Date;
 
         constructor(workspace: Workspace, canvas: HTMLCanvasElement) {
             this.workspace = workspace;
             this.canvas = canvas;
             this.highlightVariable = null;
+            this.mouseDownTime = null;
+            this.prevMouseDownTime = null;
             this.setupUI();
         }
         loadProcess(process) {
@@ -55,6 +60,7 @@
             this.fixedRegions = [addStopStep, this.deleteStepRegion];
             this.hoverRegion = null;
             this.mouseDownRegion = null;
+            this.prevMouseDownRegion = null;
 
             this.canvas.addEventListener('dragover', this.canvasDragOver.bind(this));
             this.canvas.addEventListener('drop', this.canvasDrop.bind(this));
@@ -149,6 +155,9 @@
             this.canvasInteractStart(pos);
         }
         private canvasInteractStart(pos: Position) {
+            this.prevMouseDownTime = this.mouseDownTime;
+            this.mouseDownTime = new Date();
+
             let region = this.getRegion(pos.x, pos.y);
             this.mouseDownRegion = region;
             if (region != null && region.mousedown(pos.x, pos.y)) {
@@ -172,12 +181,27 @@
             if (region != null) {
                 draw = region.mouseup(pos.x, pos.y);
 
-                if (region === this.mouseDownRegion)
-                    draw = region.click() || draw;
+                if (region === this.mouseDownRegion) {
+                    if (region.doubleClick !== null && region === this.prevMouseDownRegion && this.prevMouseDownTime !== null) {
+                        let doubleClickCutoff = new Date();
+                        doubleClickCutoff.setSeconds(doubleClickCutoff.getSeconds() - 1);
+
+                        if (this.prevMouseDownTime >= doubleClickCutoff) {
+                            draw = region.doubleClick() || draw;
+                        }
+                        else {
+                            draw = region.click() || draw;
+                        }
+                    }
+                    else {
+                        draw = region.click() || draw;
+                    }
+                }
             }
             if (this.mouseDownRegion != null) {
                 if (region !== this.mouseDownRegion)
                     draw = this.mouseDownRegion.mouseup(pos.x, pos.y) || draw;
+                this.prevMouseDownRegion = this.mouseDownRegion;
                 this.mouseDownRegion = null;
                 draw = true;
             }
@@ -317,15 +341,20 @@
         }
         private dropProcess(name: string, x: number, y: number) {
             let process: Process = this.workspace.systemProcesses.getByName(name);
-            if (process === undefined)
+            let isUserProcess: boolean
+            if (process === undefined) {
                 process = this.workspace.userProcesses.getByName(name);
+                isUserProcess = true;
+            }
+            else
+                isUserProcess = false;
         
             if (process === undefined) {
                 this.workspace.showError('Dropped unrecognised process: ' + name);
                 return;
             }
 
-            let step = new ProcessStep(this.currentProcess.getNextStepID(), process, this.currentProcess, x, y)
+            let step = new ProcessStep(this.currentProcess.getNextStepID(), process, isUserProcess, this.currentProcess, x, y)
             step.createDanglingReturnPaths();
             this.currentProcess.steps.push(step);
             this.processChanged();

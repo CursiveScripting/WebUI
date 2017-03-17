@@ -153,17 +153,22 @@
 
                 let childProcess: Process;
                 let childProcessName = stepNode.getAttribute('process');
-                if (systemProcesses.contains(childProcessName))
+                let isUserProcess: boolean;
+                if (systemProcesses.contains(childProcessName)) {
                     childProcess = systemProcesses.getByName(childProcessName);
-                else if (userProcesses.contains(childProcessName))
+                    isUserProcess = false;
+                }
+                else if (userProcesses.contains(childProcessName)) {
                     childProcess = userProcesses.getByName(childProcessName);
+                    isUserProcess = true;
+                }
                 else {
                     workspace.showError('Step ' + id + ' of the "' + process.name + '" process wraps an unknown process: ' + name + '. That process doesn\'t exist in this workspace.');
                     continue;
                 }
 
                 process.noteUsedStepID(id);
-                let step = new ProcessStep(id, childProcess, process, x, y);
+                let step = new ProcessStep(id, childProcess, isUserProcess, process, x, y);
                 this.loadStepInputs(workspace, process, step, stepNode);
                 this.loadStepOutputs(workspace, process, step, stepNode);
                 process.steps.push(step);

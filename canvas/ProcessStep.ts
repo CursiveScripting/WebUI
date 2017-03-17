@@ -3,7 +3,7 @@
         readonly radius: number;
         readonly extraLength: number;
 
-        constructor(uniqueID: number, process: Process, parentProcess: UserProcess, x: number, y: number) {
+        constructor(uniqueID: number, process: Process, isUserProcess: boolean, parentProcess: UserProcess, x: number, y: number) {
             super(uniqueID, process, parentProcess, x, y);
             this.radius = 25;
 
@@ -11,6 +11,9 @@
             this.setFont(ctx);
             let textLength = ctx.measureText(this.process.name).width / 2 + 8;
             this.extraLength = Math.max(0, textLength - this.radius);
+
+            if (isUserProcess)
+                this.bodyRegion.doubleClick = this.doubleClicked.bind(this);
         }
         protected writeText(ctx: CanvasRenderingContext2D) {
             ctx.fillStyle = '#000';
@@ -179,6 +182,10 @@
                 if (pos != -1)
                     this.returnPaths.splice(pos, 1);
             }
+        }
+        private doubleClicked() {
+            this.parentProcess.workspace.openProcess(this.process as UserProcess);
+            return false;
         }
     }
 }

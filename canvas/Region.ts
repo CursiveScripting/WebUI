@@ -3,6 +3,7 @@
         hover: () => boolean;
         unhover: () => boolean;
         click: () => boolean;
+        doubleClick: () => boolean;
         mousedown: (x: number, y: number) => boolean;
         mouseup: (x: number, y: number) => boolean;
         move: (x: number, y: number) => boolean;
@@ -17,6 +18,7 @@
             this.define = definition == null ? empty : definition;
             this.draw = draw == null ? empty : draw;
             this.click = this.hover = this.unhover = this.move = this.mousedown = this.mouseup = empty;
+            this.doubleClick = null;
             this.cursor = cursor == null ? '' : cursor;
         }
         containsPoint(ctx: CanvasRenderingContext2D, x: number, y: number) {
