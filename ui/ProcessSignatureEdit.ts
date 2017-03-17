@@ -261,7 +261,7 @@
 
             if (process.returnPaths !== null)
                 for (let path of process.returnPaths)
-                    this.outputListElement.appendChild(this.createReturnPath(path));
+                    this.returnPathListElement.appendChild(this.createReturnPath(path));
         }
         private createProcessParameter(param: DataField) {
             let element = document.createElement('li');
