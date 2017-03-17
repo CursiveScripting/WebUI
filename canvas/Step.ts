@@ -162,10 +162,6 @@
         validate() {
             this.valid = false;
 
-            for (let path of this.returnPaths)
-                if (!path.isConnected())
-                    return false;
-
             let inputs = this.inputs;
             if (inputs !== null)
                 for (let input of inputs)
@@ -178,7 +174,13 @@
                     if (output.link === null)
                         return false;
 
+            // draw this step as valid, even if its return paths aren't. They draw their invalidity separately.
             this.valid = true;
+
+            for (let path of this.returnPaths)
+                if (!path.isConnected())
+                    return false;
+
             return true;
         }
         abstract getPerpendicular(angle: number): Orientation;
