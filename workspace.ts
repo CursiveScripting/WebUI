@@ -142,5 +142,20 @@
                     otherProcess.validate();
             }
         }
+        processRemoved(process: UserProcess) {
+            this.userProcesses.remove(process.name);
+            for (let i=0; i<this.userProcesses.count; i++) {
+                let otherProcess = this.userProcesses.getByIndex(i);
+                let changed = false;
+                for (let step of otherProcess.steps)
+                    if (step.process === process) {
+                        otherProcess.removeStep(step);
+                        changed = true;
+                    }
+                if (changed)
+                    otherProcess.validate();
+            }
+            this.ready();
+        }
     }
 }

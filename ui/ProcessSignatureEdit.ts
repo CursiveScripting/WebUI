@@ -9,6 +9,7 @@
         private returnPathListElement: HTMLOListElement;
         private saveButton: HTMLButtonElement;
         private cancelButton: HTMLButtonElement;
+        private deleteButton: HTMLButtonElement;
         
         constructor(workspace: Workspace, popupRoot: HTMLElement) {
             this.workspace = workspace;
@@ -29,6 +30,14 @@
             this.processNameInput.id = 'txtProcessName';
             this.processNameInput.type = 'text';
             p.appendChild(this.processNameInput);
+
+            p.appendChild(document.createTextNode(' '));
+
+            this.deleteButton = document.createElement('button');
+            p.appendChild(this.deleteButton);
+            this.deleteButton.className = 'delete';
+            this.deleteButton.innerText = 'delete this process';
+            this.deleteButton.addEventListener('click', this.deleteButtonClicked.bind(this));
 
             this.inputListElement = this.createListElement('inputs', 'inputs', 'input');
 
@@ -227,6 +236,13 @@
             this.workspace.processEditor.show();
             this.workspace.variableListDisplay.show();
         }
+        private deleteButtonClicked() {
+            // TODO: confirm deletion
+
+            this.hide();
+        
+            this.workspace.processRemoved(this.editingProcess);
+        }
         private show() {
             this.populateContent();
             this.inputListElement.innerHTML = '';
@@ -242,12 +258,14 @@
             this.show();
             this.saveButton.innerText = 'add new process';
             this.cancelButton.style.display = 'none';
+            this.deleteButton.style.display = 'none';
             this.editingProcess = null;
         }
         showExisting(process: UserProcess) {
             this.show();
             this.saveButton.innerText = 'update process';
             this.cancelButton.style.removeProperty('display');
+            this.deleteButton.style.removeProperty('display');
             this.editingProcess = process;
             this.processNameInput.value = process.name;
             
