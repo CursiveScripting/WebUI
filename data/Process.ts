@@ -1,7 +1,15 @@
 ﻿namespace Cursive {
     export abstract class Process {
         workspace: Workspace;
-        constructor(public name: string, readonly inputs: Parameter[], readonly outputs: Parameter[], readonly returnPaths: string[], readonly isEditable: boolean) { }
+        constructor(
+            public name: string
+            ,readonly inputs: Parameter[] 
+            ,readonly outputs: Parameter[]
+            ,readonly returnPaths: string[]
+            ,readonly isEditable: boolean
+            ,public description: string
+            ,public folder: string
+        ) { }
         
         signatureMatches(other: Process) {
             if (this.inputs.length != other.inputs.length ||
@@ -31,8 +39,15 @@
     }
 
     export class SystemProcess extends Process {
-        constructor(name: string, inputs: Parameter[], outputs: Parameter[], returnPaths: string[]) {
-            super(name, inputs, outputs, returnPaths, false);
+        constructor(
+            name: string
+            ,inputs: Parameter[]
+            ,outputs: Parameter[]
+            ,returnPaths: string[]
+            ,description: string
+            ,folder: string
+        ) {
+            super(name, inputs, outputs, returnPaths, false, description, folder);
         }
     }
 }

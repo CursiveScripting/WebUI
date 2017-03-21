@@ -72,6 +72,10 @@
             let returnPaths: string[] = [];
             let procTypeName = isSystemProcess ? 'system' : 'fixed';
             
+            let folder = procNode.hasAttribute('folder') ? procNode.getAttribute('folder') : null;
+            let descNodes = procNode.getElementsByTagName('Description');
+            let description = descNodes.length > 0 ? (descNodes[0] as HTMLElement).innerText : '';
+            
             let paramNodes = procNode.getElementsByTagName('Input');
             this.loadParameters(workspace, processName, types, paramNodes, inputs, 'input', procTypeName);
 
@@ -93,9 +97,9 @@
 
             let process: Process;
             if (isSystemProcess)
-                process = new SystemProcess(processName, inputs, outputs, returnPaths);
+                process = new SystemProcess(processName, inputs, outputs, returnPaths, description, folder);
             else {
-                process = new UserProcess(processName, inputs, outputs, [], returnPaths, true);
+                process = new UserProcess(processName, inputs, outputs, [], returnPaths, true, description, folder);
                 (process as UserProcess).createDefaultSteps();
             }
             

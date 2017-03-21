@@ -10,8 +10,11 @@
                 
                 let existing = userProcesses.getByName(process.name);
                 if (existing !== undefined) {
-                    if (existing.fixedSignature)
+                    if (existing.fixedSignature) {
                         existing.variables = process.variables;
+                        existing.folder = process.folder;
+                        existing.description = process.description;
+                    }
                     else
                         workspace.showError('There are two user processes with the same name: ' + name + '. Process names must be unique.');
                     continue;
@@ -35,6 +38,9 @@
 
         private static loadProcessDefinition(workspace: Workspace, processNode: Element): UserProcess {
             let processName = processNode.getAttribute('name');
+            let folder = processNode.hasAttribute('folder') ? processNode.getAttribute('folder') : null;
+            let descNodes = processNode.getElementsByTagName('Description');
+            let description = descNodes.length > 0 ? (descNodes[0] as HTMLElement).innerText : '';
 
             let inputs: Parameter[] = [];
             let paramNodes = processNode.getElementsByTagName('Input');
@@ -60,7 +66,7 @@
                     returnPaths.push(returnPathName);
             }
 
-            return new UserProcess(processName, inputs, outputs, variables, returnPaths, false);
+            return new UserProcess(processName, inputs, outputs, variables, returnPaths, false, description, folder);
         }
 
         private static loadProcessParameters(workspace: Workspace, paramNodes, dataFields: DataField[], paramTypeName: 'input' | 'output' | 'variable') {

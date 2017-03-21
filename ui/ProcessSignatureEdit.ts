@@ -7,6 +7,8 @@
         private inputListElement: HTMLOListElement;
         private outputListElement: HTMLOListElement;
         private returnPathListElement: HTMLOListElement;
+        private folderNameInput: HTMLInputElement;
+        private descriptionInput: HTMLTextAreaElement;
         private saveButton: HTMLButtonElement;
         private cancelButton: HTMLButtonElement;
         private deleteButton: HTMLButtonElement;
@@ -44,6 +46,33 @@
             this.outputListElement = this.createListElement('outputs', 'outputs', 'output');
 
             this.returnPathListElement = this.createListElement('returnPaths', 'return paths', 'return path');
+
+
+            p = document.createElement('p');
+            this.rootElement.appendChild(p);
+            label = document.createElement('label');
+            label.setAttribute('for', 'txtFolderName');
+            label.innerText = 'Folder group: ';
+            p.appendChild(label);
+
+            this.folderNameInput = document.createElement('input');
+            this.folderNameInput.id = 'txtFolderName';
+            this.folderNameInput.type = 'text';
+            p.appendChild(this.folderNameInput);
+
+            p.appendChild(document.createTextNode(' (optional, used for sorting the process list)'));
+
+
+            p = document.createElement('p');
+            this.rootElement.appendChild(p);
+            label = document.createElement('label');
+            label.setAttribute('for', 'txtProcessDescription');
+            label.innerText = 'Description: ';
+            
+            this.descriptionInput = document.createElement('textarea');
+            this.descriptionInput.id = 'txtProcessDescription';
+            p.appendChild(this.descriptionInput);
+
 
             p = document.createElement('p');
             p.className = 'row buttons';
@@ -101,7 +130,7 @@
 
             let isNew = false;
             if (this.editingProcess === null) {
-                this.editingProcess = new UserProcess(processName, [], [], [], [], false);
+                this.editingProcess = new UserProcess(processName, [], [], [], [], false, '', null);
                 this.editingProcess.workspace = this.workspace;
                 this.workspace.userProcesses.add(processName, this.editingProcess);
                 isNew = true;
@@ -111,6 +140,10 @@
                 this.editingProcess.name = processName;
                 this.workspace.userProcesses.add(processName, this.editingProcess);
             }
+
+            this.editingProcess.description = this.descriptionInput.value.trim();
+            let folder = this.folderNameInput.value.trim();
+            this.editingProcess.folder = folder == '' ? null : folder;
 
             this.updateProcessParameters(this.editingProcess.inputs, this.inputListElement.childNodes);
             this.updateProcessParameters(this.editingProcess.outputs, this.outputListElement.childNodes);
@@ -260,6 +293,8 @@
             this.cancelButton.style.display = 'none';
             this.deleteButton.style.display = 'none';
             this.editingProcess = null;
+            this.folderNameInput.value = '';
+            this.descriptionInput.value = '';
         }
         showExisting(process: UserProcess) {
             this.show();
@@ -268,6 +303,9 @@
             this.deleteButton.style.removeProperty('display');
             this.editingProcess = process;
             this.processNameInput.value = process.name;
+
+            this.folderNameInput.value = process.folder === null ? '' : process.folder;
+            this.descriptionInput.value = process.description;
             
             if (process.inputs !== null)
                 for (let input of process.inputs)

@@ -14,6 +14,14 @@
             let element = parent.ownerDocument.createElement('Process');
             parent.appendChild(element);
             element.setAttribute('name', process.name);
+            if (process.folder !== null)
+                element.setAttribute('folder', process.folder);
+
+            if (process.description !== null && process.description !== '') {
+                let desc = parent.ownerDocument.createElement('Description');
+                desc.innerText = process.description;
+                element.appendChild(desc);
+            }
 
             // write inputs, outputs, variables
             for (let parameter of process.inputs)
