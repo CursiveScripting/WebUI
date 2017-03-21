@@ -1,4 +1,4 @@
 [submodule "Schema"]
 	path = Schema
-	url = git@github.com:CursiveScripting/Schema.git
+	url = https://github.com/CursiveScripting/Schema.git
 	branch = master
