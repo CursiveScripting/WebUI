@@ -74,7 +74,7 @@
             
             let folder = procNode.hasAttribute('folder') ? procNode.getAttribute('folder') : null;
             let descNodes = procNode.getElementsByTagName('Description');
-            let description = descNodes.length > 0 ? (descNodes[0] as HTMLElement).innerText : '';
+            let description = descNodes.length > 0 ? descNodes[0].innerHTML : '';
             
             let paramNodes = procNode.getElementsByTagName('Input');
             this.loadParameters(workspace, processName, types, paramNodes, inputs, 'input', procTypeName);

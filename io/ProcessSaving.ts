@@ -19,7 +19,7 @@
 
             if (process.description !== null && process.description !== '') {
                 let desc = parent.ownerDocument.createElement('Description');
-                desc.innerText = process.description;
+                desc.innerHTML = process.description;
                 element.appendChild(desc);
             }
 

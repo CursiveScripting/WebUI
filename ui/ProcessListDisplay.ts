@@ -2,6 +2,7 @@
     export class ProcessListDisplay {
         private readonly workspace: Workspace;
         private readonly listElement: HTMLElement;
+        private folderElements: {[key:string]:HTMLElement};
         
         constructor(workspace: Workspace, processList: HTMLElement) {
             this.workspace = workspace;
@@ -10,6 +11,7 @@
         }
         populateList() {
             this.listElement.innerHTML = '';
+            this.folderElements = {};
             this.createAddNewProcessItem();
 
             let userProcs = this.workspace.userProcesses;
@@ -22,6 +24,26 @@
             for (let i = 0; i < sysProcs.count; i++) {
                 let proc = sysProcs.getByIndex(i);
                 this.createProcessItem(proc, false, true, true);
+            }            
+        }
+        private getFolderElement(proc: Process) {
+            if (proc.folder === null)
+                return this.listElement;
+
+            let folderName = proc.folder;
+            if (this.folderElements.hasOwnProperty(folderName)) {
+                return this.folderElements[folderName];
+            }
+            else {
+                let wrapperItem = document.createElement('li');
+                wrapperItem.className = 'folder';
+                wrapperItem.setAttribute('data-name', folderName);
+                this.listElement.appendChild(wrapperItem);
+
+                let folderList = document.createElement('ul');
+                wrapperItem.appendChild(folderList);
+                this.folderElements[folderName] = folderList;
+                return folderList;
             }
         }
         private dragStart(e: DragEvent) {
@@ -46,7 +68,7 @@
             let item = document.createElement('li');
             item.setAttribute('draggable', 'true');
             item.setAttribute('data-process', process.name);
-            this.listElement.appendChild(item);
+            this.getFolderElement(process).appendChild(item);
 
             if (!openable)
                 item.classList.add('cantOpen');
@@ -78,7 +100,7 @@
                 element = document.createElement('div');
                 element.className = 'props returnPaths';
                 item.appendChild(element);
-
+ 
                 for (let returnPath of process.returnPaths) {
                     let prop = document.createElement('span');
                     prop.className = 'prop';
@@ -87,8 +109,13 @@
                 }
             }
 
+            element = document.createElement('div');
+            element.className = 'description';
+            element.innerText = process.description;
+            item.appendChild(element);
+
             item.addEventListener('dragstart', this.dragStart.bind(this));
-                
+            
             if (openable)
                 item.addEventListener('click', this.openUserProcess.bind(this));
         }

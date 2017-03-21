@@ -40,7 +40,7 @@
             let processName = processNode.getAttribute('name');
             let folder = processNode.hasAttribute('folder') ? processNode.getAttribute('folder') : null;
             let descNodes = processNode.getElementsByTagName('Description');
-            let description = descNodes.length > 0 ? (descNodes[0] as HTMLElement).innerText : '';
+            let description = descNodes.length > 0 ? descNodes[0].innerHTML : '';
 
             let inputs: Parameter[] = [];
             let paramNodes = processNode.getElementsByTagName('Input');
