@@ -28,7 +28,7 @@
             e.cancelBubble = true;
         }
         addField(name: string) {
-            let row = document.createElement('div');
+            let row = document.createElement('label');
             row.className = 'row';
             this.popupContent.appendChild(row);
 

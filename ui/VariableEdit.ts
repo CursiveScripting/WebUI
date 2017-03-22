@@ -5,7 +5,7 @@
         private promptElement: HTMLDivElement;
         private nameInput: HTMLInputElement;
         private typeSelect: HTMLSelectElement;
-        private deleteRow: HTMLDivElement;
+        private deleteRow: HTMLLabelElement;
         private editingVariable: Variable;
         private showParameterOnClose: ParameterDisplay;
 

@@ -24,14 +24,12 @@
             let p = document.createElement('p');
             this.rootElement.appendChild(p);
             let label = document.createElement('label');
-            label.setAttribute('for', 'txtProcessName');
             label.innerText = 'Process name: ';
             p.appendChild(label);
 
             this.processNameInput = document.createElement('input');
-            this.processNameInput.id = 'txtProcessName';
             this.processNameInput.type = 'text';
-            p.appendChild(this.processNameInput);
+            label.appendChild(this.processNameInput);
 
             p.appendChild(document.createTextNode(' '));
 
@@ -51,14 +49,12 @@
             p = document.createElement('p');
             this.rootElement.appendChild(p);
             label = document.createElement('label');
-            label.setAttribute('for', 'txtFolderName');
             label.innerText = 'Folder group: ';
             p.appendChild(label);
 
             this.folderNameInput = document.createElement('input');
-            this.folderNameInput.id = 'txtFolderName';
             this.folderNameInput.type = 'text';
-            p.appendChild(this.folderNameInput);
+            label.appendChild(this.folderNameInput);
 
             p.appendChild(document.createTextNode(' (optional, used for sorting the process list)'));
 
@@ -66,13 +62,11 @@
             p = document.createElement('p');
             this.rootElement.appendChild(p);
             label = document.createElement('label');
-            label.setAttribute('for', 'txtProcessDescription');
             label.innerText = 'Description: ';
             p.appendChild(label);
             
             this.descriptionInput = document.createElement('textarea');
-            this.descriptionInput.id = 'txtProcessDescription';
-            p.appendChild(this.descriptionInput);
+            label.appendChild(this.descriptionInput);
 
 
             p = document.createElement('p');
