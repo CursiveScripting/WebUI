@@ -79,11 +79,13 @@
             this.rootElement.appendChild(p);
 
             this.saveButton = document.createElement('button');
+            this.saveButton.setAttribute('type', 'button');
             p.appendChild(this.saveButton);
             this.saveButton.className = 'save';
             this.saveButton.addEventListener('click', this.saveButtonClicked.bind(this));
 
             this.cancelButton = document.createElement('button');
+            this.cancelButton.setAttribute('type', 'button');
             p.appendChild(this.cancelButton);
             this.cancelButton.className = 'cancel';
             this.cancelButton.innerText = 'cancel';

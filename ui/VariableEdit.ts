@@ -50,11 +50,13 @@
             fieldRow.classList.add('buttons');
 
             let okButton = document.createElement('button');
+            okButton.setAttribute('type', 'button');
             okButton.addEventListener('click', this.okClicked.bind(this));
             okButton.innerText = 'OK';
             fieldRow.appendChild(okButton);
 
             let cancelButton = document.createElement('button');
+            okButton.setAttribute('type', 'button');
             cancelButton.addEventListener('click', this.hide.bind(this));
             cancelButton.innerText = 'cancel';
             fieldRow.appendChild(cancelButton);
