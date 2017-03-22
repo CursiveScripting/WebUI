@@ -68,6 +68,7 @@
             label = document.createElement('label');
             label.setAttribute('for', 'txtProcessDescription');
             label.innerText = 'Description: ';
+            p.appendChild(label);
             
             this.descriptionInput = document.createElement('textarea');
             this.descriptionInput.id = 'txtProcessDescription';
