@@ -34,6 +34,7 @@
             p.appendChild(document.createTextNode(' '));
 
             this.deleteButton = document.createElement('button');
+            this.deleteButton.setAttribute('type', 'button');
             p.appendChild(this.deleteButton);
             this.deleteButton.className = 'delete';
             this.deleteButton.innerText = 'delete this process';
