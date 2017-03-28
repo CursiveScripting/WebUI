@@ -17,6 +17,12 @@
         constructor(fromStep: Step, toStep: Step, name: string, endOffsetX?: number, endOffsetY?: number) {
             this.fromStep = fromStep;
             this._toStep = toStep;
+            
+            if (endOffsetX === undefined && toStep !== null && fromStep != null) {
+                endOffsetX = toStep.x - fromStep.x;
+                endOffsetY = toStep.y - fromStep.y;
+            }
+
             this.endOffsetX = endOffsetX;
             this.endOffsetY = endOffsetY;
             this.name = name;
@@ -264,9 +270,6 @@
             return this._toStep !== null;
         }
         disconnect() {
-            if (this._toStep !== null)
-                this.updateOffset(this._toStep.x, this._toStep.y);
-
             this._toStep = null;
         }
     }
