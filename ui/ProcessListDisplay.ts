@@ -2,6 +2,7 @@
     export class ProcessListDisplay {
         private readonly workspace: Workspace;
         private readonly listElement: HTMLElement;
+        private activeProcessItem: HTMLElement;
         private folderElements: {[key:string]:HTMLElement};
         
         constructor(workspace: Workspace, processList: HTMLElement) {
@@ -12,6 +13,7 @@
         populateList() {
             this.listElement.innerHTML = '';
             this.folderElements = {};
+            this.activeProcessItem = null;
             this.createAddNewProcessItem();
 
             let userProcs = this.workspace.userProcesses;
@@ -53,15 +55,18 @@
             let item = document.createElement('li');
 
             item.classList.add('addNew');
-            if (this.workspace.currentProcess === null)
+            if (this.workspace.currentProcess === null) {
                 item.classList.add('active');
+                this.activeProcessItem = item;
+            }
 
             item.innerText = 'add new process';
             this.listElement.appendChild(item);
             
-            item.addEventListener('click', this.addNewProcessClicked.bind(this));
+            item.addEventListener('click', this.addNewProcessClicked.bind(this, item));
         }
-        private addNewProcessClicked() {
+        private addNewProcessClicked(item: HTMLElement) {
+            this.activeItemChanged(item);
             this.workspace.showAddNewProcess();
         }
         private createProcessItem(process: Process, openable: boolean, fixedSignature: boolean, valid: boolean) {
@@ -76,8 +81,10 @@
                 item.classList.add('fixed');
             if (!valid)
                 item.classList.add('invalid');
-            if (process === this.workspace.currentProcess)
+            if (process === this.workspace.currentProcess) {
+                this.activeProcessItem = item;
                 item.classList.add('active');
+            }
         
             let element = document.createElement('div');
             element.className = 'name';
@@ -117,7 +124,7 @@
             item.addEventListener('dragstart', this.dragStart.bind(this));
             
             if (openable)
-                item.addEventListener('click', this.openUserProcess.bind(this));
+                item.addEventListener('click', this.openUserProcess.bind(this, item));
 
 
             item.addEventListener('mouseover', this.itemHovered.bind(this, item));
@@ -132,8 +139,9 @@
                 parent.appendChild(prop);
             }
         }
-        private openUserProcess(e: MouseEvent) {
-            let name = (e.currentTarget as HTMLElement).getAttribute('data-process');
+        private openUserProcess(item: HTMLElement, e: MouseEvent) {
+            this.activeItemChanged(item);
+            let name = item.getAttribute('data-process');
             let process = this.workspace.userProcesses.getByName(name);
             if (process === undefined) {
                 this.workspace.showError('Clicked unrecognised process: ' + name);
@@ -141,6 +149,13 @@
             }
 
             this.workspace.openProcess(process);
+        }
+        private activeItemChanged(item: HTMLElement) {
+            if (this.activeProcessItem !== null)
+                this.activeProcessItem.classList.remove('active');
+
+            this.activeProcessItem = item;
+            item.classList.add('active');
         }
         private itemHovered(item: HTMLElement) {
             item.classList.add('hover');

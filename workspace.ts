@@ -56,7 +56,6 @@
         }
         openProcess(process: UserProcess) {
             this.currentProcess = process;
-            this.processListDisplay.populateList();
             this.variableListDisplay.populateList();
             this.processEditor.loadProcess(process);
             this.variableListDisplay.show();
@@ -115,7 +114,6 @@
             this.variableListDisplay.hide();
             this.currentProcess = null;
             this.processSignatureEditor.showNew();
-            this.processListDisplay.populateList();
         }
         ready() {
             // open the first user process, or the "add new" screen
@@ -123,6 +121,7 @@
                 this.showAddNewProcess();
             else
                 this.openProcess(this.userProcesses.getByIndex(0));
+            this.processListDisplay.populateList();
         }
         processSignatureChanged(process: UserProcess) {
             for (let step of process.steps)
