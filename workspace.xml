@@ -1,0 +1,94 @@
+<Workspace>
+	<Type name="number" color="#0cf" validation="[0-9]+" />
+	<Type name="text" color="#ccc" validation=".*" />
+	<Type name="deck" color="#f00" />
+	<Type name="card" color="#fc0" />
+	
+	<RequiredProcess name="prepareDeck">
+		<Input name="cards" type="deck" />
+		<Output name="cards" type="deck" />
+	</RequiredProcess>
+
+	<SystemProcess name="print">
+		<Input name="message" type="text" />
+	</SystemProcess>
+	
+	<SystemProcess name="text equals">
+		<Input name="text1" type="text" />
+		<Input name="text2" type="text" />
+		<ReturnPath name="yes" />
+		<ReturnPath name="no" />
+	</SystemProcess>
+	
+	<SystemProcess name="equals">
+		<Input name="num1" type="number" />
+		<Input name="num2" type="number" />
+		<ReturnPath name="yes" />
+		<ReturnPath name="no" />
+	</SystemProcess>
+	
+	<SystemProcess name="less than">
+		<Input name="num1" type="number" />
+		<Input name="num2" type="number" />
+		<ReturnPath name="yes" />
+		<ReturnPath name="no" />
+	</SystemProcess>
+	
+	<SystemProcess name="greater than">
+		<Input name="num1" type="number" />
+		<Input name="num2" type="number" />
+		<ReturnPath name="yes" />
+		<ReturnPath name="no" />
+	</SystemProcess>
+	
+	<SystemProcess name="shuffle">
+		<Input name="cards" type="deck" />
+	</SystemProcess>
+	
+	<SystemProcess name="combine">
+		<Input name="cards1" type="deck" />
+		<Input name="cards2" type="deck" />
+	</SystemProcess>
+	
+	<SystemProcess name="get type">
+		<Input name="card" type="card" />
+		<Output name="type" type="text" />
+	</SystemProcess>
+	
+	<SystemProcess name="add">
+		<Input name="cards" type="deck" />
+		<Input name="card" type="card" />
+	</SystemProcess>
+	
+	<SystemProcess name="count">
+		<Input name="cards" type="deck" />
+		<Output name="size" type="number" />
+	</SystemProcess>
+	
+	<SystemProcess name="separate">
+		<Input name="cards" type="deck" />
+		<Input name="type" type="text" />
+		<Output name="remainder" type="deck" />
+		<Output name="separated" type="deck" />
+	</SystemProcess>
+	
+	<SystemProcess name="contains">
+		<Input name="cards" type="deck" />
+		<Input name="type" type="text" />
+		<ReturnPath name="yes" />
+		<ReturnPath name="no" />
+	</SystemProcess>
+	
+	<SystemProcess name="split">
+		<Input name="cards" type="deck" />
+		<Input name="parts" type="number" />
+		<Output name="part1" type="deck" />
+		<Output name="part2" type="deck" />
+		<Output name="part3" type="deck" />
+		<Output name="part4" type="deck" />
+		<Output name="part5" type="deck" />
+		<Output name="part6" type="deck" />
+		<Output name="part7" type="deck" />
+		<Output name="part8" type="deck" />
+	</SystemProcess>
+</Workspace>

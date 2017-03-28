@@ -1,0 +1,277 @@
+﻿#wrapper {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+}
+
+#processColumn {
+    flex-grow: 0;
+    width: 13em;
+
+    display: flex;
+    flex-direction: column;
+}
+
+#processColumn .processFilters {
+    padding-right: 0.75em;
+}
+
+#processColumn .processFilters > * {
+    display: block;
+    width: 100%;
+}
+
+#processColumn .processFilters > *:not(:first-child) {
+    margin-top: 0.25em;
+}
+
+#actionButtons {
+    height: 4em;
+    text-align: center;
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+#processListScroll {
+    flex-grow: 1;
+    overflow-y: scroll;
+    padding-left: 0.5em;
+}
+
+#processListScroll h2 {
+    margin: 0;
+}
+
+#editorColumn {
+    flex-grow: 1;
+
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+#variableList {
+    flex-grow: 0;
+    height: 4em;
+    list-style: none;
+    border-bottom: 1px solid gray;
+    padding: 0;
+    margin: 0;
+}
+
+#variableList[data-process-name]::before {
+    content: "Editing process: " attr(data-process-name);
+    font-size: 24px;
+    font-weight: bold;
+    display: block;
+    position: relative;
+    top: 0.3em;
+}
+
+#variableList li {
+    display: inline-block;
+    margin: 0.5em;
+}
+
+#variableList li.highlight {
+	text-decoration: underline;
+}
+
+.link {
+    cursor: pointer;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+#editArea {
+    flex-grow: 1;
+    overflow: scroll;
+    position: relative;
+}
+
+#editArea .processSignatureEdit {
+    margin-left: 1em;
+}
+
+#editArea .popupOverlay {
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background-color: rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#editArea .popupPanel {
+    margin: 0 auto;
+    min-width: 150px;
+    max-width: 325px;
+    min-height: 50px;
+    max-height: 300px;
+    z-index: 99;
+    padding: 1em;
+    border: solid black 2px;
+    background-color: white;
+    border-radius: 12px;
+    flex-grow: 0;
+}
+
+#editArea .popupPanel .row {
+    margin: 0.5em;
+    display: block;
+}
+
+#editArea .popupPanel .label {
+    font-weight: bold;
+    display: inline-block;
+    min-width: 4em;
+    margin-right: 0.5em;
+    vertical-align: baseline;
+}
+
+#editArea .row.buttons {
+    margin-bottom: 0;
+}
+
+#editArea .row.buttons > * {
+    margin: 0 0.5em 0 0.5em;
+}
+
+#editArea .error {
+    border-color: red;
+    background-color: #fcc;
+}
+
+#editArea .errorMessage {
+    color: red;
+}
+
+#processList, #processList ul {
+    margin: 0;
+    padding: 0.5em 0.5em 0.5em 0;
+    list-style: none;
+}
+
+#processList ul {
+    padding: 0;
+}
+
+#processList li {
+    padding: 0.25em;
+    margin-bottom: 0.5em;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    cursor: default;
+    transition: box-shadow 0.5s, text-shadow 0.5s;
+}
+
+#processList li:not(.folder) {
+    font-family: sans-serif;
+    border: 1px solid lightgray;
+    cursor: pointer;
+}
+
+#processList li[draggable] {
+    cursor: move;
+}
+
+#processList li.active .name, #processList li.active.addNew {
+    text-shadow: 0px 0px 1px #666;
+}
+
+#processList li.active {
+    box-shadow: 0px 0px 2px #000;
+}
+
+#processList li.cantOpen {
+    border-style: dotted;
+}
+
+#processList li.fixed {
+    border-style: dashed;
+}
+
+#processList li.invalid {
+    border-color: red;
+}
+
+#processList li.folder {
+    padding: 0;
+}
+
+#processList li.folder::before {
+    content: attr(data-name);
+    display: block;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#processList li > .name {
+    text-decoration: underline;
+    font-weight: bold;
+    transition: text-shadow 0.5s;
+}
+
+#processList li > .description {
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+#processList li > .props {
+    font-family: monospace;
+}
+
+#processList li > .props, #processList li > .description {
+    overflow: hidden;
+    transition: max-height 0.5s;
+    max-height: 500px;
+}
+
+#processList li:not(.details) > .props, #processList li:not(.details) > .description {
+    max-height: 0;
+}
+
+#processList li > .props.inputs::before {
+    content: "inputs: ";
+}
+
+#processList li > .props.outputs::before {
+    content: "outputs: ";
+}
+
+#processList li > .props.returnPaths::before {
+    content: "returns: ";
+}
+
+#processList li > .props .prop:not(:last-child)::after {
+    content: ", ";
+    color: black;
+}
+
+.caption {
+    font-size: smaller;
+}
+
+.processSignatureEdit .link.addinput, .processSignatureEdit .link.addoutput {
+    display: inline-block;
+}
+
+.processSignatureEdit label {
+    vertical-align: top;
+}
+
+.processSignatureEdit textarea {
+    width: 35em;
+    height: 5em;
+}
+
+#processList .hidden {
+    display: none;
+}

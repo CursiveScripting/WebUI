@@ -1,0 +1,72 @@
+﻿<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cursive UI</title>
+<script src="cursive.js"></script>
+<link rel="stylesheet" href="cursiveDemo.css">
+</head>
+<body>
+
+<div id="wrapper">
+    <div id="processColumn">
+        <div id="actionButtons">
+            Save / Run / Debug<br/>
+            buttons go here
+        </div>
+        <div id="processListScroll">
+            <h2>Processes</h2><div class="caption">Drag to use, click to edit</div>
+            <div class="processFilters">
+                <input type="text" id="txtSearch" placeholder="Filter processes..." onkeyup="filterProcesses()" onchange="filterProcesses()" />
+            </div>
+            <ul id="processList"></ul>
+        </div>
+    </div>
+    <div id="editorColumn">
+        <ul id="variableList"></ul>
+        <div id="editArea"></div>
+    </div>
+</div>
+
+<script>
+var workspace;
+
+var request = new XMLHttpRequest();
+request.open('GET', 'https://cursivescripting.github.io/WebUI/workspace.xml', true);
+
+request.onload = function () {
+	if ((request.status >= 200 || request.status == 0) && request.status < 400)
+	    workspace = new Cursive.Workspace(request.responseXML,
+            document.getElementById('processList'),
+            document.getElementById('variableList'),
+            document.getElementById('editArea')
+        );
+	else
+		console.log('error', request);
+};
+request.send();
+
+function filterProcesses() {
+    var filter = document.getElementById('txtSearch').value.trim();
+    var list = document.getElementById('processList');
+    if (filter == '') {
+        var hidden = list.querySelectorAll('li.hidden');
+        for (var i = 0; i < hidden.length; i++) {
+            hidden[i].classList.remove('hidden');
+        }
+        return;
+    }
+
+    var processes = list.querySelectorAll('li:not(.folder):not(.addNew)');
+    for (var i = 0; i < processes.length; i++) {
+        var process = processes[i];
+        if (process.innerText.indexOf(filter) != -1)
+            process.classList.remove('hidden');
+        else
+            process.classList.add('hidden');
+    }
+}
+</script>
+</body>
+</html>
