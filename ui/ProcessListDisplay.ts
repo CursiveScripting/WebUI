@@ -118,6 +118,10 @@
             
             if (openable)
                 item.addEventListener('click', this.openUserProcess.bind(this));
+
+
+            item.addEventListener('mouseover', this.itemHovered.bind(this, item));
+            item.addEventListener('mouseleave', this.itemUnhovered.bind(this, item));
         }
         private writeItemFields(variables: DataField[], parent: HTMLElement) {
             for (let variable of variables) {
@@ -137,6 +141,17 @@
             }
 
             this.workspace.openProcess(process);
+        }
+        private itemHovered(item: HTMLElement) {
+            item.classList.add('hover');
+            window.setTimeout(this.toggleItem.bind(this, item), 500);
+        }
+        private toggleItem(item: HTMLElement) {
+            item.classList.toggle('details', item.classList.contains('hover'));
+        }
+        private itemUnhovered(item: HTMLElement) {
+            item.classList.remove('hover');
+            window.setTimeout(this.toggleItem.bind(this, item), 500);
         }
     }
 }
