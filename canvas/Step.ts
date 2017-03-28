@@ -7,6 +7,7 @@
         private moveOffsetX: number;
         private moveOffsetY: number;
         readonly returnPaths: ReturnPath[];
+        incomingPaths: ReturnPath[];
         drawText: boolean;
         dragging: boolean;
         valid: boolean;
@@ -14,11 +15,13 @@
         regions: Region[];
         bodyRegion: Region;
         private collisionRegion: Region;
+        private anglesRangesToAvoid: [number, number][];
 
         constructor(readonly uniqueID: number, readonly process: Process, readonly parentProcess: UserProcess, x: number, y: number) {
             this.x = x === undefined ? 100 : x;
             this.y = y === undefined ? 100 : y;
             this.returnPaths = [];
+            this.incomingPaths = [];
             this.drawText = this.dragging = false;
 
             this.inputs = this.copyParameters(this.getInputSource());
@@ -47,8 +50,9 @@
                 this.defineCollisionRegion.bind(this)
             );
 
-            this.createConnectors(this.inputs, true);
+            this.anglesRangesToAvoid = [];
             this.createConnectors(this.outputs, false);
+            this.createConnectors(this.inputs, true);
         }
         private bodyRegionMouseDown(x: number, y: number) {
             this.dragging = true;
@@ -67,6 +71,11 @@
         private bodyRegionMove(x, y) {
             if (!this.dragging)
                 return false;
+
+            for (let returnPath of this.returnPaths)
+                returnPath.forgetAngles();
+            for (let returnPath of this.incomingPaths)
+                returnPath.forgetAngles();
 
             // test for collisions
             let steps = this.parentProcess.steps;
@@ -150,13 +159,39 @@
             let currentAngle = input ? centerAngle + angularSpread / 2 : centerAngle - angularSpread / 2;
             if (input)
                 stepSize = -stepSize;
-                
+            let angularPadding = Math.PI / 10;
+
             for (let param of params) {
-                let connector = new ParameterDisplay(this, currentAngle, param, input);
+                let constrainedAngle = this.constrain(currentAngle);
+    
+                let connector = new ParameterDisplay(this, constrainedAngle, param, input);
                 this.connectors.push(connector);
                 this.regions.push(connector.region);
+
+                let angularRegion: [number, number] = [constrainedAngle - angularPadding, constrainedAngle + angularPadding];
+                this.anglesRangesToAvoid.push(angularRegion);
+
+                if (angularRegion[0] < 0) {
+                    angularRegion = [constrainedAngle - angularPadding - Math.PI * 2, constrainedAngle + angularPadding - Math.PI * 2];
+                    this.anglesRangesToAvoid.push(angularRegion);
+                }
+                else if (angularRegion[1] > Math.PI * 2) {
+                    angularRegion = [constrainedAngle - angularPadding + Math.PI * 2, constrainedAngle + angularPadding + Math.PI * 2];
+                    this.anglesRangesToAvoid.push(angularRegion);
+                }
+    
                 currentAngle += stepSize;
             }
+        }
+        private constrain(angle: number) {
+            let fullTurn = Math.PI * 2;
+
+            if (angle < 0)
+                angle += fullTurn;
+            else if (angle >= fullTurn)
+                angle += fullTurn;
+
+            return angle;
         }
         createDanglingReturnPaths() { }
         validate() {
@@ -241,6 +276,15 @@
                         oldParam.link.links.splice(pos, 1);
                 }
             }
+        }
+        getBestPathAngle(desiredAngle: number) {
+            desiredAngle = this.constrain(desiredAngle);
+            for (let range of this.anglesRangesToAvoid)
+                if (desiredAngle > range[0] && desiredAngle < range[1]) {
+                    let mid = (range[0] + range[1]) / 2;
+                    return this.constrain(range[desiredAngle >= mid ? 1 : 0]);
+                }
+            return desiredAngle;
         }
     }
 }

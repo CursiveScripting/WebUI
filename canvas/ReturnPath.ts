@@ -9,6 +9,9 @@
         onlyPath: boolean = false;
         private nameLength: number = 30;
         private dragging: boolean = false;
+        private startAngle: number;
+        private endAngle: number;
+        private cpDist: number;
 
         readonly regions: Region[];
         private midArrowTransform: Transform;
@@ -25,6 +28,9 @@
 
             this.endOffsetX = endOffsetX;
             this.endOffsetY = endOffsetY;
+            this.startAngle = null;
+            this.endAngle = null;
+            this.cpDist = null;
             this.name = name;
     
             let pathName = new Region(
@@ -56,6 +62,9 @@
             endConnector.move = this.dragMove.bind(this);
 
             this.regions = [pathName, midArrow, endConnector];
+
+            if (toStep !== null)
+                toStep.incomingPaths.push(this);
         }
         get toStep(): Step {
             return this._toStep;
@@ -190,38 +199,42 @@
             ctx.strokeStyle = '#000';
             ctx.lineWidth = 3;
     
-            let dx = toX - fromX, dy = toY - fromY, m = dx === 0 ? dy > 0 ? 999 : -999 : Math.abs(dy/dx);
-            let cp1x = fromX + dx / 5, cp1y = fromY + dy / 5, cp2x = toX - dx / 5, cp2y = toY - dy / 5;
-
-            // need to curve if near horizontal (and i/o connectors will get in the way)
-            let minCurveGradient = 0.1;
-            m = Math.abs(m);
-            if (this.fromStep === this.toStep) {
-                cp1x = cp2x = fromX + 140;
-                cp1y += 200;
-                cp2y -= 200;
-            }
-            else if (m < minCurveGradient) {
-                let curveScale = (minCurveGradient - m) / minCurveGradient;
-                let yOffset = 50 * curveScale;
-
-                if (dx < 0) {
-                    if (this.fromStep.inputs != null && this.fromStep.inputs.length % 2 == 1)
-                        cp1y += dy > 0 ? yOffset : -yOffset;
-                    if (this._toStep != null && this._toStep.outputs != null && this._toStep.outputs.length % 2 == 1)
-                        cp2y += dy > 0 ? -yOffset : yOffset;
+            if (this.startAngle === null) {
+                if (this.fromStep === this.toStep) {
+                    this.startAngle = this.fromStep.getBestPathAngle(Math.PI / 2);
+                    this.endAngle = this.toStep.getBestPathAngle(3 * Math.PI / 2);
+                    this.cpDist = 80;
                 }
                 else {
-                    if (this.fromStep.outputs != null && this.fromStep.outputs.length % 2 == 1)
-                        cp1y += dy > 0 ? yOffset : -yOffset;
-                    if (this._toStep != null && this._toStep.inputs != null && this._toStep.inputs.length % 2 == 1)
-                        cp2y += dy > 0 ? -yOffset : yOffset;
+                    let dx = toX - fromX, dy = toY - fromY;
+                    let directAngle = Math.atan2(dy, dx);
+                    this.startAngle = this.fromStep.getBestPathAngle(directAngle);
+                    this.endAngle = directAngle + Math.PI;
+                    if (this.endAngle > Math.PI * 2)
+                        this.endAngle -= Math.PI * 2;
+
+                    if (this._toStep !== null)
+                        this.endAngle = this.toStep.getBestPathAngle(this.endAngle);
+                    this.cpDist = Math.min(150, Math.sqrt(dx * dx + dy * dy) * 0.4);
                 }
             }
-    
+            
+            let cp1x: number, cp1y: number, cp2x: number, cp2y: number;
+            if (this.fromStep === this.toStep) {
+                cp1x = fromX + 180;
+                cp1y = fromY - 160;
+                cp2x = toX + 180;
+                cp2y = toY + 160;
+            }
+            else {
+                cp1x = fromX + Math.cos(this.startAngle) * this.cpDist;
+                cp1y = fromY + Math.sin(this.startAngle) * this.cpDist;
+                cp2x = toX + Math.cos(this.endAngle) * this.cpDist;
+                cp2y = toY + Math.sin(this.endAngle) * this.cpDist;
+            }
+
             Drawing.drawCurve(ctx, fromX, fromY, cp1x, cp1y, cp2x, cp2y, toX, toY);
 
-            let tx: number, ty: number, angle: number;
             if (this._toStep == null) {
                 // handle goes at the end of the line
                 this.endConnectorTranform = new Transform(toX, toY, 0);
@@ -230,13 +243,13 @@
             // handle goes at the middle of the line
             let mid1x = (fromX + cp1x + cp1x + cp2x) / 4, mid1y = (fromY + cp1y + cp1y + cp2y) / 4;
             let mid2x = (toX + cp2x + cp2x + cp1x) / 4, mid2y = (toY + cp2y + cp2y + cp1y) / 4;
-            angle = Math.atan2((mid2y - mid1y), (mid2x - mid1x));
-            tx = (mid1x + mid2x) / 2;
-            ty = (mid1y + mid2y) / 2;
-            this.midArrowTransform = new Transform(tx, ty, angle);
+            let midAngle = Math.atan2(mid2y - mid1y, mid2x - mid1x);
+            let tx = (mid1x + mid2x) / 2;
+            let ty = (mid1y + mid2y) / 2;
+            this.midArrowTransform = new Transform(tx, ty, midAngle);
         }
         private dragStart(x: number, y: number) {
-            this._toStep = null;
+            this.disconnect();
             this.updateOffset(x, y);
             this.dragging = true;
             return true;
@@ -252,6 +265,11 @@
                 return false;
 
             this._toStep = otherStep;
+            if (otherStep === null)
+                return true;
+
+            otherStep.incomingPaths.push(this);
+
             // TODO: if other return paths from this step already go to the same destination, combine them into one somehow
             return true;
         }
@@ -263,6 +281,7 @@
             return true;
         }
         private updateOffset(x: number, y: number) {
+            this.forgetAngles();
             this.endOffsetX = x - this.fromStep.x;
             this.endOffsetY = y - this.fromStep.y;
         }
@@ -270,7 +289,19 @@
             return this._toStep !== null;
         }
         disconnect() {
+            if (this._toStep === null)
+                return;
+
+            let pos = this._toStep.incomingPaths.indexOf(this);
+            if (pos != -1)
+                this._toStep.incomingPaths.splice(pos, 1);
+
             this._toStep = null;
+        }
+        forgetAngles() {
+            this.startAngle = null;
+            this.endAngle = null;
+            this.cpDist = null;
         }
     }
 }

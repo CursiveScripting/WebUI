@@ -16,7 +16,7 @@
             this.outputBranchAngle = Math.PI * 0.8;
             this.inputBranchAngle = Math.PI - this.outputBranchAngle;
             this.textDistance = 30;
-            this.angle = angle < 0 ? Math.PI * 2 + angle : angle;
+            this.angle = angle;
             this.drawText = false;
 
             this.createRegion();

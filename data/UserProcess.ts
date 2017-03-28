@@ -55,10 +55,8 @@
             this.steps.splice(index, 1);
 
             // any return paths that lead to this step should now be dangling
-            for (let otherStep of this.steps)
-                for (let returnPath of otherStep.returnPaths)
-                    if (returnPath.toStep === step)
-                        returnPath.disconnect();
+            for (let returnPath of step.incomingPaths)
+                returnPath.disconnect();
 
             // any variables that used this step should have it removed
             for (let connector of step.connectors) {
