@@ -62,7 +62,7 @@
             fieldRow.appendChild(cancelButton);
         }
         
-        showNew(showOnClose: ParameterDisplay = null) {
+        showNew(showOnClose: ParameterDisplay = null, selectedType: Type = null) {
             this.showParameterOnClose = showOnClose;
             this.populateContent();
             this.popup.show();
@@ -72,6 +72,9 @@
             this.typeSelect.disabled = false;
             this.deleteRow.style.display = 'none';
             this.editingVariable = null;
+            if (selectedType != null)
+                this.typeSelect.value = selectedType.name;
+
             this.nameInput.focus();
         }
         showExisting(variable: Variable) {
@@ -92,8 +95,13 @@
 
             if (this.showParameterOnClose !== null) {
                 this.workspace.parameterEditor.show(this.showParameterOnClose);
+                if (this.editingVariable !== null) {
+                    this.workspace.parameterEditor.selectVariable(this.editingVariable);
+                }
+
                 this.showParameterOnClose = null;
             }
+            this.editingVariable = null;
         }
         private okClicked() {
             EditorPopup.clearErrors(this.popup.popupContent);
@@ -128,8 +136,8 @@
                     return;
                 }
             
-            let variable = new Variable(variableName, dataType);
-            this.workspace.currentProcess.variables.push(variable);
+            this.editingVariable = new Variable(variableName, dataType);
+            this.workspace.currentProcess.variables.push(this.editingVariable);
             return true;
         }
         private updateExistingVariable(variable: DataField) {

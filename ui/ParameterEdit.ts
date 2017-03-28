@@ -188,8 +188,11 @@
             this.workspace.processListDisplay.populateList();
             this.workspace.processEditor.draw();
         }
-        addVariableClicked() {
-            this.workspace.variableEditor.showNew(this.connector);
+        private addVariableClicked() {
+            this.workspace.variableEditor.showNew(this.connector, this.connector.param.type);
+        }
+        selectVariable(variable: Variable) {
+            this.variableSelect.value = variable.name;
         }
     }
 }
