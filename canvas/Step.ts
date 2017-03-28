@@ -72,25 +72,28 @@
             if (!this.dragging)
                 return false;
 
-            for (let returnPath of this.returnPaths)
-                returnPath.forgetAngles();
-            for (let returnPath of this.incomingPaths)
-                returnPath.forgetAngles();
-
             // test for collisions
             let steps = this.parentProcess.steps;
             let ctx = this.parentProcess.workspace.processEditor.getContext();
 
-            for (let i = 0; i < steps.length; i++) {
-                if (steps[i] === this)
+            for (let step of steps) {
+                if (step === this)
                     continue;
 
-                if (steps[i].collisionRegion.containsPoint(ctx, x + this.moveOffsetX, y + this.moveOffsetY))
+                if (step.collisionRegion.containsPoint(ctx, x + this.moveOffsetX, y + this.moveOffsetY))
                     return;
             }
 
             this.x = x + this.moveOffsetX;
             this.y = y + this.moveOffsetY;
+
+            for (let returnPath of this.returnPaths)
+                returnPath.forgetAngles();
+            for (let returnPath of this.incomingPaths)
+                returnPath.forgetAngles();
+            for (let connector of this.connectors)
+                connector.calculateOffsets();
+
             return true;
         }
         private bodyRegionUnhover() {

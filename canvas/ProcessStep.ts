@@ -12,6 +12,9 @@
             let textLength = ctx.measureText(this.process.name).width / 2 + 8;
             this.extraLength = Math.max(0, textLength - this.radius);
 
+            for (let connector of this.connectors)
+                connector.calculateOffsets();
+
             if (isUserProcess)
                 this.bodyRegion.doubleClick = this.doubleClicked.bind(this);
         }
@@ -57,7 +60,7 @@
                 calcAngle = Math.PI - calcAngle;         
 
             let dist: number;
-            let facingAngle: number;   
+            let facingAngle: number;
 
             if (calcAngle > cornerAngle) {
                 dist = this.radius / Math.sin(calcAngle);

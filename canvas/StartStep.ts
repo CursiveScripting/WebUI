@@ -4,6 +4,9 @@
         constructor(uniqueID: number, parentProcess: UserProcess, x: number, y: number) {
             super(uniqueID, null, parentProcess, x, y);
             this.radius = 45;
+
+            for (let connector of this.connectors)
+                connector.calculateOffsets();
         }
         protected writeText(ctx: CanvasRenderingContext2D) {
             ctx.fillStyle = '#0a0';
