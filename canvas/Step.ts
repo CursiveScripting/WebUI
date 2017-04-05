@@ -175,11 +175,11 @@
                 this.anglesRangesToAvoid.push(angularRegion);
 
                 if (angularRegion[0] < 0) {
-                    angularRegion = [constrainedAngle - angularPadding - Math.PI * 2, constrainedAngle + angularPadding - Math.PI * 2];
+                    angularRegion = [constrainedAngle - angularPadding + Math.PI * 2, constrainedAngle + angularPadding + Math.PI * 2];
                     this.anglesRangesToAvoid.push(angularRegion);
                 }
                 else if (angularRegion[1] > Math.PI * 2) {
-                    angularRegion = [constrainedAngle - angularPadding + Math.PI * 2, constrainedAngle + angularPadding + Math.PI * 2];
+                    angularRegion = [constrainedAngle - angularPadding - Math.PI * 2, constrainedAngle + angularPadding - Math.PI * 2];
                     this.anglesRangesToAvoid.push(angularRegion);
                 }
     
