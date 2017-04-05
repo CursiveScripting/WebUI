@@ -103,12 +103,32 @@
             }
 
             if (this.step.drawText || this.drawText || (this.param.link !== null && this.step.parentProcess.workspace.processEditor.highlightVariable === this.param.link)) {
-                ctx.font = '12px sans-serif';
                 ctx.textAlign = this.isInput ? 'right' : 'left';
-                ctx.textBaseline = 'middle';
 
                 let pos = this.drawingOffsets[5];
-                ctx.fillText(this.param.name, pos.x, pos.y);
+                let nameText = this.param.name;
+                let valueText: string;
+
+                ctx.fillStyle = '#666';
+                ctx.font = 'italic 12px sans-serif';
+                if (this.param.link !== null)
+                    valueText = this.param.link.name;
+                else if (this.param.initialValue !== null)
+                    valueText = '"' + this.param.initialValue + '"';
+                else {
+                    valueText = 'not connected';
+                    ctx.fillStyle = '#c00';
+                    ctx.font = '12px sans-serif';
+                }
+                
+                ctx.textBaseline = 'top';
+                ctx.fillText(valueText, pos.x, pos.y + 5);
+                nameText += ':';
+                
+                ctx.font = '12px sans-serif';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = this.param.type.color;
+                ctx.fillText(nameText, pos.x, pos.y);
             }
         }
         offsetStep(extraDistance: number) {
