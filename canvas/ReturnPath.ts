@@ -9,8 +9,8 @@
         onlyPath: boolean = false;
         private nameLength: number = 30;
         private dragging: boolean = false;
-        private startAngle: number;
-        private endAngle: number;
+        private startOrientation: Orientation;
+        private endOrientation: Orientation;
         private cpDist: number;
 
         readonly regions: Region[];
@@ -28,8 +28,8 @@
 
             this.endOffsetX = endOffsetX;
             this.endOffsetY = endOffsetY;
-            this.startAngle = null;
-            this.endAngle = null;
+            this.startOrientation = null;
+            this.endOrientation = null;
             this.cpDist = null;
             this.name = name;
     
@@ -196,29 +196,43 @@
                 toY = this._toStep.y;
             }
 
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 3;
-    
-            if (this.startAngle === null) {
+            if (this.startOrientation === null) {
+                let startAngle: number, endAngle: number;
+
                 if (this.fromStep === this.toStep) {
-                    this.startAngle = this.fromStep.getBestPathAngle(Math.PI / 2);
-                    this.endAngle = this.toStep.getBestPathAngle(3 * Math.PI / 2);
+                    startAngle = this.fromStep.getBestPathAngle(Math.PI / 2);
+                    endAngle = this.toStep.getBestPathAngle(3 * Math.PI / 2);
                     this.cpDist = 80;
                 }
                 else {
                     let dx = toX - fromX, dy = toY - fromY;
                     let directAngle = Math.atan2(dy, dx);
-                    this.startAngle = this.fromStep.getBestPathAngle(directAngle);
-                    this.endAngle = directAngle + Math.PI;
-                    if (this.endAngle > Math.PI * 2)
-                        this.endAngle -= Math.PI * 2;
+                    startAngle = this.fromStep.getBestPathAngle(directAngle);
+                    endAngle = directAngle + Math.PI;
+                    if (endAngle > Math.PI * 2)
+                        endAngle -= Math.PI * 2;
 
                     if (this._toStep !== null)
-                        this.endAngle = this.toStep.getBestPathAngle(this.endAngle);
-                    this.cpDist = Math.min(150, Math.sqrt(dx * dx + dy * dy) * 0.4);
+                        endAngle = this.toStep.getBestPathAngle(endAngle);
+                    this.cpDist = Math.min(100, Math.sqrt(dx * dx + dy * dy) * 0.2);
                 }
+
+                this.startOrientation = this.fromStep.getPerpendicular(startAngle);
+                if (this.toStep !== null)
+                    this.endOrientation = this.toStep.getPerpendicular(endAngle);
+                else
+                    this.endOrientation = new Orientation(toX, toY, endAngle);
             }
-            
+
+            // lines should start from the edge of steps, not the center
+            fromX = this.startOrientation.x;
+            fromY = this.startOrientation.y;
+            toX = this.endOrientation.x;
+            toY = this.endOrientation.y;
+
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+
             let cp1x: number, cp1y: number, cp2x: number, cp2y: number;
             if (this.fromStep === this.toStep) {
                 cp1x = fromX + 180;
@@ -227,10 +241,10 @@
                 cp2y = toY + 160;
             }
             else {
-                cp1x = fromX + Math.cos(this.startAngle) * this.cpDist;
-                cp1y = fromY + Math.sin(this.startAngle) * this.cpDist;
-                cp2x = toX + Math.cos(this.endAngle) * this.cpDist;
-                cp2y = toY + Math.sin(this.endAngle) * this.cpDist;
+                cp1x = fromX + Math.cos(this.startOrientation.angle) * this.cpDist;
+                cp1y = fromY + Math.sin(this.startOrientation.angle) * this.cpDist;
+                cp2x = toX + Math.cos(this.endOrientation.angle) * this.cpDist;
+                cp2y = toY + Math.sin(this.endOrientation.angle) * this.cpDist;
             }
 
             Drawing.drawCurve(ctx, fromX, fromY, cp1x, cp1y, cp2x, cp2y, toX, toY);
@@ -299,8 +313,8 @@
             this._toStep = null;
         }
         forgetAngles() {
-            this.startAngle = null;
-            this.endAngle = null;
+            this.startOrientation = null;
+            this.endOrientation = null;
             this.cpDist = null;
         }
     }
