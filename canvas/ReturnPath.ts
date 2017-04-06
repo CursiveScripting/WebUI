@@ -102,7 +102,6 @@
             transform.apply(ctx);
             ctx.translate(-26, 0);
     
-            ctx.shadowBlur = 14;
             ctx.textAlign = 'right';
         
             if (transform.angle > Math.PI / 2 || transform.angle <= -Math.PI / 2) {
@@ -112,15 +111,12 @@
         
             if (writeName !== null)
             {
-                ctx.shadowColor = ctx.fillStyle = this.warnDuplicate ? '#f99' : '#fff';
                 ctx.font = '16px sans-serif';
                 ctx.textBaseline = 'middle';
-            
-                this.nameLength = ctx.measureText(writeName).width;
-                for (let i=0; i<12; i++) // strengthen the shadow
-                    ctx.fillText(writeName, 0, 0);
-
                 ctx.fillStyle = '#000';
+
+                this.nameLength = ctx.measureText(writeName).width;
+                Drawing.writeTextBackground(ctx, writeName, 0, 0, this.warnDuplicate ? '#f99' : '#fff');
                 ctx.fillText(writeName, 0, 0);
             }
         

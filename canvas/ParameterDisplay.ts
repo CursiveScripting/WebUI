@@ -122,13 +122,17 @@
                 }
                 
                 ctx.textBaseline = 'top';
-                ctx.fillText(valueText, pos.x, pos.y + 5);
-                nameText += ':';
+                Drawing.writeTextBackground(ctx, valueText, pos.x, pos.y + 5, '#fff');
+                ctx.save();
                 
                 ctx.font = '12px sans-serif';
                 ctx.textBaseline = 'middle';
                 ctx.fillStyle = this.param.type.color;
+                Drawing.writeTextBackground(ctx, nameText, pos.x, pos.y, '#fff');
                 ctx.fillText(nameText, pos.x, pos.y);
+
+                ctx.restore();
+                ctx.fillText(valueText, pos.x, pos.y + 5);
             }
         }
         offsetStep(extraDistance: number) {

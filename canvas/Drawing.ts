@@ -30,5 +30,17 @@
                 ctx.stroke();
             }
         }
+
+        static writeTextBackground(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, blurColor: string) {
+            ctx.save();
+
+            ctx.shadowBlur = 14;
+            ctx.shadowColor = ctx.fillStyle = blurColor;
+            
+            for (let i=0; i<12; i++) // strengthen the shadow
+                ctx.fillText(text, x, y);
+
+            ctx.restore();
+        }
     }
 }
