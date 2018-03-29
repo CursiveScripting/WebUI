@@ -1,0 +1,117 @@
+.step {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background-color: #cccccc;
+    display: inline-flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0.5em;
+}
+
+.step__header {
+    padding: 0.2em;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    display: flex;
+    cursor: move;
+}
+
+.step--user .step__header {
+    background-color: #00aaaa;
+}
+
+.step--system .step__header {
+    background-color: #cc8800;
+}
+
+.step--start .step__header {
+    background-color: #00aa00;
+}
+
+.step--stop .step__header {
+    background-color: #ff3333;
+}
+
+.step__icon {
+    width: 1.3em;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.step--user .step__icon::before {
+    content: 'U';
+}
+
+.step--system .step__icon::before {
+    content: 'S';
+}
+
+.step--start .step__icon::before {
+    content: '\25B6';
+    font-size: 0.7em;
+}
+
+.step--stop .step__icon::before {
+    content: '\25A0';
+}
+
+.step__processName {
+    color: white;
+    font-weight: bold;
+    padding: 0.1em 1em 0 0.2em;
+}
+
+.step--readonly .step__processName {
+    color: grey;
+}
+
+.step__connectors {
+    display: flex;
+    justify-content: space-between;
+}
+
+.step__connector {
+    width: 1.5em;
+    height: 1.5em;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.step__connector::before {
+    content: '\25B7';
+}
+
+.step__connector--connected::before {
+    content: '\25B6';
+}
+
+.step__parameters {
+    display: flex;
+    justify-content: space-between;
+}
+
+.step__parameters:not(:empty) {
+    padding: 0.2em 0;
+}
+
+.step__inputs, .step__outputs {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.step__inputs:not(:last-child) {
+    border-right: solid #666666 1px;
+}
+
+.step__inputs {
+    padding-right: 1em;
+}
+
+.step__outputs {
+    padding-left: 1em;
+}

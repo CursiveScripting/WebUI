@@ -1,0 +1,45 @@
+.parameter {
+    display: flex;
+    justify-content: flex-start;
+    font-size: 0.9em;
+}
+
+.parameter--output {
+    flex-direction: row-reverse;
+}
+
+.parameter__icon {
+    width: 1.3em;
+    cursor: pointer;
+
+    position: relative;
+    top: -0.2em;
+}
+
+.parameter__icon::before {
+    content: '\25C7';
+}
+
+.parameter--connected .parameter__icon::before {
+    content: '\25C6';
+}
+
+.parameter--fixed .parameter__icon::before {
+    content: '\25C8';
+}
+
+.parameter__fixedValue {
+    min-width: 2em;
+    border: solid 1px #999999;
+    margin-left: 0.5em;
+    margin-right: -0.5em;
+}
+
+.parameter--fixed .parameter__fixedValue {
+    border-color: white;
+}
+
+.parameter--fixed .parameter__fixedValue--invalid {
+    color: red;
+    border-color: red;
+}
