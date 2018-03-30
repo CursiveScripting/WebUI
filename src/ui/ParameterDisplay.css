@@ -40,6 +40,6 @@
 }
 
 .parameter--fixed .parameter__fixedValue--invalid {
-    color: red;
+    color: #660000;
     border-color: red;
 }

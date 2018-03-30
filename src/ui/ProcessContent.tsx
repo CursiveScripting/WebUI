@@ -33,15 +33,6 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     render() {
-        let steps = this.props.process.steps.map((step, idx) => (
-            <StepDisplay
-                step={step}
-                key={idx}
-                readonly={false}
-                headerMouseDown={(x, y) => this.stepDragStart(step, x, y)}
-            />
-        ));
-        
         let classes = 'processContent';
         if (this.props.className !== undefined) {
             classes += ' ' + this.props.className;
@@ -62,7 +53,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                     width={this.state.width}
                     height={this.state.height}
                 />
-                {steps}
+                {this.renderSteps()}
             </div>
         );
     }
@@ -78,6 +69,17 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         if (this.resizeListener !== undefined) {
             window.removeEventListener('resize', this.resizeListener);
         }
+    }
+
+    private renderSteps() {
+        return this.props.process.steps.map((step, idx) => (
+            <StepDisplay
+                step={step}
+                key={idx}
+                readonly={false}
+                headerMouseDown={(x, y) => this.stepDragStart(step, x, y)}
+            />
+        ));
     }
 
     private updateSize() {
@@ -116,6 +118,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.draggingStep.x += dx;
         this.draggingStep.y += dy;
 
+        // TODO: only update the step that was dragged!
         this.forceUpdate();
     }
 }

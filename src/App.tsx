@@ -4,7 +4,7 @@ import { ProcessContent } from './ui/ProcessContent';
 import { StartStep, StopStep, Type, Parameter, ProcessStep, SystemProcess, UserProcess } from './data';
 
 const stringType = new Type('text', '#00cc00', undefined, /.*/, 'Any old text');
-const numberType = new Type('number', '#0099ff', undefined, undefined, 'A number');
+const numberType = new Type('number', '#0099ff', undefined, /^\d*$/, 'A number');
 const boolType = new Type('boolean', '#cc6600', undefined, undefined, 'true or false');
 
 const parentProcess = new UserProcess(
