@@ -1,9 +1,7 @@
 import * as React from 'react';
 import './App.css';
-import { StepDisplay } from './ui/StepDisplay';
+import { ProcessContent } from './ui/ProcessContent';
 import { StartStep, StopStep, Type, Parameter, ProcessStep, SystemProcess, UserProcess } from './data';
-
-const logo = require('./logo.svg');
 
 const stringType = new Type('text', '#00cc00', undefined, /.*/, 'Any old text');
 const numberType = new Type('number', '#0099ff', undefined, undefined, 'A number');
@@ -40,27 +38,22 @@ const userProcess = new UserProcess(
     ''
 );
 
-const startStep = new StartStep(1, parentProcess, 50, 50);
-const stopStep = new StopStep(2, parentProcess, 'Yea', 50, 50);
-const systemStep = new ProcessStep(3, systemProcess, parentProcess, 50, 50);
-const userStep = new ProcessStep(4, userProcess, parentProcess, 50, 50);
+const startStep = new StartStep(1, parentProcess, 32, 48);
+const stopStep = new StopStep(2, parentProcess, 'Yea', 800, 256);
+const systemStep = new ProcessStep(3, systemProcess, parentProcess, 176, 48);
+const userStep = new ProcessStep(4, userProcess, parentProcess, 448, 64);
+
+parentProcess.steps.push(startStep, stopStep, systemStep, userStep);
 
 class App extends React.Component {
   render() {
     return (
       <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
-        </header>
         <p className="App-intro">
           To get started, edit <code>src/App.tsx</code> and save to reload.
         </p>
 
-        <StepDisplay step={startStep} readonly={false} />
-        <StepDisplay step={stopStep} readonly={false} />
-        <StepDisplay step={systemStep} readonly={false} />
-        <StepDisplay step={userStep} readonly={false} />
+        <ProcessContent process={parentProcess} style={{height: '500px'}} />
       </div>
     );
   }

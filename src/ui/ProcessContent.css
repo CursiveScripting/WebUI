@@ -1,0 +1,12 @@
+.processContent {
+    position: relative;
+    overflow: auto;
+
+    background-color: white;
+    background-image: url('grid.png');
+}
+
+.processContent__canvas {
+    position: absolute;
+    top: 0; left: 0;
+}

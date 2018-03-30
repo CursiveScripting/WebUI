@@ -6,6 +6,7 @@ import './StepDisplay.css';
 interface StepDisplayProps {
     step: Step;
     readonly: boolean;
+    headerMouseDown?: (mouseX: number, mouseY: number) => void;
 }
 
 export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
@@ -69,9 +70,20 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
             </div>
         );
 
+        let posStyle = {
+            left: step.x,
+            top: step.y,
+        };
+
+        let headerMouseDown;
+        if (this.props.headerMouseDown !== undefined) {
+            const startMove = this.props.headerMouseDown;
+            headerMouseDown = (e: React.MouseEvent<HTMLDivElement>) => startMove(e.clientX, e.clientY);
+        }
+
         return (
-            <div className={classes}>
-                <div className="step__header">
+            <div className={classes} style={posStyle}>
+                <div className="step__header" onMouseDown={headerMouseDown}>
                     <div className="step__icon" />
                     <div className="step__processName">{step.name}</div>
                 </div>
