@@ -37,22 +37,27 @@ export class ParameterDisplay extends React.PureComponent<ParameterDisplayProps,
         if (!this.props.input || !this.props.parameter.type.allowInput || this.props.parameter.link !== null) {
             return undefined;
         }
-
+        
         let val = this.props.parameter.initialValue;
         
-        let classes = 'parameter__fixedValue';
+        let classes = 'parameter__fixedValueInput';
         if (val !== null && val.length > 0 && !this.props.parameter.type.isValid(val)) {
-            classes += ' parameter__fixedValue--invalid';
+            classes += ' parameter__fixedValueInput--invalid';
         }
         if (val === null) {
             val = '';
         }
 
-        return <div className={classes} contentEditable={true} onInput={e => this.fixedValChanged(e)}>{val}</div>;
+        return (
+            <div className="parameter__fixedValue">
+                <input className={classes} onChange={e => this.fixedValChanged(e)} value={val} size={1} />
+                <div className="parameter__fixedValueMeasure">{val}</div>
+            </div>
+        );
     }
 
-    private fixedValChanged(e: React.FormEvent<HTMLDivElement>) {
-        this.props.parameter.initialValue = (e.target as HTMLDivElement).innerText;
+    private fixedValChanged(e: React.ChangeEvent<HTMLInputElement>) {
+        this.props.parameter.initialValue = e.target.value.length > 0 ? e.target.value : null;
         this.forceUpdate();
     }
 }

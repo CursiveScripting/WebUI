@@ -29,17 +29,35 @@
 }
 
 .parameter__fixedValue {
-    min-width: 2em;
-    border: solid 1px #999999;
+    display: flex;
+    flex-direction: column;
     margin-left: 0.5em;
     margin-right: -0.5em;
 }
 
-.parameter--fixed .parameter__fixedValue {
+.parameter__fixedValueMeasure {
+    white-space: pre;
+    font-size: 1em;
+    font-family: sans-serif;
+    border-width: 1px;
+    padding-right: 0.2em;
+
+    height: 1px;
+    overflow: hidden;
+}
+
+.parameter__fixedValueInput {
+    border: solid 1px #999999;
+    font-size: 1em;
+    font-family: sans-serif;
+    background-color: transparent;
+}
+
+.parameter--fixed .parameter__fixedValueInput {
     border-color: white;
 }
 
-.parameter--fixed .parameter__fixedValue--invalid {
+.parameter--fixed .parameter__fixedValueInput--invalid {
     color: #660000;
     border-color: red;
 }
