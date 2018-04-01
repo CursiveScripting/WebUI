@@ -5,13 +5,24 @@ import './ParameterDisplay.css';
 interface ParameterDisplayProps {
     parameter: Parameter;
     input: boolean;
+    linkMouseDown?: () => void;
+    linkMouseUp?: () => void;
 }
 
 export class ParameterDisplay extends React.PureComponent<ParameterDisplayProps, {}> {
+    private _connector: HTMLDivElement;
+    public get connector() { return this._connector; }
+
     render() {
         return (
             <div className={this.determineRootClasses()}>
-                <div className="parameter__icon" style={{'color': this.props.parameter.type.color}} />
+                <div
+                    className="parameter__icon"
+                    style={{'color': this.props.parameter.type.color}}
+                    onMouseDown={this.props.linkMouseDown}
+                    onMouseUp={this.props.linkMouseUp}
+                    ref={c => { if (c !== null) { this._connector = c; }}}
+                />
                 <div className="parameter__name">
                     {this.props.parameter.name}
                 </div>
@@ -39,7 +50,7 @@ export class ParameterDisplay extends React.PureComponent<ParameterDisplayProps,
         }
         
         let val = this.props.parameter.initialValue;
-        
+ 
         let classes = 'parameter__fixedValueInput';
         if (val !== null && val.length > 0 && !this.props.parameter.type.isValid(val)) {
             classes += ' parameter__fixedValueInput--invalid';

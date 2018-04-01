@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Step, StepType } from '../data';
+import { Parameter, Step, StepType } from '../data';
 import { ParameterDisplay } from './ParameterDisplay';
 import './StepDisplay.css';
 
@@ -7,9 +7,21 @@ interface StepDisplayProps {
     step: Step;
     readonly: boolean;
     headerMouseDown?: (mouseX: number, mouseY: number) => void;
+    inputLinkMouseDown?: () => void;
+    outputLinkMouseDown?: () => void;
+    inputLinkMouseUp?: () => void;
+    outputLinkMouseUp?: () => void;
+    parameterLinkMouseDown?: (param: Parameter) => void;
+    parameterLinkMouseUp?: (param: Parameter) => void;
 }
 
 export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
+    private _inputConnector: HTMLDivElement | null;
+    private _outputConnector: HTMLDivElement | null;
+
+    public get inputConnector() { return this._inputConnector; }
+    public get outputConnector() { return this._inputConnector; }
+
     render() {
         let posStyle = {
             left: this.props.step.x,
@@ -34,8 +46,8 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
                     {this.renderOutConnector()}
                 </div>
                 <div className="step__parameters">
-                    {this.renderInputs()}
-                    {this.renderOutputs()}
+                    {this.renderParameters(this.props.step.inputs, true)}
+                    {this.renderParameters(this.props.step.outputs, false)}
                 </div>
             </div>
         );
@@ -69,8 +81,15 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
         let conClasses = this.props.step.incomingPaths.length === 0
             ? 'step__connector step__connector--in step__connector--connected'
             : 'step__connector step__connector--in';
-        
-        return <div className={conClasses} />;
+    
+        return (
+            <div
+                className={conClasses}
+                onMouseDown={this.props.inputLinkMouseDown}
+                onMouseUp={this.props.inputLinkMouseUp}
+                ref={c => this._inputConnector = c}
+            />
+        );
     }
     
     private renderOutConnector() {
@@ -81,42 +100,38 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
         let conClasses = this.props.step.returnPaths.length === 0
             ? 'step__connector step__connector--out step__connector--connected'
             : 'step__connector step__connector--out';
-        
-        return <div className={conClasses} />;
-    }
-
-    private renderInputs() {
-        if (this.props.step.inputs.length === 0) {
-            return undefined;
-        }
-
+    
         return (
-            <div className="step__inputs">
-                {this.props.step.inputs.map((param, idx) => (
-                    <ParameterDisplay
-                        key={idx}
-                        input={true}
-                        parameter={param}
-                    />
-                ))}
-            </div>
+            <div
+                className={conClasses}
+                onMouseDown={this.props.outputLinkMouseDown}
+                onMouseUp={this.props.outputLinkMouseUp}
+                ref={c => this._outputConnector = c}
+            />
         );
     }
 
-    private renderOutputs() {
-        if (this.props.step.outputs.length === 0) {
+    private renderParameters(parameters: Parameter[], input: boolean) {
+        if (parameters.length === 0) {
             return undefined;
         }
 
         return (
-            <div className="step__outputs">
-                {this.props.step.outputs.map((param, idx) => (
+            <div className={input ? 'step__inputs' : 'step_outputs'}>
+                {parameters.map((param, idx) => {
+                    const mouseDown = this.props.parameterLinkMouseDown;
+                    const mouseUp = this.props.parameterLinkMouseUp;
+
+                    return (
                     <ParameterDisplay
                         key={idx}
-                        input={false}
+                        input={input}
                         parameter={param}
+                        linkMouseDown={mouseDown === undefined ? undefined : () => mouseDown(param)}
+                        linkMouseUp={mouseUp === undefined ? undefined : () => mouseUp(param)}
                     />
-                ))}
+                    );
+                })}
             </div>
         );
     }
