@@ -15,6 +15,8 @@ interface ProcessContentState {
     height: number;
 }
 
+const gridSize = 16;
+
 export class ProcessContent extends React.PureComponent<ProcessContentProps, ProcessContentState> {
     private root: HTMLDivElement;
     private ctx: CanvasRenderingContext2D | null;
@@ -163,6 +165,15 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     private dragStop() {
+        // align to grid
+        if (this.draggingStep !== undefined) {
+            this.draggingStep.x = Math.round(this.draggingStep.x / gridSize) * gridSize;
+            this.draggingStep.y = Math.round(this.draggingStep.y / gridSize) * gridSize;
+
+            // TODO: only update the step that was dragged!
+            this.forceUpdate();
+        }
+
         this.draggingStep = undefined;
         this.draggingStepConnector = undefined;
         this.draggingParamConnector = undefined;
@@ -193,27 +204,19 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     private parameterLinkDragStart(param: Parameter) {
-        console.log('started dragging on link', param.name);
-        
         this.draggingParamConnector = param;
     }
 
     private parameterLinkDragStop(param: Parameter) {
-        console.log('stopped dragging on link', param.name);
-
         this.draggingParamConnector = undefined;
     }
 
     private stepLinkDragStart(step: Step, input: boolean) {
-        console.log('started dragging step ' + (input ? 'input' : 'output'));
-
         this.draggingStepConnector = step;
         this.draggingInput = input;
     }
 
     private stepLinkDragStop(step: Step, input: boolean) {
-        console.log('stopped dragging step ' + (input ? 'input' : 'output'));
-
         this.draggingStepConnector = step;
     }
 }

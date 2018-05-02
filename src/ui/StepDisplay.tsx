@@ -117,7 +117,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
         }
 
         return (
-            <div className={input ? 'step__inputs' : 'step_outputs'}>
+            <div className={input ? 'step__inputs' : 'step__outputs'}>
                 {parameters.map((param, idx) => {
                     const mouseDown = this.props.parameterLinkMouseDown;
                     const mouseUp = this.props.parameterLinkMouseUp;
