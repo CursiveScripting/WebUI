@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Parameter, Step, UserProcess } from '../data';
+import { Parameter, Step, UserProcess, ReturnPath } from '../data';
 import { StepDisplay } from './StepDisplay';
 import './ProcessContent.css';
 
@@ -74,6 +74,12 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             this.drawLinks(this.ctx);
         }
     }
+
+    componentDidUpdate() {
+        if (this.ctx !== null) {
+            this.drawLinks(this.ctx);
+        }
+    }
     
     componentWillUnmount() {
         if (this.resizeListener !== undefined) {
@@ -105,34 +111,42 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     private drawLinks(ctx: CanvasRenderingContext2D) {
-        for (let stopStepDisplay of this.stepDisplays) {
-            for (let path of stopStepDisplay.props.step.incomingPaths) {
-                let startStepDisplay = this.stepDisplays.filter(d => d.props.step === path.fromStep)[0];
+        ctx.clearRect(0, 0, this.state.width, this.state.height);
+        let root = this.root.getBoundingClientRect();
+        
+        for (let endStepDisplay of this.stepDisplays) {
+            for (let path of endStepDisplay.props.step.incomingPaths) {
+                let beginStepDisplay = this.getStepDisplay(path.fromStep);
 
                 // TODO: should be able to have multiple output connectors, one for each return path
-                let startConnector = startStepDisplay.outputConnector;
-                let endConnector = stopStepDisplay.inputConnector;
-
-                if (startConnector === null || endConnector === null) {
-                    continue;
+                let beginConnector = beginStepDisplay.outputConnector;
+                let endConnector = endStepDisplay.inputConnector;
+                
+                if (beginConnector !== null && endConnector !== null) {
+                    this.drawLink(ctx, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
                 }
-
-                // TODO: want position within process content area, not on screen / page!
-                this.drawLink(ctx, startConnector.clientLeft, startConnector.clientTop, endConnector.clientLeft, endConnector.clientTop);
             }
         }
 
         if (this.draggingStepConnector !== undefined) {
-            // let startConnector, endConnector;
+            let dragRect = {
+                left: this.dragX, right: this.dragX,
+                top: this.dragY, bottom: this.dragY,
+                width: 0, height: 0,
+            };
+            
             if (this.draggingInput) {
-                // startConnector = this.draggingStepConnector;
-                
+                let beginConnector = this.getStepDisplay(this.draggingStepConnector).inputConnector;
+                if (beginConnector !== null) {
+                    this.drawLink(ctx, root, dragRect, beginConnector.getBoundingClientRect());
+                }
             }
             else {
-                // endConnector = this.draggingStepConnector;
+                let endConnector = this.getStepDisplay(this.draggingStepConnector).outputConnector;
+                if (endConnector !== null) {
+                    this.drawLink(ctx, root, endConnector.getBoundingClientRect(), dragRect);
+                }
             }
-            
-            // TODO: link to drag x / y
         }
 
         // TODO: draw parameter links
@@ -142,13 +156,24 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
     }
     
-    private drawLink(ctx: CanvasRenderingContext2D, startX: number, startY: number, endX: number, endY: number) {
+    private drawLink(ctx: CanvasRenderingContext2D, root: ClientRect | DOMRect, begin: ClientRect | DOMRect, end: ClientRect | DOMRect) {
+        let x1 = begin.right - root.left, y1 = begin.top + begin.height / 2 - root.top;
+        let x2 = end.left - root.left, y2 = end.top + end.height / 2 - root.top;
+
         ctx.lineWidth = 3;
         ctx.strokeStyle = '#000000';
+        this.drawCurve(ctx, x1, y1, x2, y2);
+    }
+
+    private drawCurve(ctx: CanvasRenderingContext2D, startX: number, startY: number, endX: number, endY: number) {
         ctx.beginPath();
         ctx.moveTo(startX, startY);
         ctx.lineTo(endX, endY);
         ctx.stroke();
+    }
+
+    private getStepDisplay(step: Step) {
+        return this.stepDisplays.filter(d => d.props.step === step)[0];
     }
 
     private updateSize() {
@@ -174,8 +199,12 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             this.forceUpdate();
         }
 
+        if (this.draggingStepConnector !== undefined && this.ctx !== null) {
+            this.draggingStepConnector = undefined;
+            this.drawLinks(this.ctx);
+        }
+
         this.draggingStep = undefined;
-        this.draggingStepConnector = undefined;
         this.draggingParamConnector = undefined;
 
         this.dragX = 0;
@@ -183,19 +212,21 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     private mouseMove(e: React.MouseEvent<HTMLDivElement>) {
-        if (this.draggingStep === undefined) {
-            return;
-        }
-
         let dx = e.clientX - this.dragX;
         let dy = e.clientY - this.dragY;
         
         this.dragX = e.clientX;
         this.dragY = e.clientY;
 
-        // const snapSize = 16;
-        // this.draggingStep.x = Math.round((this.draggingStep.x + dx) / snapSize) * snapSize;
-        // this.draggingStep.y = Math.round((this.draggingStep.y + dy) / snapSize) * snapSize;
+        if (this.draggingStepConnector !== undefined && this.ctx !== null) {
+            this.drawLinks(this.ctx);
+            return;
+        }
+
+        if (this.draggingStep === undefined) {
+            return;
+        }
+
         this.draggingStep.x += dx;
         this.draggingStep.y += dy;
 
@@ -204,10 +235,12 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     private parameterLinkDragStart(param: Parameter) {
+        console.log('started dragging on link', param.name);
         this.draggingParamConnector = param;
     }
 
     private parameterLinkDragStop(param: Parameter) {
+        console.log('stopped dragging on link', param.name);
         this.draggingParamConnector = undefined;
     }
 
@@ -217,6 +250,30 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     private stepLinkDragStop(step: Step, input: boolean) {
-        this.draggingStepConnector = step;
+        if (this.draggingStepConnector !== undefined && this.draggingStepConnector !== step && this.draggingInput !== input) {
+            let fromStep: Step, toStep: Step;
+            if (input) {
+                fromStep = this.draggingStepConnector;
+                toStep = step;
+            }
+            else {
+                fromStep = step;
+                toStep = this.draggingStepConnector;
+            }
+
+            if (fromStep.returnPaths.length > 0) {
+                // TODO: handle path name here
+                let removeFrom = fromStep.returnPaths[0].toStep;
+                removeFrom.incomingPaths = removeFrom.incomingPaths.filter(rp => rp.fromStep !== fromStep);
+            }
+
+            // TODO: handle path name here
+            let newPath = new ReturnPath(fromStep, toStep, null);
+            fromStep.returnPaths = [newPath];
+            toStep.incomingPaths.push(newPath);
+        }
+
+        this.draggingStepConnector = undefined;
+        this.forceUpdate();
     }
 }

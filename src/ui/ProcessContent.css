@@ -2,7 +2,7 @@
     position: relative;
     overflow: auto;
 
-    background-color: white;
+    background-color: #fafafa;
     background-image: url('grid.png');
 }
 

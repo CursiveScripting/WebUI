@@ -20,7 +20,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
     private _outputConnector: HTMLDivElement | null;
 
     public get inputConnector() { return this._inputConnector; }
-    public get outputConnector() { return this._inputConnector; }
+    public get outputConnector() { return this._outputConnector; }
 
     render() {
         let posStyle = {

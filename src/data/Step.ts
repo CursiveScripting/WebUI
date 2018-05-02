@@ -21,8 +21,6 @@ export abstract class Step {
         public y: number
     ) {
         /*
-        this.returnPaths = [];
-        this.incomingPaths = [];
         this.drawText = this.dragging = false;
 
         this.inputs = this.copyParameters(this.getInputSource());
