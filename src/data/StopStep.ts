@@ -15,6 +15,7 @@ export class StopStep extends Step {
     public get name() { return 'Stop'; }
     public get inputs () { return this.parentProcess.outputs; }
     public get outputs () { return []; }
+    public get returnPathNames() { return null; }
 
     public validate() {
         let isValid = super.validate();

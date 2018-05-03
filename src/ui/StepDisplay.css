@@ -74,19 +74,33 @@
     justify-content: space-between;
 }
 
+.step__outConnectors {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
 .step__connector {
+    cursor: pointer;
+    font-style: italic;
+}
+
+.step__connector--in {
+    align-self: flex-start;
+}
+
+.step__connector::after {
+    margin-left: 0.25em;
     width: 1.5em;
     height: 1.5em;
     color: white;
-    cursor: pointer;
     font-weight: bold;
-}
+    font-style: normal;
 
-.step__connector::before {
     content: '\25B7';
 }
 
-.step__connector--connected::before {
+.step__connector--connected::after {
     content: '\25B6';
 }
 

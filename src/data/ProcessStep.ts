@@ -16,6 +16,7 @@ export class ProcessStep extends Step {
     public get name() { return this.process.name; }
     public get inputs () { return this.process.inputs; }
     public get outputs () { return this.process.outputs; }
+    public get returnPathNames() { return this.process.returnPaths; }
 
     public validate() {
         let isValid = super.validate();

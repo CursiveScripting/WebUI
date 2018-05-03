@@ -15,6 +15,12 @@ interface ProcessContentState {
     height: number;
 }
 
+interface StepConnectorDragInfo {
+    step: Step;
+    input: boolean;
+    returnPath: string | null;
+}
+
 const gridSize = 16;
 
 export class ProcessContent extends React.PureComponent<ProcessContentProps, ProcessContentState> {
@@ -22,9 +28,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     private ctx: CanvasRenderingContext2D | null;
     private resizeListener?: () => void;
     private draggingStep?: Step;
-    private draggingStepConnector?: Step;
+    private draggingStepConnector?: StepConnectorDragInfo;
     private draggingParamConnector?: Parameter;
-    private draggingInput: boolean;
     private dragX: number = 0;
     private dragY: number = 0;
     private stepDisplays: StepDisplay[];
@@ -97,8 +102,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 key={idx}
                 readonly={false}
                 headerMouseDown={(x, y) => this.stepDragStart(step, x, y)}
-                inputLinkMouseDown={() => this.stepLinkDragStart(step, true)}
-                outputLinkMouseDown={() => this.stepLinkDragStart(step, false)}
+                inputLinkMouseDown={() => this.stepLinkDragStart(step, true, null)}
+                outputLinkMouseDown={returnPath => this.stepLinkDragStart(step, false, returnPath)}
                 inputLinkMouseUp={() => this.stepLinkDragStop(step, true)}
                 outputLinkMouseUp={() => this.stepLinkDragStop(step, false)}
                 parameterLinkMouseDown={(param) => this.parameterLinkDragStart(param)}
@@ -118,8 +123,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             for (let path of endStepDisplay.props.step.incomingPaths) {
                 let beginStepDisplay = this.getStepDisplay(path.fromStep);
 
-                // TODO: should be able to have multiple output connectors, one for each return path
-                let beginConnector = beginStepDisplay.outputConnector;
+                let beginConnector = beginStepDisplay.getOutputConnector(path.name);
                 let endConnector = endStepDisplay.inputConnector;
                 
                 if (beginConnector !== null && endConnector !== null) {
@@ -134,15 +138,17 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 top: this.dragY, bottom: this.dragY,
                 width: 0, height: 0,
             };
+
+            let dragInfo = this.draggingStepConnector;
             
-            if (this.draggingInput) {
-                let beginConnector = this.getStepDisplay(this.draggingStepConnector).inputConnector;
+            if (dragInfo.input) {
+                let beginConnector = this.getStepDisplay(dragInfo.step).inputConnector;
                 if (beginConnector !== null) {
                     this.drawLink(ctx, root, dragRect, beginConnector.getBoundingClientRect());
                 }
             }
             else {
-                let endConnector = this.getStepDisplay(this.draggingStepConnector).outputConnector;
+                let endConnector = this.getStepDisplay(dragInfo.step).getOutputConnector(dragInfo.returnPath);
                 if (endConnector !== null) {
                     this.drawLink(ctx, root, endConnector.getBoundingClientRect(), dragRect);
                 }
@@ -166,9 +172,11 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     private drawCurve(ctx: CanvasRenderingContext2D, startX: number, startY: number, endX: number, endY: number) {
+        let cpOffset = Math.min(150, Math.abs(endY - startY));
+
         ctx.beginPath();
         ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
+        ctx.bezierCurveTo(startX + cpOffset, startY, endX - cpOffset, endY, endX, endY);
         ctx.stroke();
     }
 
@@ -244,36 +252,50 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.draggingParamConnector = undefined;
     }
 
-    private stepLinkDragStart(step: Step, input: boolean) {
-        this.draggingStepConnector = step;
-        this.draggingInput = input;
+    private stepLinkDragStart(step: Step, input: boolean, returnPath: string | null) {
+        this.draggingStepConnector = {
+            step: step,
+            input: input,
+            returnPath: returnPath,
+        };
     }
 
     private stepLinkDragStop(step: Step, input: boolean) {
-        if (this.draggingStepConnector !== undefined && this.draggingStepConnector !== step && this.draggingInput !== input) {
-            let fromStep: Step, toStep: Step;
-            if (input) {
-                fromStep = this.draggingStepConnector;
-                toStep = step;
-            }
-            else {
-                fromStep = step;
-                toStep = this.draggingStepConnector;
-            }
-
-            if (fromStep.returnPaths.length > 0) {
-                // TODO: handle path name here
-                let removeFrom = fromStep.returnPaths[0].toStep;
-                removeFrom.incomingPaths = removeFrom.incomingPaths.filter(rp => rp.fromStep !== fromStep);
-            }
-
-            // TODO: handle path name here
-            let newPath = new ReturnPath(fromStep, toStep, null);
-            fromStep.returnPaths = [newPath];
-            toStep.incomingPaths.push(newPath);
+        if (this.draggingStepConnector === undefined) {
+            return;
         }
 
+        let dragInfo = this.draggingStepConnector;
         this.draggingStepConnector = undefined;
+
+        if (dragInfo.step === step || dragInfo.input === input) {
+            if (this.ctx != null) {
+                this.drawLinks(this.ctx);
+            }
+            return;
+        }
+
+        let fromStep: Step, toStep: Step;
+        if (input) {
+            fromStep = dragInfo.step;
+            toStep = step;
+        }
+        else {
+            fromStep = step;
+            toStep = dragInfo.step;
+        }
+
+        let existingPaths = fromStep.returnPaths.filter(r => r.name === dragInfo.returnPath);
+        for (let existingPath of existingPaths) {
+            let removeFrom = existingPath.toStep;
+            removeFrom.incomingPaths = removeFrom.incomingPaths.filter(rp => rp.fromStep !== fromStep);
+        }
+
+        fromStep.returnPaths = fromStep.returnPaths.filter(r => r.name !== dragInfo.returnPath);
+        let newPath = new ReturnPath(fromStep, toStep, dragInfo.returnPath);
+        fromStep.returnPaths.push(newPath);
+        toStep.incomingPaths.push(newPath);
+
         this.forceUpdate();
     }
 }

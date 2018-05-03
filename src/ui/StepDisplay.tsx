@@ -6,21 +6,27 @@ import './StepDisplay.css';
 interface StepDisplayProps {
     step: Step;
     readonly: boolean;
-    headerMouseDown?: (mouseX: number, mouseY: number) => void;
-    inputLinkMouseDown?: () => void;
-    outputLinkMouseDown?: () => void;
-    inputLinkMouseUp?: () => void;
-    outputLinkMouseUp?: () => void;
-    parameterLinkMouseDown?: (param: Parameter) => void;
-    parameterLinkMouseUp?: (param: Parameter) => void;
+    headerMouseDown: (mouseX: number, mouseY: number) => void;
+    inputLinkMouseDown: () => void;
+    outputLinkMouseDown: (returnPath: string | null) => void;
+    inputLinkMouseUp: () => void;
+    outputLinkMouseUp: () => void;
+    parameterLinkMouseDown: (param: Parameter) => void;
+    parameterLinkMouseUp: (param: Parameter) => void;
 }
 
 export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
     private _inputConnector: HTMLDivElement | null;
-    private _outputConnector: HTMLDivElement | null;
+    private _outputConnectors: { [key: string]: HTMLDivElement } = {};
 
     public get inputConnector() { return this._inputConnector; }
-    public get outputConnector() { return this._outputConnector; }
+    public getOutputConnector(returnPathName: string | null) {
+        if (returnPathName === null) {
+            returnPathName = '';
+        }
+
+        return this._outputConnectors[returnPathName];
+    }
 
     render() {
         let posStyle = {
@@ -43,7 +49,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
                 <div className="step__connectors">
                     {this.renderInConnector()}
                     <div className="step__betweenConnectors" />
-                    {this.renderOutConnector()}
+                    {this.renderOutConnectors()}
                 </div>
                 <div className="step__parameters">
                     {this.renderParameters(this.props.step.inputs, true)}
@@ -92,22 +98,43 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
         );
     }
     
-    private renderOutConnector() {
-        if (this.props.step.stepType === StepType.Stop) {
+    private renderOutConnectors() {
+        let pathIdentifiers = this.props.step.returnPathNames;
+        if (pathIdentifiers === null) {
             return undefined;
         }
+        if (pathIdentifiers.length === 0) {
+            pathIdentifiers = [''];
+        }
 
-        let conClasses = this.props.step.returnPaths.length === 0
-            ? 'step__connector step__connector--out step__connector--connected'
-            : 'step__connector step__connector--out';
-    
+        const connectorRefs: { [key: string]: HTMLDivElement } = {};
+
+        let connectors = pathIdentifiers.map((identifier, index) => {
+            let pathName = identifier === '' ? null : identifier;
+            let hasConnectedPath = this.props.step.returnPaths.filter(p => p.name === pathName).length === 0;
+            let classes = hasConnectedPath
+                ? 'step__connector step__connector--out step__connector--connected'
+                : 'step__connector step__connector--out';
+            
+            return (
+                <div
+                    key={index}
+                    className={classes}
+                    onMouseDown={() => this.props.outputLinkMouseDown(pathName)}
+                    onMouseUp={this.props.outputLinkMouseUp}
+                    ref={c => { if (c !== null) { connectorRefs[identifier] = c; }}}
+                >
+                    {identifier}
+                </div>
+            );
+        });
+
+        this._outputConnectors = connectorRefs;
+
         return (
-            <div
-                className={conClasses}
-                onMouseDown={this.props.outputLinkMouseDown}
-                onMouseUp={this.props.outputLinkMouseUp}
-                ref={c => this._outputConnector = c}
-            />
+            <div className="step__outConnectors">
+                {connectors}
+            </div>
         );
     }
 

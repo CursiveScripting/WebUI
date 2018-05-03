@@ -30,8 +30,9 @@ export abstract class Step {
     }
 
     public abstract get name(): string;
-    public abstract get inputs (): Parameter[];
-    public abstract get outputs (): Parameter[];
+    public abstract get inputs(): Parameter[];
+    public abstract get outputs(): Parameter[];
+    public abstract get returnPathNames(): string[] | null;
 
     public validate() {
         // TODO: quite a lot
