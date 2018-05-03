@@ -288,7 +288,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         let existingPaths = fromStep.returnPaths.filter(r => r.name === dragInfo.returnPath);
         for (let existingPath of existingPaths) {
             let removeFrom = existingPath.toStep;
-            removeFrom.incomingPaths = removeFrom.incomingPaths.filter(rp => rp.fromStep !== fromStep);
+            removeFrom.incomingPaths = removeFrom.incomingPaths.filter(rp => rp.fromStep !== fromStep || rp.name !== dragInfo.returnPath);
         }
 
         fromStep.returnPaths = fromStep.returnPaths.filter(r => r.name !== dragInfo.returnPath);
