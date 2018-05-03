@@ -32,12 +32,18 @@ export class ProcessSaving {
         for (let parameter of process.outputs) {
             this.saveProcessParameter(parameter, element, 'Output');
         }
-        /*
         for (let variable of process.variables) {
             let varElement = this.saveProcessParameter(variable, element, 'Variable');
-            // TODO: write initialValue attribute if required
+
+            if (variable.initialValue !== null) {
+                varElement.setAttribute('initialValue', variable.initialValue);
+            }
+
+            if (variable.x >= 0 && variable.y >= 0) {
+                varElement.setAttribute('x', variable.x.toString());
+                varElement.setAttribute('y', variable.y.toString());
+            }
         }
-        */
         for (let returnPath of process.returnPaths) {
             this.saveProcessReturnPath(returnPath, element);
         }

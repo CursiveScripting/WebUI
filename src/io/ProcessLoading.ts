@@ -94,7 +94,9 @@ export class ProcessLoading {
 
             let dataField: DataField;
             if (paramTypeName === 'variable') {
-                dataField = new Variable(paramName, dataType);
+                let x = node.hasAttribute('x') ? parseInt(node.getAttribute('x') as string) : -1;
+                let y = node.hasAttribute('y') ? parseInt(node.getAttribute('y') as string) : -1;
+                dataField = new Variable(paramName, dataType, x, y);
             }
             else {
                 dataField = new Parameter(paramName, dataType);
