@@ -67,27 +67,57 @@ export class UserProcess extends Process {
 
     /*
     createDefaultSteps() {
-        let step: Step = new StartStep(this.getNextStepID(), this, 75, 125);
+        let step: Step = new StartStep(this.getNextStepID(), this, 32, 32);
         step.createDanglingReturnPaths();
         this.steps.push(step);
     }
+    */
 
     removeStep(step: Step) {
         let index = this.steps.indexOf(step);
         this.steps.splice(index, 1);
 
         // any return paths that lead to this step should now be dangling
-        for (let returnPath of step.incomingPaths)
-            returnPath.disconnect();
+        for (let returnPath of step.incomingPaths) {
+            let removeFrom = returnPath.fromStep.returnPaths;
+            index = removeFrom.indexOf(returnPath);
+            removeFrom.splice(index, 1);
+        }
+
+        for (let returnPath of step.returnPaths) {
+            let removeFrom = returnPath.toStep.incomingPaths;
+            index = removeFrom.indexOf(returnPath);
+            removeFrom.splice(index, 1);
+        }
 
         // any variables that used this step should have it removed
-        for (let connector of step.connectors) {
-            if (connector.param.link === null)
+        for (let param of step.inputs) {
+            if (param.link === null) {
                 continue;
-            let variableLinks = connector.param.link.links;
-            let index = variableLinks.indexOf(connector.param);
-            variableLinks.splice(index, 1);
+            }
+
+            let removeFrom = param.link.links;
+            index = removeFrom.indexOf(param);
+            removeFrom.splice(index, 1);
+        }
+
+        for (let param of step.outputs) {
+            if (param.link === null) {
+                continue;
+            }
+
+            let removeFrom = param.link.links;
+            index = removeFrom.indexOf(param);
+            removeFrom.splice(index, 1);
         }
     }
-    */
+
+    removeVariable(variable: Variable) {
+        let index = this.variables.indexOf(variable);
+        this.variables.splice(index, 1);
+
+        for (let link of variable.links) {
+            link.link = null;
+        }
+    }
 }

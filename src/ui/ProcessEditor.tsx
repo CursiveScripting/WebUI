@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { UserProcess, Workspace, Type, Process } from '../data';
+import { UserProcess, Workspace, Type, Process, Step, Variable, StepType } from '../data';
 import { ProcessContent } from './ProcessContent';
 import { ProcessList } from './ProcessList';
 import { DataTypePicker } from './DataTypePicker';
@@ -16,6 +16,8 @@ interface ProcessEditorState {
     selectedDataType?: Type;
     selectedProcess?: Process;
     selectedStopStep: boolean;
+    selectedStep?: Step;
+    selectedVariable?: Variable;
 }
 
 export class ProcessEditor extends React.PureComponent<ProcessEditorProps, ProcessEditorState> {
@@ -54,6 +56,8 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     dropStep={this.state.selectedProcess}
                     dropStopStep={this.state.selectedStopStep}
                     itemDropped={() => this.dropCompleted()}
+                    stepDragging={step => this.setState({ selectedStep: step })}
+                    variableDragging={variable => this.setState({ selectedVariable: variable })}
                 />
             </div>
         );
@@ -65,6 +69,11 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             stopClasses += ' stopStepTool--active';
         }
 
+        let binClasses = 'tool binTool';
+        if (this.state.selectedStep !== undefined || this.state.selectedVariable !== undefined) {
+            binClasses += ' binTool--active';
+        }
+
         return (
             <div className="processEditor__toolbar">
                 <DataTypePicker
@@ -73,10 +82,13 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     typeSelected={type => this.selectDataType(type)}
                 />
                 <div className={stopClasses} onMouseDown={() => this.selectStopStep()}>
-                    <div className="tool_label">Add stop step:</div>
+                    <div className="tool_label">Add a stop step:</div>
                     <div className="stopStepTool__icon" />
                 </div>
-                <div className="tool">Bin</div>
+                <div className={binClasses} onMouseUp={() => this.removeSelectedItem()}>
+                    <div className="tool_label">Drag here to remove:</div>
+                    <div className="binTool__icon" />
+                </div>
             </div>
         );
     }
@@ -121,6 +133,21 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             selectedDataType: undefined,
             selectedProcess: undefined,
             selectedStopStep: false,
+        });
+    }
+
+    private removeSelectedItem() {
+        if (this.state.selectedStep !== undefined && this.state.selectedStep.stepType !== StepType.Start) {
+            this.state.openProcess.removeStep(this.state.selectedStep);
+        }
+
+        else if (this.state.selectedVariable !== undefined) {
+            this.state.openProcess.removeVariable(this.state.selectedVariable);
+        }
+
+        this.setState({
+            selectedStep: undefined,
+            selectedVariable: undefined,
         });
     }
 }

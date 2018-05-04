@@ -36,14 +36,31 @@
     position: relative;
     top: -1.2em;
     cursor: move;
-    color: #f00;
+    color: #801a1a;
 }
 
 .stopStepTool--active .stopStepTool__icon {
-    color: black;
+    color: #ff3333;
 }
 
 .stopStepTool__icon::before {
     font-size: 3em;
     content: '\25A0';
+}
+
+.binTool__icon {
+    align-self: center;
+    position: relative;
+    top: -0.7em;
+    color: #666666;
+}
+
+.binTool--active .binTool__icon {
+    cursor: pointer;
+    color: #dd0000;
+}
+
+.binTool__icon::before {
+    font-size: 2em;
+    content: '\2672';
 }

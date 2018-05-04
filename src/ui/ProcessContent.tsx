@@ -11,6 +11,8 @@ interface ProcessContentProps {
     dropStep?: Process;
     dropStopStep: boolean;
     itemDropped: () => void;
+    stepDragging: (step: Step | undefined) => void;
+    variableDragging: (variable: Variable | undefined) => void;
 }
 
 interface ProcessContentState {
@@ -206,12 +208,16 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.draggingStep = step;
         this.dragX = startX;
         this.dragY = startY;
+
+        this.props.stepDragging(step);
     }
 
     private varDragStart(variable: Variable, startX: number, startY: number) {
         this.draggingVariable = variable;
         this.dragX = startX;
         this.dragY = startY;
+
+        this.props.variableDragging(variable);
     }
 
     private dragStop() {
@@ -259,6 +265,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             this.draggingStep.y = this.alignToGrid(this.draggingStep.y);
 
             this.draggingStep = undefined;
+            this.props.stepDragging(undefined);
+
             // TODO: only update the step that was dragged!
             this.forceUpdate();
         }
@@ -268,6 +276,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             this.draggingVariable.y = this.alignToGrid(this.draggingVariable.y);
 
             this.draggingVariable = undefined;
+            this.props.variableDragging(undefined);
+
             // TODO: only update the variable that was dragged!
             this.forceUpdate();
         }
