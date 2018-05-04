@@ -10,7 +10,7 @@ interface StepDisplayProps {
     inputLinkMouseDown: () => void;
     outputLinkMouseDown: (returnPath: string | null) => void;
     inputLinkMouseUp: () => void;
-    outputLinkMouseUp: () => void;
+    outputLinkMouseUp: (returnPath: string | null) => void;
     parameterLinkMouseDown: (param: Parameter) => void;
     parameterLinkMouseUp: (param: Parameter) => void;
 }
@@ -121,7 +121,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
                     key={index}
                     className={classes}
                     onMouseDown={() => this.props.outputLinkMouseDown(pathName)}
-                    onMouseUp={this.props.outputLinkMouseUp}
+                    onMouseUp={() => this.props.outputLinkMouseUp(pathName)}
                     ref={c => { if (c !== null) { connectorRefs[identifier] = c; }}}
                 >
                     {identifier}

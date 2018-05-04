@@ -100,8 +100,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 headerMouseDown={(x, y) => this.stepDragStart(step, x, y)}
                 inputLinkMouseDown={() => this.stepLinkDragStart(step, true, null)}
                 outputLinkMouseDown={returnPath => this.stepLinkDragStart(step, false, returnPath)}
-                inputLinkMouseUp={() => this.stepLinkDragStop(step, true)}
-                outputLinkMouseUp={() => this.stepLinkDragStop(step, false)}
+                inputLinkMouseUp={() => this.stepLinkDragStop(step, true, null)}
+                outputLinkMouseUp={returnPath => this.stepLinkDragStop(step, false, returnPath)}
                 parameterLinkMouseDown={(param) => this.parameterLinkDragStart(param)}
                 parameterLinkMouseUp={(param) => this.parameterLinkDragStop(param)}
             />
@@ -199,6 +199,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             this.draggingStep.x = Math.round(this.draggingStep.x / gridSize) * gridSize;
             this.draggingStep.y = Math.round(this.draggingStep.y / gridSize) * gridSize;
 
+            this.draggingStep = undefined;
             // TODO: only update the step that was dragged!
             this.forceUpdate();
         }
@@ -208,7 +209,6 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             this.drawLinks(this.ctx);
         }
 
-        this.draggingStep = undefined;
         this.draggingParamConnector = undefined;
 
         this.dragX = 0;
@@ -256,7 +256,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         };
     }
 
-    private stepLinkDragStop(step: Step, input: boolean) {
+    private stepLinkDragStop(step: Step, input: boolean, returnPath: string | null) {
         if (this.draggingStepConnector === undefined) {
             return;
         }
@@ -275,20 +275,21 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         if (input) {
             fromStep = dragInfo.step;
             toStep = step;
+            returnPath = dragInfo.returnPath;
         }
         else {
             fromStep = step;
             toStep = dragInfo.step;
         }
 
-        let existingPaths = fromStep.returnPaths.filter(r => r.name === dragInfo.returnPath);
+        let existingPaths = fromStep.returnPaths.filter(r => r.name === returnPath);
         for (let existingPath of existingPaths) {
             let removeFrom = existingPath.toStep;
-            removeFrom.incomingPaths = removeFrom.incomingPaths.filter(rp => rp.fromStep !== fromStep || rp.name !== dragInfo.returnPath);
+            removeFrom.incomingPaths = removeFrom.incomingPaths.filter(rp => rp.fromStep !== fromStep || rp.name !== returnPath);
         }
 
-        fromStep.returnPaths = fromStep.returnPaths.filter(r => r.name !== dragInfo.returnPath);
-        let newPath = new ReturnPath(fromStep, toStep, dragInfo.returnPath);
+        fromStep.returnPaths = fromStep.returnPaths.filter(r => r.name !== returnPath);
+        let newPath = new ReturnPath(fromStep, toStep, returnPath);
         fromStep.returnPaths.push(newPath);
         toStep.incomingPaths.push(newPath);
 
