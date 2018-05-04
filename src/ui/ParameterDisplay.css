@@ -8,24 +8,9 @@
     flex-direction: row-reverse;
 }
 
-.parameter__icon {
+.parameter__connector {
     width: 1.3em;
-    cursor: pointer;
-
-    position: relative;
-    top: -0.15em;
-}
-
-.parameter__icon::before {
-    content: '\25C7';
-}
-
-.parameter--connected .parameter__icon::before {
-    content: '\25C6';
-}
-
-.parameter--fixed .parameter__icon::before {
-    content: '\25C8';
+    top: -0.2em;
 }
 
 .parameter__fixedValue {

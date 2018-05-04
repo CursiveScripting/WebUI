@@ -1,9 +1,18 @@
 .variable {
     position: absolute;
-    padding: 0.2em 0.75em;
+    background-color: #cccccc;
     border-radius: 0.5em;
-    color: white;
-    text-shadow: 0px 0px 4px black;
+    display: flex;
+}
+
+.variable__connector {
+    width: 1em;
+}
+
+.variable__name {
     cursor: move;
     user-select: none;
+    color: white;
+    padding: 0.2em 0.5em;
+    text-shadow: 0px 0px 4px black;
 }

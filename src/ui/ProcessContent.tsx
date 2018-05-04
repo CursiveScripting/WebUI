@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Parameter, Step, UserProcess, ReturnPath, Type, Variable } from '../data';
+import { Step, UserProcess, ReturnPath, Type, Variable, DataField } from '../data';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
 import './ProcessContent.css';
@@ -31,7 +31,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     private draggingStep?: Step;
     private draggingVariable?: Variable;
     private draggingStepConnector?: StepConnectorDragInfo;
-    private draggingParamConnector?: Parameter;
+    private draggingParamConnector?: DataField;
     private dragX: number = 0;
     private dragY: number = 0;
     private stepDisplays: StepDisplay[];
@@ -103,8 +103,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 outputLinkMouseDown={returnPath => this.stepLinkDragStart(step, false, returnPath)}
                 inputLinkMouseUp={() => this.stepLinkDragStop(step, true, null)}
                 outputLinkMouseUp={returnPath => this.stepLinkDragStop(step, false, returnPath)}
-                parameterLinkMouseDown={(param) => this.parameterLinkDragStart(param)}
-                parameterLinkMouseUp={(param) => this.parameterLinkDragStop(param)}
+                parameterLinkMouseDown={(param, input) => this.parameterLinkDragStart(param, input)}
+                parameterLinkMouseUp={(param, input) => this.parameterLinkDragStop(param, input)}
             />
         ));
     }
@@ -117,7 +117,9 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 ref={v => { if (v !== null) { this.variableDisplays.push(v); }}}
                 variable={variable}
                 key={idx}
-                mouseDown={(x, y) => this.varDragStart(variable, x, y)}
+                nameMouseDown={(x, y) => this.varDragStart(variable, x, y)}
+                connectorMouseDown={input => this.parameterLinkDragStart(variable, input)}
+                connectorMouseUp={input => this.parameterLinkDragStop(variable, input)}
             />
         ));
     }
@@ -281,12 +283,12 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
     }
 
-    private parameterLinkDragStart(param: Parameter) {
+    private parameterLinkDragStart(param: DataField, input: boolean) {
         console.log('started dragging on link', param.name);
         this.draggingParamConnector = param;
     }
 
-    private parameterLinkDragStop(param: Parameter) {
+    private parameterLinkDragStop(param: DataField, input: boolean) {
         console.log('stopped dragging on link', param.name);
         this.draggingParamConnector = undefined;
     }

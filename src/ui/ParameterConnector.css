@@ -1,0 +1,20 @@
+.connector {
+    cursor: pointer;
+    position: relative;
+}
+
+.connector::before {
+    content: '\25C7';
+}
+
+.connector--connected::before {
+    content: '\25C6';
+}
+
+.connector--fixed::before {
+    content: '\25C8';
+}
+
+.connector--output::before {
+    float: right;
+}
