@@ -33,14 +33,13 @@ export class DataTypePicker extends React.PureComponent<DataTypePickerProps, {}>
             classes += ' dataTypePicker__item--selected';
         }
 
-        // TODO: allow dragging into content area
         return (
             <div
                 className={classes}
                 key={index}
                 style={{backgroundColor: type.color, borderColor: type.color}}
                 title={type.guidance}
-                onClick={() => this.props.typeSelected(type)}
+                onMouseDown={() => this.props.typeSelected(type)}
             >
                 {type.name}
             </div>
