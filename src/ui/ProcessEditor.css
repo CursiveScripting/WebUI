@@ -27,12 +27,16 @@
     flex-direction: column;
 }
 
-.tool_label {
+.tool__label {
     font-style: italic;
 }
 
-.stopStepTool__icon {
+.tool__icon {
+    user-select: none;
     align-self: center;
+}
+
+.stopStepTool__icon {
     position: relative;
     top: -1.2em;
     cursor: move;
@@ -49,7 +53,6 @@
 }
 
 .binTool__icon {
-    align-self: center;
     position: relative;
     top: -0.7em;
     color: #666666;

@@ -82,12 +82,12 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     typeSelected={type => this.selectDataType(type)}
                 />
                 <div className={stopClasses} onMouseDown={() => this.selectStopStep()}>
-                    <div className="tool_label">Add a stop step:</div>
-                    <div className="stopStepTool__icon" />
+                    <div className="tool__label">Add a stop step:</div>
+                    <div className="tool__icon stopStepTool__icon" />
                 </div>
                 <div className={binClasses} onMouseUp={() => this.removeSelectedItem()}>
-                    <div className="tool_label">Drag here to remove:</div>
-                    <div className="binTool__icon" />
+                    <div className="tool__label">Drag here to remove:</div>
+                    <div className="tool__icon binTool__icon" />
                 </div>
             </div>
         );
