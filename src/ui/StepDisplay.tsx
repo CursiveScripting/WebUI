@@ -34,15 +34,9 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
             top: this.props.step.y,
         };
 
-        let headerMouseDown;
-        if (this.props.headerMouseDown !== undefined) {
-            const startMove = this.props.headerMouseDown;
-            headerMouseDown = (e: React.MouseEvent<HTMLDivElement>) => startMove(e.clientX, e.clientY);
-        }
-
         return (
             <div className={this.determineRootClasses()} style={posStyle}>
-                <div className="step__header" onMouseDown={headerMouseDown}>
+                <div className="step__header" onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY)}>
                     <div className="step__icon" />
                     <div className="step__processName">{this.props.step.name}</div>
                 </div>

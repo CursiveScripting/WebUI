@@ -4,13 +4,22 @@ import './DataTypePicker.css';
 
 interface DataTypePickerProps {
     types: Type[];
+    selectedType?: Type;
+    typeSelected: (type: Type) => void;
 }
 
 export class DataTypePicker extends React.PureComponent<DataTypePickerProps, {}> {
     render() {
+        if (this.props.types.length === 0) {
+            return null;
+        }
+
         return (
             <div className="dataTypePicker">
-                {this.props.types.map((type, index) => this.renderType(type, index))}
+                <div className="dataTypePicker__intro">Add a new variable:</div>
+                <div className="dataTypePicker__items">
+                    {this.props.types.map((type, index) => this.renderType(type, index))}
+                </div>
             </div>
         );
     }
@@ -20,10 +29,19 @@ export class DataTypePicker extends React.PureComponent<DataTypePickerProps, {}>
         if (type.allowInput) {
             classes += ' dataTypePicker__item--canInput';
         }
+        if (type === this.props.selectedType) {
+            classes += ' dataTypePicker__item--selected';
+        }
 
-        // TODO: allow dragging into content area, creating a variable
+        // TODO: allow dragging into content area
         return (
-            <div className={classes} key={index} style={{backgroundColor: type.color}} title={type.guidance}>
+            <div
+                className={classes}
+                key={index}
+                style={{backgroundColor: type.color, borderColor: type.color}}
+                title={type.guidance}
+                onClick={() => this.props.typeSelected(type)}
+            >
                 {type.name}
             </div>
         );

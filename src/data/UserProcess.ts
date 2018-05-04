@@ -2,6 +2,7 @@
 import { Parameter } from './Parameter';
 import { Step } from './Step';
 import { Variable } from './Variable';
+import { Type } from './Type';
 
 export class UserProcess extends Process {
     steps: Step[];
@@ -49,6 +50,19 @@ export class UserProcess extends Process {
         
         this.valid = valid;
         return valid;
+    }
+
+    getNewVariableName(type: Type) {
+        let prefix = type.name + ' ';
+        let num = 1;
+        
+        while (true) {
+            let name = prefix + num;
+            if (this.variables.filter(v => v.name === name).length === 0) {
+                return name;
+            }
+            num++;
+        }
     }
 
     /*

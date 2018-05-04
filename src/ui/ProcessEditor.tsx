@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { UserProcess, Workspace } from '../data';
+import { UserProcess, Workspace, Type } from '../data';
 import { ProcessContent } from './ProcessContent';
 import { ProcessList } from './ProcessList';
 import { DataTypePicker } from './DataTypePicker';
@@ -13,6 +13,7 @@ interface ProcessEditorProps {
 
 interface ProcessEditorState {
     openProcess: UserProcess;
+    selectedDataType?: Type;
 }
 
 export class ProcessEditor extends React.PureComponent<ProcessEditorProps, ProcessEditorState> {
@@ -41,7 +42,12 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     openProcess={this.state.openProcess}
                 />
                 {this.renderToolbar()}
-                <ProcessContent className="processEditor__content" process={this.state.openProcess} />
+                <ProcessContent
+                    className="processEditor__content"
+                    process={this.state.openProcess}
+                    dropVariableType={this.state.selectedDataType}
+                    itemDropped={() => this.dropCompleted()}
+                />
             </div>
         );
     }
@@ -49,10 +55,35 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
     private renderToolbar() {
         return (
             <div className="processEditor__toolbar">
-                <DataTypePicker types={this.props.workspace.types.values} />
+                <DataTypePicker
+                    types={this.props.workspace.types.values}
+                    selectedType={this.state.selectedDataType}
+                    typeSelected={type => this.selectDataType(type)}
+                />
                 <div>Add stop step</div>
                 <div>Bin</div>
             </div>
         );
+    }
+/*
+    private openProcess(process: UserProcess) {
+        if (process === this.state.openProcess) {
+            return;
+        }
+
+        this.setState({
+            openProcess: process,
+            selectedDataType: undefined,
+        });
+    }
+*/
+    private selectDataType(type: Type | undefined) {
+        this.setState({
+            selectedDataType: type === this.state.selectedDataType ? undefined : type,
+        });
+    }
+
+    private dropCompleted() {
+        this.selectDataType(undefined);
     }
 }

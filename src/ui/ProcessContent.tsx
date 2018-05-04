@@ -1,11 +1,14 @@
 import * as React from 'react';
-import { Parameter, Step, UserProcess, ReturnPath } from '../data';
+import { Parameter, Step, UserProcess, ReturnPath, Type, Variable } from '../data';
 import { StepDisplay } from './StepDisplay';
+import { VariableDisplay } from './VariableDisplay';
 import './ProcessContent.css';
 
 interface ProcessContentProps {
     process: UserProcess;
     className?: string;
+    dropVariableType?: Type;
+    itemDropped: () => void;
 }
 
 interface ProcessContentState {
@@ -26,11 +29,13 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     private ctx: CanvasRenderingContext2D | null;
     private resizeListener?: () => void;
     private draggingStep?: Step;
+    private draggingVariable?: Variable;
     private draggingStepConnector?: StepConnectorDragInfo;
     private draggingParamConnector?: Parameter;
     private dragX: number = 0;
     private dragY: number = 0;
     private stepDisplays: StepDisplay[];
+    private variableDisplays: VariableDisplay[];
 
     constructor(props: ProcessContentProps) {
         super(props);
@@ -61,6 +66,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                     height={this.state.height}
                 />
                 {this.renderSteps()}
+                {this.renderVariables()}
             </div>
         );
     }
@@ -89,11 +95,11 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
     
     private renderSteps() {
-        const stepDisplays: StepDisplay[] = [];
+        this.stepDisplays = [];
 
-        let stepDisplay = this.props.process.steps.map((step, idx) => (
+        return this.props.process.steps.map((step, idx) => (
             <StepDisplay
-                ref={s => { if (s !== null) { stepDisplays.push(s); }}}
+                ref={s => { if (s !== null) { this.stepDisplays.push(s); }}}
                 step={step}
                 key={idx}
                 readonly={false}
@@ -106,9 +112,19 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 parameterLinkMouseUp={(param) => this.parameterLinkDragStop(param)}
             />
         ));
+    }
+    
+    private renderVariables() {
+        this.variableDisplays = [];
 
-        this.stepDisplays = stepDisplays;
-        return stepDisplay;
+        return this.props.process.variables.map((variable, idx) => (
+            <VariableDisplay
+                ref={v => { if (v !== null) { this.variableDisplays.push(v); }}}
+                variable={variable}
+                key={idx}
+                mouseDown={(x, y) => this.varDragStart(variable, x, y)}
+            />
+        ));
     }
 
     private drawLinks(ctx: CanvasRenderingContext2D) {
@@ -193,23 +209,52 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.dragY = startY;
     }
 
+    private varDragStart(variable: Variable, startX: number, startY: number) {
+        this.draggingVariable = variable;
+        this.dragX = startX;
+        this.dragY = startY;
+    }
+
     private dragStop() {
-        // align to grid
-        if (this.draggingStep !== undefined) {
-            this.draggingStep.x = Math.round(this.draggingStep.x / gridSize) * gridSize;
-            this.draggingStep.y = Math.round(this.draggingStep.y / gridSize) * gridSize;
+        if (this.props.dropVariableType !== undefined) {
+            let name = this.props.process.getNewVariableName(this.props.dropVariableType);
+            let root = this.root.getBoundingClientRect();
+
+            // get content-relative coordinates from screen-relative drag coordinates
+            let x = this.dragX - root.left;
+            let y = this.dragY - root.top;
+
+            let newVar = new Variable(name , this.props.dropVariableType, this.alignToGrid(x), this.alignToGrid(y));
+            this.props.process.variables.push(newVar);
+            this.props.itemDropped();
+        }
+
+        else if (this.draggingStep !== undefined) {
+            this.draggingStep.x = this.alignToGrid(this.draggingStep.x);
+            this.draggingStep.y = this.alignToGrid(this.draggingStep.y);
 
             this.draggingStep = undefined;
             // TODO: only update the step that was dragged!
             this.forceUpdate();
         }
 
-        if (this.draggingStepConnector !== undefined && this.ctx !== null) {
+        else if (this.draggingVariable !== undefined) {
+            this.draggingVariable.x = this.alignToGrid(this.draggingVariable.x);
+            this.draggingVariable.y = this.alignToGrid(this.draggingVariable.y);
+
+            this.draggingVariable = undefined;
+            // TODO: only update the variable that was dragged!
+            this.forceUpdate();
+        }
+
+        else if (this.draggingStepConnector !== undefined && this.ctx !== null) {
             this.draggingStepConnector = undefined;
             this.drawLinks(this.ctx);
         }
 
-        this.draggingParamConnector = undefined;
+        else if (this.draggingParamConnector !== undefined) {
+            this.draggingParamConnector = undefined;
+        }
 
         this.dragX = 0;
         this.dragY = 0;
@@ -224,18 +269,21 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
 
         if (this.draggingStepConnector !== undefined && this.ctx !== null) {
             this.drawLinks(this.ctx);
-            return;
         }
 
-        if (this.draggingStep === undefined) {
-            return;
+        else if (this.draggingStep !== undefined) {
+            this.draggingStep.x += dx;
+            this.draggingStep.y += dy;
+            
+            this.forceUpdate(); // TODO: only update the step that was dragged!
         }
 
-        this.draggingStep.x += dx;
-        this.draggingStep.y += dy;
+        else if (this.draggingVariable !== undefined) {
+            this.draggingVariable.x += dx;
+            this.draggingVariable.y += dy;
 
-        // TODO: only update the step that was dragged!
-        this.forceUpdate();
+            this.forceUpdate(); // TODO: only update the variable that was dragged!
+        }
     }
 
     private parameterLinkDragStart(param: Parameter) {
@@ -294,5 +342,9 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         toStep.incomingPaths.push(newPath);
 
         this.forceUpdate();
+    }
+
+    private alignToGrid(val: number) {
+        return Math.round(val / gridSize) * gridSize;
     }
 }
