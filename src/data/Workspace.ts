@@ -9,8 +9,7 @@ export class Workspace {
     userProcesses: Dictionary<UserProcess>;
     types: Dictionary<Type>;
 
-    constructor(workspaceXml: HTMLElement) {
-        // WorkspaceLoading.loadWorkspace(this, workspaceXml);
+    constructor() {
         this.systemProcesses = new Dictionary<SystemProcess>();
         this.userProcesses = new Dictionary<UserProcess>();
         this.types = new Dictionary<Type>();
@@ -20,7 +19,7 @@ export class Workspace {
         let valid = true;
 
         for (let i = 0; i < this.userProcesses.count; i++) {
-            let process = this.userProcesses.getByIndex(i);
+            let process = this.userProcesses.values[i];
             if (!process.validate()) {
                 valid = false;
             }

@@ -1,0 +1,20 @@
+.processEditor {
+    display: grid;
+    grid-template-columns: 12em 1fr;
+    grid-template-rows: 3em 1fr;
+    grid-template-areas:
+        "sidebar toolbar"
+        "sidebar content";
+}
+
+.processEditor__sidebar {
+    grid-area: sidebar;
+}
+
+.processEditor__toolbar {
+    grid-area: toolbar;
+}
+
+.processEditor__content {
+    grid-area: content;
+}

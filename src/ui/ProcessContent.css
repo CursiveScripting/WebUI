@@ -1,6 +1,7 @@
 .processContent {
     position: relative;
     overflow: auto;
+    min-height: 10em;
 
     background-color: #fafafa;
     background-image: url('grid.png');

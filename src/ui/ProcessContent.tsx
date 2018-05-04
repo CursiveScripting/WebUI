@@ -4,10 +4,8 @@ import { StepDisplay } from './StepDisplay';
 import './ProcessContent.css';
 
 interface ProcessContentProps {
-    id?: string;
-    className?: string;
-    style?: React.CSSProperties;
     process: UserProcess;
+    className?: string;
 }
 
 interface ProcessContentState {
@@ -51,9 +49,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
 
         return (
             <div
-                id={this.props.id}
                 className={classes}
-                style={this.props.style}
                 ref={r => { if (r !== null) { this.root = r; }}}
                 onMouseMove={e => this.mouseMove(e)}
                 onMouseUp={e => this.dragStop()}
@@ -91,7 +87,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             window.removeEventListener('resize', this.resizeListener);
         }
     }
-
+    
     private renderSteps() {
         const stepDisplays: StepDisplay[] = [];
 

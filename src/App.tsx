@@ -1,11 +1,13 @@
 import * as React from 'react';
 import './App.css';
-import { ProcessContent } from './ui/ProcessContent';
-import { StartStep, StopStep, Type, Parameter, ProcessStep, SystemProcess, UserProcess } from './data';
+import { ProcessEditor } from './ui/ProcessEditor';
+import { StartStep, StopStep, Type, Parameter, ProcessStep, SystemProcess, UserProcess, Workspace } from './data';
 
 const stringType = new Type('text', '#00cc00', undefined, /.*/, 'Any old text');
 const numberType = new Type('number', '#0099ff', undefined, /^\d*$/, 'A number');
 const boolType = new Type('boolean', '#cc6600', undefined, undefined, 'true or false');
+
+const workspace = new Workspace();
 
 const parentProcess = new UserProcess(
     'Example parent',
@@ -17,6 +19,7 @@ const parentProcess = new UserProcess(
     'Some parent process to do something',
     ''
 );
+workspace.userProcesses.add(parentProcess.name, parentProcess);
 
 const systemProcess = new SystemProcess(
     'System process',
@@ -26,6 +29,7 @@ const systemProcess = new SystemProcess(
     'An example process that doesn\'t really exist',
     'Root',
 );
+workspace.systemProcesses.add(systemProcess.name, systemProcess);
 
 const userProcess = new UserProcess(
     'User process',
@@ -37,6 +41,7 @@ const userProcess = new UserProcess(
     'Some process to do something',
     ''
 );
+workspace.userProcesses.add(userProcess.name, userProcess);
 
 const startStep = new StartStep(1, parentProcess, 32, 48);
 const stopStep = new StopStep(2, parentProcess, 'Yea', 800, 256);
@@ -47,15 +52,7 @@ parentProcess.steps.push(startStep, stopStep, systemStep, userStep);
 
 class App extends React.Component {
   render() {
-    return (
-      <div className="App">
-        <p className="App-intro">
-          To get started, edit <code>src/App.tsx</code> and save to reload.
-        </p>
-
-        <ProcessContent process={parentProcess} style={{height: '500px'}} />
-      </div>
-    );
+    return <ProcessEditor className="fullScreen" workspace={workspace} initialProcess={parentProcess} />;
   }
 }
 

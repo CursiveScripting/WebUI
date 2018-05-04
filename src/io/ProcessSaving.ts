@@ -6,7 +6,7 @@ export class ProcessSaving {
         let rootNode = saveDoc.createElement('Processes');
 
         for (let i = 0; i < processes.count; i++) {
-            this.saveProcess(processes.getByIndex(i), rootNode);
+            this.saveProcess(processes.values[i], rootNode);
         }
         return rootNode.outerHTML;
     }

@@ -1,0 +1,40 @@
+.processListItem {
+    display: flex;
+    flex-direction: column;
+    margin: 0.5em;
+    border-radius: 0.5rem;
+    padding: 0;
+
+    background-color: #ccc;
+    cursor: move;
+    user-select: none;
+    overflow: hidden;
+}
+
+.processListItem--system .processListItem__name {
+    background-color: #cc8800;
+}
+
+.processListItem--user .processListItem__name {
+    background-color: #00aaaa;
+    cursor: pointer;
+}
+
+.processListItem--open {
+    border: solid 2px black;
+}
+
+.processListItem--open .processListItem__name {
+    cursor: not-allowed;
+}
+
+.processListItem__name {
+    font-weight: bold;
+    color: white;
+    padding: 0.2em;
+}
+
+.processListItem__desc {
+    font-size: 0.9em;
+    padding: 0.2em;
+}
