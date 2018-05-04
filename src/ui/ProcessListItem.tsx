@@ -5,6 +5,8 @@ import './ProcessListItem.css';
 interface ProcessListItemProps {
     process: Process;
     isOpen: boolean;
+    isSelected: boolean;
+    onMouseDown: () => void;
 }
 
 export class ProcessListItem extends React.PureComponent<ProcessListItemProps, {}> {
@@ -13,7 +15,9 @@ export class ProcessListItem extends React.PureComponent<ProcessListItemProps, {
         if (this.props.isOpen) {
             classes += ' processListItem--open';
         }
-
+        if (this.props.isSelected) {
+            classes += ' processListItem--selected';
+        }
         if (this.props.process instanceof UserProcess) {
             classes += ' processListItem--user';
         }
@@ -22,7 +26,7 @@ export class ProcessListItem extends React.PureComponent<ProcessListItemProps, {
         }
 
         return (
-            <div className={classes}>
+            <div className={classes} onMouseDown={this.props.onMouseDown}>
                 <div className="processListItem__name">{this.props.process.name}</div>
                 <div className="processListItem__desc">{this.props.process.description}</div>
             </div>

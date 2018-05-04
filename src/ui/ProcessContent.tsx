@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Step, UserProcess, ReturnPath, Type, Variable, DataField } from '../data';
+import { Step, UserProcess, ReturnPath, Type, Variable, DataField, StopStep, ProcessStep, Process } from '../data';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
 import './ProcessContent.css';
@@ -8,6 +8,8 @@ interface ProcessContentProps {
     process: UserProcess;
     className?: string;
     dropVariableType?: Type;
+    dropStep?: Process;
+    dropStopStep: boolean;
     itemDropped: () => void;
 }
 
@@ -218,11 +220,37 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             let root = this.root.getBoundingClientRect();
 
             // get content-relative coordinates from screen-relative drag coordinates
+            let x = this.alignToGrid(this.dragX - root.left);
+            let y = this.alignToGrid(this.dragY - root.top);
+
+            let newVar = new Variable(name , this.props.dropVariableType, x, y);
+            this.props.process.variables.push(newVar);
+            this.props.itemDropped();
+        }
+
+        else if (this.props.dropStep !== undefined) {
+            let root = this.root.getBoundingClientRect();
+
+            // get content-relative coordinates from screen-relative drag coordinates
             let x = this.dragX - root.left;
             let y = this.dragY - root.top;
 
-            let newVar = new Variable(name , this.props.dropVariableType, this.alignToGrid(x), this.alignToGrid(y));
-            this.props.process.variables.push(newVar);
+            let process = this.props.process;
+            let newStep = new ProcessStep(process.getNextStepID(), this.props.dropStep, process, x, y);
+            process.steps.push(newStep);
+            this.props.itemDropped();
+        }
+
+        else if (this.props.dropStopStep) {
+            let root = this.root.getBoundingClientRect();
+
+            // get content-relative coordinates from screen-relative drag coordinates
+            let x = this.dragX - root.left;
+            let y = this.dragY - root.top;
+
+            let process = this.props.process;
+            let newStep = new StopStep(process.getNextStepID(), process, null, x, y);
+            process.steps.push(newStep);
             this.props.itemDropped();
         }
 
@@ -284,12 +312,12 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     private parameterLinkDragStart(param: DataField, input: boolean) {
-        console.log('started dragging on link', param.name);
+        // console.log('started dragging on link', param.name);
         this.draggingParamConnector = param;
     }
 
     private parameterLinkDragStop(param: DataField, input: boolean) {
-        console.log('stopped dragging on link', param.name);
+        // console.log('stopped dragging on link', param.name);
         this.draggingParamConnector = undefined;
     }
 

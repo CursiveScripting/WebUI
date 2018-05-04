@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { UserProcess, SystemProcess } from '../data';
+import { UserProcess, SystemProcess, Process } from '../data';
 import { ProcessListItem } from './ProcessListItem';
 import './ProcessList.css';
 
@@ -7,7 +7,9 @@ interface ProcessListProps {
     systemProcesses: SystemProcess[];
     userProcesses: UserProcess[];
     openProcess?: UserProcess;
+    selectedProcess?: Process;
     className?: string;
+    processSelected: (process: Process) => void;
 }
 
 export class ProcessList extends React.PureComponent<ProcessListProps, {}> {
@@ -26,24 +28,26 @@ export class ProcessList extends React.PureComponent<ProcessListProps, {}> {
     }
 
     private renderUserProcess(process: UserProcess, index: number) {
-        // TODO: allow dragging into open process
         // TODO: allow opening
         return (
             <ProcessListItem
                 process={process}
                 key={index}
                 isOpen={process === this.props.openProcess}
+                isSelected={this.props.selectedProcess === process}
+                onMouseDown={() => this.props.processSelected(process)}
             />
         );
     }
 
     private renderSystemProcess(process: SystemProcess, index: number) {
-        // TODO: allow dragging into open process
         return (
             <ProcessListItem
                 process={process}
                 key={index}
                 isOpen={false}
+                isSelected={this.props.selectedProcess === process}
+                onMouseDown={() => this.props.processSelected(process)}
             />
         );
     }

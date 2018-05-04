@@ -15,9 +15,35 @@
     grid-area: toolbar;
     display: flex;
     justify-content: space-around;
-    align-items: center;
+    align-items: stretch;
 }
 
 .processEditor__content {
     grid-area: content;
+}
+
+.tool {
+    display: flex;
+    flex-direction: column;
+}
+
+.tool_label {
+    font-style: italic;
+}
+
+.stopStepTool__icon {
+    align-self: center;
+    position: relative;
+    top: -1.2em;
+    cursor: move;
+    color: #f00;
+}
+
+.stopStepTool--active .stopStepTool__icon {
+    color: black;
+}
+
+.stopStepTool__icon::before {
+    font-size: 3em;
+    content: '\25A0';
 }

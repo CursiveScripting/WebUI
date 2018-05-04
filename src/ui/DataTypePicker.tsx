@@ -15,8 +15,8 @@ export class DataTypePicker extends React.PureComponent<DataTypePickerProps, {}>
         }
 
         return (
-            <div className="dataTypePicker">
-                <div className="dataTypePicker__intro">Add a new variable:</div>
+            <div className="dataTypePicker tool">
+                <div className="tool__intro">Add a new variable:</div>
                 <div className="dataTypePicker__items">
                     {this.props.types.map((type, index) => this.renderType(type, index))}
                 </div>

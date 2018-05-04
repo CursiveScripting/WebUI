@@ -1,12 +1,3 @@
-.dataTypePicker {
-    display: flex;
-    flex-direction: column;
-}
-
-.dataTypePicker__intro {
-    font-style: italic;
-}
-
 .dataTypePicker__items {
     display: flex;
 }
