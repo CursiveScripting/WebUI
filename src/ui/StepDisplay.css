@@ -6,6 +6,7 @@
     padding: 0;
     position: absolute;
     user-select: none;
+    border: solid black 1px;
 }
 
 .step__header {
@@ -14,6 +15,7 @@
     border-top-right-radius: 0.5rem;
     display: flex;
     cursor: move;
+    border-bottom: solid black 1px;
 }
 
 .step--user .step__header {

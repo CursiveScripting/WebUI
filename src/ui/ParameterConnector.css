@@ -1,10 +1,16 @@
 .connector {
     cursor: pointer;
     position: relative;
+    width: 1em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .connector::before {
     content: '\25C7';
+    position: relative;
+    top: -0.1em;
 }
 
 .connector--connected::before {
@@ -13,8 +19,4 @@
 
 .connector--fixed::before {
     content: '\25C8';
-}
-
-.connector--output::before {
-    float: right;
 }

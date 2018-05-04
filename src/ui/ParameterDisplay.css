@@ -1,16 +1,17 @@
 .parameter {
     display: flex;
     justify-content: flex-start;
+    align-items: center;
     font-size: 0.9em;
+}
+
+.parameter__name {
+    position: relative;
+    top: -0.15em;
 }
 
 .parameter--output {
     flex-direction: row-reverse;
-}
-
-.parameter__connector {
-    width: 1.3em;
-    top: -0.2em;
 }
 
 .parameter__fixedValue {

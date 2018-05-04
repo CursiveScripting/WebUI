@@ -3,10 +3,7 @@
     background-color: #cccccc;
     border-radius: 0.5em;
     display: flex;
-}
-
-.variable__connector {
-    width: 1em;
+    border: solid black 1px;
 }
 
 .variable__name {
@@ -15,4 +12,6 @@
     color: white;
     padding: 0.2em 0.5em;
     text-shadow: 0px 0px 4px black;
+    border-left: solid black 1px;
+    border-right: solid black 1px;
 }
