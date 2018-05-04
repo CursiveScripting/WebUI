@@ -62,6 +62,7 @@
     color: white;
     font-weight: bold;
     padding: 0.1em 1em 0 0.2em;
+    text-shadow: 0px 0px 4px black;
 }
 
 .step--readonly .step__processName {
@@ -95,6 +96,7 @@
     color: white;
     font-weight: bold;
     font-style: normal;
+    text-shadow: 0px 0px 1px black;
 
     content: '\25B7';
 }

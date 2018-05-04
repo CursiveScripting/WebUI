@@ -3,11 +3,14 @@ import './App.css';
 import { ProcessEditor } from './ui/ProcessEditor';
 import { StartStep, StopStep, Type, Parameter, ProcessStep, SystemProcess, UserProcess, Workspace } from './data';
 
+const workspace = new Workspace();
+
 const stringType = new Type('text', '#00cc00', undefined, /.*/, 'Any old text');
 const numberType = new Type('number', '#0099ff', undefined, /^\d*$/, 'A number');
 const boolType = new Type('boolean', '#cc6600', undefined, undefined, 'true or false');
-
-const workspace = new Workspace();
+workspace.types.add(stringType.name, stringType);
+workspace.types.add(numberType.name, numberType);
+workspace.types.add(boolType.name, boolType);
 
 const parentProcess = new UserProcess(
     'Example parent',

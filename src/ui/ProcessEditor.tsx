@@ -2,6 +2,7 @@ import * as React from 'react';
 import { UserProcess, Workspace } from '../data';
 import { ProcessContent } from './ProcessContent';
 import { ProcessList } from './ProcessList';
+import { DataTypePicker } from './DataTypePicker';
 import './ProcessEditor.css';
 
 interface ProcessEditorProps {
@@ -48,7 +49,9 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
     private renderToolbar() {
         return (
             <div className="processEditor__toolbar">
-                Drag in variables of various types from here. Drag in stop steps, and have a bin to drag things onto to delete them
+                <DataTypePicker types={this.props.workspace.types.values} />
+                <div>Add stop step</div>
+                <div>Bin</div>
             </div>
         );
     }
