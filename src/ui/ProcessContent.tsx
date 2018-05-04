@@ -26,7 +26,7 @@ const gridSize = 16;
 
 export class ProcessContent extends React.PureComponent<ProcessContentProps, ProcessContentState> {
     private root: HTMLDivElement;
-    private ctx: CanvasRenderingContext2D | null;
+    private ctx: CanvasRenderingContext2D;
     private resizeListener?: () => void;
     private draggingStep?: Step;
     private draggingVariable?: Variable;
@@ -61,7 +61,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             >
                 <canvas
                     className="processContent__canvas"
-                    ref={c => this.ctx = c === null ? null : c.getContext('2d')}
+                    ref={c => {if (c !== null) { let ctx = c.getContext('2d'); if (ctx !== null) { this.ctx = ctx; }}}}
                     width={this.state.width}
                     height={this.state.height}
                 />
@@ -76,16 +76,11 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         window.addEventListener('resize', this.resizeListener);
     
         this.updateSize();
-
-        if (this.ctx !== null) {
-            this.drawLinks(this.ctx);
-        }
+        this.drawLinks(this.ctx);
     }
 
     componentDidUpdate() {
-        if (this.ctx !== null) {
-            this.drawLinks(this.ctx);
-        }
+        this.drawLinks(this.ctx);
     }
     
     componentWillUnmount() {
@@ -247,7 +242,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             this.forceUpdate();
         }
 
-        else if (this.draggingStepConnector !== undefined && this.ctx !== null) {
+        else if (this.draggingStepConnector !== undefined) {
             this.draggingStepConnector = undefined;
             this.drawLinks(this.ctx);
         }
@@ -267,7 +262,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.dragX = e.clientX;
         this.dragY = e.clientY;
 
-        if (this.draggingStepConnector !== undefined && this.ctx !== null) {
+        if (this.draggingStepConnector !== undefined) {
             this.drawLinks(this.ctx);
         }
 
@@ -313,9 +308,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.draggingStepConnector = undefined;
 
         if (dragInfo.step === step || dragInfo.input === input) {
-            if (this.ctx != null) {
-                this.drawLinks(this.ctx);
-            }
+            this.drawLinks(this.ctx);
             return;
         }
 
