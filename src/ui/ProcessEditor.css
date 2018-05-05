@@ -25,6 +25,7 @@
 .tool {
     display: flex;
     flex-direction: column;
+    user-select: none;
 }
 
 .tool__label {
@@ -32,7 +33,6 @@
 }
 
 .tool__icon {
-    user-select: none;
     align-self: center;
 }
 

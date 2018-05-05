@@ -16,16 +16,28 @@ interface StepDisplayProps {
 }
 
 export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
-    private _inputConnector: HTMLDivElement | null;
-    private _outputConnectors: { [key: string]: HTMLDivElement } = {};
+    private _entryConnector: HTMLDivElement | null;
+    private _returnConnectors: { [key: string]: HTMLDivElement } = {};
+    private _inputConnectors: HTMLDivElement[];
+    private _outputConnectors: HTMLDivElement[];
 
-    public get inputConnector() { return this._inputConnector; }
-    public getOutputConnector(returnPathName: string | null) {
+    public get entryConnector() { return this._entryConnector; }
+    public getReturnConnector(returnPathName: string | null) {
         if (returnPathName === null) {
             returnPathName = '';
         }
 
-        return this._outputConnectors[returnPathName];
+        return this._returnConnectors[returnPathName];
+    }
+
+    public getInputConnector(param: Parameter) {
+        let index = this.props.step.inputs.indexOf(param);
+        return this._inputConnectors[index];
+    }
+
+    public getOutputConnector(param: Parameter) {
+        let index = this.props.step.outputs.indexOf(param);
+        return this._outputConnectors[index];
     }
 
     render() {
@@ -87,7 +99,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
                 className={conClasses}
                 onMouseDown={this.props.inputLinkMouseDown}
                 onMouseUp={this.props.inputLinkMouseUp}
-                ref={c => this._inputConnector = c}
+                ref={c => this._entryConnector = c}
             />
         );
     }
@@ -101,7 +113,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
             pathIdentifiers = [''];
         }
 
-        const connectorRefs: { [key: string]: HTMLDivElement } = {};
+        this._returnConnectors = {};
 
         let connectors = pathIdentifiers.map((identifier, index) => {
             let pathName = identifier === '' ? null : identifier;
@@ -116,14 +128,12 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
                     className={classes}
                     onMouseDown={() => this.props.outputLinkMouseDown(pathName)}
                     onMouseUp={() => this.props.outputLinkMouseUp(pathName)}
-                    ref={c => { if (c !== null) { connectorRefs[identifier] = c; }}}
+                    ref={c => { if (c !== null) { this._returnConnectors[identifier] = c; }}}
                 >
                     {identifier}
                 </div>
             );
         });
-
-        this._outputConnectors = connectorRefs;
 
         return (
             <div className="step__outConnectors">
@@ -133,6 +143,14 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
     }
 
     private renderParameters(parameters: Parameter[], input: boolean) {
+        let connectors: HTMLDivElement[] = [];
+        if (input) {
+            this._inputConnectors = connectors;
+        }
+        else {
+            this._outputConnectors = connectors;
+        }
+
         if (parameters.length === 0) {
             return undefined;
         }
@@ -143,6 +161,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
                     return (
                     <ParameterDisplay
                         key={idx}
+                        ref={c => { if (c !== null) { connectors.push(c.connector); }}}
                         input={input}
                         parameter={param}
                         linkMouseDown={() => this.props.parameterLinkMouseDown(param, input)}

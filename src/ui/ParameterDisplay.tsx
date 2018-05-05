@@ -11,6 +11,9 @@ interface ParameterDisplayProps {
 }
 
 export class ParameterDisplay extends React.PureComponent<ParameterDisplayProps, {}> {
+    private _connector: HTMLDivElement;
+    public get connector() { return this._connector; }
+
     render() {
         return (
             <div className={this.determineRootClasses()}>
@@ -21,6 +24,7 @@ export class ParameterDisplay extends React.PureComponent<ParameterDisplayProps,
                     state={this.determineConnectorState()}
                     onMouseDown={this.props.linkMouseDown}
                     onMouseUp={this.props.linkMouseUp}
+                    ref={c => { if (c !== null) { this._connector = c.connector; }}}
                 />
                 <div
                     className="parameter__name"

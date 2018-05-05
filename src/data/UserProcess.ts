@@ -77,20 +77,19 @@ export class UserProcess extends Process {
         let index = this.steps.indexOf(step);
         this.steps.splice(index, 1);
 
-        // any return paths that lead to this step should now be dangling
+        // any return paths that lead to or come from this step should be removed
         for (let returnPath of step.incomingPaths) {
             let removeFrom = returnPath.fromStep.returnPaths;
             index = removeFrom.indexOf(returnPath);
             removeFrom.splice(index, 1);
         }
-
         for (let returnPath of step.returnPaths) {
             let removeFrom = returnPath.toStep.incomingPaths;
             index = removeFrom.indexOf(returnPath);
             removeFrom.splice(index, 1);
         }
 
-        // any variables that used this step should have it removed
+        // this step's input/output parameters should be unlinked from everything
         for (let param of step.inputs) {
             if (param.link === null) {
                 continue;
@@ -100,7 +99,6 @@ export class UserProcess extends Process {
             index = removeFrom.indexOf(param);
             removeFrom.splice(index, 1);
         }
-
         for (let param of step.outputs) {
             if (param.link === null) {
                 continue;

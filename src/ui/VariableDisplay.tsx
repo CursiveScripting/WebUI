@@ -11,6 +11,11 @@ interface VariableDisplayProps {
 }
 
 export class VariableDisplay extends React.PureComponent<VariableDisplayProps, {}> {
+    private _inputConnector: HTMLDivElement;
+    private _outputConnector: HTMLDivElement;
+
+    public get inputConnector() { return this._inputConnector; }
+    public get outputConnector() { return this._outputConnector; }
 
     render() {
         let posStyle = {
@@ -33,6 +38,7 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, {
                     input={true}
                     onMouseDown={() => this.props.connectorMouseDown(true)}
                     onMouseUp={() => this.props.connectorMouseUp(true)}
+                    ref={c => { if (c !== null) { this._inputConnector = c.connector; }}}
                 />
                 <div
                     className="variable__name"
@@ -48,6 +54,7 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, {
                     input={false}
                     onMouseDown={() => this.props.connectorMouseDown(false)}
                     onMouseUp={() => this.props.connectorMouseUp(false)}
+                    ref={c => { if (c !== null) { this._outputConnector = c.connector; }}}
                 />
             </div>
         );

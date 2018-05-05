@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Step, UserProcess, ReturnPath, Type, Variable, DataField, StopStep, ProcessStep, Process } from '../data';
+import { Step, UserProcess, ReturnPath, Type, Variable, DataField, StopStep, ProcessStep, Process, Parameter } from '../data';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
 import './ProcessContent.css';
@@ -26,6 +26,12 @@ interface StepConnectorDragInfo {
     returnPath: string | null;
 }
 
+interface ParamConnectorDragInfo {
+    field: DataField;
+    input: boolean;
+    step?: Step;
+}
+
 const gridSize = 16;
 
 export class ProcessContent extends React.PureComponent<ProcessContentProps, ProcessContentState> {
@@ -35,7 +41,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     private draggingStep?: Step;
     private draggingVariable?: Variable;
     private draggingStepConnector?: StepConnectorDragInfo;
-    private draggingParamConnector?: DataField;
+    private draggingParamConnector?: ParamConnectorDragInfo;
     private dragX: number = 0;
     private dragY: number = 0;
     private stepDisplays: StepDisplay[];
@@ -107,8 +113,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 outputLinkMouseDown={returnPath => this.stepLinkDragStart(step, false, returnPath)}
                 inputLinkMouseUp={() => this.stepLinkDragStop(step, true, null)}
                 outputLinkMouseUp={returnPath => this.stepLinkDragStop(step, false, returnPath)}
-                parameterLinkMouseDown={(param, input) => this.parameterLinkDragStart(param, input)}
-                parameterLinkMouseUp={(param, input) => this.parameterLinkDragStop(param, input)}
+                parameterLinkMouseDown={(param, input) => this.fieldLinkDragStart(param, input, step)}
+                parameterLinkMouseUp={(param, input) => this.fieldLinkDragStop(param, input, step)}
             />
         ));
     }
@@ -122,8 +128,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 variable={variable}
                 key={idx}
                 nameMouseDown={(x, y) => this.varDragStart(variable, x, y)}
-                connectorMouseDown={input => this.parameterLinkDragStart(variable, input)}
-                connectorMouseUp={input => this.parameterLinkDragStop(variable, input)}
+                connectorMouseDown={input => this.fieldLinkDragStart(variable, input, undefined)}
+                connectorMouseUp={input => this.fieldLinkDragStop(variable, input, undefined)}
             />
         ));
     }
@@ -132,16 +138,42 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         ctx.clearRect(0, 0, this.state.width, this.state.height);
         let root = this.root.getBoundingClientRect();
         
-        for (let endStepDisplay of this.stepDisplays) {
-            for (let path of endStepDisplay.props.step.incomingPaths) {
+        for (let stepDisplay of this.stepDisplays) {
+            for (let path of stepDisplay.props.step.incomingPaths) {
                 let beginStepDisplay = this.getStepDisplay(path.fromStep);
 
-                let beginConnector = beginStepDisplay.getOutputConnector(path.name);
-                let endConnector = endStepDisplay.inputConnector;
+                let beginConnector = beginStepDisplay.getReturnConnector(path.name);
+                let endConnector = stepDisplay.entryConnector;
                 
                 if (beginConnector !== null && endConnector !== null) {
-                    this.drawLink(ctx, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
+                    this.drawFlowLink(ctx, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
                 }
+            }
+
+            for (let parameter of stepDisplay.props.step.inputs) {
+                if (parameter.link === null) {
+                    continue;
+                }
+
+                let endConnector = stepDisplay.getInputConnector(parameter);
+
+                let variableDisplay = this.getVariableDisplay(parameter.link);
+                let beginConnector = variableDisplay.outputConnector;
+
+                this.drawFieldLink(ctx, parameter.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
+            }
+
+            for (let parameter of stepDisplay.props.step.outputs) {
+                if (parameter.link === null) {
+                    continue;
+                }
+
+                let beginConnector = stepDisplay.getOutputConnector(parameter);
+
+                let variableDisplay = this.getVariableDisplay(parameter.link);
+                let endConnector = variableDisplay.inputConnector;
+
+                this.drawFieldLink(ctx, parameter.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
             }
         }
 
@@ -155,32 +187,77 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             let dragInfo = this.draggingStepConnector;
             
             if (dragInfo.input) {
-                let beginConnector = this.getStepDisplay(dragInfo.step).inputConnector;
+                let beginConnector = this.getStepDisplay(dragInfo.step).entryConnector;
                 if (beginConnector !== null) {
-                    this.drawLink(ctx, root, dragRect, beginConnector.getBoundingClientRect());
+                    this.drawFlowLink(ctx, root, dragRect, beginConnector.getBoundingClientRect());
                 }
             }
             else {
-                let endConnector = this.getStepDisplay(dragInfo.step).getOutputConnector(dragInfo.returnPath);
+                let endConnector = this.getStepDisplay(dragInfo.step).getReturnConnector(dragInfo.returnPath);
                 if (endConnector !== null) {
-                    this.drawLink(ctx, root, endConnector.getBoundingClientRect(), dragRect);
+                    this.drawFlowLink(ctx, root, endConnector.getBoundingClientRect(), dragRect);
                 }
             }
         }
 
-        // TODO: draw parameter links
-
         if (this.draggingParamConnector !== undefined) {
-            // TODO: draw dragging parameter link
+            let dragRect = {
+                left: this.dragX, right: this.dragX,
+                top: this.dragY, bottom: this.dragY,
+                width: 0, height: 0,
+            };
+            
+            let dragInfo = this.draggingParamConnector;
+            let connector: HTMLDivElement;
+
+            if (dragInfo.step !== undefined) {
+                let stepDisplay = this.getStepDisplay(dragInfo.step);
+                connector = dragInfo.input
+                    ? stepDisplay.getInputConnector(dragInfo.field as Parameter)
+                    : stepDisplay.getOutputConnector(dragInfo.field as Parameter);
+            }
+            else {
+                let varDisplay = this.getVariableDisplay(dragInfo.field as Variable);
+                connector = dragInfo.input
+                    ? varDisplay.inputConnector
+                    : varDisplay.outputConnector;
+            }
+
+            if (dragInfo.input) {
+                this.drawFieldLink(ctx, dragInfo.field.type, root, dragRect, connector.getBoundingClientRect());
+            }
+            else {
+                this.drawFieldLink(ctx, dragInfo.field.type, root, connector.getBoundingClientRect(), dragRect);
+            }
         }
     }
     
-    private drawLink(ctx: CanvasRenderingContext2D, root: ClientRect | DOMRect, begin: ClientRect | DOMRect, end: ClientRect | DOMRect) {
+    private drawFlowLink(
+        ctx: CanvasRenderingContext2D,
+        root: ClientRect | DOMRect,
+        begin: ClientRect | DOMRect,
+        end: ClientRect | DOMRect
+    ) {
         let x1 = begin.right - root.left, y1 = begin.top + begin.height / 2 - root.top;
         let x2 = end.left - root.left, y2 = end.top + end.height / 2 - root.top;
 
         ctx.lineWidth = 3;
         ctx.strokeStyle = '#000000';
+        this.drawCurve(ctx, x1, y1, x2, y2);
+    }
+
+    private drawFieldLink(
+        ctx: CanvasRenderingContext2D,
+        type: Type,
+        root: ClientRect | DOMRect,
+        begin: ClientRect | DOMRect,
+        end: ClientRect | DOMRect
+    ) {
+        let x1 = begin.right - root.left, y1 = begin.top + begin.height / 2 - root.top;
+        let x2 = end.left - root.left, y2 = end.top + end.height / 2 - root.top;
+
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = type.color;
         this.drawCurve(ctx, x1, y1, x2, y2);
     }
 
@@ -195,6 +272,10 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
 
     private getStepDisplay(step: Step) {
         return this.stepDisplays.filter(d => d.props.step === step)[0];
+    }
+
+    private getVariableDisplay(variable: Variable) {
+        return this.variableDisplays.filter(d => d.props.variable === variable)[0];
     }
 
     private updateSize() {
@@ -289,6 +370,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
 
         else if (this.draggingParamConnector !== undefined) {
             this.draggingParamConnector = undefined;
+            this.drawLinks(this.ctx);
         }
 
         this.dragX = 0;
@@ -302,7 +384,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.dragX = e.clientX;
         this.dragY = e.clientY;
 
-        if (this.draggingStepConnector !== undefined) {
+        if (this.draggingStepConnector !== undefined || this.draggingParamConnector !== undefined) {
             this.drawLinks(this.ctx);
         }
 
@@ -319,16 +401,6 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
 
             this.forceUpdate(); // TODO: only update the variable that was dragged!
         }
-    }
-
-    private parameterLinkDragStart(param: DataField, input: boolean) {
-        // console.log('started dragging on link', param.name);
-        this.draggingParamConnector = param;
-    }
-
-    private parameterLinkDragStop(param: DataField, input: boolean) {
-        // console.log('stopped dragging on link', param.name);
-        this.draggingParamConnector = undefined;
     }
 
     private stepLinkDragStart(step: Step, input: boolean, returnPath: string | null) {
@@ -375,6 +447,94 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         toStep.incomingPaths.push(newPath);
 
         this.forceUpdate();
+    }
+
+    private fieldLinkDragStart(field: DataField, input: boolean, step?: Step) {
+        this.draggingParamConnector = {
+            field: field,
+            input: input,
+            step: step,
+        };
+    }
+
+    private fieldLinkDragStop(field: DataField, input: boolean, step?: Step) {
+        if (this.draggingParamConnector === undefined) {
+            return;
+        }
+        
+        let dragInfo = this.draggingParamConnector;
+        let dropInfo = {
+            field: field,
+            input: input,
+            step: step,
+        };
+
+        this.draggingParamConnector = undefined;
+        
+        if (this.createLink(dragInfo, dropInfo)) {
+            this.forceUpdate();
+        }
+        else {
+            this.drawLinks(this.ctx);
+        }
+    }
+
+    private createLink(from: ParamConnectorDragInfo, to: ParamConnectorDragInfo) {
+        if (from.field === to.field) {
+            return false; // mustn't be to/from the same variable
+        }
+
+        if (from.input === to.input) {
+            return false; // must be from an input to an output
+        }
+
+        if (from.input) {
+            let tmp = from;
+            from = to;
+            to = tmp;
+        }
+
+        if (from.field.type !== to.field.type && !from.field.type.isAssignableFrom(to.field.type)) {
+            return false; // fields must be of the same type, or output type must extend input type
+        }
+
+        if ((from.step === undefined) === (to.step === undefined)) {
+            return false; // must be between a parameter and a variable, for now
+        }
+
+        if (from.step !== undefined && from.step === to.step) {
+            return false; // mustn't be on the same step
+        }
+
+        let parameter: Parameter;
+        let variable: Variable;
+
+        if (from.field instanceof Parameter) {
+            parameter = from.field as Parameter;
+            variable = to.field as Variable;
+        }
+        else if (to.field instanceof Parameter) {
+            parameter = to.field as Parameter;
+            variable = from.field as Variable;
+        }
+        else {
+            return false; // not going to/from any parameter... ?
+        }
+
+        if (parameter.link === variable) {
+            return false; // they already link, do nothing
+        }
+
+        if (parameter.link !== null) {
+            let removeFrom = parameter.link.links;
+            let index = removeFrom.indexOf(parameter);
+            removeFrom.splice(index, 1);
+        }
+
+        parameter.link = variable;
+        variable.links.push(parameter);
+
+        return true;
     }
 
     private alignToGrid(val: number) {

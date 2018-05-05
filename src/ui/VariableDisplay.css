@@ -4,6 +4,7 @@
     border-radius: 0.5em;
     display: flex;
     border: solid black 1px;
+    user-select: none;
 }
 
 .variable__name {
