@@ -242,7 +242,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         let x1 = begin.right - root.left, y1 = begin.top + begin.height / 2 - root.top;
         let x2 = end.left - root.left, y2 = end.top + end.height / 2 - root.top;
 
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 4;
         ctx.strokeStyle = '#000000';
         this.drawCurve(ctx, x1, y1, x2, y2);
     }
