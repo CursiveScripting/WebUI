@@ -86,11 +86,11 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         window.addEventListener('resize', this.resizeListener);
     
         this.updateSize();
-        this.drawLinks(this.ctx);
+        this.drawLinks();
     }
 
     componentDidUpdate() {
-        this.drawLinks(this.ctx);
+        this.drawLinks();
     }
     
     componentWillUnmount() {
@@ -134,7 +134,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         ));
     }
 
-    private drawLinks(ctx: CanvasRenderingContext2D) {
+    private drawLinks() {
+        let ctx = this.ctx;
         ctx.clearRect(0, 0, this.state.width, this.state.height);
         let root = this.root.getBoundingClientRect();
         
@@ -345,32 +346,32 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             this.draggingStep.x = this.alignToGrid(this.draggingStep.x);
             this.draggingStep.y = this.alignToGrid(this.draggingStep.y);
 
+            this.getStepDisplay(this.draggingStep).forceUpdate();
+            this.drawLinks();
+
             this.draggingStep = undefined;
             this.props.stepDragging(undefined);
-
-            // TODO: only update the step that was dragged!
-            this.forceUpdate();
         }
 
         else if (this.draggingVariable !== undefined) {
             this.draggingVariable.x = this.alignToGrid(this.draggingVariable.x);
             this.draggingVariable.y = this.alignToGrid(this.draggingVariable.y);
 
+            this.getVariableDisplay(this.draggingVariable).forceUpdate();
+            this.drawLinks();
+
             this.draggingVariable = undefined;
             this.props.variableDragging(undefined);
-
-            // TODO: only update the variable that was dragged!
-            this.forceUpdate();
         }
 
         else if (this.draggingStepConnector !== undefined) {
             this.draggingStepConnector = undefined;
-            this.drawLinks(this.ctx);
+            this.drawLinks();
         }
 
         else if (this.draggingParamConnector !== undefined) {
             this.draggingParamConnector = undefined;
-            this.drawLinks(this.ctx);
+            this.drawLinks();
         }
 
         this.dragX = 0;
@@ -385,21 +386,23 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.dragY = e.clientY;
 
         if (this.draggingStepConnector !== undefined || this.draggingParamConnector !== undefined) {
-            this.drawLinks(this.ctx);
+            this.drawLinks();
         }
 
         else if (this.draggingStep !== undefined) {
             this.draggingStep.x += dx;
             this.draggingStep.y += dy;
             
-            this.forceUpdate(); // TODO: only update the step that was dragged!
+            this.getStepDisplay(this.draggingStep).forceUpdate();
+            this.drawLinks();
         }
 
         else if (this.draggingVariable !== undefined) {
             this.draggingVariable.x += dx;
             this.draggingVariable.y += dy;
 
-            this.forceUpdate(); // TODO: only update the variable that was dragged!
+            this.getVariableDisplay(this.draggingVariable).forceUpdate();
+            this.drawLinks();
         }
     }
 
@@ -420,7 +423,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.draggingStepConnector = undefined;
 
         if (dragInfo.step === step || dragInfo.input === input) {
-            this.drawLinks(this.ctx);
+            this.drawLinks();
             return;
         }
 
@@ -446,7 +449,9 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         fromStep.returnPaths.push(newPath);
         toStep.incomingPaths.push(newPath);
 
-        this.forceUpdate();
+        this.getStepDisplay(fromStep).forceUpdate();
+        this.getStepDisplay(toStep).forceUpdate();
+        this.drawLinks();
     }
 
     private fieldLinkDragStart(field: DataField, input: boolean, step?: Step) {
@@ -472,11 +477,22 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.draggingParamConnector = undefined;
         
         if (this.createLink(dragInfo, dropInfo)) {
-            this.forceUpdate();
+            if (dragInfo.step !== undefined) {
+                this.getStepDisplay(dragInfo.step).forceUpdate();
+            }
+            else {
+                this.getVariableDisplay(dragInfo.field as Variable).forceUpdate();
+            }
+
+            if (dropInfo.step !== undefined) {
+                this.getStepDisplay(dropInfo.step).forceUpdate();
+            }
+            else {
+                this.getVariableDisplay(dropInfo.field as Variable).forceUpdate();
+            }
         }
-        else {
-            this.drawLinks(this.ctx);
-        }
+
+        this.drawLinks();
     }
 
     private createLink(from: ParamConnectorDragInfo, to: ParamConnectorDragInfo) {
