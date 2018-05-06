@@ -2,6 +2,7 @@ import * as React from 'react';
 import { ProcessEditor } from './ui/ProcessEditor';
 import { Workspace } from './data';
 import './App.css';
+import { ProcessLoading } from './io/ProcessLoading';
 
 interface AppState {
     workspace?: Workspace;
@@ -22,8 +23,16 @@ class App extends React.PureComponent<{}, AppState> {
                 throw 'Failed to load workspace XML';
             }
 
+            let workspace = Workspace.loadWorkspace(request.responseXML);
+            let processXml = sessionStorage.getItem('saved');
+            if (processXml !== null) {
+                let tmp = document.createElement('div');
+                tmp.innerHTML = processXml;
+                ProcessLoading.loadProcesses(workspace, tmp.firstChild as HTMLElement);
+            }
+
             this.setState({
-                workspace: Workspace.loadWorkspace(request.responseXML),
+                workspace: workspace,
             });
         };
         request.send();
@@ -38,13 +47,13 @@ class App extends React.PureComponent<{}, AppState> {
             <ProcessEditor
                 className="fullScreen"
                 workspace={this.state.workspace}
+                save={xml => this.saveProcesses(xml)}
             />
         );
     }
 
-    private saveProcesses(xml: XMLDocument) {
-        console.log('not really saving...', xml);
-        return true;
+    private saveProcesses(processXml: string) {
+        sessionStorage.setItem('saved', processXml);
     }
 }
 

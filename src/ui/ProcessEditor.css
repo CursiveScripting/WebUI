@@ -67,3 +67,18 @@
     font-size: 2em;
     content: '\2672';
 }
+
+.saveTool__icon {
+    cursor: pointer;
+    position: relative;
+    top: -0.7em;
+}
+
+.saveTool--invalid .saveTool__icon {
+    color: #ff0000;
+}
+
+.saveTool__icon::before {
+    font-size: 2em;
+    content: '\26BF';
+}

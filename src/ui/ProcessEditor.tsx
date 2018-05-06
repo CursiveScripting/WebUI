@@ -4,11 +4,13 @@ import { ProcessContent } from './ProcessContent';
 import { ProcessList } from './ProcessList';
 import { DataTypePicker } from './DataTypePicker';
 import './ProcessEditor.css';
+import { ProcessSaving } from '../io/ProcessSaving';
 
 interface ProcessEditorProps {
     workspace: Workspace;
     initialProcess?: UserProcess;
     className?: string;
+    save?: (xml: string) => void;
 }
 
 interface ProcessEditorState {
@@ -74,6 +76,19 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             binClasses += ' binTool--active';
         }
 
+        let saveButton;
+
+        if (this.props.save !== undefined) {
+            let saveClasses = 'tool saveTool';
+
+            saveButton = (
+                <div className={saveClasses} onClick={() => this.saveProcesses()}>
+                    <div className="tool__label">Click to save:</div>
+                    <div className="tool__icon saveTool__icon" />
+                </div>
+            );
+        }
+
         return (
             <div className="processEditor__toolbar">
                 <DataTypePicker
@@ -89,6 +104,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     <div className="tool__label">Drag here to remove:</div>
                     <div className="tool__icon binTool__icon" />
                 </div>
+                {saveButton}
             </div>
         );
     }
@@ -149,5 +165,14 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             selectedStep: undefined,
             selectedVariable: undefined,
         });
+    }
+
+    private saveProcesses() {
+        if (this.props.save === undefined) {
+            return;
+        }
+
+        let xml = ProcessSaving.saveProcesses(this.props.workspace.userProcesses);
+        this.props.save(xml);
     }
 }
