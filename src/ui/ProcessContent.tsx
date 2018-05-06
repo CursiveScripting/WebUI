@@ -343,6 +343,10 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
 
         else if (this.draggingStep !== undefined) {
+            if (this.props.process.steps.indexOf(this.draggingStep) === -1) {
+                return;
+            }
+
             this.draggingStep.x = this.alignToGrid(this.draggingStep.x);
             this.draggingStep.y = this.alignToGrid(this.draggingStep.y);
 
@@ -354,6 +358,10 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
 
         else if (this.draggingVariable !== undefined) {
+            if (this.props.process.variables.indexOf(this.draggingVariable) === -1) {
+                return;
+            }
+
             this.draggingVariable.x = this.alignToGrid(this.draggingVariable.x);
             this.draggingVariable.y = this.alignToGrid(this.draggingVariable.y);
 
@@ -390,6 +398,9 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
 
         else if (this.draggingStep !== undefined) {
+            if (this.props.process.steps.indexOf(this.draggingStep) === -1) {
+                return;
+            }
             this.draggingStep.x += dx;
             this.draggingStep.y += dy;
             
@@ -398,6 +409,10 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
 
         else if (this.draggingVariable !== undefined) {
+            if (this.props.process.variables.indexOf(this.draggingVariable) === -1) {
+                return;
+            }
+
             this.draggingVariable.x += dx;
             this.draggingVariable.y += dy;
 
