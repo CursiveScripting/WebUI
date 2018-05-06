@@ -320,8 +320,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             let root = this.root.getBoundingClientRect();
 
             // get content-relative coordinates from screen-relative drag coordinates
-            let x = this.dragX - root.left;
-            let y = this.dragY - root.top;
+            let x = this.alignToGrid(this.dragX - root.left);
+            let y = this.alignToGrid(this.dragY - root.top);
 
             let process = this.props.process;
             let newStep = new ProcessStep(process.getNextStepID(), this.props.dropStep, process, x, y);
@@ -333,8 +333,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             let root = this.root.getBoundingClientRect();
 
             // get content-relative coordinates from screen-relative drag coordinates
-            let x = this.dragX - root.left;
-            let y = this.dragY - root.top;
+            let x = this.alignToGrid(this.dragX - root.left);
+            let y = this.alignToGrid(this.dragY - root.top);
 
             let process = this.props.process;
             let newStep = new StopStep(process.getNextStepID(), process, null, x, y);
