@@ -28,7 +28,6 @@ export class ProcessLoading {
                 continue;
             }
 
-            // process.workspace = workspace;
             userProcesses.add(process.name, process);
         }
 

@@ -3,6 +3,7 @@ import { Parameter } from './Parameter';
 import { Step } from './Step';
 import { Variable } from './Variable';
 import { Type } from './Type';
+import { StartStep } from './StartStep';
 
 export class UserProcess extends Process {
     steps: Step[];
@@ -65,13 +66,10 @@ export class UserProcess extends Process {
         }
     }
 
-    /*
     createDefaultSteps() {
         let step: Step = new StartStep(this.getNextStepID(), this, 32, 32);
-        step.createDanglingReturnPaths();
         this.steps.push(step);
     }
-    */
 
     removeStep(step: Step) {
         let index = this.steps.indexOf(step);
