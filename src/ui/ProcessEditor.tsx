@@ -4,7 +4,6 @@ import { ProcessContent } from './ProcessContent';
 import { ProcessList } from './ProcessList';
 import { DataTypePicker } from './DataTypePicker';
 import './ProcessEditor.css';
-import { ProcessSaving } from '../io/ProcessSaving';
 
 interface ProcessEditorProps {
     workspace: Workspace;
@@ -172,7 +171,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             return;
         }
 
-        let xml = ProcessSaving.saveProcesses(this.props.workspace.userProcesses);
+        let xml = this.props.workspace.saveProcesses();
         this.props.save(xml);
     }
 }

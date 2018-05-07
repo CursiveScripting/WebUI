@@ -2,7 +2,6 @@ import * as React from 'react';
 import { ProcessEditor } from './ui/ProcessEditor';
 import { Workspace } from './data';
 import './App.css';
-import { ProcessLoading } from './io/ProcessLoading';
 
 interface AppState {
     workspace?: Workspace;
@@ -23,12 +22,13 @@ class App extends React.PureComponent<{}, AppState> {
                 throw 'Failed to load workspace XML';
             }
 
-            let workspace = Workspace.loadWorkspace(request.responseXML);
+            let workspace = Workspace.loadFromDOM(request.responseXML);
+
             let processXml = sessionStorage.getItem('saved');
             if (processXml !== null) {
                 let tmp = document.createElement('div');
                 tmp.innerHTML = processXml;
-                ProcessLoading.loadProcesses(workspace, tmp.firstChild as HTMLElement);
+                workspace.loadProcessesFromString(processXml);
             }
 
             this.setState({
