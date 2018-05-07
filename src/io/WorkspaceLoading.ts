@@ -49,16 +49,19 @@ export class WorkspaceLoading {
             validationExpression = new RegExp(validation);
         }
 
-        let extendsType: Type | undefined;
+        let extendsType: Type | null;
         if (typeNode.hasAttribute('extends')) {
             let extendsName = typeNode.getAttribute('extends') as string;
             if (types.contains(extendsName)) {
                 extendsType = types.getByName(extendsName);
             }
             else {
-                extendsType = undefined;
+                extendsType = null;
                 workspace.showError(`Type ${name} extends a type which has not been defined: ${extendsName}.`);
             }
+        }
+        else {
+            extendsType = null;
         }
 
         let guidance: string | undefined;
@@ -128,11 +131,8 @@ export class WorkspaceLoading {
             let paramName = paramNodes[i].getAttribute('name') as string;
             let paramTypeName = paramNodes[i].getAttribute('type') as string;
             
-            let paramType: Type;
-            if (types.contains(paramTypeName)) {
-                paramType = types.getByName(paramTypeName);
-            }
-            else {
+            let paramType = types.getByName(paramTypeName);
+            if (paramType === null) {
                 workspace.showError(`The '${processName}' ${procTypeName} process has an ${inputOrOutput} (${paramName})`
                  + ` with an unrecognised type: ${paramTypeName}.`);
                 continue;

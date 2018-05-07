@@ -102,7 +102,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     private renderSteps() {
         this.stepDisplays = [];
 
-        return this.props.process.steps.map((step, idx) => (
+        return this.props.process.steps.values.map((step, idx) => (
             <StepDisplay
                 ref={s => { if (s !== null) { this.stepDisplays.push(s); }}}
                 step={step}
@@ -142,7 +142,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         for (let stepDisplay of this.stepDisplays) {
             for (let path of stepDisplay.props.step.incomingPaths) {
                 let beginStepDisplay = this.getStepDisplay(path.fromStep);
-
+                
                 let beginConnector = beginStepDisplay.getReturnConnector(path.name);
                 let endConnector = stepDisplay.entryConnector;
                 
@@ -325,7 +325,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
 
             let process = this.props.process;
             let newStep = new ProcessStep(process.getNextStepID(), this.props.dropStep, process, x, y);
-            process.steps.push(newStep);
+            process.steps.add(newStep.uniqueID, newStep);
             this.props.itemDropped();
         }
 
@@ -338,12 +338,12 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
 
             let process = this.props.process;
             let newStep = new StopStep(process.getNextStepID(), process, null, x, y);
-            process.steps.push(newStep);
+            process.steps.add(newStep.uniqueID, newStep);
             this.props.itemDropped();
         }
 
         else if (this.draggingStep !== undefined) {
-            if (this.props.process.steps.indexOf(this.draggingStep) === -1) {
+            if (this.props.process.steps.values.indexOf(this.draggingStep) === -1) {
                 return;
             }
 
@@ -398,7 +398,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
 
         else if (this.draggingStep !== undefined) {
-            if (this.props.process.steps.indexOf(this.draggingStep) === -1) {
+            if (this.props.process.steps.values.indexOf(this.draggingStep) === -1) {
                 return;
             }
             this.draggingStep.x += dx;

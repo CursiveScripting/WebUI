@@ -2,7 +2,7 @@ import { Step, StepType } from './Step';
 import { UserProcess } from './UserProcess';
 
 export class StartStep extends Step {
-    constructor(uniqueID: number, parentProcess: UserProcess, x: number, y: number) {
+    constructor(uniqueID: string, parentProcess: UserProcess, x: number, y: number) {
         super(uniqueID, StepType.Start, parentProcess, x, y);
     }
 

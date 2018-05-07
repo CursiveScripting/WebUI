@@ -52,7 +52,7 @@ export class ProcessSaving {
         let steps = parent.ownerDocument.createElement('Steps');
         element.appendChild(steps);
 
-        for (let step of process.steps) {
+        for (let step of process.steps.values) {
             this.saveStep(step, steps);
         }
     }

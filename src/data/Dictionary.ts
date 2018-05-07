@@ -2,8 +2,9 @@
     values: T[] = [];
     private valuesByName: { [key: string]: T } = {};
 
-    getByName(key: string) {
-        return this.valuesByName[key];
+    getByName(key: string): T | null {
+        let val = this.valuesByName[key];
+        return val === undefined ? null : val;
     }
 
     add(key: string, value: T) {
@@ -27,5 +28,10 @@
 
         let index = this.values.indexOf(value);
         this.values.splice(index, 1);
+    }
+
+    clear() {
+        this.valuesByName = {};
+        this.values = [];
     }
 }

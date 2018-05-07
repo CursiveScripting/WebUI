@@ -11,7 +11,7 @@ export class ProcessLoading {
             let process = this.loadProcessDefinition(workspace, processNodes[i]);
             
             let existing = userProcesses.getByName(process.name);
-            if (existing !== undefined) {
+            if (existing !== null) {
                 if (existing.fixedSignature) {
                     existing.variables = process.variables;
                     existing.folder = process.folder;
@@ -117,34 +117,32 @@ export class ProcessLoading {
         systemProcesses: Dictionary<SystemProcess>
     ) {
         let name = processNode.getAttribute('name') as string;
-        if (!userProcesses.contains(name)) {
+
+        let process = userProcesses.getByName(name);
+        if (process === null) {
             return;
         }
-        
-        let process = userProcesses.getByName(name);
-        process.steps = [];
-        let stepsByID: {[key: number]: Step} = {};
+
+        process.steps.clear();
         let returnPathsToProcess: [Step, Element][] = [];
 
         let startNodes = processNode.getElementsByTagName('Start');
         for (let i = 0; i < startNodes.length; i++) {
             let stepNode = startNodes[i];
-            let id = parseInt(stepNode.getAttribute('ID') as string);
+            let id = stepNode.getAttribute('ID') as string;
             let x = parseInt(stepNode.getAttribute('x') as string);
             let y = parseInt(stepNode.getAttribute('y') as string);
 
-            process.noteUsedStepID(id);
             let step = new StartStep(id, process, x, y);
             this.loadStepOutputs(workspace, process, step, stepNode);
-            process.steps.push(step);
-            stepsByID[step.uniqueID] = step;
+            process.steps.add(id, step);
             returnPathsToProcess.push([step, stepNode]);
         }
 
         let stopNodes = processNode.getElementsByTagName('Stop');
         for (let i = 0; i < stopNodes.length; i++) {
             let stepNode = stopNodes[i];
-            let id = parseInt(stepNode.getAttribute('ID') as string);
+            let id = stepNode.getAttribute('ID') as string;
             let x = parseInt(stepNode.getAttribute('x') as string);
             let y = parseInt(stepNode.getAttribute('y') as string);
 
@@ -164,22 +162,20 @@ export class ProcessLoading {
                 }
             }
 
-            process.noteUsedStepID(id);
             let step = new StopStep(id, process, returnPath, x, y);
             this.loadStepInputs(workspace, process, step, stepNode);
-            process.steps.push(step);
-            stepsByID[step.uniqueID] = step;
+            process.steps.add(id, step);
             returnPathsToProcess.push([step, stepNode]);
         }
 
         let stepNodes = processNode.getElementsByTagName('Step');
         for (let i = 0; i < stepNodes.length; i++) {
             let stepNode = stepNodes[i];
-            let id = parseInt(stepNode.getAttribute('ID') as string);
+            let id = stepNode.getAttribute('ID') as string;
             let x = parseInt(stepNode.getAttribute('x') as string);
             let y = parseInt(stepNode.getAttribute('y') as string);
 
-            let childProcess: Process;
+            let childProcess: Process | null;
             let childProcessName = stepNode.getAttribute('process') as string;
             if (systemProcesses.contains(childProcessName)) {
                 childProcess = systemProcesses.getByName(childProcessName);
@@ -188,22 +184,24 @@ export class ProcessLoading {
                 childProcess = userProcesses.getByName(childProcessName);
             }
             else {
+                childProcess = null;
+            }
+
+            if (childProcess === null) {
                 workspace.showError(`Step ${id} of the "${process.name}" process wraps an unknown process: ${name}.`
                  + ' That process doesn\'t exist in this workspace.');
                 continue;
             }
 
-            process.noteUsedStepID(id);
             let step = new ProcessStep(id, childProcess, process, x, y);
             this.loadStepInputs(workspace, process, step, stepNode);
             this.loadStepOutputs(workspace, process, step, stepNode);
-            process.steps.push(step);
-            stepsByID[step.uniqueID] = step;
+            process.steps.add(id, step);
             returnPathsToProcess.push([step, stepNode]);
         }
         
         for (let step of returnPathsToProcess) {
-            this.loadReturnPaths(workspace, step[0], step[1], stepsByID);
+            this.loadReturnPaths(workspace, step[0], step[1], process);
         }
     }
 
@@ -289,21 +287,22 @@ export class ProcessLoading {
         return null;
     }
 
-    private static loadReturnPaths(workspace: Workspace, step: Step, stepNode: Element, stepsByID: { [key: number]: Step }) {
+    private static loadReturnPaths(workspace: Workspace, step: Step, stepNode: Element, process: UserProcess) {
         let returnPathNodes = stepNode.getElementsByTagName('ReturnPath');
         
         for (let i = 0; i < returnPathNodes.length; i++) {
             let returnPathNode = returnPathNodes[i];
             let targetStepID = returnPathNode.getAttribute('targetStepID') as string;
-            let targetStep = stepsByID[targetStepID];
+            let targetStep = process.steps.getByName(targetStepID);
 
-            if (targetStep === undefined) {
+            if (targetStep === null) {
                 continue;
             }
 
             let returnPath = new ReturnPath(step, targetStep, null);
             // returnPath.onlyPath = true;
             step.returnPaths.push(returnPath);
+            targetStep.incomingPaths.push(returnPath);
         }
 
         returnPathNodes = stepNode.getElementsByTagName('NamedReturnPath');
@@ -311,9 +310,9 @@ export class ProcessLoading {
         for (let i = 0; i < returnPathNodes.length; i++) {
             let returnPathNode = returnPathNodes[i];
             let targetStepID = returnPathNode.getAttribute('targetStepID') as string;
-            let targetStep = stepsByID[targetStepID];
+            let targetStep = process.steps.getByName(targetStepID);
 
-            if (targetStep === undefined) {
+            if (targetStep === null) {
                 continue;
             }
 

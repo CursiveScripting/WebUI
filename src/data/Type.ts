@@ -4,7 +4,7 @@
     constructor(
         readonly name: string,
         public color: string,
-        readonly extendsType: Type | undefined,
+        readonly extendsType: Type | null,
         private readonly validation: RegExp | undefined,
         readonly guidance?: string
     ) {
@@ -19,7 +19,7 @@
     }
     
     isAssignableFrom(other: Type) {
-        let test: Type | undefined = this;
+        let test: Type | null = this;
 
         do { 
             if (test === other) {
@@ -27,7 +27,7 @@
             }
             
             test = test.extendsType;
-        } while (test !== undefined);
+        } while (test !== null);
 
         return false;
     }

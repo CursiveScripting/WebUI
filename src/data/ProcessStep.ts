@@ -4,7 +4,7 @@ import { UserProcess } from './UserProcess';
 
 export class ProcessStep extends Step {
     constructor(
-        uniqueID: number,
+        uniqueID: string,
         readonly process: Process,
         parentProcess: UserProcess,
         x: number,

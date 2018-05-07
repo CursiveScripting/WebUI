@@ -12,19 +12,21 @@ export class Workspace {
     types: Dictionary<Type>;
     
     public static loadFromString(workspaceXml: string) {
-        let tmp = document.createElement('div');
-        tmp.innerHTML = workspaceXml;
-        return WorkspaceLoading.loadWorkspace(tmp.firstChild as HTMLElement);
+        return WorkspaceLoading.loadWorkspace(Workspace.stringToElement(workspaceXml));
     }
 
     public static loadFromDOM(workspaceXml: Document) {
         return WorkspaceLoading.loadWorkspace(workspaceXml.firstChild as HTMLElement);
     }
     
-    public loadProcessesFromString(processXml: string) {
+    private static stringToElement(xml: string) {
         let tmp = document.createElement('div');
-        tmp.innerHTML = processXml;
-        return ProcessLoading.loadProcesses(this, tmp.firstChild as HTMLElement);
+        tmp.innerHTML = xml;
+        return tmp.firstChild as HTMLElement;
+    }
+
+    public loadProcessesFromString(processXml: string) {
+        return ProcessLoading.loadProcesses(this, Workspace.stringToElement(processXml));
     }
 
     public loadProcessesFromDOM(processXml: Document) {

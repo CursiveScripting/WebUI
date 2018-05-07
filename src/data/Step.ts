@@ -14,7 +14,7 @@ export abstract class Step {
     public returnPaths: ReturnPath[] = [];
 
     constructor(
-        public readonly uniqueID: number,
+        public readonly uniqueID: string,
         public readonly stepType: StepType,
         readonly parentProcess: UserProcess,
         public x: number,

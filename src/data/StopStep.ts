@@ -2,7 +2,7 @@ import { Step, StepType } from './Step';
 import { UserProcess } from './UserProcess';
 
 export class StopStep extends Step {
-    constructor(uniqueID: number, parentProcess: UserProcess, public returnPath: string | null, x: number, y: number) {
+    constructor(uniqueID: string, parentProcess: UserProcess, public returnPath: string | null, x: number, y: number) {
         super(uniqueID, StepType.Stop, parentProcess, x, y);
         /*
         this.radius = 45;

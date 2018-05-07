@@ -4,9 +4,10 @@ import { Step } from './Step';
 import { Variable } from './Variable';
 import { Type } from './Type';
 import { StartStep } from './StartStep';
+import { Dictionary } from './Dictionary';
 
 export class UserProcess extends Process {
-    steps: Step[];
+    steps: Dictionary<Step>;
     private valid: boolean;
     private nextStepID: number;
 
@@ -22,7 +23,7 @@ export class UserProcess extends Process {
     ) {
         super(name, inputs, outputs, returnPaths, true, description, folder);
     
-        this.steps = [];
+        this.steps = new Dictionary<Step>();
         this.valid = false;
         this.nextStepID = 1;
     }
@@ -32,7 +33,7 @@ export class UserProcess extends Process {
     }
 
     getNextStepID() {
-        return this.nextStepID++;
+        return (this.nextStepID++).toString();
     }
 
     noteUsedStepID(stepID: number) {
@@ -41,7 +42,7 @@ export class UserProcess extends Process {
 
     validate() {
         let valid = true;
-        for (let step of this.steps) {
+        for (let step of this.steps.values) {
             if (!step.validate()) {
                 valid = false;
             }
@@ -68,22 +69,21 @@ export class UserProcess extends Process {
 
     createDefaultSteps() {
         let step: Step = new StartStep(this.getNextStepID(), this, 32, 32);
-        this.steps.push(step);
+        this.steps.add(step.uniqueID, step);
     }
 
     removeStep(step: Step) {
-        let index = this.steps.indexOf(step);
-        this.steps.splice(index, 1);
+        this.steps.remove(step.uniqueID);
 
         // any return paths that lead to or come from this step should be removed
         for (let returnPath of step.incomingPaths) {
             let removeFrom = returnPath.fromStep.returnPaths;
-            index = removeFrom.indexOf(returnPath);
+            let index = removeFrom.indexOf(returnPath);
             removeFrom.splice(index, 1);
         }
         for (let returnPath of step.returnPaths) {
             let removeFrom = returnPath.toStep.incomingPaths;
-            index = removeFrom.indexOf(returnPath);
+            let index = removeFrom.indexOf(returnPath);
             removeFrom.splice(index, 1);
         }
 
@@ -94,7 +94,7 @@ export class UserProcess extends Process {
             }
 
             let removeFrom = param.link.links;
-            index = removeFrom.indexOf(param);
+            let index = removeFrom.indexOf(param);
             removeFrom.splice(index, 1);
         }
         for (let param of step.outputs) {
@@ -103,7 +103,7 @@ export class UserProcess extends Process {
             }
 
             let removeFrom = param.link.links;
-            index = removeFrom.indexOf(param);
+            let index = removeFrom.indexOf(param);
             removeFrom.splice(index, 1);
         }
     }
