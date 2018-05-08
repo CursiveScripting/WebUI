@@ -33,11 +33,12 @@ export class UserProcess extends Process {
     }
 
     getNextStepID() {
-        return (this.nextStepID++).toString();
-    }
-
-    noteUsedStepID(stepID: number) {
-        this.nextStepID = Math.max(this.nextStepID, stepID + 1);
+        while (true) {
+            let stepID = (this.nextStepID++).toString();
+            if (!this.steps.contains(stepID)) {
+                return stepID;
+            } 
+        }
     }
 
     validate() {
