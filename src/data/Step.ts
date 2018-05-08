@@ -1,6 +1,7 @@
 import { Parameter } from './Parameter';
 import { ReturnPath } from './ReturnPath';
 import { UserProcess } from './UserProcess';
+import { Positionable } from './Positionable';
 
 export enum StepType {
     Start,
@@ -9,7 +10,7 @@ export enum StepType {
     UserProcess,
 }
 
-export abstract class Step {
+export abstract class Step implements Positionable {
     public incomingPaths: ReturnPath[] = [];
     public returnPaths: ReturnPath[] = [];
 

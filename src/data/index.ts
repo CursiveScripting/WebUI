@@ -2,7 +2,7 @@ export { DataField } from './DataField';
 export { Dictionary } from './Dictionary';
 export { Parameter } from './Parameter';
 export { ReturnPath } from './ReturnPath';
-export { Position } from './Position';
+export { Positionable } from './Positionable';
 export { Process } from './Process';
 export { ProcessStep } from './ProcessStep';
 export { StartStep } from './StartStep';

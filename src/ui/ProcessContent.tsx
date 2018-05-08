@@ -308,7 +308,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             let x = this.alignToGrid(this.dragX - root.left);
             let y = this.alignToGrid(this.dragY - root.top);
 
-            let newVar = new Variable(name , this.props.dropVariableType, x, y);
+            let newVar = new Variable(name, this.props.dropVariableType, x, y);
             this.props.process.variables.push(newVar);
             this.props.itemDropped();
         }
