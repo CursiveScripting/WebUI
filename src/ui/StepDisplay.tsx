@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Parameter, Step, StepType } from '../data';
+import { Parameter, Step, StepType, StopStep } from '../data';
 import { ParameterDisplay } from './ParameterDisplay';
 import './StepDisplay.css';
 
@@ -107,6 +107,13 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
     private renderOutConnectors() {
         let pathIdentifiers = this.props.step.returnPathNames;
         if (pathIdentifiers === null) {
+            if (this.props.step.stepType === StepType.Stop) {
+                let pathName = (this.props.step as StopStep).returnPath;
+                if (pathName !== null) {
+                    return <div className="step__returnPathName">{pathName}</div>;
+                }
+            }
+
             return undefined;
         }
         if (pathIdentifiers.length === 0) {

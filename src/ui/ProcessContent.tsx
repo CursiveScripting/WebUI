@@ -9,7 +9,7 @@ interface ProcessContentProps {
     className?: string;
     dropVariableType?: Type;
     dropStep?: Process;
-    dropStopStep: boolean;
+    dropStopStep?: string | null;
     itemDropped: () => void;
     stepDragging: (step: Step | undefined) => void;
     variableDragging: (variable: Variable | undefined) => void;
@@ -326,7 +326,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             this.props.itemDropped();
         }
 
-        else if (this.props.dropStopStep) {
+        else if (this.props.dropStopStep !== undefined) {
             let root = this.root.getBoundingClientRect();
 
             // get content-relative coordinates from screen-relative drag coordinates
@@ -334,7 +334,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             let y = this.alignToGrid(this.dragY - root.top);
 
             let process = this.props.process;
-            let newStep = new StopStep(process.getNextStepID(), process, null, x, y);
+            let newStep = new StopStep(process.getNextStepID(), process, this.props.dropStopStep, x, y);
             process.steps.add(newStep.uniqueID, newStep);
             this.props.itemDropped();
         }

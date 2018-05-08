@@ -36,20 +36,37 @@
     align-self: center;
 }
 
-.stopStepTool__icon {
-    position: relative;
-    top: -1.2em;
-    cursor: move;
-    color: #801a1a;
+.stopStepTool__items {
+    display: flex;
 }
 
-.stopStepTool--active .stopStepTool__icon {
-    color: #ff3333;
+.stopStepTool__icon {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    cursor: move;
+    top: 0.3em;
+    text-shadow: 0px 0px 4px white, 0px 0px 4px white, 0px 0px 4px white, 0px 0px 4px white, 0px 0px 4px white;
+    min-height: 2em;
+    min-width: 2em;
 }
 
 .stopStepTool__icon::before {
+    position: absolute;
+    text-shadow: none;
     font-size: 3em;
+    top: -0.5em;
+    z-index: -1;
+    color: #801a1a;
     content: '\25A0';
+}
+
+.stopStepTool__icon--active::before, .stopStepTool__icon:hover::before {
+    color: #ff3333;
+}
+
+.stopStepTool__icon:not(:first-child) {
+    margin-left: 1em;
 }
 
 .binTool__icon {

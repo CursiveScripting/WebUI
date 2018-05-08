@@ -16,7 +16,7 @@ interface ProcessEditorState {
     openProcess: UserProcess;
     selectedDataType?: Type;
     selectedProcess?: Process;
-    selectedStopStep: boolean;
+    selectedStopStep?: string | null;
     selectedStep?: Step;
     selectedVariable?: Variable;
 }
@@ -29,7 +29,6 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             openProcess: props.initialProcess === undefined
                 ? props.workspace.userProcesses.values[0]
                 : props.initialProcess,
-            selectedStopStep: false,
         };
     }
     
@@ -65,11 +64,6 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
     }
 
     private renderToolbar() {
-        let stopClasses = 'tool stopStepTool';
-        if (this.state.selectedStopStep) {
-            stopClasses += ' stopStepTool--active';
-        }
-
         let binClasses = 'tool binTool';
         if (this.state.selectedStep !== undefined || this.state.selectedVariable !== undefined) {
             binClasses += ' binTool--active';
@@ -95,9 +89,11 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     selectedType={this.state.selectedDataType}
                     typeSelected={type => this.selectDataType(type)}
                 />
-                <div className={stopClasses} onMouseDown={() => this.selectStopStep()}>
+                <div className="tool stopStepTool">
                     <div className="tool__label">Add a stop step:</div>
-                    <div className="tool__icon stopStepTool__icon" />
+                    <div className="stopStepTool__items">
+                        {this.renderReturnPathSelectors()}
+                    </div>
                 </div>
                 <div className={binClasses} onMouseUp={() => this.removeSelectedItem()}>
                     <div className="tool__label">Drag here to remove:</div>
@@ -106,6 +102,31 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                 {saveButton}
             </div>
         );
+    }
+
+    private renderReturnPathSelectors() {
+        let paths: (string | null)[] = this.state.openProcess.returnPaths;
+
+        if (paths.length === 0) {
+            paths = [null];
+        }
+
+        return paths.map((name, idx) => {
+            let classes = 'tool__icon stopStepTool__icon';
+            if (name === this.state.selectedStopStep) {
+                classes += ' stopStepTool__icon--active';
+            }
+
+            return (
+                <div
+                    className={classes}
+                    key={idx}
+                    onMouseDown={() => this.selectStopStep(name)}
+                >
+                    {name}
+                </div>
+            );
+        });
     }
 /*
     private openProcess(process: UserProcess) {
@@ -123,7 +144,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         this.setState({
             selectedDataType: type === this.state.selectedDataType ? undefined : type,
             selectedProcess: undefined,
-            selectedStopStep: false,
+            selectedStopStep: undefined,
         });
     }
 
@@ -131,15 +152,15 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         this.setState({
             selectedDataType: undefined,
             selectedProcess: process === this.state.selectedProcess ? undefined : process,
-            selectedStopStep: false,
+            selectedStopStep: undefined,
         });
     }
 
-    private selectStopStep() {
+    private selectStopStep(pathName: string | null) {
         this.setState({
             selectedDataType: undefined,
             selectedProcess: undefined,
-            selectedStopStep: !this.state.selectedStopStep,
+            selectedStopStep: this.state.selectedStopStep === pathName ? undefined : pathName,
         });
     }
 
@@ -147,7 +168,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         this.setState({
             selectedDataType: undefined,
             selectedProcess: undefined,
-            selectedStopStep: false,
+            selectedStopStep: undefined,
         });
     }
 
