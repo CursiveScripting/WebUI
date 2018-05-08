@@ -76,6 +76,10 @@
     justify-content: space-between;
 }
 
+.step__betweenConnectors {
+    width: 0.5em;
+}
+
 .step__outConnectors {
     display: flex;
     flex-direction: column;

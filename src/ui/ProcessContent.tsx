@@ -135,8 +135,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     private drawLinks() {
-        let ctx = this.ctx;
-        ctx.clearRect(0, 0, this.state.width, this.state.height);
+        this.ctx.clearRect(0, 0, this.state.width, this.state.height);
         let root = this.root.getBoundingClientRect();
         
         for (let stepDisplay of this.stepDisplays) {
@@ -147,7 +146,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 let endConnector = stepDisplay.entryConnector;
                 
                 if (beginConnector !== null && endConnector !== null) {
-                    this.drawFlowLink(ctx, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
+                    this.drawProcessLink(root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
                 }
             }
 
@@ -161,7 +160,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 let variableDisplay = this.getVariableDisplay(parameter.link);
                 let beginConnector = variableDisplay.outputConnector;
 
-                this.drawFieldLink(ctx, parameter.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
+                this.drawFieldLink(parameter.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
             }
 
             for (let parameter of stepDisplay.props.step.outputs) {
@@ -174,7 +173,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 let variableDisplay = this.getVariableDisplay(parameter.link);
                 let endConnector = variableDisplay.inputConnector;
 
-                this.drawFieldLink(ctx, parameter.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
+                this.drawFieldLink(parameter.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
             }
         }
 
@@ -190,13 +189,13 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             if (dragInfo.input) {
                 let beginConnector = this.getStepDisplay(dragInfo.step).entryConnector;
                 if (beginConnector !== null) {
-                    this.drawFlowLink(ctx, root, dragRect, beginConnector.getBoundingClientRect());
+                    this.drawProcessLink(root, dragRect, beginConnector.getBoundingClientRect());
                 }
             }
             else {
                 let endConnector = this.getStepDisplay(dragInfo.step).getReturnConnector(dragInfo.returnPath);
                 if (endConnector !== null) {
-                    this.drawFlowLink(ctx, root, endConnector.getBoundingClientRect(), dragRect);
+                    this.drawProcessLink(root, endConnector.getBoundingClientRect(), dragRect);
                 }
             }
         }
@@ -225,16 +224,15 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             }
 
             if (dragInfo.input) {
-                this.drawFieldLink(ctx, dragInfo.field.type, root, dragRect, connector.getBoundingClientRect());
+                this.drawFieldLink(dragInfo.field.type, root, dragRect, connector.getBoundingClientRect());
             }
             else {
-                this.drawFieldLink(ctx, dragInfo.field.type, root, connector.getBoundingClientRect(), dragRect);
+                this.drawFieldLink(dragInfo.field.type, root, connector.getBoundingClientRect(), dragRect);
             }
         }
     }
     
-    private drawFlowLink(
-        ctx: CanvasRenderingContext2D,
+    private drawProcessLink(
         root: ClientRect | DOMRect,
         begin: ClientRect | DOMRect,
         end: ClientRect | DOMRect
@@ -242,13 +240,12 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         let x1 = begin.right - root.left, y1 = begin.top + begin.height / 2 - root.top;
         let x2 = end.left - root.left, y2 = end.top + end.height / 2 - root.top;
 
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = '#000000';
-        this.drawCurve(ctx, x1, y1, x2, y2);
+        this.ctx.lineWidth = 4;
+        this.ctx.strokeStyle = '#000000';
+        this.drawCurve(x1, y1, x2, y2);
     }
 
     private drawFieldLink(
-        ctx: CanvasRenderingContext2D,
         type: Type,
         root: ClientRect | DOMRect,
         begin: ClientRect | DOMRect,
@@ -257,18 +254,18 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         let x1 = begin.right - root.left, y1 = begin.top + begin.height / 2 - root.top;
         let x2 = end.left - root.left, y2 = end.top + end.height / 2 - root.top;
 
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = type.color;
-        this.drawCurve(ctx, x1, y1, x2, y2);
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = type.color;
+        this.drawCurve(x1, y1, x2, y2);
     }
 
-    private drawCurve(ctx: CanvasRenderingContext2D, startX: number, startY: number, endX: number, endY: number) {
+    private drawCurve(startX: number, startY: number, endX: number, endY: number) {
         let cpOffset = Math.min(150, Math.abs(endY - startY));
 
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.bezierCurveTo(startX + cpOffset, startY, endX - cpOffset, endY, endX, endY);
-        ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.moveTo(startX, startY);
+        this.ctx.bezierCurveTo(startX + cpOffset, startY, endX - cpOffset, endY, endX, endY);
+        this.ctx.stroke();
     }
 
     private getStepDisplay(step: Step) {
