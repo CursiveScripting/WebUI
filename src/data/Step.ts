@@ -22,9 +22,6 @@ export abstract class Step {
     ) {
         /*
         this.drawText = this.dragging = false;
-
-        this.inputs = this.copyParameters(this.getInputSource());
-        this.outputs = this.copyParameters(this.getOutputSource());
         this.createRegions();
         */
     }
@@ -37,5 +34,9 @@ export abstract class Step {
     public validate() {
         // TODO: quite a lot
         return true;
+    }
+
+    protected copyParameters(params: Parameter[]) {
+        return params.map(param => new Parameter(param.name, param.type));
     }
 }
