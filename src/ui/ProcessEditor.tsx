@@ -75,16 +75,17 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         if (this.props.save !== undefined) {
             let saveClasses = 'tool saveTool';
             
-            let click;
+            let click, saveTitle;
             if (this.props.workspace.isValid) {
                 click = () => this.saveProcesses();
             }
             else {
                 saveClasses += ' saveTool--invalid';
+                saveTitle = 'You must correct all validation errors before saving';
             }
 
             saveButton = (
-                <div className={saveClasses} onClick={click}>
+                <div className={saveClasses} onClick={click} title={saveTitle}>
                     <div className="tool__label">Click to save:</div>
                     <div className="tool__icon saveTool__icon" />
                 </div>

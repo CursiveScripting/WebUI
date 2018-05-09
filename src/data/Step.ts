@@ -68,10 +68,14 @@ export abstract class Step implements Positionable {
     }
 
     private validateReturnPaths() {
-        // should have exactly 1 return path, with a null name
         if (this.returnPathNames === null) {
+            return true;
+        }
+
+        // should have exactly 1 return path, with a null name
+        if (this.returnPathNames.length === 0) {
             if (this.returnPaths.length !== 1) {
-                return false;
+                return false; // not got a (single) path
             }
 
             if (this.returnPaths[0].name !== null) {

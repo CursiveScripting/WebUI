@@ -1,6 +1,6 @@
 ﻿import { Process } from './Process';
 import { Parameter } from './Parameter';
-import { Step } from './Step';
+import { Step, StepType } from './Step';
 import { Variable } from './Variable';
 import { Type } from './Type';
 import { StartStep } from './StartStep';
@@ -53,7 +53,12 @@ export class UserProcess extends Process {
         }
 
         if (valid && full) {
-            // TODO: variable-assignment detection
+            let unassignedVariables = this.variables.filter(v => v.initialValue === null);
+            let currentStep = this.steps.values.filter(s => s.stepType === StepType.Start)[0];
+            
+            if (!this.checkUnassignedVariableUse(currentStep, [], unassignedVariables)) {
+                valid = false;
+            }
         }
         
         this.valid = valid;
@@ -121,5 +126,47 @@ export class UserProcess extends Process {
         for (let link of variable.links) {
             link.link = null;
         }
+    }
+
+    private checkUnassignedVariableUse(currentStep: Step, visitedSteps: Step[], unassignedVariables: Variable[]) {
+        visitedSteps.push(currentStep);
+
+        unassignedVariables = unassignedVariables.slice();
+
+        // remove variables that currentStep's outputs connect to from the unassigned list
+        for (let output of currentStep.outputs) {
+            if (output.link !== null) {
+                let index = unassignedVariables.indexOf(output.link);
+                if (index !== -1) {
+                    unassignedVariables.splice(index, 1);
+                }
+            }
+        }
+
+        let allValid = true;
+
+        for (let path of currentStep.returnPaths) {
+            let nextStep = path.toStep;
+
+            if (visitedSteps.indexOf(nextStep) !== -1) {
+                continue; // already processed this step, don't do it again
+            }
+
+            // check each input of nextStep, if it touches anything in unassignedVariables, that's not valid
+            for (let input of currentStep.inputs) {
+                if (input.link !== null) {
+                    let index = unassignedVariables.indexOf(input.link);
+                    if (index !== -1) {
+                        return false; // once an uninitialized variable is used, stop down this branch
+                    }
+                }
+            }
+
+            if (!this.checkUnassignedVariableUse(nextStep, visitedSteps, unassignedVariables)) {
+                allValid = false;
+            }
+        }
+
+        return allValid;
     }
 }
