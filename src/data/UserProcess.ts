@@ -41,16 +41,19 @@ export class UserProcess extends Process {
         }
     }
 
-    validate() {
+    validate(full: boolean) {
         let valid = true;
         for (let step of this.steps.values) {
+            if (full && step.isValid) {
+                continue;
+            }
             if (!step.validate()) {
                 valid = false;
             }
         }
 
-        if (valid) {
-            // TODO: any other validation rules? variable-assignment detection, etc?
+        if (valid && full) {
+            // TODO: variable-assignment detection
         }
         
         this.valid = valid;

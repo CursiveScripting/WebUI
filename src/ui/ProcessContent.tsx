@@ -14,6 +14,7 @@ interface ProcessContentProps {
     itemDropped: () => void;
     stepDragging: (step: Step | undefined) => void;
     variableDragging: (variable: Variable | undefined) => void;
+    connectionChanged: () => void;
 }
 
 interface ProcessContentState {
@@ -450,6 +451,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
 
         let existingPaths = fromStep.returnPaths.filter(r => r.name === returnPath);
+        let prevConnectedSteps = existingPaths.map(path => path.toStep);
+        
         for (let existingPath of existingPaths) {
             let removeFrom = existingPath.toStep;
             removeFrom.incomingPaths = removeFrom.incomingPaths.filter(rp => rp.fromStep !== fromStep || rp.name !== returnPath);
@@ -460,8 +463,18 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         fromStep.returnPaths.push(newPath);
         toStep.incomingPaths.push(newPath);
 
+        fromStep.setInvalid();
+        toStep.setInvalid();
+
         this.getStepDisplay(fromStep).forceUpdate();
         this.getStepDisplay(toStep).forceUpdate();
+        
+        for (let prevConnectedStep of prevConnectedSteps) {
+            prevConnectedStep.setInvalid();
+            this.getStepDisplay(prevConnectedStep).forceUpdate();
+        }
+
+        this.props.connectionChanged();
         this.drawLinks();
     }
 
@@ -489,6 +502,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         
         if (this.createLink(dragInfo, dropInfo)) {
             if (dragInfo.step !== undefined) {
+                dragInfo.step.setInvalid();
                 this.getStepDisplay(dragInfo.step).forceUpdate();
             }
             else {
@@ -496,6 +510,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             }
 
             if (dropInfo.step !== undefined) {
+                dropInfo.step.setInvalid();
                 this.getStepDisplay(dropInfo.step).forceUpdate();
             }
             else {
@@ -503,6 +518,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             }
         }
 
+        this.props.connectionChanged();
         this.drawLinks();
     }
 

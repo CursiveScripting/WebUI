@@ -31,6 +31,8 @@ class App extends React.PureComponent<{}, AppState> {
                 workspace.loadProcessesFromString(processXml);
             }
 
+            workspace.validate(true);
+
             this.setState({
                 workspace: workspace,
             });

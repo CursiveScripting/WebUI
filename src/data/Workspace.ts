@@ -10,6 +10,12 @@ export class Workspace {
     systemProcesses: Dictionary<SystemProcess>;
     userProcesses: Dictionary<UserProcess>;
     types: Dictionary<Type>;
+
+    private invalidProcesses: UserProcess[] = [];
+
+    get isValid(): boolean {
+        return this.invalidProcesses.length === 0;
+    }
     
     public static loadFromString(workspaceXml: string) {
         return WorkspaceLoading.loadWorkspace(Workspace.stringToElement(workspaceXml));
@@ -43,16 +49,31 @@ export class Workspace {
         this.types = new Dictionary<Type>();
     }
 
-    validate() {
-        let valid = true;
+    validate(full: boolean) {
+        this.invalidProcesses = [];
 
         for (let process of this.userProcesses.values) {
-            if (!process.validate()) {
-                valid = false;
+            if (full && process.isValid) {
+                continue;
+            }
+            if (!process.validate(full)) {
+                this.invalidProcesses.push(process);
             }
         }
 
-        return valid;
+        return this.invalidProcesses.length === 0;
+    }
+
+    updateValidation(process: UserProcess, isValid: boolean) {
+        if (isValid) {
+            let index = this.invalidProcesses.indexOf(process);
+            if (index !== -1) {
+                this.invalidProcesses.splice(index, 1); // remove
+            }
+        }
+        else {
+            this.invalidProcesses.push(process);
+        }
     }
     
     showError(message: string) {

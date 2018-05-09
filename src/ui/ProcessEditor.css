@@ -93,6 +93,7 @@
 
 .saveTool--invalid .saveTool__icon {
     color: #ff0000;
+    cursor: not-allowed;
 }
 
 .saveTool__icon::before {

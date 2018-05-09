@@ -31,6 +31,8 @@ export abstract class Step implements Positionable {
     public abstract get outputs(): Parameter[];
     public abstract get returnPathNames(): string[] | null;
 
+    public setInvalid() { this._isValid = false; }
+
     public validate() {
         let valid = true;
 

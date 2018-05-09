@@ -34,8 +34,6 @@ export class ProcessLoading {
         for (let i = 0; i < processNodes.length; i++) {
             this.loadProcessSteps(workspace, processNodes[i], userProcesses, systemProcesses);
         }
-
-        workspace.validate();
     }
 
     private static loadProcessDefinition(workspace: Workspace, processNode: Element): UserProcess {

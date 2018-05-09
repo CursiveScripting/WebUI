@@ -58,6 +58,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     itemDropped={() => this.dropCompleted()}
                     stepDragging={step => this.setState({ selectedStep: step })}
                     variableDragging={variable => this.setState({ selectedVariable: variable })}
+                    connectionChanged={() => this.revalidateOpenProcess(false)}
                 />
             </div>
         );
@@ -73,9 +74,17 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
 
         if (this.props.save !== undefined) {
             let saveClasses = 'tool saveTool';
+            
+            let click;
+            if (this.props.workspace.isValid) {
+                click = () => this.saveProcesses();
+            }
+            else {
+                saveClasses += ' saveTool--invalid';
+            }
 
             saveButton = (
-                <div className={saveClasses} onClick={() => this.saveProcesses()}>
+                <div className={saveClasses} onClick={click}>
                     <div className="tool__label">Click to save:</div>
                     <div className="tool__icon saveTool__icon" />
                 </div>
@@ -165,20 +174,25 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
     }
 
     private dropCompleted() {
+        this.revalidateOpenProcess(false);
+
         this.setState({
             selectedDataType: undefined,
             selectedProcess: undefined,
             selectedStopStep: undefined,
+            openProcess: this.state.openProcess,
         });
     }
 
     private removeSelectedItem() {
         if (this.state.selectedStep !== undefined && this.state.selectedStep.stepType !== StepType.Start) {
             this.state.openProcess.removeStep(this.state.selectedStep);
+            this.revalidateOpenProcess(true);
         }
 
         else if (this.state.selectedVariable !== undefined) {
             this.state.openProcess.removeVariable(this.state.selectedVariable);
+            this.revalidateOpenProcess(true);
         }
 
         this.setState({
@@ -194,5 +208,15 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
 
         let xml = this.props.workspace.saveProcesses();
         this.props.save(xml);
+    }
+
+    private revalidateOpenProcess(full: boolean) {
+        let wasValid = this.props.workspace.isValid;
+        let processValid = this.state.openProcess.validate(full);
+        this.props.workspace.updateValidation(this.state.openProcess, processValid);
+
+        if (wasValid !== this.props.workspace.isValid) {
+            this.forceUpdate(); // TODO: possibly just update save button in the toolbar, and process list
+        }
     }
 }
