@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Step, UserProcess, ReturnPath, Type, Variable, DataField, StopStep, ProcessStep, Process, Parameter } from '../data';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
+import { Positionable } from '../data/Positionable';
 import './ProcessContent.css';
 
 interface ProcessContentProps {
@@ -301,42 +302,27 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
 
     private dragStop() {
         if (this.props.dropVariableType !== undefined) {
-            let name = this.props.process.getNewVariableName(this.props.dropVariableType);
-            let root = this.root.getBoundingClientRect();
-
-            // get content-relative coordinates from screen-relative drag coordinates
-            let x = this.alignToGrid(this.dragX - root.left);
-            let y = this.alignToGrid(this.dragY - root.top);
-
-            let newVar = new Variable(name, this.props.dropVariableType, x, y);
-            this.props.process.variables.push(newVar);
-            this.props.itemDropped();
+            let dropVariableType = this.props.dropVariableType;
+            this.dropNewItem((x, y) => {
+                let newVar = new Variable(this.props.process.getNewVariableName(dropVariableType), dropVariableType, x, y);
+                this.props.process.variables.push(newVar);
+            });
         }
 
         else if (this.props.dropStep !== undefined) {
-            let root = this.root.getBoundingClientRect();
-
-            // get content-relative coordinates from screen-relative drag coordinates
-            let x = this.alignToGrid(this.dragX - root.left);
-            let y = this.alignToGrid(this.dragY - root.top);
-
-            let process = this.props.process;
-            let newStep = new ProcessStep(process.getNextStepID(), this.props.dropStep, process, x, y);
-            process.steps.add(newStep.uniqueID, newStep);
-            this.props.itemDropped();
+            let dropStep = this.props.dropStep;
+            this.dropNewItem((x, y) => {
+                let newStep = new ProcessStep(this.props.process.getNextStepID(), dropStep, this.props.process, x, y);
+                this.props.process.steps.add(newStep.uniqueID, newStep);
+            });
         }
 
         else if (this.props.dropStopStep !== undefined) {
-            let root = this.root.getBoundingClientRect();
-
-            // get content-relative coordinates from screen-relative drag coordinates
-            let x = this.alignToGrid(this.dragX - root.left);
-            let y = this.alignToGrid(this.dragY - root.top);
-
-            let process = this.props.process;
-            let newStep = new StopStep(process.getNextStepID(), process, this.props.dropStopStep, x, y);
-            process.steps.add(newStep.uniqueID, newStep);
-            this.props.itemDropped();
+            let dropStopStep = this.props.dropStopStep;
+            this.dropNewItem((x, y) => {
+                let newStep = new StopStep(this.props.process.getNextStepID(), this.props.process, dropStopStep, x, y);
+                this.props.process.steps.add(newStep.uniqueID, newStep);
+            });
         }
 
         else if (this.draggingStep !== undefined) {
@@ -344,12 +330,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 return;
             }
 
-            this.draggingStep.x = this.alignToGrid(this.draggingStep.x);
-            this.draggingStep.y = this.alignToGrid(this.draggingStep.y);
-
-            this.getStepDisplay(this.draggingStep).forceUpdate();
-            this.drawLinks();
-
+            this.stopDraggingItem(this.draggingStep, this.getStepDisplay(this.draggingStep));
+            
             this.draggingStep = undefined;
             this.props.stepDragging(undefined);
         }
@@ -359,11 +341,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 return;
             }
 
-            this.draggingVariable.x = this.alignToGrid(this.draggingVariable.x);
-            this.draggingVariable.y = this.alignToGrid(this.draggingVariable.y);
-
-            this.getVariableDisplay(this.draggingVariable).forceUpdate();
-            this.drawLinks();
+            this.stopDraggingItem(this.draggingVariable, this.getVariableDisplay(this.draggingVariable));
 
             this.draggingVariable = undefined;
             this.props.variableDragging(undefined);
@@ -398,11 +376,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             if (this.props.process.steps.values.indexOf(this.draggingStep) === -1) {
                 return;
             }
-            this.draggingStep.x += dx;
-            this.draggingStep.y += dy;
-            
-            this.getStepDisplay(this.draggingStep).forceUpdate();
-            this.drawLinks();
+
+            this.dragItem(dx, dy, this.draggingStep, this.getStepDisplay(this.draggingStep));
         }
 
         else if (this.draggingVariable !== undefined) {
@@ -410,12 +385,36 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 return;
             }
 
-            this.draggingVariable.x += dx;
-            this.draggingVariable.y += dy;
-
-            this.getVariableDisplay(this.draggingVariable).forceUpdate();
-            this.drawLinks();
+            this.dragItem(dx, dy, this.draggingVariable, this.getVariableDisplay(this.draggingVariable));
         }
+    }
+
+    private dropNewItem(createAction: (x: number, y: number) => void) {
+        let root = this.root.getBoundingClientRect();
+
+        // get content-relative coordinates from screen-relative drag coordinates
+        let x = this.alignToGrid(this.dragX - root.left);
+        let y = this.alignToGrid(this.dragY - root.top);
+
+        createAction(x, y);
+        this.props.itemDropped();
+    }
+
+    private dragItem(dx: number, dy: number, item: Positionable, display: React.Component) {
+        item.x += dx;
+        item.y += dy;
+        
+        display.forceUpdate();
+        this.drawLinks();
+    }
+
+    private stopDraggingItem(item: Positionable, display: React.Component) {
+
+        item.x = this.alignToGrid(item.x);
+        item.y = this.alignToGrid(item.y);
+
+        display.forceUpdate();
+        this.drawLinks();
     }
 
     private stepLinkDragStart(step: Step, input: boolean, returnPath: string | null) {
