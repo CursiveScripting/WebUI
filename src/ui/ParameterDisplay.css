@@ -10,6 +10,10 @@
     top: -0.15em;
 }
 
+.parameter--invalid .parameter__name {
+    color: #f00;
+}
+
 .parameter--output {
     flex-direction: row-reverse;
 }

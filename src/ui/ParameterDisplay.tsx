@@ -41,6 +41,10 @@ export class ParameterDisplay extends React.PureComponent<ParameterDisplayProps,
     private determineRootClasses() {
         let classes = this.props.input ? 'parameter parameter--input' : 'parameter parameter--output';
 
+        if (!this.props.parameter.isValid) {
+            classes += ' parameter--invalid';
+        }
+
         if (this.props.parameter.link === null && this.props.parameter.initialValue !== null) {
             classes += ' parameter--fixed';
         }

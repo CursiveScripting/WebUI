@@ -46,8 +46,7 @@ export class Workspace {
     validate() {
         let valid = true;
 
-        for (let i = 0; i < this.userProcesses.count; i++) {
-            let process = this.userProcesses.values[i];
+        for (let process of this.userProcesses.values) {
             if (!process.validate()) {
                 valid = false;
             }

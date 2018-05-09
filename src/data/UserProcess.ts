@@ -49,7 +49,9 @@ export class UserProcess extends Process {
             }
         }
 
-        // TODO: any other validation rules? e.g. All stop steps must have a return path name or not
+        if (valid) {
+            // TODO: any other validation rules? variable-assignment detection, etc?
+        }
         
         this.valid = valid;
         return valid;

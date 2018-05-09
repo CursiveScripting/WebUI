@@ -70,6 +70,11 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
         if (this.props.readonly) {
             classes += 'step--readonly';
         }
+
+        if (!this.props.step.isValid) {
+            classes += ' step--invalid';
+        }
+
         switch (this.props.step.stepType) {
             case StepType.Start:
                 classes += ' step--start'; break;

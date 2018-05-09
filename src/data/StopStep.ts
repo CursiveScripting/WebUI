@@ -18,8 +18,21 @@ export class StopStep extends Step {
     public validate() {
         let isValid = super.validate();
 
-        // TODO: quite a lot
+        if (isValid) {
+            // ensure return path name is valid
+            if (this.parentProcess.returnPaths === null) {
+                if (this.returnPath !== null) {
+                    isValid = false; // definition must have changed, this shouldn't happen
+                }
+            }
+            else {
+                if (this.parentProcess.returnPaths.filter(pathName => pathName === this.returnPath).length !== 1) {
+                    isValid = false; // definition must have changed, this shouldn't happen
+                }
+            }
+        }
 
+        this._isValid = true;
         return isValid;
     }
 }

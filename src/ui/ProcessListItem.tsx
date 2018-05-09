@@ -18,13 +18,18 @@ export class ProcessListItem extends React.PureComponent<ProcessListItemProps, {
         if (this.props.isSelected) {
             classes += ' processListItem--selected';
         }
+        
         if (this.props.process instanceof UserProcess) {
             classes += ' processListItem--user';
+
+            if (!(this.props.process as UserProcess).isValid) {
+                classes += ' processListItem--invalid';
+            }
         }
         else if (this.props.process instanceof SystemProcess) {
             classes += ' processListItem--system';
         }
-
+        
         return (
             <div className={classes} onMouseDown={this.props.onMouseDown}>
                 <div className="processListItem__name">{this.props.process.name}</div>

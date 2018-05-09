@@ -1,6 +1,6 @@
 .step {
     border-radius: 0.5rem;
-    background-color: #cccccc;
+    background-color: #ccc;
     display: inline-flex;
     flex-direction: column;
     padding: 0;
@@ -16,6 +16,15 @@
     display: flex;
     cursor: move;
     border-bottom: solid black 1px;
+}
+
+.step--invalid {
+    border-color: #a00;
+    background-color: #fcc;
+}
+
+.step--invalid .step__header {
+    border-bottom-color: #a00;
 }
 
 .step--user .step__header {
@@ -69,6 +78,15 @@
 
 .step--readonly .step__processName {
     color: grey;
+}
+
+.step--invalid .step__processName {
+    color: #f00;
+    text-shadow: 0px 0px 4px white;
+}
+
+.step--invalid .step__processName::after {
+    content: ' !!';
 }
 
 .step__connectors {
