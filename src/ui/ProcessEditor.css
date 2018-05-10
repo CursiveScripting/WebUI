@@ -3,8 +3,16 @@
     grid-template-columns: 12em 1fr;
     grid-template-rows: 3em 1fr;
     grid-template-areas:
-        "sidebar toolbar"
+        "toolbar toolbar"
         "sidebar content";
+}
+
+@media only screen and (min-width: 1024px) {
+    .processEditor {
+        grid-template-areas:
+            "sidebar toolbar"
+            "sidebar content";
+    }
 }
 
 .processEditor__sidebar {
@@ -13,90 +21,8 @@
 
 .processEditor__toolbar {
     grid-area: toolbar;
-    display: flex;
-    justify-content: space-around;
-    align-items: stretch;
 }
 
 .processEditor__content {
     grid-area: content;
-}
-
-.tool {
-    display: flex;
-    flex-direction: column;
-    user-select: none;
-}
-
-.tool__label {
-    font-style: italic;
-}
-
-.tool__icon {
-    align-self: center;
-}
-
-.stopStepTool__items {
-    display: flex;
-}
-
-.stopStepTool__icon {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    cursor: move;
-    top: 0.3em;
-    text-shadow: 0px 0px 4px white, 0px 0px 4px white, 0px 0px 4px white, 0px 0px 4px white, 0px 0px 4px white;
-    min-height: 2em;
-    min-width: 2em;
-}
-
-.stopStepTool__icon::before {
-    position: absolute;
-    text-shadow: none;
-    font-size: 3em;
-    top: -0.5em;
-    z-index: -1;
-    color: #801a1a;
-    content: '\25A0';
-}
-
-.stopStepTool__icon--active::before, .stopStepTool__icon:hover::before {
-    color: #ff3333;
-}
-
-.stopStepTool__icon:not(:first-child) {
-    margin-left: 1em;
-}
-
-.binTool__icon {
-    position: relative;
-    top: -0.7em;
-    color: #666666;
-}
-
-.binTool--active .binTool__icon {
-    cursor: pointer;
-    color: #dd0000;
-}
-
-.binTool__icon::before {
-    font-size: 2em;
-    content: '\2672';
-}
-
-.saveTool__icon {
-    cursor: pointer;
-    position: relative;
-    top: -0.7em;
-}
-
-.saveTool--invalid .saveTool__icon {
-    color: #ff0000;
-    cursor: not-allowed;
-}
-
-.saveTool__icon::before {
-    font-size: 2em;
-    content: '\26BF';
 }

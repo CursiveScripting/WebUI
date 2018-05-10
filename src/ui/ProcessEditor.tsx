@@ -2,7 +2,7 @@ import * as React from 'react';
 import { UserProcess, Workspace, Type, Process, Step, Variable, StepType } from '../data';
 import { ProcessContent } from './ProcessContent';
 import { ProcessList } from './ProcessList';
-import { DataTypePicker } from './DataTypePicker';
+import { ProcessToolbar } from './ProcessToolbar';
 import './ProcessEditor.css';
 
 interface ProcessEditorProps {
@@ -40,6 +40,11 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             classes += ' ' + this.props.className;
         }
 
+        let processErrors = this.props.workspace.validationSummary.getErrors(this.state.openProcess);
+        if (processErrors === null) {
+            processErrors = [];
+        }
+
         return (
             <div className={classes}>
                 <ProcessList
@@ -52,7 +57,21 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     validationSummary={this.props.workspace.validationSummary}
                     ref={list => {if (list !== null) { this.processList = list; }}}
                 />
-                {this.renderToolbar()}
+                <ProcessToolbar
+                    types={this.props.workspace.types.values}
+                    returnPaths={this.state.openProcess.returnPaths}
+                    validationErrors={processErrors}
+                    selectedStep={this.state.selectedStep}
+                    selectedVariable={this.state.selectedVariable}
+                    selectedDataType={this.state.selectedDataType}
+                    selectedStopStep={this.state.selectedStopStep}
+                    className="processEditor__toolbar"
+                    saveProcesses={() => this.saveProcesses()}
+                    selectDataType={type => this.selectDataType(type)}
+                    selectStopStep={step => this.selectStopStep(step)}
+                    removeSelectedItem={() => this.removeSelectedItem()}
+                    save={this.props.save}
+                />
                 <ProcessContent
                     className="processEditor__content"
                     process={this.state.openProcess}
@@ -66,81 +85,6 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                 />
             </div>
         );
-    }
-
-    private renderToolbar() {
-        let binClasses = 'tool binTool';
-        if (this.state.selectedStep !== undefined || this.state.selectedVariable !== undefined) {
-            binClasses += ' binTool--active';
-        }
-
-        let saveButton;
-
-        if (this.props.save !== undefined) {
-            let saveClasses = 'tool saveTool';
-            
-            let click, saveTitle;
-            if (this.props.workspace.isValid) {
-                click = () => this.saveProcesses();
-            }
-            else {
-                saveClasses += ' saveTool--invalid';
-                saveTitle = 'You must correct all validation errors before saving';
-            }
-
-            saveButton = (
-                <div className={saveClasses} onClick={click} title={saveTitle}>
-                    <div className="tool__label">Click to save:</div>
-                    <div className="tool__icon saveTool__icon" />
-                </div>
-            );
-        }
-
-        return (
-            <div className="processEditor__toolbar">
-                <DataTypePicker
-                    types={this.props.workspace.types.values}
-                    selectedType={this.state.selectedDataType}
-                    typeSelected={type => this.selectDataType(type)}
-                />
-                <div className="tool stopStepTool">
-                    <div className="tool__label">Add a stop step:</div>
-                    <div className="stopStepTool__items">
-                        {this.renderReturnPathSelectors()}
-                    </div>
-                </div>
-                <div className={binClasses} onMouseUp={() => this.removeSelectedItem()}>
-                    <div className="tool__label">Drag here to remove:</div>
-                    <div className="tool__icon binTool__icon" />
-                </div>
-                {saveButton}
-            </div>
-        );
-    }
-
-    private renderReturnPathSelectors() {
-        let paths: (string | null)[] = this.state.openProcess.returnPaths;
-
-        if (paths.length === 0) {
-            paths = [null];
-        }
-
-        return paths.map((name, idx) => {
-            let classes = 'tool__icon stopStepTool__icon';
-            if (name === this.state.selectedStopStep) {
-                classes += ' stopStepTool__icon--active';
-            }
-
-            return (
-                <div
-                    className={classes}
-                    key={idx}
-                    onMouseDown={() => this.selectStopStep(name)}
-                >
-                    {name}
-                </div>
-            );
-        });
     }
 /*
     private openProcess(process: UserProcess) {
