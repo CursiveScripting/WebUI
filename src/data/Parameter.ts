@@ -8,6 +8,6 @@ export class Parameter extends DataField {
     constructor(name: string, dataType: Type) {
         super(name, dataType);
         this.link = null;
-        this.isValid = false;
+        this.isValid = true;
     }
 }

@@ -8,7 +8,15 @@
     }
 
     add(key: string, value: T) {
-        if (!this.contains(key)) {
+        if (this.contains(key)) {
+            // update the value stored for this key
+            let prevValue = this.valuesByName[key];
+            if (prevValue !== value) {
+                let index = this.values.indexOf(prevValue);
+                this.values.splice(index, 1, value);
+            }
+        }
+        else {
             this.values.push(value);
         }
         this.valuesByName[key] = value;

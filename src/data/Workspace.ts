@@ -5,16 +5,17 @@ import { UserProcess } from './UserProcess';
 import { WorkspaceLoading } from '../io/WorkspaceLoading';
 import { ProcessLoading } from '../io/ProcessLoading';
 import { ProcessSaving } from '../io/ProcessSaving';
+import { ValidationSummary } from './ValidationSummary';
 
 export class Workspace {
     systemProcesses: Dictionary<SystemProcess>;
     userProcesses: Dictionary<UserProcess>;
     types: Dictionary<Type>;
-
-    private invalidProcesses: UserProcess[] = [];
+    
+    readonly validationSummary: ValidationSummary;
 
     get isValid(): boolean {
-        return this.invalidProcesses.length === 0;
+        return !this.validationSummary.hasAnyErrors();
     }
     
     public static loadFromString(workspaceXml: string) {
@@ -47,33 +48,25 @@ export class Workspace {
         this.systemProcesses = new Dictionary<SystemProcess>();
         this.userProcesses = new Dictionary<UserProcess>();
         this.types = new Dictionary<Type>();
+
+        this.validationSummary = new ValidationSummary();
     }
 
-    validate(full: boolean) {
-        this.invalidProcesses = [];
+    validateAll() {
+        this.validationSummary.clear();
 
         for (let process of this.userProcesses.values) {
-            if (full && process.isValid) {
-                continue;
-            }
-            if (!process.validate(full)) {
-                this.invalidProcesses.push(process);
-            }
+            this.validateProcess(process);
         }
 
-        return this.invalidProcesses.length === 0;
+        return !this.validationSummary.hasAnyErrors();
     }
 
-    updateValidation(process: UserProcess, isValid: boolean) {
-        if (isValid) {
-            let index = this.invalidProcesses.indexOf(process);
-            if (index !== -1) {
-                this.invalidProcesses.splice(index, 1); // remove
-            }
-        }
-        else {
-            this.invalidProcesses.push(process);
-        }
+    validateProcess(process: UserProcess) {
+        let processErrors = process.validate();
+        this.validationSummary.setProcessErrors(process, processErrors);
+        
+        return processErrors.length === 0;
     }
     
     showError(message: string) {

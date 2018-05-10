@@ -5,10 +5,10 @@ import { Variable } from './Variable';
 import { Type } from './Type';
 import { StartStep } from './StartStep';
 import { Dictionary } from './Dictionary';
+import { ValidationError } from './ValidationError';
 
 export class UserProcess extends Process {
     steps: Dictionary<Step>;
-    private valid: boolean;
     private nextStepID: number;
 
     constructor(
@@ -24,12 +24,7 @@ export class UserProcess extends Process {
         super(name, inputs, outputs, returnPaths, true, description, folder);
     
         this.steps = new Dictionary<Step>();
-        this.valid = false;
         this.nextStepID = 1;
-    }
-
-    get isValid(): boolean {
-        return this.valid;
     }
 
     getNextStepID() {
@@ -41,18 +36,17 @@ export class UserProcess extends Process {
         }
     }
 
-    validate(full: boolean) {
+    validate(): ValidationError[] {
+        let errors: ValidationError[] = [];
+
         let valid = true;
         for (let step of this.steps.values) {
-            if (full && step.isValid) {
-                continue;
-            }
             if (!step.validate()) {
                 valid = false;
             }
         }
 
-        if (valid && full) {
+        if (valid) {
             let unassignedVariables = this.variables.filter(v => v.initialValue === null);
             let currentStep = this.steps.values.filter(s => s.stepType === StepType.Start)[0];
             
@@ -61,8 +55,7 @@ export class UserProcess extends Process {
             }
         }
         
-        this.valid = valid;
-        return valid;
+        return errors;
     }
 
     getNewVariableName(type: Type) {

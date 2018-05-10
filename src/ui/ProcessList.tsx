@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { UserProcess, SystemProcess, Process } from '../data';
 import { ProcessListItem } from './ProcessListItem';
+import { ValidationSummary } from '../data/ValidationSummary';
 import './ProcessList.css';
 
 interface ProcessListProps {
@@ -9,6 +10,7 @@ interface ProcessListProps {
     openProcess?: UserProcess;
     selectedProcess?: Process;
     className?: string;
+    validationSummary: ValidationSummary;
     processSelected: (process: Process) => void;
 }
 
@@ -28,6 +30,9 @@ export class ProcessList extends React.PureComponent<ProcessListProps, {}> {
     }
 
     private renderUserProcess(process: UserProcess, index: number) {
+        let errors = this.props.validationSummary.getErrors(process);
+        let numErrors = errors === null ? 0 : errors.length;
+
         // TODO: allow opening
         return (
             <ProcessListItem
@@ -35,6 +40,7 @@ export class ProcessList extends React.PureComponent<ProcessListProps, {}> {
                 key={index}
                 isOpen={process === this.props.openProcess}
                 isSelected={this.props.selectedProcess === process}
+                numErrors={numErrors}
                 onMouseDown={() => this.props.processSelected(process)}
             />
         );
@@ -47,6 +53,7 @@ export class ProcessList extends React.PureComponent<ProcessListProps, {}> {
                 key={index}
                 isOpen={false}
                 isSelected={this.props.selectedProcess === process}
+                numErrors={0}
                 onMouseDown={() => this.props.processSelected(process)}
             />
         );
