@@ -52,7 +52,7 @@ export abstract class Step implements Positionable {
         }
 
         this._isValid = errors.length === 0;
-        return this._isValid;
+        return errors;
     }
 
     protected copyParameters(params: Parameter[]) {

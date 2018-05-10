@@ -39,20 +39,15 @@ export class UserProcess extends Process {
     validate(): ValidationError[] {
         let errors: ValidationError[] = [];
 
-        let valid = true;
         for (let step of this.steps.values) {
-            if (!step.validate()) {
-                valid = false;
-            }
+            errors = [...errors, ...step.validate()];
         }
 
-        if (valid) {
+        if (errors.length === 0) {
             let unassignedVariables = this.variables.filter(v => v.initialValue === null);
             let currentStep = this.steps.values.filter(s => s.stepType === StepType.Start)[0];
             
-            if (!this.checkUnassignedVariableUse(currentStep, [], unassignedVariables)) {
-                valid = false;
-            }
+            this.checkUnassignedVariableUse(currentStep, [], unassignedVariables, errors);
         }
         
         return errors;
@@ -121,7 +116,7 @@ export class UserProcess extends Process {
         }
     }
 
-    private checkUnassignedVariableUse(currentStep: Step, visitedSteps: Step[], unassignedVariables: Variable[]) {
+    private checkUnassignedVariableUse(currentStep: Step, visitedSteps: Step[], unassignedVariables: Variable[], errors: ValidationError[]) {
         visitedSteps.push(currentStep);
 
         unassignedVariables = unassignedVariables.slice();
@@ -146,16 +141,17 @@ export class UserProcess extends Process {
             }
 
             // check each input of nextStep, if it touches anything in unassignedVariables, that's not valid
-            for (let input of currentStep.inputs) {
+            for (let input of nextStep.inputs) {
                 if (input.link !== null) {
                     let index = unassignedVariables.indexOf(input.link);
                     if (index !== -1) {
+                        errors.push(new ValidationError(nextStep, input, `Variable is used before it is assigned: ${input.link.name}`));
                         return false; // once an uninitialized variable is used, stop down this branch
                     }
                 }
             }
 
-            if (!this.checkUnassignedVariableUse(nextStep, visitedSteps, unassignedVariables)) {
+            if (!this.checkUnassignedVariableUse(nextStep, visitedSteps, unassignedVariables, errors)) {
                 allValid = false;
             }
         }

@@ -15,9 +15,8 @@ export class Workspace {
     readonly validationSummary: ValidationSummary;
 
     get isValid(): boolean {
-        return !this.validationSummary.hasAnyErrors();
+        return !this.validationSummary.hasAnyErrors;
     }
-    
     public static loadFromString(workspaceXml: string) {
         return WorkspaceLoading.loadWorkspace(Workspace.stringToElement(workspaceXml));
     }
@@ -59,7 +58,7 @@ export class Workspace {
             this.validateProcess(process);
         }
 
-        return !this.validationSummary.hasAnyErrors();
+        return !this.validationSummary.hasAnyErrors;
     }
 
     validateProcess(process: UserProcess) {

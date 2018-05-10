@@ -8,48 +8,21 @@ interface ProcessToolbarProps {
     types: Type[];
     returnPaths: (string | null)[];
     validationErrors: ValidationError[];
+    otherProcessesHaveErrors: boolean;
     selectedStep?: Step;
     selectedVariable?: Variable;
     selectedDataType?: Type;
     selectedStopStep?: string | null;
     className?: string;
 
-    saveProcesses: () => void;
+    saveProcesses?: () => void;
     selectDataType: (type: Type) => void;
     selectStopStep: (name: string | null) => void;
     removeSelectedItem: () => void;
-    save?: (xml: string) => void; // TODO: save from WORKSPACE toolbar, not process one
 }
 
 export class ProcessToolbar extends React.PureComponent<ProcessToolbarProps, {}> {
     render() {
-        let binClasses = 'tool binTool';
-        if (this.props.selectedStep !== undefined || this.props.selectedVariable !== undefined) {
-            binClasses += ' binTool--active';
-        }
-
-        let saveButton;
-
-        if (this.props.save !== undefined) {
-            let saveClasses = 'tool saveTool';
-            
-            let click, saveTitle;
-            if (this.props.validationErrors.length === 0) {
-                click = this.props.saveProcesses;
-            }
-            else {
-                saveClasses += ' saveTool--invalid';
-                saveTitle = 'You must correct all validation errors before saving';
-            }
-
-            saveButton = (
-                <div className={saveClasses} onClick={click} title={saveTitle}>
-                    <div className="tool__label">Click to save:</div>
-                    <div className="tool__icon saveTool__icon" />
-                </div>
-            );
-        }
-
         let classes = 'processToolbar';
         if (this.props.className !== undefined) {
             classes += ' ' + this.props.className;
@@ -68,11 +41,8 @@ export class ProcessToolbar extends React.PureComponent<ProcessToolbarProps, {}>
                         {this.renderReturnPathSelectors()}
                     </div>
                 </div>
-                <div className={binClasses} onMouseUp={() => this.props.removeSelectedItem()}>
-                    <div className="tool__label">Drag here to remove:</div>
-                    <div className="tool__icon binTool__icon" />
-                </div>
-                {saveButton}
+                {this.renderBin()}
+                {this.renderSaveAndValidation()}
             </div>
         );
     }
@@ -100,5 +70,54 @@ export class ProcessToolbar extends React.PureComponent<ProcessToolbarProps, {}>
                 </div>
             );
         });
+    }
+
+    private renderBin() {
+        let binClasses = 'tool binTool';
+        if (this.props.selectedStep !== undefined || this.props.selectedVariable !== undefined) {
+            binClasses += ' binTool--active';
+        }
+
+        return (
+            <div className={binClasses} onMouseUp={() => this.props.removeSelectedItem()}>
+                <div className="tool__label">Drag here to remove:</div>
+                <div className="tool__icon binTool__icon" />
+            </div>
+        );
+    }
+
+    private renderSaveAndValidation() {
+        let canEverSave = this.props.saveProcesses !== undefined;
+
+        let promptText, title, click;
+        let saveClasses = 'tool saveTool';
+
+        if (this.props.validationErrors.length === 0) {
+            if (this.props.otherProcessesHaveErrors) {
+                saveClasses += ' saveTool--otherInvalid';
+                promptText = `Error(s) in other process(es)${canEverSave ? ', can\'t save' : ''}`;
+                title = 'You must correct all processes before saving';
+            }
+            else if (canEverSave) {
+                promptText = 'Click to save:';
+                click = this.props.saveProcesses;
+            }
+        }
+        else {
+            saveClasses += ' saveTool--invalid';
+            promptText = `${this.props.validationErrors.length} error${(this.props.validationErrors.length === 1 ? '' : 's')} in this process`;
+            if (canEverSave) {
+                promptText += ', can\'t save';
+            }
+            title = 'You must correct all errors before saving';
+            // TODO: display validation messages in a fold-down container
+        }
+
+        return (
+            <div className={saveClasses} onClick={click} title={title}>
+                <div className="tool__label">{promptText}</div>
+                <div className="tool__icon saveTool__icon" />
+            </div>
+        );
     }
 }

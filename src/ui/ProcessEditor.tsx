@@ -40,9 +40,14 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             classes += ' ' + this.props.className;
         }
 
+        let otherProcessesHaveErrors: boolean;
         let processErrors = this.props.workspace.validationSummary.getErrors(this.state.openProcess);
         if (processErrors === null) {
             processErrors = [];
+            otherProcessesHaveErrors = this.props.workspace.validationSummary.numErrorProcesses > 0;
+        }
+        else {
+            otherProcessesHaveErrors = this.props.workspace.validationSummary.numErrorProcesses > 1;
         }
 
         return (
@@ -61,16 +66,16 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     types={this.props.workspace.types.values}
                     returnPaths={this.state.openProcess.returnPaths}
                     validationErrors={processErrors}
+                    otherProcessesHaveErrors={otherProcessesHaveErrors}
                     selectedStep={this.state.selectedStep}
                     selectedVariable={this.state.selectedVariable}
                     selectedDataType={this.state.selectedDataType}
                     selectedStopStep={this.state.selectedStopStep}
                     className="processEditor__toolbar"
-                    saveProcesses={() => this.saveProcesses()}
+                    saveProcesses={this.props.save === undefined ? undefined : () => this.saveProcesses()}
                     selectDataType={type => this.selectDataType(type)}
                     selectStopStep={step => this.selectStopStep(step)}
                     removeSelectedItem={() => this.removeSelectedItem()}
-                    save={this.props.save}
                 />
                 <ProcessContent
                     className="processEditor__content"

@@ -36,7 +36,11 @@ export class ValidationSummary {
         this.errorsByProcess.clear();
     }
 
-    hasAnyErrors() {
+    get numErrorProcesses() {
+        return this.errorsByProcess.count;
+    }
+
+    get hasAnyErrors() {
         return this.errorsByProcess.count > 0;
     }
 

@@ -1,6 +1,7 @@
 import { Step, StepType } from './Step';
 import { UserProcess } from './UserProcess';
 import { Parameter } from './Parameter';
+import { ValidationError } from './ValidationError';
 
 export class StopStep extends Step {
     private _inputs: Parameter[];
@@ -16,23 +17,21 @@ export class StopStep extends Step {
     public get returnPathNames() { return null; }
 
     public validate() {
-        let isValid = super.validate();
+        let errors = super.validate();
 
-        if (isValid) {
-            // ensure return path name is valid
-            if (this.parentProcess.returnPaths === null) {
-                if (this.returnPath !== null) {
-                    isValid = false; // definition must have changed, this shouldn't happen
-                }
+        // ensure return path name is valid
+        if (this.parentProcess.returnPaths === null) {
+            if (this.returnPath !== null) {
+                errors.push(new ValidationError(this, null, 'Invalid return path name')); // TODO: improve
             }
-            else {
-                if (this.parentProcess.returnPaths.filter(pathName => pathName === this.returnPath).length !== 1) {
-                    isValid = false; // definition must have changed, this shouldn't happen
-                }
+        }
+        else {
+            if (this.parentProcess.returnPaths.filter(pathName => pathName === this.returnPath).length !== 1) {
+                errors.push(new ValidationError(this, null, 'Wrong number of return paths')); // TODO: improve
             }
         }
 
-        this._isValid = true;
-        return isValid;
+        this._isValid = errors.length === 0;
+        return errors;
     }
 }
