@@ -171,7 +171,6 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
 
         if (wasValid !== isValid) {
             this.processList.forceUpdate(); // update the process list
-            // TODO: also update save button? Or should this happen automatically?
         }
     }
 }

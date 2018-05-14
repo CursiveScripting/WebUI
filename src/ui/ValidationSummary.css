@@ -1,0 +1,27 @@
+.validationSummary {
+    z-index: 1;
+    background-color: white;
+    padding: 1em;
+    border-radius: 0.5em;
+    border: solid grey 1px;
+    position: absolute;
+    top: 3em;
+    display: none;
+}
+
+.saveTool:hover .validationSummary, .saveTool:active .validationSummary {
+    display: block;
+}
+
+.validationSummary__item {
+    cursor: pointer;
+}
+
+.validationSummary__item:not(:first-child) {
+    border-top: solid grey 1px;
+    padding-top: 0.5em;
+}
+
+.validationSummary__item:not(:last-child) {
+    padding-bottom: 0.5em;
+}
