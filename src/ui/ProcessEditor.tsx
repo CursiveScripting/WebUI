@@ -69,11 +69,11 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     otherProcessesHaveErrors={otherProcessesHaveErrors}
                     selectedStep={this.state.selectedStep}
                     selectedVariable={this.state.selectedVariable}
-                    selectedDataType={this.state.selectedDataType}
+                    selectedType={this.state.selectedDataType}
                     selectedStopStep={this.state.selectedStopStep}
                     className="processEditor__toolbar"
                     saveProcesses={this.props.save === undefined ? undefined : () => this.saveProcesses()}
-                    selectDataType={type => this.selectDataType(type)}
+                    selectType={type => this.selectDataType(type)}
                     selectStopStep={step => this.selectStopStep(step)}
                     removeSelectedItem={() => this.removeSelectedItem()}
                 />

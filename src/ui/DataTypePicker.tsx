@@ -2,10 +2,10 @@ import * as React from 'react';
 import { Type } from '../data';
 import './DataTypePicker.css';
 
-interface DataTypePickerProps {
+export interface DataTypePickerProps {
     types: Type[];
     selectedType?: Type;
-    typeSelected: (type: Type) => void;
+    selectType: (type: Type) => void;
 }
 
 export class DataTypePicker extends React.PureComponent<DataTypePickerProps, {}> {
@@ -39,7 +39,7 @@ export class DataTypePicker extends React.PureComponent<DataTypePickerProps, {}>
                 key={index}
                 style={{backgroundColor: type.color, borderColor: type.color}}
                 title={type.guidance}
-                onMouseDown={() => this.props.typeSelected(type)}
+                onMouseDown={() => this.props.selectType(type)}
             >
                 {type.name}
             </div>
