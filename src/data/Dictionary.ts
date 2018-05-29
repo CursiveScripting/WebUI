@@ -42,4 +42,16 @@
         this.valuesByName = {};
         this.values = [];
     }
+    
+    getAllKeys() {
+        const allKeys = [];
+        
+        for (const key in this.valuesByName) {
+            if (this.valuesByName.hasOwnProperty(key)) {
+                allKeys.push(key);
+            }
+        }
+
+        return allKeys;
+    }
 }

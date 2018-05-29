@@ -65,7 +65,7 @@ export class Workspace {
         let processErrors = process.validate();
         this.validationSummary.setProcessErrors(process, processErrors);
         
-        return processErrors.length === 0;
+        return processErrors;
     }
     
     showError(message: string) {

@@ -6,7 +6,7 @@ interface ProcessListItemProps {
     process: Process;
     isOpen: boolean;
     isSelected: boolean;
-    numErrors: number;
+    hasError: boolean;
     onMouseDown: () => void;
 }
 
@@ -19,7 +19,7 @@ export class ProcessListItem extends React.PureComponent<ProcessListItemProps, {
         if (this.props.isSelected) {
             classes += ' processListItem--selected';
         }
-        if (this.props.numErrors > 0) {
+        if (this.props.hasError) {
             classes += ' processListItem--invalid';
         }
         

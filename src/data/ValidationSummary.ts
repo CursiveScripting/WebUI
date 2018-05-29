@@ -9,10 +9,6 @@ export class ValidationSummary {
         this.errorsByProcess = new Dictionary();
     }
 
-    getErrors(process: UserProcess) {
-        return this.errorsByProcess.getByName(process.name);
-    }
-
     addError(process: UserProcess, error: ValidationError) {
         var errorList = this.errorsByProcess.getByName(process.name);
         if (errorList === null) {
@@ -46,5 +42,9 @@ export class ValidationSummary {
 
     hasErrorsForProcess(process: UserProcess) {
         return this.errorsByProcess.contains(process.name);
+    }
+
+    get errorProcessNames() {
+        return this.errorsByProcess.getAllKeys();
     }
 }

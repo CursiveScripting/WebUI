@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { UserProcess, Workspace, Type, Process, Step, Variable, StepType } from '../data';
+import { ValidationError } from '../data/ValidationError';
 import { ProcessContent } from './ProcessContent';
 import { ProcessList } from './ProcessList';
 import { ProcessToolbar } from './ProcessToolbar';
@@ -19,18 +20,25 @@ interface ProcessEditorState {
     selectedStopStep?: string | null;
     selectedStep?: Step;
     selectedVariable?: Variable;
+    processErrors: ValidationError[];
+    processesWithErrors: UserProcess[];
+    otherProcessesHaveErrors: boolean;
 }
 
 export class ProcessEditor extends React.PureComponent<ProcessEditorProps, ProcessEditorState> {
-    private processList: ProcessList;
-
     constructor(props: ProcessEditorProps) {
         super(props);
+
+        const errorProcessNames = props.workspace.validationSummary.errorProcessNames;
+        const errorProcesses = props.workspace.userProcesses.values.filter(val => errorProcessNames.indexOf(val.name) !== -1);
 
         this.state = {
             openProcess: props.initialProcess === undefined
                 ? props.workspace.userProcesses.values[0]
                 : props.initialProcess,
+            otherProcessesHaveErrors: false,
+            processErrors: [],
+            processesWithErrors: errorProcesses,
         };
     }
     
@@ -38,16 +46,6 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         let classes = 'processEditor';
         if (this.props.className !== undefined) {
             classes += ' ' + this.props.className;
-        }
-
-        let otherProcessesHaveErrors: boolean;
-        let processErrors = this.props.workspace.validationSummary.getErrors(this.state.openProcess);
-        if (processErrors === null) {
-            processErrors = [];
-            otherProcessesHaveErrors = this.props.workspace.validationSummary.numErrorProcesses > 0;
-        }
-        else {
-            otherProcessesHaveErrors = this.props.workspace.validationSummary.numErrorProcesses > 1;
         }
 
         return (
@@ -59,14 +57,13 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     openProcess={this.state.openProcess}
                     selectedProcess={this.state.selectedProcess}
                     processSelected={process => this.selectProcess(process)}
-                    validationSummary={this.props.workspace.validationSummary}
-                    ref={list => {if (list !== null) { this.processList = list; }}}
+                    errorProcesses={this.state.processesWithErrors}
                 />
                 <ProcessToolbar
                     types={this.props.workspace.types.values}
                     returnPaths={this.state.openProcess.returnPaths}
-                    validationErrors={processErrors}
-                    otherProcessesHaveErrors={otherProcessesHaveErrors}
+                    validationErrors={this.state.processErrors}
+                    otherProcessesHaveErrors={this.state.otherProcessesHaveErrors}
                     selectedStep={this.state.selectedStep}
                     selectedVariable={this.state.selectedVariable}
                     selectedType={this.state.selectedDataType}
@@ -166,11 +163,33 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
 
     private revalidateOpenProcess() {
         let wasValid = !this.props.workspace.validationSummary.hasErrorsForProcess(this.state.openProcess);
+        let processErrors = this.props.workspace.validateProcess(this.state.openProcess);
+        let isValid = processErrors.length === 0;
 
-        let isValid = this.props.workspace.validateProcess(this.state.openProcess);
+        let otherProcessesHaveErrors = this.props.workspace.validationSummary.numErrorProcesses > (isValid ? 0 : 1);
 
-        if (wasValid !== isValid) {
-            this.processList.forceUpdate(); // update the process list
+        this.setState({
+            processErrors: processErrors,
+            otherProcessesHaveErrors: otherProcessesHaveErrors,
+        });
+
+        if (wasValid === isValid) {
+            return;
         }
+        
+        // validity has changed, update the "invalid processes" list for the sidebar
+        this.setState(prev => {
+            const processesWithErrors = prev.processesWithErrors.slice();
+            if (isValid) {
+                processesWithErrors.splice(processesWithErrors.indexOf(this.state.openProcess, 1));
+            }
+            else {
+                processesWithErrors.push(this.state.openProcess);
+            }
+            
+            return {
+                processesWithErrors: processesWithErrors,
+            };
+        });
     }
 }
