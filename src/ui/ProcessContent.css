@@ -13,7 +13,7 @@
 }
 
 .processContent__scrollWrapper {
-    overflow: auto;
+    overflow: scroll;
 }
 
 .processContent__canvas, .processContent__scrollWrapper {

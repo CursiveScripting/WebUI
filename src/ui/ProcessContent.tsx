@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Step, UserProcess, ReturnPath, Type, Variable, DataField, StopStep, ProcessStep, Process, Parameter } from '../data';
+import { getScrollbarSize } from './getScrollbarSize';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
 import { Positionable } from '../data/Positionable';
@@ -25,6 +26,8 @@ interface ProcessContentState {
     viewHeight: number;
     contentWidth: number;
     contentHeight: number;
+    scrollbarWidth: number;
+    scrollbarHeight: number;
 }
 
 interface StepConnectorDragInfo {
@@ -57,11 +60,15 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     constructor(props: ProcessContentProps) {
         super(props);
 
+        const scrollSize = getScrollbarSize();
+
         this.state = {
             viewWidth: 0,
             viewHeight: 0,
             contentWidth: 0,
             contentHeight: 0,
+            scrollbarWidth: scrollSize.width,
+            scrollbarHeight: scrollSize.height,
         };
     }
 
@@ -71,7 +78,20 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             classes += ' ' + this.props.className;
         }
 
-        const contentSizeStyle = { width: this.state.contentWidth + 'px', height: this.state.contentHeight + 'px' };
+        const contentSizeStyle = {
+            width: this.state.contentWidth + 'px',
+            height: this.state.contentHeight + 'px'
+        };
+        
+        let canvasWidth = this.state.viewWidth;
+        if (this.state.viewWidth < this.state.contentWidth) {
+            canvasWidth -= this.state.scrollbarWidth;
+        }
+
+        let canvasHeight = this.state.viewHeight;
+        if (this.state.viewHeight < this.state.contentHeight) {
+            canvasHeight -= this.state.scrollbarHeight;
+        }
 
         return (
             <div
@@ -83,8 +103,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 <canvas
                     className="processContent__canvas"
                     ref={c => {if (c !== null) { let ctx = c.getContext('2d'); if (ctx !== null) { this.ctx = ctx; }}}}
-                    width={this.state.viewWidth}
-                    height={this.state.viewHeight}
+                    width={canvasWidth}
+                    height={canvasHeight}
                 />
                 <div
                     className="processContent__scrollWrapper"
@@ -307,8 +327,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.setState({
             viewWidth: this.root.offsetWidth,
             viewHeight: this.root.offsetHeight,
-            contentWidth: Math.max(this.state.contentWidth, this.root.offsetWidth),
-            contentHeight: Math.max(this.state.contentHeight, this.root.offsetHeight),
+            contentWidth: Math.max(this.state.contentWidth, this.root.offsetWidth - this.state.scrollbarWidth),
+            contentHeight: Math.max(this.state.contentHeight, this.root.offsetHeight - this.state.scrollbarHeight),
         });
     }
 
@@ -326,13 +346,29 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             maxY = Math.max(maxY, display.maxY);
         }
 
-        const contentWidth = Math.ceil(maxX / gridSize) * gridSize + gridSize * extraCells;
-        const contentHeight = Math.ceil(maxY / gridSize) * gridSize + gridSize * extraCells;
-        console.log(`maxX ${maxX}, contentWidth ${contentWidth}`);
+        let contentWidth = Math.ceil(maxX / gridSize) * gridSize;
+        let contentHeight = Math.ceil(maxY / gridSize) * gridSize;
+        
+        const viewWidth = this.state.viewWidth - this.state.scrollbarWidth;
+        const viewHeight = this.state.viewHeight - this.state.scrollbarHeight;
+
+        if (contentWidth > viewWidth) {
+            contentWidth += gridSize * extraCells;
+        }
+        else {
+            contentWidth = viewWidth;
+        }
+        
+        if (contentHeight > viewHeight) {
+            contentHeight += gridSize * extraCells;
+        }
+        else {
+            contentHeight = viewHeight;
+        }
 
         this.setState({
-            contentWidth: Math.max(contentWidth, this.state.viewWidth),
-            contentHeight: Math.max(contentHeight, this.state.viewHeight),
+            contentWidth: contentWidth,
+            contentHeight:  contentHeight,
         });
     }
 
