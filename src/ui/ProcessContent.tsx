@@ -21,8 +21,10 @@ interface ProcessContentProps {
 }
 
 interface ProcessContentState {
-    width: number;
-    height: number;
+    viewWidth: number;
+    viewHeight: number;
+    contentWidth: number;
+    contentHeight: number;
 }
 
 interface StepConnectorDragInfo {
@@ -56,8 +58,10 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         super(props);
 
         this.state = {
-            width: 0,
-            height: 0,
+            viewWidth: 0,
+            viewHeight: 0,
+            contentWidth: 0,
+            contentHeight: 0,
         };
     }
 
@@ -77,20 +81,30 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 <canvas
                     className="processContent__canvas"
                     ref={c => {if (c !== null) { let ctx = c.getContext('2d'); if (ctx !== null) { this.ctx = ctx; }}}}
-                    width={this.state.width}
-                    height={this.state.height}
+                    width={this.state.viewWidth}
+                    height={this.state.viewHeight}
                 />
-                {this.renderSteps()}
-                {this.renderVariables()}
+                <div
+                    className="processContent__scrollWrapper"
+                    onScroll={() => this.drawLinks()}
+                >
+                    <div
+                        className="processContent__scrollRoot"
+                        style={{ width: this.state.contentWidth + 'px', height: this.state.contentHeight + 'px' }}
+                    >
+                        {this.renderSteps()}
+                        {this.renderVariables()}
+                    </div>
+                </div>
             </div>
         );
     }
 
     componentDidMount() {
-        this.resizeListener = () => this.updateSize();
+        this.resizeListener = () => this.updateViewSize();
         window.addEventListener('resize', this.resizeListener);
     
-        this.updateSize();
+        this.updateViewSize();
         this.drawLinks();
     }
 
@@ -147,7 +161,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     private drawLinks() {
-        this.ctx.clearRect(0, 0, this.state.width, this.state.height);
+        this.ctx.clearRect(0, 0, this.state.viewWidth, this.state.viewHeight);
+        
         let root = this.root.getBoundingClientRect();
         
         for (let stepDisplay of this.stepDisplays) {
@@ -288,10 +303,36 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         return this.variableDisplays.filter(d => d.props.variable === variable)[0];
     }
 
-    private updateSize() {
+    private updateViewSize() {
         this.setState({
-            width: this.root.offsetWidth,
-            height: this.root.offsetHeight,
+            viewWidth: this.root.offsetWidth,
+            viewHeight: this.root.offsetHeight,
+            contentWidth: Math.max(this.state.contentWidth, this.root.offsetWidth),
+            contentHeight: Math.max(this.state.contentHeight, this.root.offsetHeight),
+        });
+    }
+
+    private updateContentSize() {
+        const extraCells = 5;
+        let maxX = 0, maxY = 0;
+
+        for (const display of this.stepDisplays) {
+            maxX = Math.max(maxX, display.maxX);
+            maxY = Math.max(maxY, display.maxY);
+        }
+
+        for (const display of this.variableDisplays) {
+            maxX = Math.max(maxX, display.maxX);
+            maxY = Math.max(maxY, display.maxY);
+        }
+
+        const contentWidth = Math.ceil(maxX / gridSize) * gridSize + gridSize * extraCells;
+        const contentHeight = Math.ceil(maxY / gridSize) * gridSize + gridSize * extraCells;
+        console.log(`maxX ${maxX}, contentWidth ${contentWidth}`);
+
+        this.setState({
+            contentWidth: Math.max(contentWidth, this.state.viewWidth),
+            contentHeight: Math.max(contentHeight, this.state.viewHeight),
         });
     }
 
@@ -368,8 +409,13 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             this.drawLinks();
         }
 
+        else {
+            return;
+        }
+
         this.dragX = 0;
         this.dragY = 0;
+        this.updateContentSize();
     }
 
     private mouseMove(e: React.MouseEvent<HTMLDivElement>) {

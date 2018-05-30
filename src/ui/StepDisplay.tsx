@@ -44,6 +44,14 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
         return this._outputConnectors[index];
     }
 
+    public get maxX() {
+        return this.root.offsetLeft + this.root.offsetWidth;
+    }
+
+    public get maxY() {
+        return this.root.offsetTop + this.root.offsetHeight;
+    }
+
     render() {
         let posStyle = {
             left: this.props.step.x,

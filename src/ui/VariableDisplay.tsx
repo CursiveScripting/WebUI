@@ -11,12 +11,21 @@ interface VariableDisplayProps {
 }
 
 export class VariableDisplay extends React.PureComponent<VariableDisplayProps, {}> {
+    private root: HTMLDivElement;
     private _inputConnector: HTMLDivElement;
     private _outputConnector: HTMLDivElement;
 
     public get inputConnector() { return this._inputConnector; }
     public get outputConnector() { return this._outputConnector; }
+    
+    public get maxX() {
+        return this.root.offsetLeft + this.root.offsetWidth;
+    }
 
+    public get maxY() {
+        return this.root.offsetTop + this.root.offsetHeight;
+    }
+    
     render() {
         let posStyle = {
             left: this.props.variable.x,
@@ -30,7 +39,7 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, {
         let classes = 'variable';
 
         return (
-            <div className={classes} style={posStyle}>
+            <div className={classes} style={posStyle} ref={r => { if (r !== null) { this.root = r; }}}>
                 <ParameterConnector
                     className="variable__connector variable__input"
                     type={this.props.variable.type}
