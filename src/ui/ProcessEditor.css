@@ -7,6 +7,10 @@
         "sidebar content";
 }
 
+.processEditor * {
+    box-sizing: border-box;
+}
+
 @media only screen and (min-width: 1024px) {
     .processEditor {
         grid-template-areas:

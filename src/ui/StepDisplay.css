@@ -16,6 +16,7 @@
     display: flex;
     cursor: move;
     border-bottom: solid black 1px;
+    height: 24px;
 }
 
 .step--focused.step--invalid {
@@ -72,7 +73,7 @@
 .step__processName {
     color: white;
     font-weight: bold;
-    padding: 0.1em 1em 0 0.2em;
+    padding: 0 1em 0 0.2em;
     text-shadow: 0px 0px 4px black;
 }
 
@@ -98,6 +99,11 @@
 .step__connector {
     cursor: pointer;
     font-style: italic;
+    height: 24px;
+}
+
+.step__connector--in, .step__connector:last-of-type {
+    height: 23px;
 }
 
 .step__connector--in {
@@ -135,7 +141,7 @@
 }
 
 .step__parameters:not(:empty) {
-    padding: 0.2em 0;
+    padding: 0;
 }
 
 .step__inputs, .step__outputs {

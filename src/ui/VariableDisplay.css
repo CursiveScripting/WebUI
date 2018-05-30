@@ -5,6 +5,7 @@
     display: flex;
     border: solid black 1px;
     user-select: none;
+    height: 25px;
 }
 
 .variable__name {
