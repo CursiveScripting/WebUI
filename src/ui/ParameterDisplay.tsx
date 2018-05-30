@@ -6,6 +6,7 @@ import './ParameterDisplay.css';
 interface ParameterDisplayProps {
     parameter: Parameter;
     input: boolean;
+    focused: boolean;
     linkMouseDown?: () => void;
     linkMouseUp?: () => void;
 }
@@ -40,6 +41,10 @@ export class ParameterDisplay extends React.PureComponent<ParameterDisplayProps,
 
     private determineRootClasses() {
         let classes = this.props.input ? 'parameter parameter--input' : 'parameter parameter--output';
+
+        if (this.props.focused) {
+            classes += ' parameter--focused';
+        }
 
         if (!this.props.parameter.isValid) {
             classes += ' parameter--invalid';

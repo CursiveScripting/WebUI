@@ -18,12 +18,12 @@
     border-bottom: solid black 1px;
 }
 
-.step--invalid {
+.step--focused.step--invalid {
     border-color: #a00;
     background-color: #fcc;
 }
 
-.step--invalid .step__header {
+.step--focused.step--invalid .step__header {
     border-bottom-color: #a00;
 }
 
@@ -80,12 +80,12 @@
     color: grey;
 }
 
-.step--invalid .step__processName {
+.step--focused.step--invalid .step__processName {
     color: #f00;
     text-shadow: 0px 0px 4px white;
 }
 
-.step--invalid .step__processName::after {
+.step--focused.step--invalid .step__processName::after {
     content: ' !!';
 }
 

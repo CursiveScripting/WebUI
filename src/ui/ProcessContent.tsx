@@ -11,6 +11,8 @@ interface ProcessContentProps {
     dropVariableType?: Type;
     dropStep?: Process;
     dropStopStep?: string | null;
+    focusStep?: Step;
+    focusStepParameter?: Parameter;
     itemDropped: () => void;
     stepDragging: (step: Step | undefined) => void;
     variableDragging: (variable: Variable | undefined) => void;
@@ -91,7 +93,11 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.drawLinks();
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps: ProcessContentProps, prevState: ProcessContentState) {
+        if (prevProps.focusStep === undefined && this.props.focusStep !== undefined) {
+            this.getStepDisplay(this.props.focusStep).scrollIntoView();
+        }
+
         this.drawLinks();
     }
     
@@ -107,8 +113,10 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         return this.props.process.steps.values.map((step, idx) => (
             <StepDisplay
                 ref={s => { if (s !== null) { this.stepDisplays.push(s); }}}
-                step={step}
                 key={idx}
+                step={step}
+                focused={step === this.props.focusStep}
+                focusParameter={this.props.focusStepParameter}
                 readonly={false}
                 headerMouseDown={(x, y) => this.stepDragStart(step, x, y)}
                 inputLinkMouseDown={() => this.stepLinkDragStart(step, true, null)}

@@ -6,6 +6,8 @@ import './StepDisplay.css';
 interface StepDisplayProps {
     step: Step;
     readonly: boolean;
+    focused: boolean;
+    focusParameter?: Parameter;
     headerMouseDown: (mouseX: number, mouseY: number) => void;
     inputLinkMouseDown: () => void;
     outputLinkMouseDown: (returnPath: string | null) => void;
@@ -16,6 +18,7 @@ interface StepDisplayProps {
 }
 
 export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
+    private root: HTMLDivElement;
     private _entryConnector: HTMLDivElement | null;
     private _returnConnectors: { [key: string]: HTMLDivElement } = {};
     private _inputConnectors: HTMLDivElement[];
@@ -47,7 +50,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
         };
 
         return (
-            <div className={this.determineRootClasses()} style={posStyle}>
+            <div className={this.determineRootClasses()} style={posStyle} ref={r => { if (r !== null) { this.root = r; }}}>
                 <div className="step__header" onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY)}>
                     <div className="step__icon" />
                     <div className="step__processName">{this.props.step.name}</div>
@@ -65,12 +68,20 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
         );
     }
 
+    public scrollIntoView() {
+        this.root.scrollIntoView({ behavior: 'smooth' });
+    }
+
     private determineRootClasses() {
         let classes = 'step';
         if (this.props.readonly) {
             classes += 'step--readonly';
         }
 
+        if (this.props.focused) {
+            classes += ' step--focused';
+        }
+        
         if (!this.props.step.isValid) {
             classes += ' step--invalid';
         }
@@ -176,6 +187,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
                         ref={c => { if (c !== null) { connectors.push(c.connector); }}}
                         input={input}
                         parameter={param}
+                        focused={param === this.props.focusParameter}
                         linkMouseDown={() => this.props.parameterLinkMouseDown(param, input)}
                         linkMouseUp={() => this.props.parameterLinkMouseUp(param, input)}
                     />

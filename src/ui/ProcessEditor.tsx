@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { UserProcess, Workspace, Type, Process, Step, Variable, StepType } from '../data';
+import { UserProcess, Workspace, Type, Process, Step, Variable, StepType, Parameter } from '../data';
 import { ValidationError } from '../data/ValidationError';
 import { ProcessContent } from './ProcessContent';
 import { ProcessList } from './ProcessList';
@@ -15,14 +15,16 @@ interface ProcessEditorProps {
 
 interface ProcessEditorState {
     openProcess: UserProcess;
-    selectedDataType?: Type;
-    selectedProcess?: Process;
-    selectedStopStep?: string | null;
-    selectedStep?: Step;
-    selectedVariable?: Variable;
+    droppingDataType?: Type;
+    droppingProcess?: Process;
+    droppingStopStep?: string | null;
+    draggingStep?: Step;
+    draggingVariable?: Variable;
     processErrors: ValidationError[];
     processesWithErrors: UserProcess[];
     otherProcessesHaveErrors: boolean;
+    focusStep?: Step;
+    focusStepParameter?: Parameter;
 }
 
 export class ProcessEditor extends React.PureComponent<ProcessEditorProps, ProcessEditorState> {
@@ -55,7 +57,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     userProcesses={this.props.workspace.userProcesses.values}
                     systemProcesses={this.props.workspace.systemProcesses.values}
                     openProcess={this.state.openProcess}
-                    selectedProcess={this.state.selectedProcess}
+                    selectedProcess={this.state.droppingProcess}
                     processSelected={process => this.selectProcess(process)}
                     errorProcesses={this.state.processesWithErrors}
                 />
@@ -64,12 +66,14 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     returnPaths={this.state.openProcess.returnPaths}
                     validationErrors={this.state.processErrors}
                     otherProcessesHaveErrors={this.state.otherProcessesHaveErrors}
-                    selectedStep={this.state.selectedStep}
-                    selectedVariable={this.state.selectedVariable}
-                    selectedType={this.state.selectedDataType}
-                    selectedStopStep={this.state.selectedStopStep}
+                    selectedStep={this.state.draggingStep}
+                    selectedVariable={this.state.draggingVariable}
+                    selectedType={this.state.droppingDataType}
+                    selectedStopStep={this.state.droppingStopStep}
                     className="processEditor__toolbar"
                     saveProcesses={this.props.save === undefined ? undefined : () => this.saveProcesses()}
+                    focusOnStep={(step, param) => this.focusOnStep(step, param)}
+                    clearFocus={() => this.clearFocus()}
                     selectType={type => this.selectDataType(type)}
                     selectStopStep={step => this.selectStopStep(step)}
                     removeSelectedItem={() => this.removeSelectedItem()}
@@ -77,13 +81,15 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                 <ProcessContent
                     className="processEditor__content"
                     process={this.state.openProcess}
-                    dropVariableType={this.state.selectedDataType}
-                    dropStep={this.state.selectedProcess}
-                    dropStopStep={this.state.selectedStopStep}
+                    dropVariableType={this.state.droppingDataType}
+                    dropStep={this.state.droppingProcess}
+                    dropStopStep={this.state.droppingStopStep}
                     itemDropped={() => this.dropCompleted()}
-                    stepDragging={step => this.setState({ selectedStep: step })}
-                    variableDragging={variable => this.setState({ selectedVariable: variable })}
+                    stepDragging={step => this.setState({ draggingStep: step })}
+                    variableDragging={variable => this.setState({ draggingVariable: variable })}
                     connectionChanged={() => this.revalidateOpenProcess()}
+                    focusStep={this.state.focusStep}
+                    focusStepParameter={this.state.focusStepParameter}
                 />
             </div>
         );
@@ -102,25 +108,25 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
 */
     private selectDataType(type: Type | undefined) {
         this.setState({
-            selectedDataType: type === this.state.selectedDataType ? undefined : type,
-            selectedProcess: undefined,
-            selectedStopStep: undefined,
+            droppingDataType: type === this.state.droppingDataType ? undefined : type,
+            droppingProcess: undefined,
+            droppingStopStep: undefined,
         });
     }
 
     private selectProcess(process: Process | undefined) {
         this.setState({
-            selectedDataType: undefined,
-            selectedProcess: process === this.state.selectedProcess ? undefined : process,
-            selectedStopStep: undefined,
+            droppingDataType: undefined,
+            droppingProcess: process === this.state.droppingProcess ? undefined : process,
+            droppingStopStep: undefined,
         });
     }
 
     private selectStopStep(pathName: string | null) {
         this.setState({
-            selectedDataType: undefined,
-            selectedProcess: undefined,
-            selectedStopStep: this.state.selectedStopStep === pathName ? undefined : pathName,
+            droppingDataType: undefined,
+            droppingProcess: undefined,
+            droppingStopStep: this.state.droppingStopStep === pathName ? undefined : pathName,
         });
     }
 
@@ -128,27 +134,27 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         this.revalidateOpenProcess();
 
         this.setState({
-            selectedDataType: undefined,
-            selectedProcess: undefined,
-            selectedStopStep: undefined,
+            droppingDataType: undefined,
+            droppingProcess: undefined,
+            droppingStopStep: undefined,
             openProcess: this.state.openProcess,
         });
     }
 
     private removeSelectedItem() {
-        if (this.state.selectedStep !== undefined && this.state.selectedStep.stepType !== StepType.Start) {
-            this.state.openProcess.removeStep(this.state.selectedStep);
+        if (this.state.draggingStep !== undefined && this.state.draggingStep.stepType !== StepType.Start) {
+            this.state.openProcess.removeStep(this.state.draggingStep);
             this.revalidateOpenProcess();
         }
 
-        else if (this.state.selectedVariable !== undefined) {
-            this.state.openProcess.removeVariable(this.state.selectedVariable);
+        else if (this.state.draggingVariable !== undefined) {
+            this.state.openProcess.removeVariable(this.state.draggingVariable);
             this.revalidateOpenProcess();
         }
 
         this.setState({
-            selectedStep: undefined,
-            selectedVariable: undefined,
+            draggingStep: undefined,
+            draggingVariable: undefined,
         });
     }
 
@@ -190,6 +196,20 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             return {
                 processesWithErrors: processesWithErrors,
             };
+        });
+    }
+
+    private focusOnStep(step: Step, parameter: Parameter | null) {
+        this.setState({
+            focusStep: step,
+            focusStepParameter: parameter === null ? undefined : parameter,
+        });
+    }
+
+    private clearFocus() {
+        this.setState({
+            focusStep: undefined,
+            focusStepParameter: undefined,
         });
     }
 }
