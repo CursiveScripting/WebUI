@@ -71,6 +71,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             classes += ' ' + this.props.className;
         }
 
+        const contentSizeStyle = { width: this.state.contentWidth + 'px', height: this.state.contentHeight + 'px' };
+
         return (
             <div
                 className={classes}
@@ -88,10 +90,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                     className="processContent__scrollWrapper"
                     onScroll={() => this.drawLinks()}
                 >
-                    <div
-                        className="processContent__scrollRoot"
-                        style={{ width: this.state.contentWidth + 'px', height: this.state.contentHeight + 'px' }}
-                    >
+                    <div className="processContent__backgroundScroll" style={contentSizeStyle} />
+                    <div className="processContent__scrollRoot" style={contentSizeStyle}>
                         {this.renderSteps()}
                         {this.renderVariables()}
                     </div>

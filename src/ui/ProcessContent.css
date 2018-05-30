@@ -2,6 +2,7 @@
     position: relative;
     overflow: hidden;
     min-height: 10em;
+    background-color: #fafafa;
 }
 
 .processContent__canvas {
@@ -21,7 +22,16 @@
     bottom: 0; right: 0;
 }
 
-.processContent__scrollRoot {
-    background-color: #fafafa;
+.processContent__backgroundScroll {
     background-image: url('grid.png');
+    z-index: 0;
+}
+
+.processContent__scrollRoot {
+    z-index: 2;
+}
+
+.processContent__backgroundScroll, .processContent__scrollRoot {
+    position: absolute;
+    top: 0; left: 0;
 }
