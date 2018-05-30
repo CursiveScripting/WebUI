@@ -25,6 +25,7 @@ interface ProcessEditorState {
     otherProcessesHaveErrors: boolean;
     focusStep?: Step;
     focusStepParameter?: Parameter;
+    focusStepReturnPath?: string | null;
 }
 
 export class ProcessEditor extends React.PureComponent<ProcessEditorProps, ProcessEditorState> {
@@ -72,8 +73,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     selectedStopStep={this.state.droppingStopStep}
                     className="processEditor__toolbar"
                     saveProcesses={this.props.save === undefined ? undefined : () => this.saveProcesses()}
-                    focusOnStep={(step, param) => this.focusOnStep(step, param)}
-                    clearFocus={() => this.clearFocus()}
+                    focusError={error => this.focusOnError(error)}
                     selectType={type => this.selectDataType(type)}
                     selectStopStep={step => this.selectStopStep(step)}
                     removeSelectedItem={() => this.removeSelectedItem()}
@@ -90,6 +90,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     connectionChanged={() => this.revalidateOpenProcess()}
                     focusStep={this.state.focusStep}
                     focusStepParameter={this.state.focusStepParameter}
+                    focusStepReturnPath={this.state.focusStepReturnPath}
                 />
             </div>
         );
@@ -199,17 +200,20 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         });
     }
 
-    private focusOnStep(step: Step, parameter: Parameter | null) {
-        this.setState({
-            focusStep: step,
-            focusStepParameter: parameter === null ? undefined : parameter,
-        });
-    }
+    private focusOnError(error?: ValidationError) {
+        if (error === undefined) {
+            this.setState({
+                focusStep: undefined,
+                focusStepParameter: undefined,
+                focusStepReturnPath: undefined,
+            });
+            return;
+        }
 
-    private clearFocus() {
         this.setState({
-            focusStep: undefined,
-            focusStepParameter: undefined,
+            focusStep: error.step,
+            focusStepParameter: error.parameter === null ? undefined : error.parameter,
+            focusStepReturnPath: error.returnPath,
         });
     }
 }

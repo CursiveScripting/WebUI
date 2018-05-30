@@ -145,7 +145,7 @@ export class UserProcess extends Process {
                 if (input.link !== null) {
                     let index = unassignedVariables.indexOf(input.link);
                     if (index !== -1) {
-                        errors.push(new ValidationError(nextStep, input, `Variable is used before it is assigned: ${input.link.name}`));
+                        errors.push(new ValidationError(nextStep, input, undefined, `Variable is used before it is assigned: ${input.link.name}`));
                         return false; // once an uninitialized variable is used, stop down this branch
                     }
                 }

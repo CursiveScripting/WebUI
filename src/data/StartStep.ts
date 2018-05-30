@@ -14,6 +14,4 @@ export class StartStep extends Step {
     public get inputs () { return []; }
     public get outputs () { return this._outputs; }
     public get returnPathNames() { return []; }
-
-    // TODO: quite a lot
 }

@@ -22,12 +22,13 @@ export class StopStep extends Step {
         // ensure return path name is valid
         if (this.parentProcess.returnPaths === null) {
             if (this.returnPath !== null) {
-                errors.push(new ValidationError(this, null, 'Invalid return path name')); // TODO: improve
+                errors.push(new ValidationError(this, null, null, `Invalid return path name: ${this.returnPath}`));
             }
         }
         else {
-            if (this.parentProcess.returnPaths.filter(pathName => pathName === this.returnPath).length !== 1) {
-                errors.push(new ValidationError(this, null, 'Wrong number of return paths')); // TODO: improve
+            const numPaths = this.parentProcess.returnPaths.filter(pathName => pathName === this.returnPath).length;
+            if (numPaths !== 1) {
+                errors.push(new ValidationError(this, null, undefined, `Wrong number of return paths: got ${numPaths}, but expected 1`));
             }
         }
 

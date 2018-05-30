@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Step, Parameter } from '../data';
 import { ValidationError } from '../data/ValidationError';
 import './ValidationSummary.css';
 
@@ -7,8 +6,7 @@ export interface SaveToolProps {
     validationErrors: ValidationError[];
     otherProcessesHaveErrors: boolean;
     saveProcesses?: () => void;
-    focusOnStep: (step: Step, parameter: Parameter | null) => void;
-    clearFocus: () => void;
+    focusError: (error: ValidationError | undefined) => void;
 }
 
 export class SaveTool extends React.PureComponent<SaveToolProps, {}> {
@@ -58,8 +56,8 @@ export class SaveTool extends React.PureComponent<SaveToolProps, {}> {
     }
 
     private renderValidationError(error: ValidationError, index: number) {
-        const focusError = () => this.props.focusOnStep(error.step, error.parameter);
-        const clearFocus = () => this.props.clearFocus();
+        const focusError = () => this.props.focusError(error);
+        const clearFocus = () => this.props.focusError(undefined);
 
         return (
             <div

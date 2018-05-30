@@ -37,8 +37,7 @@ export class ProcessToolbar extends React.PureComponent<ProcessToolbarProps, {}>
                     validationErrors={this.props.validationErrors}
                     saveProcesses={this.props.saveProcesses}
                     otherProcessesHaveErrors={this.props.otherProcessesHaveErrors}
-                    focusOnStep={this.props.focusOnStep}
-                    clearFocus={this.props.clearFocus}
+                    focusError={this.props.focusError}
                 />
             </div>
         );

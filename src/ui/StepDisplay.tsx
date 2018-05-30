@@ -8,6 +8,7 @@ interface StepDisplayProps {
     readonly: boolean;
     focused: boolean;
     focusParameter?: Parameter;
+    focusReturnPath?: string | null;
     headerMouseDown: (mouseX: number, mouseY: number) => void;
     inputLinkMouseDown: () => void;
     outputLinkMouseDown: (returnPath: string | null) => void;
@@ -110,6 +111,11 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
             ? 'step__connector step__connector--in step__connector--connected'
             : 'step__connector step__connector--in';
     
+        if (this.props.focused && this.props.focusParameter === undefined && this.props.focusReturnPath === undefined) {
+            // not focused on a parameter, nor a return path, so must be the input connector
+            conClasses += ' step__connector--focused';
+        }
+
         return (
             <div
                 className={conClasses}
@@ -126,7 +132,11 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
             if (this.props.step.stepType === StepType.Stop) {
                 let pathName = (this.props.step as StopStep).returnPath;
                 if (pathName !== null) {
-                    return <div className="step__returnPathName">{pathName}</div>;
+                    let classes = 'step__returnPathName';
+                    if (this.props.focused && this.props.focusParameter === undefined) {
+                        classes += ' step__returnPathName--focused';
+                    }
+                    return <div className={classes}>{pathName}</div>;
                 }
             }
 
@@ -145,6 +155,10 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
                 ? 'step__connector step__connector--out step__connector--connected'
                 : 'step__connector step__connector--out';
             
+            if (this.props.focused && this.props.focusReturnPath === pathName) {
+                classes += ' step__connector--focused';
+            }
+
             return (
                 <div
                     key={index}

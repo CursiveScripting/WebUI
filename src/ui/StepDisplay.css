@@ -80,15 +80,6 @@
     color: grey;
 }
 
-.step--focused.step--invalid .step__processName {
-    color: #f00;
-    text-shadow: 0px 0px 4px white;
-}
-
-.step--focused.step--invalid .step__processName::after {
-    content: ' !!';
-}
-
 .step__connectors {
     display: flex;
     justify-content: space-between;
@@ -123,6 +114,15 @@
     text-shadow: 0px 0px 1px black;
 
     content: '\25B7';
+}
+
+.step__connector--focused {
+    color: #f00;
+}
+
+.step__connector--focused::after {
+    color: #f00;
+    text-shadow: 0px 0px 4px white;
 }
 
 .step__connector--connected::after {
@@ -161,4 +161,8 @@
     position: relative;
     top: 0.15em;
     right: 0.3em;
+}
+
+.step__returnPathName--focused {
+    color: #f00;
 }

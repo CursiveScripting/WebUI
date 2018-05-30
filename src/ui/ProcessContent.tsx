@@ -13,6 +13,7 @@ interface ProcessContentProps {
     dropStopStep?: string | null;
     focusStep?: Step;
     focusStepParameter?: Parameter;
+    focusStepReturnPath?: string | null;
     itemDropped: () => void;
     stepDragging: (step: Step | undefined) => void;
     variableDragging: (variable: Variable | undefined) => void;
@@ -117,6 +118,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 step={step}
                 focused={step === this.props.focusStep}
                 focusParameter={this.props.focusStepParameter}
+                focusReturnPath={this.props.focusStepReturnPath}
                 readonly={false}
                 headerMouseDown={(x, y) => this.stepDragStart(step, x, y)}
                 inputLinkMouseDown={() => this.stepLinkDragStart(step, true, null)}
