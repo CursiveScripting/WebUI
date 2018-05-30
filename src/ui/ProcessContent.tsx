@@ -37,7 +37,7 @@ interface ParamConnectorDragInfo {
     step?: Step;
 }
 
-const gridSize = 16;
+const gridSize = 24;
 
 export class ProcessContent extends React.PureComponent<ProcessContentProps, ProcessContentState> {
     private root: HTMLDivElement;

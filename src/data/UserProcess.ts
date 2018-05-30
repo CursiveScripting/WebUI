@@ -67,7 +67,7 @@ export class UserProcess extends Process {
     }
 
     createDefaultSteps() {
-        let step: Step = new StartStep(this.getNextStepID(), this, 32, 32);
+        let step: Step = new StartStep(this.getNextStepID(), this, 24, 24);
         this.steps.add(step.uniqueID, step);
     }
 
