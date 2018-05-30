@@ -6,10 +6,6 @@
     height: 24px;
 }
 
-.parameter--focused.parameter--invalid .parameter__name {
-    color: #f00;
-}
-
 .parameter--output {
     flex-direction: row-reverse;
 }
