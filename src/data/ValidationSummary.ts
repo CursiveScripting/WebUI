@@ -40,8 +40,9 @@ export class ValidationSummary {
         return this.errorsByProcess.count > 0;
     }
 
-    hasErrorsForProcess(process: UserProcess) {
-        return this.errorsByProcess.contains(process.name);
+    getErrorsForProcess(process: UserProcess) {
+        let errors = this.errorsByProcess.getByName(process.name);
+        return errors === null ? [] : errors;
     }
 
     get errorProcessNames() {

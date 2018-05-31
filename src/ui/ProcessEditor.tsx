@@ -45,6 +45,16 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         };
     }
     
+    componentWillMount() {
+        this.openProcess(this.state.openProcess);
+    }
+
+    componentDidUpdate(prevProps: ProcessEditorProps, prevState: ProcessEditorState) {
+        if (prevProps.workspace !== this.props.workspace) {
+            this.openProcess(this.props.workspace.userProcesses[0]);
+        }
+    }
+
     render() {
         let classes = 'processEditor';
         if (this.props.className !== undefined) {
@@ -95,18 +105,20 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             </div>
         );
     }
-/*
+
     private openProcess(process: UserProcess) {
-        if (process === this.state.openProcess) {
-            return;
-        }
+        const processErrors = this.props.workspace.validationSummary.getErrorsForProcess(process);
+        let isValid = processErrors.length === 0;
+
+        let otherProcessesHaveErrors = this.props.workspace.validationSummary.numErrorProcesses > (isValid ? 0 : 1);
 
         this.setState({
             openProcess: process,
+            processErrors: processErrors,
+            otherProcessesHaveErrors: otherProcessesHaveErrors,
         });
-        this.dropCompleted();
     }
-*/
+    
     private selectDataType(type: Type | undefined) {
         this.setState({
             droppingDataType: type === this.state.droppingDataType ? undefined : type,
@@ -167,9 +179,9 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         let xml = this.props.workspace.saveProcesses();
         this.props.save(xml);
     }
-
+    
     private revalidateOpenProcess() {
-        let wasValid = !this.props.workspace.validationSummary.hasErrorsForProcess(this.state.openProcess);
+        let wasValid = this.props.workspace.validationSummary.getErrorsForProcess(this.state.openProcess).length === 0;
         let processErrors = this.props.workspace.validateProcess(this.state.openProcess);
         let isValid = processErrors.length === 0;
 
