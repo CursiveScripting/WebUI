@@ -16,8 +16,8 @@ export class ProcessStep extends Step {
     ) {
         super(uniqueID, process.isEditable ? StepType.UserProcess : StepType.SystemProcess, parentProcess, x, y);
         
-        this._inputs = this.copyParameters(parentProcess.inputs);       
-        this._outputs = this.copyParameters(parentProcess.outputs);
+        this._inputs = this.copyParameters(process.inputs);       
+        this._outputs = this.copyParameters(process.outputs);
     }
 
     public get name() { return this.process.name; }
