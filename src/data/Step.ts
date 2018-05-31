@@ -71,6 +71,9 @@ export abstract class Step implements Positionable {
 
     private validateReturnPaths() {
         if (this.returnPathNames === null) {
+            if (this.stepType === StepType.SystemProcess) {
+                console.log('validating, path names are null');
+            }
             return [];
         }
 
@@ -104,6 +107,6 @@ export abstract class Step implements Positionable {
             }
         }
 
-        return [];
+        return errors;
     }
 }
