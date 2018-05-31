@@ -6,6 +6,7 @@ import { Type } from './Type';
 import { StartStep } from './StartStep';
 import { Dictionary } from './Dictionary';
 import { ValidationError } from './ValidationError';
+import { gridSize } from '../ui/gridSize';
 
 export class UserProcess extends Process {
     steps: Dictionary<Step>;
@@ -67,7 +68,7 @@ export class UserProcess extends Process {
     }
 
     createDefaultSteps() {
-        let step: Step = new StartStep(this.getNextStepID(), this, 24, 24);
+        let step: Step = new StartStep(this.getNextStepID(), this, gridSize * 2, gridSize * 2);
         this.steps.add(step.uniqueID, step);
     }
 
