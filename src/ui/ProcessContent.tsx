@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Step, UserProcess, ReturnPath, Type, Variable, DataField, StopStep, ProcessStep, Process, Parameter } from '../data';
 import { getScrollbarSize } from './getScrollbarSize';
+import { gridSize, growToFitGrid, alignToGrid } from './gridSize';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
 import { Positionable } from '../data/Positionable';
@@ -41,8 +42,6 @@ interface ParamConnectorDragInfo {
     input: boolean;
     step?: Step;
 }
-
-const gridSize = 24;
 
 export class ProcessContent extends React.PureComponent<ProcessContentProps, ProcessContentState> {
     private root: HTMLDivElement;
@@ -145,10 +144,10 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     private renderSteps() {
         this.stepDisplays = [];
 
-        return this.props.process.steps.values.map((step, idx) => (
+        return this.props.process.steps.values.map(step => (
             <StepDisplay
                 ref={s => { if (s !== null) { this.stepDisplays.push(s); }}}
-                key={idx}
+                key={step.uniqueID}
                 step={step}
                 focused={step === this.props.focusStep}
                 focusParameter={this.props.focusStepParameter}
@@ -169,11 +168,11 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     private renderVariables() {
         this.variableDisplays = [];
 
-        return this.props.process.variables.map((variable, idx) => (
+        return this.props.process.variables.map(variable => (
             <VariableDisplay
                 ref={v => { if (v !== null) { this.variableDisplays.push(v); }}}
                 variable={variable}
-                key={idx}
+                key={variable.name}
                 nameMouseDown={(x, y) => this.varDragStart(variable, x, y)}
                 connectorMouseDown={input => this.fieldLinkDragStart(variable, input, undefined)}
                 connectorMouseUp={input => this.fieldLinkDragStop(variable, input, undefined)}
@@ -347,8 +346,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             maxY = Math.max(maxY, display.maxY);
         }
 
-        let contentWidth = Math.ceil(maxX / gridSize) * gridSize;
-        let contentHeight = Math.ceil(maxY / gridSize) * gridSize;
+        let contentWidth = growToFitGrid(maxX);
+        let contentHeight = growToFitGrid(maxY);
         
         const viewWidth = this.state.viewWidth - this.state.scrollbarWidth;
         const viewHeight = this.state.viewHeight - this.state.scrollbarHeight;
@@ -487,8 +486,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         let root = this.root.getBoundingClientRect();
 
         // get content-relative coordinates from screen-relative drag coordinates
-        let x = this.alignToGrid(this.dragX - root.left);
-        let y = this.alignToGrid(this.dragY - root.top);
+        let x = alignToGrid(this.dragX - root.left);
+        let y = alignToGrid(this.dragY - root.top);
 
         createAction(x, y);
         this.props.itemDropped();
@@ -504,8 +503,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
 
     private stopDraggingItem(item: Positionable, display: React.Component) {
 
-        item.x = this.alignToGrid(item.x);
-        item.y = this.alignToGrid(item.y);
+        item.x = alignToGrid(item.x);
+        item.y = alignToGrid(item.y);
 
         display.forceUpdate();
         this.drawLinks();
@@ -671,9 +670,5 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         variable.links.push(parameter);
 
         return true;
-    }
-
-    private alignToGrid(val: number) {
-        return Math.round(val / gridSize) * gridSize;
     }
 }

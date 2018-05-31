@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Parameter, Step, StepType, StopStep } from '../data';
+import { growToFitGrid } from './gridSize';
 import { ParameterDisplay } from './ParameterDisplay';
 import './StepDisplay.css';
 
@@ -19,13 +20,22 @@ interface StepDisplayProps {
     defaultChanged: (inputParam: Parameter) => void;
 }
 
-export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
+interface StepDisplayState {
+    width?: number;
+}
+
+export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDisplayState> {
     private root: HTMLDivElement;
     private _entryConnector: HTMLDivElement | null;
     private _returnConnectors: { [key: string]: HTMLDivElement } = {};
     private _inputConnectors: HTMLDivElement[];
     private _outputConnectors: HTMLDivElement[];
 
+    constructor(props: StepDisplayProps) {
+        super(props);
+        this.state = {};
+    }
+    
     public get entryConnector() { return this._entryConnector; }
     public getReturnConnector(returnPathName: string | null) {
         if (returnPathName === null) {
@@ -53,10 +63,21 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
         return this.root.offsetTop + this.root.offsetHeight;
     }
 
+    componentDidMount() {
+        this.updateWidth();
+    }
+
+    componentDidUpdate(prevProps: StepDisplayProps, prevState: StepDisplayState) {
+        if (this.state.width === undefined) {
+            this.updateWidth(); // if width was just cleared, now calculate it again
+        }
+    }
+
     render() {
         let posStyle = {
             left: this.props.step.x,
             top: this.props.step.y,
+            minWidth: this.state.width,
         };
 
         return (
@@ -213,11 +234,25 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
                         focused={param === this.props.focusParameter}
                         linkMouseDown={() => this.props.parameterLinkMouseDown(param, input)}
                         linkMouseUp={() => this.props.parameterLinkMouseUp(param, input)}
-                        defaultChanged={input ? () => this.props.defaultChanged(param) : undefined}
+                        defaultChanged={input ? () => this.defaultChanged(param) : undefined}
                     />
                     );
                 })}
             </div>
         );
+    }
+
+    private defaultChanged(param: Parameter) {
+        this.props.defaultChanged(param);
+
+        this.setState({
+            width: undefined, // trigger a width recalculation, but need to be able to get narrower, so unset it first
+        });
+    }
+
+    private updateWidth() {
+        this.setState({
+            width: growToFitGrid(this.root.offsetWidth),
+        });
     }
 }

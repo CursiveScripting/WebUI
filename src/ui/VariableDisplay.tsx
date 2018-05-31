@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Variable } from '../data';
+import { growToFitGrid } from './gridSize';
 import { ParameterConnector, ConnectorState } from './ParameterConnector';
 import './VariableDisplay.css';
 
@@ -10,7 +11,11 @@ interface VariableDisplayProps {
     connectorMouseUp: (input: boolean) => void;
 }
 
-export class VariableDisplay extends React.PureComponent<VariableDisplayProps, {}> {
+interface VariableDisplayState {
+    width?: number;
+}
+
+export class VariableDisplay extends React.PureComponent<VariableDisplayProps, VariableDisplayState> {
     private root: HTMLDivElement;
     private _inputConnector: HTMLDivElement;
     private _outputConnector: HTMLDivElement;
@@ -25,11 +30,23 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, {
     public get maxY() {
         return this.root.offsetTop + this.root.offsetHeight;
     }
+
+    constructor(props: VariableDisplayProps) {
+        super(props);
+        this.state = {};
+    }
+
+    componentDidMount() {
+        this.setState({
+            width: growToFitGrid(this.root.offsetWidth),
+        });
+    }
     
     render() {
         let posStyle = {
             left: this.props.variable.x,
             top: this.props.variable.y,
+            minWidth: this.state.width,
         };
 
         let colorStyle = {
