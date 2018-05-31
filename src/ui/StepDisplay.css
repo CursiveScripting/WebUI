@@ -171,9 +171,9 @@
 
 @keyframes throbError {
     from {
-    }
-    to {
         color: #f00;
         text-shadow: 0px 0px 4px white;
+    }
+    to {
     }
 }
