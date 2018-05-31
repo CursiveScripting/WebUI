@@ -298,7 +298,6 @@ export class ProcessLoading {
             }
 
             let returnPath = new ReturnPath(step, targetStep, null);
-            // returnPath.onlyPath = true;
             step.returnPaths.push(returnPath);
             targetStep.incomingPaths.push(returnPath);
         }
@@ -316,8 +315,8 @@ export class ProcessLoading {
 
             let name = returnPathNode.getAttribute('name');
             let returnPath = new ReturnPath(step, targetStep, name);
-            // returnPath.onlyPath = false;
             step.returnPaths.push(returnPath);
+            targetStep.incomingPaths.push(returnPath);
         }
     }
 }
