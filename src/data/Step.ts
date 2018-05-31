@@ -43,11 +43,21 @@ export abstract class Step implements Positionable {
             errors.push(new ValidationError(this, null, undefined, 'No connections lead to this step - it is unreachable'));
         }
 
-        // all input connectors and output connectors should be connected
+        // all input connectors should be connected
         for (let input of this.inputs) {
-            input.isValid = input.link !== null || input.initialValue !== null;
-            if (!input.isValid) {
+            input.isValid = true;
+            if (input.link !== null) {
+                continue;
+            }
+
+            if (input.initialValue === null) {
+                input.isValid = false;
                 errors.push(new ValidationError(this, input, undefined, 'Input is not connected and has no default'));
+            }
+
+            else if (!input.type.isValid(input.initialValue)) {
+                input.isValid = false;
+                errors.push(new ValidationError(this, input, undefined, 'Input has invalid default'));
             }
         }
 

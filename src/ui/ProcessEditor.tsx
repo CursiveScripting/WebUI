@@ -87,7 +87,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                     itemDropped={() => this.dropCompleted()}
                     stepDragging={step => this.setState({ draggingStep: step })}
                     variableDragging={variable => this.setState({ draggingVariable: variable })}
-                    connectionChanged={() => this.revalidateOpenProcess()}
+                    revalidate={() => this.revalidateOpenProcess()}
                     focusStep={this.state.focusStep}
                     focusStepParameter={this.state.focusStepParameter}
                     focusStepReturnPath={this.state.focusStepReturnPath}

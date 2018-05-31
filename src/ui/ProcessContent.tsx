@@ -18,7 +18,7 @@ interface ProcessContentProps {
     itemDropped: () => void;
     stepDragging: (step: Step | undefined) => void;
     variableDragging: (variable: Variable | undefined) => void;
-    connectionChanged: () => void;
+    revalidate: () => void;
 }
 
 interface ProcessContentState {
@@ -161,6 +161,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 outputLinkMouseUp={returnPath => this.stepLinkDragStop(step, false, returnPath)}
                 parameterLinkMouseDown={(param, input) => this.fieldLinkDragStart(param, input, step)}
                 parameterLinkMouseUp={(param, input) => this.fieldLinkDragStop(param, input, step)}
+                defaultChanged={param => this.props.revalidate()}
             />
         ));
     }
@@ -566,7 +567,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             this.getStepDisplay(prevConnectedStep).forceUpdate();
         }
 
-        this.props.connectionChanged();
+        this.props.revalidate();
         this.drawLinks();
     }
 
@@ -610,7 +611,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             }
         }
 
-        this.props.connectionChanged();
+        this.props.revalidate();
         this.drawLinks();
     }
 

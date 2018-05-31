@@ -16,6 +16,7 @@ interface StepDisplayProps {
     outputLinkMouseUp: (returnPath: string | null) => void;
     parameterLinkMouseDown: (param: Parameter, input: boolean) => void;
     parameterLinkMouseUp: (param: Parameter, input: boolean) => void;
+    defaultChanged: (inputParam: Parameter) => void;
 }
 
 export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
@@ -212,6 +213,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, {}> {
                         focused={param === this.props.focusParameter}
                         linkMouseDown={() => this.props.parameterLinkMouseDown(param, input)}
                         linkMouseUp={() => this.props.parameterLinkMouseUp(param, input)}
+                        defaultChanged={input ? () => this.props.defaultChanged(param) : undefined}
                     />
                     );
                 })}

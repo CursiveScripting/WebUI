@@ -9,6 +9,7 @@ interface ParameterDisplayProps {
     focused: boolean;
     linkMouseDown?: () => void;
     linkMouseUp?: () => void;
+    defaultChanged?: () => void;
 }
 
 export class ParameterDisplay extends React.PureComponent<ParameterDisplayProps, {}> {
@@ -94,6 +95,11 @@ export class ParameterDisplay extends React.PureComponent<ParameterDisplayProps,
 
     private fixedValChanged(e: React.ChangeEvent<HTMLInputElement>) {
         this.props.parameter.initialValue = e.target.value.length > 0 ? e.target.value : null;
+
+        if (this.props.defaultChanged !== undefined) {
+            this.props.defaultChanged();
+        }
+
         this.forceUpdate();
     }
 }
