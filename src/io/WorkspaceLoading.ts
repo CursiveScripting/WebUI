@@ -126,6 +126,7 @@ export class WorkspaceLoading {
         procTypeName: string
     ) {
         let usedNames: {[key: string]: boolean} = {};
+        const isInput = inputOrOutput === 'input';
 
         for (let i = 0; i < paramNodes.length; i++) {
             let paramName = paramNodes[i].getAttribute('name') as string;
@@ -145,7 +146,7 @@ export class WorkspaceLoading {
             }
                 
             usedNames[paramName] = true;
-            parameters.push(new Parameter(paramName, paramType));
+            parameters.push(new Parameter(paramName, paramType, isInput));
         }
     }
 }

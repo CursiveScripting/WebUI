@@ -78,6 +78,9 @@ export class ProcessLoading {
         dataFields: DataField[],
         paramTypeName: 'input' | 'output' | 'variable'
     ) {
+        const isVariable = paramTypeName === 'variable';
+        const isInput = paramTypeName === 'input';
+
         for (let i = 0; i < paramNodes.length; i++) {
             let node = paramNodes[i];
             let paramName = node.getAttribute('name') as string;
@@ -90,13 +93,13 @@ export class ProcessLoading {
             }
 
             let dataField: DataField;
-            if (paramTypeName === 'variable') {
+            if (isVariable) {
                 let x = node.hasAttribute('x') ? parseInt(node.getAttribute('x') as string) : -1;
                 let y = node.hasAttribute('y') ? parseInt(node.getAttribute('y') as string) : -1;
                 dataField = new Variable(paramName, dataType, x, y);
             }
             else {
-                dataField = new Parameter(paramName, dataType);
+                dataField = new Parameter(paramName, dataType, isInput);
             }
 
             if (node.hasAttribute('initialValue')) {

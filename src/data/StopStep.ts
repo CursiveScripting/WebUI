@@ -8,7 +8,7 @@ export class StopStep extends Step {
 
     constructor(uniqueID: string, parentProcess: UserProcess, public returnPath: string | null, x: number, y: number) {
         super(uniqueID, StepType.Stop, parentProcess, x, y);
-        this._inputs = this.copyParameters(parentProcess.outputs);
+        this._inputs = this.copyParameters(parentProcess.outputs, true);
     }
 
     public get name() { return 'Stop'; }

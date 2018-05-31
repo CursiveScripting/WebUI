@@ -65,8 +65,8 @@ export abstract class Step implements Positionable {
         return errors;
     }
 
-    protected copyParameters(params: Parameter[]) {
-        return params.map(param => new Parameter(param.name, param.type));
+    protected copyParameters(params: Parameter[], asInput: boolean) {
+        return params.map(param => new Parameter(param.name, param.type, asInput));
     }
 
     private validateReturnPaths() {

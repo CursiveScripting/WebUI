@@ -7,7 +7,7 @@ export class StartStep extends Step {
 
     constructor(uniqueID: string, parentProcess: UserProcess, x: number, y: number) {
         super(uniqueID, StepType.Start, parentProcess, x, y);
-        this._outputs = this.copyParameters(parentProcess.inputs);
+        this._outputs = this.copyParameters(parentProcess.inputs, false);
     }
 
     public get name() { return 'Start'; }
