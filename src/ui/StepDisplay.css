@@ -1,5 +1,5 @@
 .step {
-    border-radius: 0.5rem;
+    border-radius: 0.5em;
     background-color: #ccc;
     display: inline-flex;
     flex-direction: column;
@@ -7,12 +7,11 @@
     position: absolute;
     user-select: none;
     border: solid black 1px;
+    overflow: hidden;
 }
 
 .step__header {
-    padding: 0.2em;
-    border-top-left-radius: 0.5rem;
-    border-top-right-radius: 0.5rem;
+    padding: 0.2em 0;
     display: flex;
     cursor: move;
     border-bottom: solid black 1px;
@@ -73,7 +72,7 @@
 .step__processName {
     color: white;
     font-weight: bold;
-    padding: 0 1em 0 0.2em;
+    padding: 0 1em 0 0;
     text-shadow: 0px 0px 4px black;
 }
 
