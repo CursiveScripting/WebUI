@@ -1,22 +1,24 @@
 .processEditor {
     display: grid;
     grid-template-columns: 12em 1fr;
-    grid-template-rows: 3em 1fr;
+    grid-template-rows: 3em 3em 1fr;
     grid-template-areas:
         "toolbar toolbar"
+        "addnew content"
         "sidebar content";
+}
+
+@media (min-width: 1024px) {
+    .processEditor {
+        grid-template-rows: 3em 1fr;
+        grid-template-areas:
+            "addnew toolbar"
+            "sidebar content";
+    }
 }
 
 .processEditor * {
     box-sizing: border-box;
-}
-
-@media only screen and (min-width: 1024px) {
-    .processEditor {
-        grid-template-areas:
-            "sidebar toolbar"
-            "sidebar content";
-    }
 }
 
 .processEditor__sidebar {
@@ -29,4 +31,23 @@
 
 .processEditor__content {
     grid-area: content;
+}
+
+.processEditor__addNew {
+    grid-area: addnew;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    background-color: #ccc;
+    margin: 0.5em 1.5em 0.5em 0.5em;
+    border-radius: 1em;
+    cursor: pointer;
+}
+
+.processEditor__definitionHeader {
+    grid-area: toolbar;
+    display: flex;
+    align-items: center;
+    font-size: 2em;
 }

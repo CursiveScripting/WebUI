@@ -8,6 +8,8 @@ interface ProcessListItemProps {
     isSelected: boolean;
     hasError: boolean;
     onMouseDown: () => void;
+    clickHeader?: () => void;
+    clickEdit?: () => void;
 }
 
 export class ProcessListItem extends React.PureComponent<ProcessListItemProps, {}> {
@@ -30,10 +32,19 @@ export class ProcessListItem extends React.PureComponent<ProcessListItemProps, {
             classes += ' processListItem--system';
         }
         
+        const headerClicked = this.props.clickHeader;
+        const clickHeader = headerClicked === undefined ? undefined : () => headerClicked();
+
+        const editClicked = this.props.clickEdit;
+        const editLink = editClicked === undefined ? undefined : (
+            <div className="processListItem__editLink" onClick={() => editClicked()}>Edit definition</div>
+        );
+
         return (
             <div className={classes} onMouseDown={this.props.onMouseDown}>
-                <div className="processListItem__name">{this.props.process.name}</div>
+                <div className="processListItem__name" onClick={clickHeader}>{this.props.process.name}</div>
                 <div className="processListItem__desc">{this.props.process.description}</div>
+                {editLink}
             </div>
         );
     }

@@ -10,6 +10,8 @@ interface ProcessListProps {
     selectedProcess?: Process;
     className?: string;
     errorProcesses: UserProcess[];
+    processOpened: (process: UserProcess) => void;
+    editDefinition: (process: UserProcess) => void;
     processSelected: (process: Process) => void;
 }
 
@@ -31,14 +33,21 @@ export class ProcessList extends React.PureComponent<ProcessListProps, {}> {
     private renderUserProcess(process: UserProcess, index: number) {
         let hasErrors = this.props.errorProcesses.indexOf(process) !== -1;
 
-        // TODO: allow opening
+        const openProcess = process === this.props.openProcess
+            ? undefined
+            : () => this.props.processOpened(process);
+
+        const editDef = process.fixedSignature ? undefined : () => this.props.editDefinition(process);
+
         return (
             <ProcessListItem
                 process={process}
-                key={index}
+                key={process.name}
                 isOpen={process === this.props.openProcess}
                 isSelected={this.props.selectedProcess === process}
                 hasError={hasErrors}
+                clickHeader={openProcess}
+                clickEdit={editDef}
                 onMouseDown={() => this.props.processSelected(process)}
             />
         );

@@ -4,6 +4,7 @@ import { ValidationError } from '../data/ValidationError';
 import { ProcessContent } from './ProcessContent';
 import { ProcessList } from './ProcessList';
 import { ProcessToolbar } from './ProcessToolbar';
+import { SignatureEditor } from './SignatureEditor';
 import './ProcessEditor.css';
 
 interface ProcessEditorProps {
@@ -14,7 +15,8 @@ interface ProcessEditorProps {
 }
 
 interface ProcessEditorState {
-    openProcess: UserProcess;
+    openProcess?: UserProcess;
+    editingSignature: boolean;
     droppingDataType?: Type;
     droppingProcess?: Process;
     droppingStopStep?: string | null;
@@ -39,6 +41,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             openProcess: props.initialProcess === undefined
                 ? props.workspace.userProcesses.values[0]
                 : props.initialProcess,
+            editingSignature: false,
             otherProcessesHaveErrors: false,
             processErrors: [],
             processesWithErrors: errorProcesses,
@@ -46,7 +49,9 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
     }
     
     componentWillMount() {
-        this.openProcess(this.state.openProcess);
+        if (this.state.openProcess !== undefined) {
+            this.openProcess(this.state.openProcess);
+        }
     }
 
     componentDidUpdate(prevProps: ProcessEditorProps, prevState: ProcessEditorState) {
@@ -61,49 +66,134 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             classes += ' ' + this.props.className;
         }
 
+        if (this.state.editingSignature) {
+            classes += ' processEditor--editDef';
+
+            return (
+                <div className={classes}>
+                    {this.renderProcessList()}
+                    {this.renderSignatureHeader()}
+                    {this.renderSignatureEditor()}
+                </div>
+            );
+        }
+
+        const addButton = <div role="button" className="processEditor__addNew" onClick={() => this.showNewProcess()}>Add process</div>;
+
         return (
             <div className={classes}>
-                <ProcessList
-                    className="processEditor__sidebar"
-                    userProcesses={this.props.workspace.userProcesses.values}
-                    systemProcesses={this.props.workspace.systemProcesses.values}
-                    openProcess={this.state.openProcess}
-                    selectedProcess={this.state.droppingProcess}
-                    processSelected={process => this.selectProcess(process)}
-                    errorProcesses={this.state.processesWithErrors}
-                />
-                <ProcessToolbar
-                    types={this.props.workspace.types.values}
-                    returnPaths={this.state.openProcess.returnPaths}
-                    validationErrors={this.state.processErrors}
-                    otherProcessesHaveErrors={this.state.otherProcessesHaveErrors}
-                    selectedStep={this.state.draggingStep}
-                    selectedVariable={this.state.draggingVariable}
-                    selectedType={this.state.droppingDataType}
-                    selectedStopStep={this.state.droppingStopStep}
-                    className="processEditor__toolbar"
-                    saveProcesses={this.props.save === undefined ? undefined : () => this.saveProcesses()}
-                    focusError={error => this.focusOnError(error)}
-                    selectType={type => this.selectDataType(type)}
-                    selectStopStep={step => this.selectStopStep(step)}
-                    removeSelectedItem={() => this.removeSelectedItem()}
-                />
-                <ProcessContent
-                    className="processEditor__content"
-                    process={this.state.openProcess}
-                    dropVariableType={this.state.droppingDataType}
-                    dropStep={this.state.droppingProcess}
-                    dropStopStep={this.state.droppingStopStep}
-                    itemDropped={() => this.dropCompleted()}
-                    stepDragging={step => this.setState({ draggingStep: step })}
-                    variableDragging={variable => this.setState({ draggingVariable: variable })}
-                    revalidate={() => this.revalidateOpenProcess()}
-                    focusStep={this.state.focusStep}
-                    focusStepParameter={this.state.focusStepParameter}
-                    focusStepReturnPath={this.state.focusStepReturnPath}
-                />
+                {this.renderProcessList()}
+                {addButton}
+                {this.renderProcessToolbar()}
+                {this.renderProcessContent()}
             </div>
         );
+    }
+
+    private renderProcessList() {
+        return (
+            <ProcessList
+                className="processEditor__sidebar"
+                userProcesses={this.props.workspace.userProcesses.values}
+                systemProcesses={this.props.workspace.systemProcesses.values}
+                openProcess={this.state.openProcess}
+                selectedProcess={this.state.droppingProcess}
+                processOpened={process => this.openProcess(process)}
+                editDefinition={process => this.showEditProcess(process)}
+                processSelected={process => this.selectProcess(process)}
+                errorProcesses={this.state.processesWithErrors}
+            />
+        );
+    }
+
+    private renderProcessContent() {
+        if (this.state.openProcess === undefined) {
+            return undefined;
+        }
+
+        return (
+            <ProcessContent
+                className="processEditor__content"
+                process={this.state.openProcess}
+                dropVariableType={this.state.droppingDataType}
+                dropStep={this.state.droppingProcess}
+                dropStopStep={this.state.droppingStopStep}
+                itemDropped={() => this.dropCompleted()}
+                stepDragging={step => this.setState({ draggingStep: step })}
+                variableDragging={variable => this.setState({ draggingVariable: variable })}
+                revalidate={() => this.revalidateOpenProcess()}
+                focusStep={this.state.focusStep}
+                focusStepParameter={this.state.focusStepParameter}
+                focusStepReturnPath={this.state.focusStepReturnPath}
+            />
+        );
+    }
+
+    private renderProcessToolbar() {
+        return (
+            <ProcessToolbar
+                types={this.props.workspace.types.values}
+                returnPaths={this.state.openProcess === undefined ? [] : this.state.openProcess.returnPaths}
+                validationErrors={this.state.processErrors}
+                otherProcessesHaveErrors={this.state.otherProcessesHaveErrors}
+                selectedStep={this.state.draggingStep}
+                selectedVariable={this.state.draggingVariable}
+                selectedType={this.state.droppingDataType}
+                selectedStopStep={this.state.droppingStopStep}
+                className="processEditor__toolbar"
+                saveProcesses={this.props.save === undefined ? undefined : () => this.saveProcesses()}
+                focusError={error => this.focusOnError(error)}
+                selectType={type => this.selectDataType(type)}
+                selectStopStep={step => this.selectStopStep(step)}
+                removeSelectedItem={() => this.removeSelectedItem()}
+            />
+        );
+    }
+
+    private renderSignatureHeader() {
+        const text = this.state.openProcess === undefined
+            ? 'Define new process'
+            : 'Edit process definition: ' + this.state.openProcess.name;
+
+        return (
+            <div className="processEditor__definitionHeader">
+                {text}
+            </div>
+        );
+    }
+
+    private renderSignatureEditor() {
+        return (
+            <SignatureEditor
+                process={this.state.openProcess}
+                className="processEditor__content"
+                save={() => this.saveSignature()}
+                cancel={() => this.closeSignatureEditor()}
+            />
+        );
+    }
+
+    private showNewProcess() {
+        this.showEditProcess();
+    }
+
+    private showEditProcess(process?: UserProcess) {
+        this.setState({
+            editingSignature: true,
+            openProcess: process,
+        });
+    }
+
+    private closeSignatureEditor() {
+        this.setState({
+            editingSignature: false,
+        });
+
+        if (this.state.openProcess === undefined) {
+            this.setState({
+                openProcess: this.props.workspace.userProcesses.values[0],
+            });
+        }
     }
 
     private openProcess(process: UserProcess) {
@@ -119,6 +209,12 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         });
     }
     
+    private saveSignature() {
+        // TODO: add new or update existing user process
+
+        this.closeSignatureEditor();
+    }
+
     private selectDataType(type: Type | undefined) {
         this.setState({
             droppingDataType: type === this.state.droppingDataType ? undefined : type,
@@ -155,6 +251,10 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
     }
 
     private removeSelectedItem() {
+        if (this.state.openProcess === undefined) {
+            return;
+        }
+
         if (this.state.draggingStep !== undefined && this.state.draggingStep.stepType !== StepType.Start) {
             this.state.openProcess.removeStep(this.state.draggingStep);
             this.revalidateOpenProcess();
@@ -181,6 +281,10 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
     }
     
     private revalidateOpenProcess() {
+        if (this.state.openProcess === undefined) {
+            return;
+        }
+        
         let wasValid = this.props.workspace.validationSummary.getErrorsForProcess(this.state.openProcess).length === 0;
         let processErrors = this.props.workspace.validateProcess(this.state.openProcess);
         let isValid = processErrors.length === 0;
@@ -199,13 +303,16 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         // validity has changed, update the "invalid processes" list for the sidebar
         this.setState(prev => {
             const processesWithErrors = prev.processesWithErrors.slice();
-            if (isValid) {
-                processesWithErrors.splice(processesWithErrors.indexOf(this.state.openProcess, 1));
+
+            if (prev.openProcess !== undefined) {
+                if (isValid) {
+                    processesWithErrors.splice(processesWithErrors.indexOf(prev.openProcess, 1));
+                }
+                else {
+                    processesWithErrors.push(prev.openProcess);
+                }
             }
-            else {
-                processesWithErrors.push(this.state.openProcess);
-            }
-            
+
             return {
                 processesWithErrors: processesWithErrors,
             };
