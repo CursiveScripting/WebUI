@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { ProcessEditor } from './ui/ProcessEditor';
 import { Workspace } from './data';
+import Worker from 'worker-loader!./TestWorker';
 import './App.css';
 
 interface AppState {
@@ -14,6 +15,9 @@ class App extends React.PureComponent<{}, AppState> {
     }
 
     componentWillMount() {
+        const worker = new Worker();
+        worker.postMessage('whatever');
+
         let request = new XMLHttpRequest();
         request.open('GET', 'workspace.xml', true);
     
