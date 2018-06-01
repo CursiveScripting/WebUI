@@ -26,9 +26,8 @@ export class Workspace {
     }
     
     private static stringToElement(xml: string) {
-        let tmp = document.createElement('div');
-        tmp.innerHTML = xml;
-        return tmp.firstChild as HTMLElement;
+        const parser = new DOMParser();
+        return parser.parseFromString(xml, 'application/xml').documentElement;
     }
 
     public loadProcessesFromString(processXml: string) {
