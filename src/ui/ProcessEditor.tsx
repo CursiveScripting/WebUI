@@ -167,7 +167,8 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             <SignatureEditor
                 process={this.state.openProcess}
                 className="processEditor__content"
-                save={() => this.saveSignature()}
+                allTypes={this.props.workspace.types.values}
+                save={process => this.saveSignature(process)}
                 cancel={() => this.closeSignatureEditor()}
             />
         );
@@ -209,8 +210,8 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         });
     }
     
-    private saveSignature() {
-        // TODO: add new or update existing user process
+    private saveSignature(process: UserProcess) {
+        // TODO: add new or replace existing user process
 
         this.closeSignatureEditor();
     }

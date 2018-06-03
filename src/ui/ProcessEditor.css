@@ -47,7 +47,6 @@
 
 .processEditor__definitionHeader {
     grid-area: toolbar;
-    display: flex;
-    align-items: center;
+    text-align: center;
     font-size: 2em;
 }
