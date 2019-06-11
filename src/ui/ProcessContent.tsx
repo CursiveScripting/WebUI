@@ -144,7 +144,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     private renderSteps() {
         this.stepDisplays = [];
 
-        return this.props.process.steps.values.map(step => (
+        return Array.from(this.props.process.steps.values()).map(step => (
             <StepDisplay
                 ref={s => { if (s !== null) { this.stepDisplays.push(s); }}}
                 key={step.uniqueID}
@@ -401,7 +401,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             let dropStep = this.props.dropStep;
             this.dropNewItem((x, y) => {
                 let newStep = new ProcessStep(this.props.process.getNextStepID(), dropStep, this.props.process, x, y);
-                this.props.process.steps.add(newStep.uniqueID, newStep);
+                this.props.process.steps.set(newStep.uniqueID, newStep);
             });
         }
 
@@ -409,12 +409,12 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             let dropStopStep = this.props.dropStopStep;
             this.dropNewItem((x, y) => {
                 let newStep = new StopStep(this.props.process.getNextStepID(), this.props.process, dropStopStep, x, y);
-                this.props.process.steps.add(newStep.uniqueID, newStep);
+                this.props.process.steps.set(newStep.uniqueID, newStep);
             });
         }
 
         else if (this.draggingStep !== undefined) {
-            if (this.props.process.steps.values.indexOf(this.draggingStep) === -1) {
+            if (!this.props.process.steps.has(this.draggingStep.uniqueID)) {
                 return;
             }
 
@@ -466,7 +466,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
 
         else if (this.draggingStep !== undefined) {
-            if (this.props.process.steps.values.indexOf(this.draggingStep) === -1) {
+            if (!this.props.process.steps.has(this.draggingStep.uniqueID)) {
                 return;
             }
 

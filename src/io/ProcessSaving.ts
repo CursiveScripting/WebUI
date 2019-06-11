@@ -1,12 +1,12 @@
-﻿import { DataField, Dictionary, Parameter, Step, StepType, StopStep, UserProcess } from '../data';
+﻿import { DataField, Parameter, Step, StepType, StopStep, UserProcess } from '../data';
 
 export class ProcessSaving {
-    static saveProcesses(processes: Dictionary<UserProcess>) {
+    static saveProcesses(processes: Map<string, UserProcess>) {
         let saveDoc = document.implementation.createDocument(null, 'processes', null);
         let rootNode = saveDoc.createElement('Processes');
 
-        for (let i = 0; i < processes.count; i++) {
-            this.saveProcess(processes.values[i], rootNode);
+        for (const [name, process] of processes) {
+            this.saveProcess(process, rootNode);
         }
         return rootNode.outerHTML;
     }
@@ -52,7 +52,7 @@ export class ProcessSaving {
         let steps = parent.ownerDocument!.createElement('Steps');
         element.appendChild(steps);
 
-        for (let step of process.steps.values) {
+        for (let [id, step] of process.steps) {
             this.saveStep(step, steps);
         }
     }

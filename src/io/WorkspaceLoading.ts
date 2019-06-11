@@ -1,35 +1,35 @@
-import { Workspace, SystemProcess, Dictionary, Type, UserProcess, Parameter, Process } from '../data';
+import { Workspace, SystemProcess, Type, UserProcess, Parameter, Process } from '../data';
 
 export class WorkspaceLoading {
     public static loadWorkspace(workspaceXml: HTMLElement) {
         let workspace = new Workspace();
-        let systemProcesses = new Dictionary<SystemProcess>();
-        let userProcesses = new Dictionary<UserProcess>();
+        let systemProcesses = new Map<string, SystemProcess>();
+        let userProcesses = new Map<string, UserProcess>();
 
-        let types = new Dictionary<Type>();
+        let types = new Map<string, Type>();
         let typeNodes = workspaceXml.getElementsByTagName('Type');
         
-        for (let i = 0; i < typeNodes.length; i++) {
-            let type = this.loadType(typeNodes[i], workspace, types);
+        for (const typeNode of typeNodes) {
+            let type = this.loadType(typeNode, workspace, types);
             
-            if (types.contains(type.name)) {
+            if (types.has(type.name)) {
                 workspace.showError('There are two types in the workspace with the same name: ' + type.name + '. Type names must be unique.');
                 continue;
             }
 
-            types.add(type.name, type);
+            types.set(type.name, type);
         }
     
         let procNodes = workspaceXml.getElementsByTagName('SystemProcess');
-        for (let i = 0; i < procNodes.length; i++) {
-            let process = this.loadProcessDefinition(workspace, procNodes[i], types, true) as SystemProcess;
-            systemProcesses.add(process.name, process);
+        for (const procNode of procNodes) {
+            let process = this.loadProcessDefinition(workspace, procNode, types, true) as SystemProcess;
+            systemProcesses.set(process.name, process);
         }
 
         procNodes = workspaceXml.getElementsByTagName('RequiredProcess');
-        for (let i = 0; i < procNodes.length; i++) {
-            let process = this.loadProcessDefinition(workspace, procNodes[i], types, false) as UserProcess;
-            userProcesses.add(process.name, process);
+        for (const procNode of procNodes) {
+            let process = this.loadProcessDefinition(workspace, procNode, types, false) as UserProcess;
+            userProcesses.set(process.name, process);
         }
 
         workspace.types = types;
@@ -39,7 +39,7 @@ export class WorkspaceLoading {
         return workspace;
     }
 
-    private static loadType(typeNode: Element, workspace: Workspace, types: Dictionary<Type>) {
+    private static loadType(typeNode: Element, workspace: Workspace, types: Map<string, Type>) {
         let name = typeNode.getAttribute('name') as string;
         let color = typeNode.getAttribute('color') as string;
         
@@ -52,12 +52,14 @@ export class WorkspaceLoading {
         let extendsType: Type | null;
         if (typeNode.hasAttribute('extends')) {
             let extendsName = typeNode.getAttribute('extends') as string;
-            if (types.contains(extendsName)) {
-                extendsType = types.getByName(extendsName);
-            }
-            else {
+            const tmpExtendsType = types.get(extendsName)
+            
+            if (tmpExtendsType === undefined) {
                 extendsType = null;
                 workspace.showError(`Type ${name} extends a type which has not been defined: ${extendsName}.`);
+            }
+            else {
+                extendsType = tmpExtendsType;
             }
         }
         else {
@@ -72,7 +74,7 @@ export class WorkspaceLoading {
         return new Type(name, color, extendsType, validationExpression, guidance);
     }
 
-    private static loadProcessDefinition(workspace: Workspace, procNode: Element, types: Dictionary<Type>, isSystemProcess: boolean): Process {
+    private static loadProcessDefinition(workspace: Workspace, procNode: Element, types: Map<string, Type>, isSystemProcess: boolean): Process {
         let processName = procNode.getAttribute('name') as string;
         let inputs: Parameter[] = [];
         let outputs: Parameter[] = [];
@@ -91,8 +93,8 @@ export class WorkspaceLoading {
         
         let returnPathNodes = procNode.getElementsByTagName('ReturnPath');
         let usedNames: {[key: string]: boolean} = {};
-        for (let i = 0; i < returnPathNodes.length; i++) {
-            let path = returnPathNodes[i].getAttribute('name') as string;
+        for (const returnPathNode of returnPathNodes) {
+            let path = returnPathNode.getAttribute('name') as string;
             
             if (usedNames.hasOwnProperty(path)) {
                 workspace.showError(`The '${processName}' ${procTypeName} process has two return paths with the same name: ${path}.`
@@ -119,7 +121,7 @@ export class WorkspaceLoading {
     private static loadParameters(
         workspace: Workspace,
         processName: string,
-        types: Dictionary<Type>,
+        types: Map<string, Type>,
         paramNodes: HTMLCollectionOf<Element>,
         parameters: Parameter[],
         inputOrOutput: 'input' | 'output',
@@ -128,12 +130,12 @@ export class WorkspaceLoading {
         let usedNames: {[key: string]: boolean} = {};
         const isInput = inputOrOutput === 'input';
 
-        for (let i = 0; i < paramNodes.length; i++) {
-            let paramName = paramNodes[i].getAttribute('name') as string;
-            let paramTypeName = paramNodes[i].getAttribute('type') as string;
+        for (const paramNode of paramNodes) {
+            let paramName = paramNode.getAttribute('name') as string;
+            let paramTypeName = paramNode.getAttribute('type') as string;
             
-            let paramType = types.getByName(paramTypeName);
-            if (paramType === null) {
+            let paramType = types.get(paramTypeName);
+            if (paramType === undefined) {
                 workspace.showError(`The '${processName}' ${procTypeName} process has an ${inputOrOutput} (${paramName})`
                  + ` with an unrecognised type: ${paramTypeName}.`);
                 continue;

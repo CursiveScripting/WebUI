@@ -2,7 +2,6 @@ import { Positionable } from './Positionable';
 export type Positionable = Positionable;
 
 export { DataField } from './DataField';
-export { Dictionary } from './Dictionary';
 export { Parameter } from './Parameter';
 export { ReturnPath } from './ReturnPath';
 export { Process } from './Process';

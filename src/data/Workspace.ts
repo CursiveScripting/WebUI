@@ -1,4 +1,3 @@
-import { Dictionary } from './Dictionary';
 import { SystemProcess } from './SystemProcess';
 import { Type } from './Type';
 import { UserProcess } from './UserProcess';
@@ -8,11 +7,11 @@ import { ProcessSaving } from '../io/ProcessSaving';
 import { ValidationSummary } from './ValidationSummary';
 
 export class Workspace {
-    systemProcesses: Dictionary<SystemProcess>;
-    userProcesses: Dictionary<UserProcess>;
-    types: Dictionary<Type>;
+    systemProcesses = new Map<string, SystemProcess>();
+    userProcesses = new Map<string, UserProcess>();
+    types = new Map<string, Type>();
     
-    readonly validationSummary: ValidationSummary;
+    readonly validationSummary = new ValidationSummary();
 
     get isValid(): boolean {
         return !this.validationSummary.hasAnyErrors;
@@ -42,18 +41,10 @@ export class Workspace {
         return ProcessSaving.saveProcesses(this.userProcesses);
     }
 
-    constructor() {
-        this.systemProcesses = new Dictionary<SystemProcess>();
-        this.userProcesses = new Dictionary<UserProcess>();
-        this.types = new Dictionary<Type>();
-
-        this.validationSummary = new ValidationSummary();
-    }
-
     validateAll() {
         this.validationSummary.clear();
 
-        for (let process of this.userProcesses.values) {
+        for (let [name, process] of this.userProcesses) {
             this.validateProcess(process);
         }
 

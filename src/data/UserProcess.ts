@@ -4,12 +4,12 @@ import { Step, StepType } from './Step';
 import { Variable } from './Variable';
 import { Type } from './Type';
 import { StartStep } from './StartStep';
-import { Dictionary } from './Dictionary';
 import { ValidationError } from './ValidationError';
 import { gridSize } from '../ui/gridSize';
+import { findInMap } from './findInMap';
 
 export class UserProcess extends Process {
-    steps: Dictionary<Step>;
+    steps: Map<string, Step>;
     private nextStepID: number;
 
     constructor(
@@ -24,14 +24,14 @@ export class UserProcess extends Process {
     ) {
         super(name, inputs, outputs, returnPaths, true, description, folder);
     
-        this.steps = new Dictionary<Step>();
+        this.steps = new Map<string, Step>();
         this.nextStepID = 1;
     }
 
     getNextStepID() {
         while (true) {
             let stepID = (this.nextStepID++).toString();
-            if (!this.steps.contains(stepID)) {
+            if (!this.steps.has(stepID)) {
                 return stepID;
             } 
         }
@@ -40,13 +40,13 @@ export class UserProcess extends Process {
     validate(): ValidationError[] {
         let errors: ValidationError[] = [];
 
-        for (let step of this.steps.values) {
+        for (const [id, step] of this.steps) {
             errors = [...errors, ...step.validate()];
         }
 
         if (errors.length === 0) {
             let unassignedVariables = this.variables.filter(v => v.initialValue === null);
-            let currentStep = this.steps.values.filter(s => s.stepType === StepType.Start)[0];
+            let currentStep = findInMap(this.steps, s => s.stepType === StepType.Start)!;
             
             this.checkUnassignedVariableUse(currentStep, [], unassignedVariables, errors);
         }
@@ -69,11 +69,11 @@ export class UserProcess extends Process {
 
     createDefaultSteps() {
         let step: Step = new StartStep(this.getNextStepID(), this, gridSize * 2, gridSize * 2);
-        this.steps.add(step.uniqueID, step);
+        this.steps.set(step.uniqueID, step);
     }
 
     removeStep(step: Step) {
-        this.steps.remove(step.uniqueID);
+        this.steps.delete(step.uniqueID);
 
         // any return paths that lead to or come from this step should be removed
         for (let returnPath of step.incomingPaths) {

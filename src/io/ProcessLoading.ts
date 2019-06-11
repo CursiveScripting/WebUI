@@ -1,4 +1,4 @@
-﻿import { DataField, Dictionary, Parameter, Process, ProcessStep, ReturnPath, StartStep, Step, StopStep, SystemProcess,
+﻿import { DataField, Parameter, Process, ProcessStep, ReturnPath, StartStep, Step, StopStep, SystemProcess,
     UserProcess, Variable, Workspace } from '../data';
 
 export class ProcessLoading {
@@ -7,11 +7,11 @@ export class ProcessLoading {
         let userProcesses = workspace.userProcesses;        
         let systemProcesses = workspace.systemProcesses;
         
-        for (let i = 0; i < processNodes.length; i++) {
-            let process = this.loadProcessDefinition(workspace, processNodes[i]);
+        for (const processNode of processNodes) {
+            const process = this.loadProcessDefinition(workspace, processNode);
             
-            let existing = userProcesses.getByName(process.name);
-            if (existing !== null) {
+            let existing = userProcesses.get(process.name);
+            if (existing !== undefined) {
                 if (existing.fixedSignature) {
                     existing.variables = process.variables;
                     existing.folder = process.folder;
@@ -23,16 +23,16 @@ export class ProcessLoading {
                 continue;
             }
 
-            if (systemProcesses.contains(process.name)) {
+            if (systemProcesses.has(process.name)) {
                 workspace.showError(`A user process has the same name as a system processes: ${process.name}. Process names must be unique.`);
                 continue;
             }
 
-            userProcesses.add(process.name, process);
+            userProcesses.set(process.name, process);
         }
 
-        for (let i = 0; i < processNodes.length; i++) {
-            this.loadProcessSteps(workspace, processNodes[i], userProcesses, systemProcesses);
+        for (const processNode of processNodes) {
+            this.loadProcessSteps(workspace, processNode, userProcesses, systemProcesses);
         }
     }
 
@@ -57,8 +57,7 @@ export class ProcessLoading {
         let returnPaths: string[] = [];
         let usedNames: {[key: string]: boolean} = {};
         paramNodes = processNode.getElementsByTagName('ReturnPath');
-        for (let i = 0; i < paramNodes.length; i++) {
-            let paramNode = paramNodes[i];
+        for (const paramNode of paramNodes) {
             if (paramNode.parentElement !== processNode) {
                 continue;
             }
@@ -81,13 +80,12 @@ export class ProcessLoading {
         const isVariable = paramTypeName === 'variable';
         const isInput = paramTypeName === 'input';
 
-        for (let i = 0; i < paramNodes.length; i++) {
-            let node = paramNodes[i];
+        for (const node of paramNodes) {
             let paramName = node.getAttribute('name') as string;
             let typeName = node.getAttribute('type') as string;
-            let dataType = workspace.types.getByName(typeName);
+            let dataType = workspace.types.get(typeName);
 
-            if (dataType === null) {
+            if (dataType === undefined) {
                 workspace.showError(`The ${paramName} ${paramTypeName} has an invalid type: ${typeName}. That type doesn't exist in this workspace.`);
                 continue;
             }
@@ -114,35 +112,33 @@ export class ProcessLoading {
     private static loadProcessSteps(
         workspace: Workspace,
         processNode: Element,
-        userProcesses: Dictionary<UserProcess>,
-        systemProcesses: Dictionary<SystemProcess>
+        userProcesses: Map<string, UserProcess>,
+        systemProcesses: Map<string, SystemProcess>
     ) {
         let name = processNode.getAttribute('name') as string;
 
-        let process = userProcesses.getByName(name);
-        if (process === null) {
+        let process = userProcesses.get(name);
+        if (process === undefined) {
             return;
         }
 
         process.steps.clear();
         let returnPathsToProcess: [Step, Element][] = [];
 
-        let startNodes = processNode.getElementsByTagName('Start');
-        for (let i = 0; i < startNodes.length; i++) {
-            let stepNode = startNodes[i];
+        const startNodes = processNode.getElementsByTagName('Start');
+        for (const stepNode of startNodes) {
             let id = stepNode.getAttribute('ID') as string;
             let x = parseInt(stepNode.getAttribute('x') as string);
             let y = parseInt(stepNode.getAttribute('y') as string);
 
             let step = new StartStep(id, process, x, y);
             this.loadStepOutputs(workspace, process, step, stepNode);
-            process.steps.add(id, step);
+            process.steps.set(id, step);
             returnPathsToProcess.push([step, stepNode]);
         }
 
-        let stopNodes = processNode.getElementsByTagName('Stop');
-        for (let i = 0; i < stopNodes.length; i++) {
-            let stepNode = stopNodes[i];
+        const stopNodes = processNode.getElementsByTagName('Stop');
+        for (const stepNode of stopNodes) {
             let id = stepNode.getAttribute('ID') as string;
             let x = parseInt(stepNode.getAttribute('x') as string);
             let y = parseInt(stepNode.getAttribute('y') as string);
@@ -165,24 +161,23 @@ export class ProcessLoading {
 
             let step = new StopStep(id, process, returnPath, x, y);
             this.loadStepInputs(workspace, process, step, stepNode);
-            process.steps.add(id, step);
+            process.steps.set(id, step);
             returnPathsToProcess.push([step, stepNode]);
         }
 
-        let stepNodes = processNode.getElementsByTagName('Step');
-        for (let i = 0; i < stepNodes.length; i++) {
-            let stepNode = stepNodes[i];
+        const stepNodes = processNode.getElementsByTagName('Step');
+        for (const stepNode of stepNodes) {
             let id = stepNode.getAttribute('ID') as string;
             let x = parseInt(stepNode.getAttribute('x') as string);
             let y = parseInt(stepNode.getAttribute('y') as string);
 
             let childProcess: Process | null;
             let childProcessName = stepNode.getAttribute('process') as string;
-            if (systemProcesses.contains(childProcessName)) {
-                childProcess = systemProcesses.getByName(childProcessName);
+            if (systemProcesses.has(childProcessName)) {
+                childProcess = systemProcesses.get(childProcessName)!;
             }
-            else if (userProcesses.contains(childProcessName)) {
-                childProcess = userProcesses.getByName(childProcessName);
+            else if (userProcesses.has(childProcessName)) {
+                childProcess = userProcesses.get(childProcessName)!;
             }
             else {
                 childProcess = null;
@@ -197,7 +192,7 @@ export class ProcessLoading {
             let step = new ProcessStep(id, childProcess, process, x, y);
             this.loadStepInputs(workspace, process, step, stepNode);
             this.loadStepOutputs(workspace, process, step, stepNode);
-            process.steps.add(id, step);
+            process.steps.set(id, step);
             returnPathsToProcess.push([step, stepNode]);
         }
         
@@ -209,9 +204,7 @@ export class ProcessLoading {
     private static loadStepInputs(workspace: Workspace, process: UserProcess, step: Step, stepNode: Element) {
         let inputNodes = stepNode.getElementsByTagName('MapInput');
         let inputs = step.inputs;
-        for (let i = 0; i < inputNodes.length; i++) {
-            let mapNode = inputNodes[i];
-
+        for (const mapNode of inputNodes) {
             let paramName = mapNode.getAttribute('name') as string;
             let sourceName = mapNode.getAttribute('source') as string;
 
@@ -233,9 +226,7 @@ export class ProcessLoading {
         }
 
         inputNodes = stepNode.getElementsByTagName('FixedInput');
-        for (let i = 0; i < inputNodes.length; i++) {
-            let mapNode = inputNodes[i];
-
+        for (const mapNode of inputNodes) {
             let paramName = mapNode.getAttribute('name') as string;
             let value = mapNode.getAttribute('value') as string;
 
@@ -255,9 +246,8 @@ export class ProcessLoading {
     private static loadStepOutputs(workspace: Workspace, process: UserProcess, step: Step, stepNode: Element) {
         let outputNodes = stepNode.getElementsByTagName('MapOutput');
         let outputs = step.outputs;
-        for (let i = 0; i < outputNodes.length; i++) {
-            let mapNode = outputNodes[i];
-            
+        
+        for (const mapNode of outputNodes) {
             let paramName = mapNode.getAttribute('name') as string;
             let destinationName = mapNode.getAttribute('destination') as string;
 
@@ -291,12 +281,11 @@ export class ProcessLoading {
     private static loadReturnPaths(workspace: Workspace, step: Step, stepNode: Element, process: UserProcess) {
         let returnPathNodes = stepNode.getElementsByTagName('ReturnPath');
         
-        for (let i = 0; i < returnPathNodes.length; i++) {
-            let returnPathNode = returnPathNodes[i];
+        for (const returnPathNode of returnPathNodes) {
             let targetStepID = returnPathNode.getAttribute('targetStepID') as string;
-            let targetStep = process.steps.getByName(targetStepID);
+            let targetStep = process.steps.get(targetStepID);
 
-            if (targetStep === null) {
+            if (targetStep === undefined) {
                 continue;
             }
 
@@ -307,12 +296,11 @@ export class ProcessLoading {
 
         returnPathNodes = stepNode.getElementsByTagName('NamedReturnPath');
 
-        for (let i = 0; i < returnPathNodes.length; i++) {
-            let returnPathNode = returnPathNodes[i];
+        for (const returnPathNode of returnPathNodes) {
             let targetStepID = returnPathNode.getAttribute('targetStepID') as string;
-            let targetStep = process.steps.getByName(targetStepID);
+            let targetStep = process.steps.get(targetStepID);
 
-            if (targetStep === null) {
+            if (targetStep === undefined) {
                 continue;
             }
 
