@@ -12,7 +12,7 @@ export class ProcessSaving {
     }
 
     private static saveProcess(process: UserProcess, parent: HTMLElement) {
-        let element = parent.ownerDocument.createElement('Process');
+        let element = parent.ownerDocument!.createElement('Process');
         parent.appendChild(element);
         element.setAttribute('name', process.name);
         if (process.folder !== null) {
@@ -20,7 +20,7 @@ export class ProcessSaving {
         }
 
         if (process.description !== null && process.description !== '') {
-            let desc = parent.ownerDocument.createElement('Description');
+            let desc = parent.ownerDocument!.createElement('Description');
             desc.innerHTML = process.description;
             element.appendChild(desc);
         }
@@ -49,7 +49,7 @@ export class ProcessSaving {
         }
 
         // write steps
-        let steps = parent.ownerDocument.createElement('Steps');
+        let steps = parent.ownerDocument!.createElement('Steps');
         element.appendChild(steps);
 
         for (let step of process.steps.values) {
@@ -61,17 +61,17 @@ export class ProcessSaving {
         let element: HTMLElement;
 
         if (step.stepType === StepType.Start) {
-            element = parent.ownerDocument.createElement('Start');
+            element = parent.ownerDocument!.createElement('Start');
         }
         else if (step.stepType === StepType.Stop) {
-            element = parent.ownerDocument.createElement('Stop');
+            element = parent.ownerDocument!.createElement('Stop');
             let returnPath = (step as StopStep).returnPath;
             if (returnPath !== null) {
                 element.setAttribute('name', returnPath);
             }
         }
         else {
-            element = parent.ownerDocument.createElement('Step');
+            element = parent.ownerDocument!.createElement('Step');
             element.setAttribute('process', step.name);
         }
         parent.appendChild(element);
@@ -88,11 +88,11 @@ export class ProcessSaving {
             let pathElement: HTMLElement;
             
             if (path.name !== null) {
-                pathElement = parent.ownerDocument.createElement('NamedReturnPath');
+                pathElement = parent.ownerDocument!.createElement('NamedReturnPath');
                 pathElement.setAttribute('name', path.name);
             }
             else {
-                pathElement = parent.ownerDocument.createElement('ReturnPath');
+                pathElement = parent.ownerDocument!.createElement('ReturnPath');
             }
 
             pathElement.setAttribute('targetStepID', path.toStep.uniqueID.toString());
@@ -121,7 +121,7 @@ export class ProcessSaving {
         nodeName: string,
         variableAttributeName: string
     ) {
-        let element = parent.ownerDocument.createElement(parameter.initialValue === null ? nodeName : 'FixedInput');
+        let element = parent.ownerDocument!.createElement(parameter.initialValue === null ? nodeName : 'FixedInput');
         element.setAttribute('name', parameter.name);
         parent.appendChild(element);
 
@@ -134,7 +134,7 @@ export class ProcessSaving {
     }
 
     private static saveProcessParameter(parameter: DataField, parent: Element, nodeName: string) {
-        let element = parent.ownerDocument.createElement(nodeName);
+        let element = parent.ownerDocument!.createElement(nodeName);
         element.setAttribute('name', parameter.name);
         element.setAttribute('type', parameter.type.name);
         parent.appendChild(element);
@@ -142,7 +142,7 @@ export class ProcessSaving {
     }
 
     private static saveProcessReturnPath(returnPath: string, parent: Element) {
-        let element = parent.ownerDocument.createElement('ReturnPath');
+        let element = parent.ownerDocument!.createElement('ReturnPath');
         element.setAttribute('name', returnPath);
         parent.appendChild(element);
     }

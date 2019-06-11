@@ -120,7 +120,7 @@ export class WorkspaceLoading {
         workspace: Workspace,
         processName: string,
         types: Dictionary<Type>,
-        paramNodes: NodeListOf<Element>,
+        paramNodes: HTMLCollectionOf<Element>,
         parameters: Parameter[],
         inputOrOutput: 'input' | 'output',
         procTypeName: string

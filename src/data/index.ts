@@ -1,8 +1,10 @@
+import { Positionable } from './Positionable';
+export type Positionable = Positionable;
+
 export { DataField } from './DataField';
 export { Dictionary } from './Dictionary';
 export { Parameter } from './Parameter';
 export { ReturnPath } from './ReturnPath';
-export { Positionable } from './Positionable';
 export { Process } from './Process';
 export { ProcessStep } from './ProcessStep';
 export { StartStep } from './StartStep';

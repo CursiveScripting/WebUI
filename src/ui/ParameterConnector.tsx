@@ -18,8 +18,8 @@ interface ParameterConnectorProps {
 }
 
 export class ParameterConnector extends React.PureComponent<ParameterConnectorProps, {}> {
-    private _connector: HTMLDivElement;
-    public get connector() { return this._connector; }
+    private _connector: HTMLDivElement | undefined;
+    public get connector() { return this._connector!; }
 
     render() {
         return (

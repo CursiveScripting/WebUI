@@ -44,8 +44,8 @@ interface ParamConnectorDragInfo {
 }
 
 export class ProcessContent extends React.PureComponent<ProcessContentProps, ProcessContentState> {
-    private root: HTMLDivElement;
-    private ctx: CanvasRenderingContext2D;
+    private root: HTMLDivElement = undefined as unknown as HTMLDivElement;
+    private ctx: CanvasRenderingContext2D = undefined as unknown as CanvasRenderingContext2D;
     private resizeListener?: () => void;
     private draggingStep?: Step;
     private draggingVariable?: Variable;
@@ -53,8 +53,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     private draggingParamConnector?: ParamConnectorDragInfo;
     private dragX: number = 0;
     private dragY: number = 0;
-    private stepDisplays: StepDisplay[];
-    private variableDisplays: VariableDisplay[];
+    private stepDisplays: StepDisplay[] = [];
+    private variableDisplays: VariableDisplay[] = [];
 
     constructor(props: ProcessContentProps) {
         super(props);

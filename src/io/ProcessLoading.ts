@@ -18,13 +18,13 @@ export class ProcessLoading {
                     existing.description = process.description;
                 }
                 else {
-                    workspace.showError(`There are two user processes with the same name: ${name}. Process names must be unique.`);
+                    workspace.showError(`There are two user processes with the same name: ${process.name}. Process names must be unique.`);
                 }
                 continue;
             }
 
             if (systemProcesses.contains(process.name)) {
-                workspace.showError(`A user process has the same name as a system processes: ${name}. Process names must be unique.`);
+                workspace.showError(`A user process has the same name as a system processes: ${process.name}. Process names must be unique.`);
                 continue;
             }
 
@@ -74,7 +74,7 @@ export class ProcessLoading {
 
     private static loadProcessParameters(
         workspace: Workspace,
-        paramNodes: NodeListOf<Element>,
+        paramNodes: HTMLCollectionOf<Element>,
         dataFields: DataField[],
         paramTypeName: 'input' | 'output' | 'variable'
     ) {
@@ -88,7 +88,7 @@ export class ProcessLoading {
             let dataType = workspace.types.getByName(typeName);
 
             if (dataType === null) {
-                workspace.showError(`The ${paramName} ${paramTypeName} has an invalid type: ${name}. That type doesn't exist in this workspace.`);
+                workspace.showError(`The ${paramName} ${paramTypeName} has an invalid type: ${typeName}. That type doesn't exist in this workspace.`);
                 continue;
             }
 
