@@ -11,7 +11,7 @@ interface ProcessEditorProps {
     workspace: Workspace;
     initialProcess?: UserProcess;
     className?: string;
-    save?: (xml: string) => void;
+    save: () => void;
 }
 
 interface ProcessEditorState {
@@ -146,7 +146,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                 selectedType={this.state.droppingDataType}
                 selectedStopStep={this.state.droppingStopStep}
                 className="processEditor__toolbar"
-                saveProcesses={this.props.save === undefined ? undefined : () => this.saveProcesses()}
+                saveProcesses={() => this.props.save()}
                 focusError={error => this.focusOnError(error)}
                 selectType={type => this.selectDataType(type)}
                 selectStopStep={step => this.selectStopStep(step)}
@@ -277,15 +277,6 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         });
     }
 
-    private saveProcesses() {
-        if (this.props.save === undefined) {
-            return;
-        }
-
-        let xml = this.props.workspace.saveProcesses();
-        this.props.save(xml);
-    }
-    
     private revalidateOpenProcess() {
         if (this.state.openProcess === undefined) {
             return;
