@@ -6,7 +6,7 @@ export class ValidationSummary {
 
     addError(process: UserProcess, error: ValidationError) {
         var errorList = this.errorsByProcess.get(process.name)!;
-        if (errorList === null) {
+        if (errorList === undefined) {
             this.errorsByProcess.set(process.name, [error]);
         }
         else {
@@ -37,10 +37,10 @@ export class ValidationSummary {
 
     getErrorsForProcess(process: UserProcess) {
         let errors = this.errorsByProcess.get(process.name);
-        return errors === null ? [] : errors;
+        return errors === undefined ? [] : errors;
     }
 
     get errorProcessNames() {
-        return this.errorsByProcess.keys();
+        return Array.from(this.errorsByProcess.keys());
     }
 }

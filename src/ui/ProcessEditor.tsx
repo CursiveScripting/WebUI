@@ -35,11 +35,16 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         super(props);
 
         const errorProcessNames = props.workspace.validationSummary.errorProcessNames;
-        const errorProcesses = props.workspace.userProcesses.values.filter(val => errorProcessNames.indexOf(val.name) !== -1);
+        const errorProcesses: UserProcess[] = [];
+        for (const [name, proc] of props.workspace.userProcesses) {
+            if (errorProcessNames.indexOf(name) !== -1) {
+                errorProcesses.push(proc);
+            }
+        }
 
         this.state = {
             openProcess: props.initialProcess === undefined
-                ? props.workspace.userProcesses.values[0]
+                ? props.workspace.userProcesses.values().next().value
                 : props.initialProcess,
             editingSignature: false,
             otherProcessesHaveErrors: false,
@@ -56,7 +61,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
 
     componentDidUpdate(prevProps: ProcessEditorProps, prevState: ProcessEditorState) {
         if (prevProps.workspace !== this.props.workspace) {
-            this.openProcess(this.props.workspace.userProcesses[0]);
+            this.openProcess(this.props.workspace.userProcesses.values().next().value);
         }
     }
 
@@ -94,8 +99,8 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         return (
             <ProcessList
                 className="processEditor__sidebar"
-                userProcesses={this.props.workspace.userProcesses.values}
-                systemProcesses={this.props.workspace.systemProcesses.values}
+                userProcesses={Array.from(this.props.workspace.userProcesses.values())}
+                systemProcesses={Array.from(this.props.workspace.systemProcesses.values())}
                 openProcess={this.state.openProcess}
                 selectedProcess={this.state.droppingProcess}
                 processOpened={process => this.openProcess(process)}
@@ -132,7 +137,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
     private renderProcessToolbar() {
         return (
             <ProcessToolbar
-                types={this.props.workspace.types.values}
+                types={Array.from(this.props.workspace.types.values())}
                 returnPaths={this.state.openProcess === undefined ? [] : this.state.openProcess.returnPaths}
                 validationErrors={this.state.processErrors}
                 otherProcessesHaveErrors={this.state.otherProcessesHaveErrors}
@@ -167,7 +172,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             <SignatureEditor
                 process={this.state.openProcess}
                 className="processEditor__content"
-                allTypes={this.props.workspace.types.values}
+                allTypes={Array.from(this.props.workspace.types.values())}
                 save={process => this.saveSignature(process)}
                 cancel={() => this.closeSignatureEditor()}
             />
@@ -192,7 +197,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
 
         if (this.state.openProcess === undefined) {
             this.setState({
-                openProcess: this.props.workspace.userProcesses.values[0],
+                openProcess: this.props.workspace.userProcesses.values().next().value,
             });
         }
     }

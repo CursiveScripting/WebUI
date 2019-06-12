@@ -16,19 +16,19 @@ interface VariableDisplayState {
 }
 
 export class VariableDisplay extends React.PureComponent<VariableDisplayProps, VariableDisplayState> {
-    private root: HTMLDivElement;
-    private _inputConnector: HTMLDivElement;
-    private _outputConnector: HTMLDivElement;
+    private root: HTMLDivElement | undefined;
+    private _inputConnector: HTMLDivElement | undefined;
+    private _outputConnector: HTMLDivElement | undefined;
 
-    public get inputConnector() { return this._inputConnector; }
-    public get outputConnector() { return this._outputConnector; }
+    public get inputConnector() { return this._inputConnector!; }
+    public get outputConnector() { return this._outputConnector!; }
     
     public get maxX() {
-        return this.root.offsetLeft + this.root.offsetWidth;
+        return this.root!.offsetLeft + this.root!.offsetWidth;
     }
 
     public get maxY() {
-        return this.root.offsetTop + this.root.offsetHeight;
+        return this.root!.offsetTop + this.root!.offsetHeight;
     }
 
     constructor(props: VariableDisplayProps) {
@@ -38,7 +38,7 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, V
 
     componentDidMount() {
         this.setState({
-            width: growToFitGrid(this.root.offsetWidth),
+            width: growToFitGrid(this.root!.offsetWidth),
         });
     }
     

@@ -40,7 +40,7 @@ export class UserProcess extends Process {
     validate(): ValidationError[] {
         let errors: ValidationError[] = [];
 
-        for (const [id, step] of this.steps) {
+        for (const [, step] of this.steps) {
             errors = [...errors, ...step.validate()];
         }
 

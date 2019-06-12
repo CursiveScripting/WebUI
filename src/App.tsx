@@ -18,8 +18,8 @@ class App extends React.PureComponent<{}, AppState> {
         request.open('GET', 'workspace.xml', true);
     
         request.onload = () => {
-            if ((request.status >= 400 || request.status < 200) && request.status !== 0 || request.responseXML === null) {
-                throw 'Failed to load workspace XML';
+            if (((request.status >= 400 || request.status < 200) && request.status !== 0) || request.responseXML === null) {
+                throw new Error('Failed to load workspace XML');
             }
 
             let workspace = Workspace.loadFromDOM(request.responseXML);

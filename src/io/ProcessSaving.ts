@@ -5,7 +5,7 @@ export class ProcessSaving {
         let saveDoc = document.implementation.createDocument(null, 'processes', null);
         let rootNode = saveDoc.createElement('Processes');
 
-        for (const [name, process] of processes) {
+        for (const [, process] of processes) {
             this.saveProcess(process, rootNode);
         }
         return rootNode.outerHTML;
@@ -52,7 +52,7 @@ export class ProcessSaving {
         let steps = parent.ownerDocument!.createElement('Steps');
         element.appendChild(steps);
 
-        for (let [id, step] of process.steps) {
+        for (let [, step] of process.steps) {
             this.saveStep(step, steps);
         }
     }

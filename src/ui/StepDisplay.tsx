@@ -25,18 +25,18 @@ interface StepDisplayState {
 }
 
 export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDisplayState> {
-    private root: HTMLDivElement;
-    private _entryConnector: HTMLDivElement | null;
+    private root: HTMLDivElement | undefined;
+    private _entryConnector: HTMLDivElement | null = null;
     private _returnConnectors: { [key: string]: HTMLDivElement } = {};
-    private _inputConnectors: HTMLDivElement[];
-    private _outputConnectors: HTMLDivElement[];
+    private _inputConnectors: HTMLDivElement[] = [];
+    private _outputConnectors: HTMLDivElement[] = [];
 
     constructor(props: StepDisplayProps) {
         super(props);
         this.state = {};
     }
     
-    public get entryConnector() { return this._entryConnector; }
+    public get entryConnector() { return this._entryConnector!; }
     public getReturnConnector(returnPathName: string | null) {
         if (returnPathName === null) {
             returnPathName = '';
@@ -56,11 +56,11 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
     }
 
     public get maxX() {
-        return this.root.offsetLeft + this.root.offsetWidth;
+        return this.root!.offsetLeft + this.root!.offsetWidth;
     }
 
     public get maxY() {
-        return this.root.offsetTop + this.root.offsetHeight;
+        return this.root!.offsetTop + this.root!.offsetHeight;
     }
 
     componentDidMount() {
@@ -100,7 +100,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
     }
 
     public scrollIntoView() {
-        this.root.scrollIntoView({ behavior: 'smooth' });
+        this.root!.scrollIntoView({ behavior: 'smooth' });
     }
 
     private determineRootClasses() {
@@ -252,7 +252,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
 
     private updateWidth() {
         this.setState({
-            width: growToFitGrid(this.root.offsetWidth),
+            width: growToFitGrid(this.root!.offsetWidth),
         });
     }
 }

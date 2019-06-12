@@ -44,7 +44,7 @@ export class Workspace {
     validateAll() {
         this.validationSummary.clear();
 
-        for (let [name, process] of this.userProcesses) {
+        for (let [, process] of this.userProcesses) {
             this.validateProcess(process);
         }
 
