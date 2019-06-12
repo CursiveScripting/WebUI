@@ -17,7 +17,7 @@
 		<Input name="message" type="text" />
 	</SystemProcess>
 	
-	<SystemProcess name="text equals">
+	<SystemProcess name="text equals" folder="logic">
 		<Description>Compare two text values</Description>
 		<Input name="text1" type="text" />
 		<Input name="text2" type="text" />
@@ -25,7 +25,7 @@
 		<ReturnPath name="no" />
 	</SystemProcess>
 	
-	<SystemProcess name="equals">
+	<SystemProcess name="equals" folder="logic">
 		<Description>Compare two number values</Description>
 		<Input name="num1" type="number" />
 		<Input name="num2" type="number" />
@@ -33,7 +33,7 @@
 		<ReturnPath name="no" />
 	</SystemProcess>
 	
-	<SystemProcess name="less than">
+	<SystemProcess name="less than" folder="logic">
 		<Description>Determine if one number is less than another</Description>
 		<Input name="num1" type="number" />
 		<Input name="num2" type="number" />
@@ -41,7 +41,7 @@
 		<ReturnPath name="no" />
 	</SystemProcess>
 	
-	<SystemProcess name="greater than">
+	<SystemProcess name="greater than" folder="logic">
 		<Description>Determine if one number is greater than another</Description>
 		<Input name="num1" type="number" />
 		<Input name="num2" type="number" />
@@ -49,36 +49,36 @@
 		<ReturnPath name="no" />
 	</SystemProcess>
 	
-	<SystemProcess name="shuffle">
+	<SystemProcess name="shuffle" folder="actions">
 		<Description>Shuffle cards randomly</Description>
 		<Input name="cards" type="deck" />
 	</SystemProcess>
 	
-	<SystemProcess name="combine">
+	<SystemProcess name="combine" folder="actions">
 		<Description>Combine two sets of cards</Description>
 		<Input name="cards1" type="deck" />
 		<Input name="cards2" type="deck" />
 	</SystemProcess>
 	
-	<SystemProcess name="get type">
+	<SystemProcess name="get type" folder="info">
 		<Description>Get the type of a card</Description>
 		<Input name="card" type="card" />
 		<Output name="type" type="text" />
 	</SystemProcess>
 	
-	<SystemProcess name="add">
+	<SystemProcess name="add" folder="actions">
 		<Description>Add a card to a deck</Description>
 		<Input name="cards" type="deck" />
 		<Input name="card" type="card" />
 	</SystemProcess>
 	
-	<SystemProcess name="count">
+	<SystemProcess name="count" folder="info">
 		<Description>Get the number of cards in a deck</Description>
 		<Input name="cards" type="deck" />
 		<Output name="size" type="number" />
 	</SystemProcess>
 	
-	<SystemProcess name="separate">
+	<SystemProcess name="separate" folder="actions">
 		<Description>Separate a deck into two, putting all cards of a particular type into their own deck</Description>
 		<Input name="cards" type="deck" />
 		<Input name="type" type="text" />
@@ -86,7 +86,7 @@
 		<Output name="separated" type="deck" />
 	</SystemProcess>
 	
-	<SystemProcess name="contains">
+	<SystemProcess name="contains" folder="info">
 		<Description>Determine whether a deck contains a particular type of card</Description>
 		<Input name="cards" type="deck" />
 		<Input name="type" type="text" />
@@ -94,7 +94,7 @@
 		<ReturnPath name="no" />
 	</SystemProcess>
 	
-	<SystemProcess name="split">
+	<SystemProcess name="split" folder="actions">
 		<Description>Split a deck of cards into a specified number of parts</Description>
 		<Input name="cards" type="deck" />
 		<Input name="parts" type="number" />
