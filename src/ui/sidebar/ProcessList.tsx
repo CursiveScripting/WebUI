@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { UserProcess, SystemProcess, Process } from '../data';
+import { UserProcess, SystemProcess, Process } from '../../data';
 import { ProcessListItem } from './ProcessListItem';
 import './ProcessList.css';
 

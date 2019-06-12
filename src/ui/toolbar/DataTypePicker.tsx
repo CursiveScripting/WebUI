@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Type } from '../data';
+import { Type } from '../../data';
 import './DataTypePicker.css';
 
 export interface DataTypePickerProps {

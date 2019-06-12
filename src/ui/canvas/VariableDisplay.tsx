@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Variable } from '../data';
+import { Variable } from '../../data';
 import { growToFitGrid } from './gridSize';
 import { ParameterConnector, ConnectorState } from './ParameterConnector';
 import './VariableDisplay.css';

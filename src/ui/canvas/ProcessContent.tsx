@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { Step, UserProcess, ReturnPath, Type, Variable, DataField, StopStep, ProcessStep, Process, Parameter } from '../data';
-import { getScrollbarSize } from './getScrollbarSize';
+import { Step, UserProcess, ReturnPath, Type, Variable, DataField, StopStep, ProcessStep, Process, Parameter } from '../../data';
+import { getScrollbarSize } from '../getScrollbarSize';
 import { gridSize, growToFitGrid, alignToGrid } from './gridSize';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
-import { Positionable } from '../data/Positionable';
+import { Positionable } from '../../data/Positionable';
 import './ProcessContent.css';
 
 interface ProcessContentProps {

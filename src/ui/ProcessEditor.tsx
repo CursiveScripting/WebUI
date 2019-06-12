@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { UserProcess, Workspace, Type, Process, Step, Variable, StepType, Parameter } from '../data';
 import { ValidationError } from '../data/ValidationError';
-import { ProcessContent } from './ProcessContent';
-import { ProcessList } from './ProcessList';
-import { ProcessToolbar } from './ProcessToolbar';
+import { ProcessContent } from './canvas/ProcessContent';
+import { ProcessList } from './sidebar/ProcessList';
+import { ProcessToolbar } from './toolbar/ProcessToolbar';
 import { SignatureEditor } from './SignatureEditor';
 import './ProcessEditor.css';
 

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ValidationError } from '../data/ValidationError';
+import { ValidationError } from '../../data/ValidationError';
 import './ValidationSummary.css';
 
 export interface SaveToolProps {

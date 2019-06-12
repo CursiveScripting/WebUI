@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Parameter, Step, StepType, StopStep } from '../data';
+import { Parameter, Step, StepType, StopStep } from '../../data';
 import { growToFitGrid } from './gridSize';
 import { ParameterDisplay } from './ParameterDisplay';
 import './StepDisplay.css';

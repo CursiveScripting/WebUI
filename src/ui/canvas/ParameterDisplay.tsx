@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Parameter } from '../data';
+import { Parameter } from '../../data';
 import { ParameterConnector, ConnectorState } from './ParameterConnector';
 import './ParameterDisplay.css';
 

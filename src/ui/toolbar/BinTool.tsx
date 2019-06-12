@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Step, Variable } from '../data';
+import { Step, Variable } from '../../data';
 
 export interface BinToolProps {
     selectedStep?: Step;
