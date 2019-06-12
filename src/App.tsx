@@ -1,62 +1,27 @@
 import * as React from 'react';
-import { ProcessEditor } from './ui/ProcessEditor';
-import { Workspace } from './data';
 import './App.css';
+import { CursiveUI } from './cursiveui/CursiveUI';
 
-interface AppState {
-    workspace?: Workspace;
+async function loadWorkspace() {
+    const response = await fetch('workspace.xml');
+    return await response.text();
 }
 
-class App extends React.PureComponent<{}, AppState> {
-    constructor(props: {}) {
-        super(props);
-        this.state = {};
-    }
-
-    componentWillMount() {
-        let request = new XMLHttpRequest();
-        request.open('GET', 'workspace.xml', true);
-    
-        request.onload = () => {
-            if (((request.status >= 400 || request.status < 200) && request.status !== 0) || request.responseXML === null) {
-                throw new Error('Failed to load workspace XML');
-            }
-
-            let workspace = Workspace.loadFromDOM(request.responseXML);
-
-            let processXml = sessionStorage.getItem('saved');
-            if (processXml !== null) {
-                let tmp = document.createElement('div');
-                tmp.innerHTML = processXml;
-                workspace.loadProcessesFromString(processXml);
-            }
-
-            workspace.validateAll();
-
-            this.setState({
-                workspace: workspace,
-            });
-        };
-        request.send();
-    }
-
-    render() {
-        if (this.state.workspace === undefined) {
-            return <div>Please wait</div>;
-        }
-      
-        return (
-            <ProcessEditor
-                className="fullScreen"
-                workspace={this.state.workspace}
-                save={xml => this.saveProcesses(xml)}
-            />
-        );
-    }
-
-    private saveProcesses(processXml: string) {
-        sessionStorage.setItem('saved', processXml);
-    }
+async function loadProcesses() {
+    return sessionStorage.getItem('saved');
 }
+
+function saveProcesses(processXml: string) {
+    sessionStorage.setItem('saved', processXml);
+}
+
+const App = () => (
+    <CursiveUI
+        className="fullScreen"
+        loadWorkspace={loadWorkspace}
+        loadProcesses={loadProcesses}
+        saveProcesses={saveProcesses}
+    />
+);
 
 export default App;
