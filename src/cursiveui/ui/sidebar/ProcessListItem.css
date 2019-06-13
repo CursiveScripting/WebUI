@@ -12,6 +12,10 @@
     overflow: hidden;
 }
 
+.processFolder .processListItem:first-child {
+    margin-top: 0.1em;
+}
+
 .processListItem--system .processListItem__name {
     background-color: #cc8800;
 }

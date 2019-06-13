@@ -12,7 +12,7 @@ export class ProcessStep extends Step {
         x: number,
         y: number
     ) {
-        super(uniqueID, process.isEditable ? StepType.UserProcess : StepType.SystemProcess, parentProcess, x, y);
+        super(uniqueID, process.isSystem ? StepType.SystemProcess : StepType.UserProcess, parentProcess, x, y);
         
         this.inputs = this.copyParameters(process.inputs, true);       
         this.outputs = this.copyParameters(process.outputs, false);

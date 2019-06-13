@@ -2,7 +2,7 @@ import * as React from 'react';
 import { UserProcess, Workspace, Type, Process, Step, Variable, StepType, Parameter } from '../data';
 import { ValidationError } from '../data/ValidationError';
 import { ProcessContent } from './canvas/ProcessContent';
-import { ProcessList } from './sidebar/ProcessList';
+import { ProcessSelector } from './sidebar/ProcessSelector';
 import { ProcessToolbar } from './toolbar/ProcessToolbar';
 import { SignatureEditor } from './SignatureEditor';
 import './ProcessEditor.css';
@@ -97,7 +97,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
 
     private renderProcessList() {
         return (
-            <ProcessList
+            <ProcessSelector
                 className="processEditor__sidebar"
                 userProcesses={Array.from(this.props.workspace.userProcesses.values())}
                 systemProcesses={Array.from(this.props.workspace.systemProcesses.values())}

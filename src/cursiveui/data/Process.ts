@@ -6,10 +6,11 @@ export abstract class Process {
         readonly inputs: Parameter[],
         readonly outputs: Parameter[],
         readonly returnPaths: string[],
-        readonly isEditable: boolean,
         public description: string,
         public folder: string | null
     ) { }
+
+    public abstract get isSystem(): boolean;
     
     signatureMatches(other: Process) {
         if (this.inputs.length !== other.inputs.length ||

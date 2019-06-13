@@ -22,11 +22,13 @@ export class UserProcess extends Process {
         description: string,
         folder: string | null
     ) {
-        super(name, inputs, outputs, returnPaths, true, description, folder);
+        super(name, inputs, outputs, returnPaths, description, folder);
     
         this.steps = new Map<string, Step>();
         this.nextStepID = 1;
     }
+
+    public get isSystem() { return false; }
 
     getNextStepID() {
         while (true) {
