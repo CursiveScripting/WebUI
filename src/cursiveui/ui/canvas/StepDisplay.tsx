@@ -82,7 +82,11 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
 
         return (
             <div className={this.determineRootClasses()} style={posStyle} ref={r => { if (r !== null) { this.root = r; }}}>
-                <div className="step__header" onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY)}>
+                <div
+                    className="step__header"
+                    title={this.props.step.description}
+                    onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY)}
+                >
                     <div className="step__icon" />
                     <div className="step__processName">{this.props.step.name}</div>
                 </div>

@@ -28,6 +28,7 @@ export abstract class Step implements Positionable {
     }
 
     public abstract get name(): string;
+    public abstract get description(): string;
     public abstract get inputs(): Parameter[];
     public abstract get outputs(): Parameter[];
     public abstract get returnPathNames(): string[] | null;

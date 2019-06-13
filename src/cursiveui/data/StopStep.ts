@@ -4,15 +4,14 @@ import { Parameter } from './Parameter';
 import { ValidationError } from './ValidationError';
 
 export class StopStep extends Step {
-    private _inputs: Parameter[];
-
     constructor(uniqueID: string, parentProcess: UserProcess, public returnPath: string | null, x: number, y: number) {
         super(uniqueID, StepType.Stop, parentProcess, x, y);
-        this._inputs = this.copyParameters(parentProcess.outputs, true);
+        this.inputs = this.copyParameters(parentProcess.outputs, true);
     }
 
     public get name() { return 'Stop'; }
-    public get inputs () { return this._inputs; }
+    public get description() { return this.inputs.length === 0 ? 'Stops this process' : 'Stops this process and sets its outputs'; }
+    public readonly inputs: Parameter[];
     public get outputs () { return []; }
     public get returnPathNames() { return null; }
 
