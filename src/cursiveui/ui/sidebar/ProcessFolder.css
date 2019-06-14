@@ -16,14 +16,13 @@
     align-items: center;
     font-weight: bold;
     background-color: #ccc;
-    margin: 0.5em;
-    border-radius: 0.4em;
+    margin: 0.5em 0;
     height: 1.75em;
 }
 
 .processFolder__headerText {
     flex-grow: 1;
-    text-align: center;
+    padding-left: 0.6rem;
 }
 
 .processFolder__header::after {
@@ -43,4 +42,9 @@
 
 .processFolder--closed > .processFolder__header::after {
     content: '+';
+}
+
+
+.processFolder__header:hover::after {
+    text-shadow: 0px 0px 4px white, 0px 0px 4px white, 0px 0px 4px white;
 }

@@ -42,7 +42,9 @@ export class ProcessListItem extends React.PureComponent<ProcessListItemProps, {
 
         return (
             <div className={classes} onMouseDown={this.props.onMouseDown}>
-                <div className="processListItem__name" onClick={clickHeader}>{this.props.process.name}</div>
+                <div className="processListItem__header" onClick={clickHeader}>
+                    <div className="processListItem__name">{this.props.process.name}</div>
+                </div>
                 <div className="processListItem__desc">{this.props.process.description}</div>
                 {editLink}
             </div>

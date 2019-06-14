@@ -2,58 +2,58 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    margin: 0.5em;
-    border-radius: 0.5em;
-    padding: 0;
-
-    background-color: #ccc;
+    margin: 0.5em 0.1em;
     cursor: move;
     user-select: none;
     overflow: hidden;
 }
 
-.processListItem--system .processListItem__name {
-    background-color: #cc8800;
-}
+.processListItem__header {
+    font-weight: bold;
+    font-size: 1.1em;
+    height: 1.4em;
+    border-radius: 1em;
+    padding-left: 0.5rem;
+    color: white;
+    text-shadow: 0px 0px 4px black;
 
-.processListItem--user .processListItem__name {
-    background-color: #00aaaa;
-    cursor: pointer;
-}
-
-.processListItem--open {
-    box-shadow: 0 0 1pt 2pt #000;
-}
-
-.processListItem--open .processListItem__name {
-    cursor: not-allowed;
+    display: flex;
 }
 
 .processListItem__name {
-    font-weight: bold;
-    color: white;
-    padding: 0.2em 0.2em 0.2em 0.5em;
-    text-shadow: 0px 0px 4px black;
+    flex-grow: 1;
 }
 
 .processListItem__desc {
-    font-size: 0.9em;
-    padding: 0.2em;
+    font-size: 0.95em;
+    padding-left: 0.5rem;
 }
 
-.processListItem--invalid {
-    background-color: #fcc;
+.processListItem--system .processListItem__header {
+    background-color: #cc8800;
 }
 
-.processListItem--invalid .processListItem__name {
+.processListItem--user .processListItem__header {
+    background-color: #00aaaa;
+}
+
+.processListItem:hover .processListItem__header {
+    color: white;
+    text-shadow: 0px 0px 4px black, 0px 0px 4px black, 0px 0px 2px black;
+}
+
+.processListItem--invalid .processListItem__header::after {
+    content: '!';
     color: #f00;
-    text-shadow: 0px 0px 4px white;
+    margin-right: 0.5em;
 }
 
-.processListItem--invalid .processListItem__name::after {
-    content: ' !!';
+.processListItem--open .processListItem__header::after {
+    content: '\279C';
+    margin-right: 0.3em;
 }
 
+/*
 .processListItem__editLink {
     display: none;
     position: absolute;
@@ -67,3 +67,4 @@
 .processListItem:hover .processListItem__editLink {
     display: initial;
 }
+*/
