@@ -10,5 +10,37 @@
     font-weight: bold;
     cursor: pointer;
     user-select: none;
-    padding-left: 1em;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    background-color: #ccc;
+    margin: 0.5em;
+    border-radius: 0.4em;
+    height: 1.75em;
+}
+
+.processFolder__headerText {
+    flex-grow: 1;
+    text-align: center;
+}
+
+.processFolder__header::after {
+    color: #666;
+    position: relative;
+    top: -0.1em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 0.9em;
+    font-size: 1.5em;
+}
+
+.processFolder--open > .processFolder__header::after {
+    content: '-';
+}
+
+.processFolder--closed > .processFolder__header::after {
+    content: '+';
 }

@@ -30,7 +30,9 @@ export class ProcessFolder extends React.PureComponent<Props, State> {
 
         return (
             <div className={classes}>
-                <div className="processFolder__header" onClick={clickHeader}>{this.props.name}</div>
+                <div className="processFolder__header" onClick={clickHeader}>
+                    <div className="processFolder__headerText">{this.props.name}</div>
+                </div>
                 <div className="processFolder__content">
                     {this.props.children}
                 </div>
