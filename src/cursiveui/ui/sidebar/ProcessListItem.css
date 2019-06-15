@@ -45,12 +45,17 @@
 .processListItem--invalid .processListItem__header::after {
     content: '!';
     color: #f00;
+    text-shadow: 0px 0px 4px white;
     margin-right: 0.5em;
 }
 
 .processListItem--open .processListItem__header::after {
     content: '\279C';
     margin-right: 0.3em;
+}
+
+.processListItem--user:not(.processListItem--open) > .processListItem__header {
+    cursor: pointer;
 }
 
 /*

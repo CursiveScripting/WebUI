@@ -18,7 +18,7 @@ interface Props {
 
 interface State {
     rootProcesses: Process[];
-    processFolders: Map<string, Process[]>
+    processFolders: Map<string, Process[]>;
 }
 
 export class ProcessSelector extends React.PureComponent<Props, State> {

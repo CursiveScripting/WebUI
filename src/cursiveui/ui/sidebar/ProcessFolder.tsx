@@ -1,42 +1,27 @@
-import * as React from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import './ProcessFolder.css';
 
 interface Props {
     name: string;
 }
 
-interface State {
-    open: boolean;
-}
+export const ProcessFolder: FunctionComponent<Props> = ({ name, children }) => {
+    const [open, setOpen] = useState(true);
 
-export class ProcessFolder extends React.PureComponent<Props, State> {
-    constructor(props: Props) {
-        super(props);
+    const classes = open
+        ? 'processFolder processFolder--open'
+        : 'processFolder processFolder--closed';
+    
+    const clickHeader = () => setOpen(!open);
 
-        this.state = {
-            open: true,
-        };
-    }
-    render() {
-        const classes = this.state.open
-            ? 'processFolder processFolder--open'
-            : 'processFolder processFolder--closed';
-        
-        const clickHeader = () => this.setState(prevState => {
-            return {
-                open: !prevState.open,
-            }
-        });
-
-        return (
-            <div className={classes}>
-                <div className="processFolder__header" onClick={clickHeader}>
-                    <div className="processFolder__headerText">{this.props.name}</div>
-                </div>
-                <div className="processFolder__content">
-                    {this.props.children}
-                </div>
+    return (
+        <div className={classes}>
+            <div className="processFolder__header" onClick={clickHeader}>
+                <div className="processFolder__headerText">{name}</div>
             </div>
-        );
-    }
+            <div className="processFolder__content">
+                {children}
+            </div>
+        </div>
+    );
 }
