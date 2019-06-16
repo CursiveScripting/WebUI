@@ -107,6 +107,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                 editDefinition={process => this.showEditProcess(process)}
                 processSelected={process => this.selectProcess(process)}
                 errorProcesses={this.state.processesWithErrors}
+                stopStepSelected={step => this.selectStopStep(step)}
             />
         );
     }
@@ -138,18 +139,15 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         return (
             <ProcessToolbar
                 types={Array.from(this.props.workspace.types.values())}
-                returnPaths={this.state.openProcess === undefined ? [] : this.state.openProcess.returnPaths}
                 validationErrors={this.state.processErrors}
                 otherProcessesHaveErrors={this.state.otherProcessesHaveErrors}
                 selectedStep={this.state.draggingStep}
                 selectedVariable={this.state.draggingVariable}
                 selectedType={this.state.droppingDataType}
-                selectedStopStep={this.state.droppingStopStep}
                 className="processEditor__toolbar"
                 saveProcesses={() => this.props.save()}
                 focusError={error => this.focusOnError(error)}
                 selectType={type => this.selectDataType(type)}
-                selectStopStep={step => this.selectStopStep(step)}
                 removeSelectedItem={() => this.removeSelectedItem()}
             />
         );

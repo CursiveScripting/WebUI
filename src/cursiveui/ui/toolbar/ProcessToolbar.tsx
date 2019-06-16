@@ -1,11 +1,10 @@
 import * as React from 'react';
 import { DataTypePicker, DataTypePickerProps } from './DataTypePicker';
-import { StopStepTool, StopStepToolProps } from './StopStepTool';
 import { BinTool, BinToolProps } from './BinTool';
 import { SaveTool, SaveToolProps } from './SaveTool';
 import './ProcessToolbar.css';
 
-interface ProcessToolbarProps extends StopStepToolProps, DataTypePickerProps, BinToolProps, SaveToolProps {
+interface ProcessToolbarProps extends DataTypePickerProps, BinToolProps, SaveToolProps {
     className?: string;
 }
 
@@ -22,11 +21,6 @@ export class ProcessToolbar extends React.PureComponent<ProcessToolbarProps, {}>
                     types={this.props.types}
                     selectedType={this.props.selectedType}
                     selectType={type => this.props.selectType(type)}
-                />
-                <StopStepTool
-                    returnPaths={this.props.returnPaths}
-                    selectedStopStep={this.props.selectedStopStep}
-                    selectStopStep={this.props.selectStopStep}
                 />
                 <BinTool
                     selectedStep={this.props.selectedStep}

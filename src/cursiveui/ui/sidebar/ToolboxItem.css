@@ -1,4 +1,4 @@
-.processListItem {
+.toolboxItem {
     display: flex;
     flex-direction: column;
     position: relative;
@@ -8,58 +8,77 @@
     overflow: hidden;
 }
 
-.processListItem__header {
-    font-weight: bold;
+.toolboxItem__header {
     font-size: 1.1em;
     height: 1.4em;
     border-radius: 1em;
     padding-left: 0.5rem;
     color: white;
     text-shadow: 0px 0px 4px black;
-
     display: flex;
 }
 
-.processListItem__name {
+.toolboxItem__name {
+    font-weight: bold;
+}
+
+.toolboxItem:not(.toolboxItem--subname) .toolboxItem__name {
     flex-grow: 1;
 }
 
-.processListItem__desc {
+.toolboxItem__subname {
+    margin-left: 0.5em;
+    flex-grow: 1;
+}
+
+.toolboxItem__subname::before {
+    content: '(';
+}
+
+.toolboxItem__subname::after {
+    content: ')';
+}
+
+.toolboxItem__desc {
     font-size: 0.95em;
     padding-left: 0.5rem;
 }
 
-.processListItem--system .processListItem__header {
+.toolboxItem--system .toolboxItem__header {
     background-color: #cc8800;
 }
 
-.processListItem--user .processListItem__header {
+.toolboxItem--user .toolboxItem__header {
     background-color: #00aaaa;
 }
 
-.processListItem:hover .processListItem__header {
+.toolboxItem--stop .toolboxItem__header {
+    background-color: #ff0000;
+}
+
+.toolboxItem:hover .toolboxItem__header {
     color: white;
     text-shadow: 0px 0px 4px black, 0px 0px 4px black, 0px 0px 2px black;
 }
 
-.processListItem--invalid .processListItem__header::after {
+.toolboxItem--invalid .toolboxItem__header::after {
     content: '!';
     color: #f00;
     text-shadow: 0px 0px 4px white;
     margin-right: 0.5em;
 }
 
-.processListItem--open .processListItem__header::after {
+.toolboxItem--open .toolboxItem__header::after {
     content: '\279C';
     margin-right: 0.3em;
 }
 
-.processListItem--user:not(.processListItem--open) > .processListItem__header {
+.toolboxItem--user:not(.toolboxItem--open) > .toolboxItem__header {
     cursor: pointer;
 }
 
 /*
-.processListItem__editLink {
+.toolboxItem__editLink {
     display: none;
     position: absolute;
     right: 0.4em;
@@ -69,7 +88,7 @@
     cursor: pointer;
 }
 
-.processListItem:hover .processListItem__editLink {
+.toolboxItem:hover .toolboxItem__editLink {
     display: initial;
 }
 */
