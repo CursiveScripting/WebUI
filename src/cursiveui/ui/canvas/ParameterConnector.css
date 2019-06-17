@@ -1,7 +1,7 @@
 .connector {
     cursor: pointer;
     position: relative;
-    width: 1rem;
+    min-width: 1rem;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -12,6 +12,7 @@
     content: '\25C7';
     position: relative;
     top: 0.1em;
+    text-shadow: 0px 0px 4px white;
 }
 
 .connector--connected::before {

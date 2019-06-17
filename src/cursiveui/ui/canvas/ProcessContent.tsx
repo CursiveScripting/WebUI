@@ -39,7 +39,7 @@ interface StepConnectorDragInfo {
 
 interface ParamConnectorDragInfo {
     field: DataField;
-    input: boolean;
+    input?: boolean;
     step?: Step;
 }
 
@@ -174,8 +174,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 variable={variable}
                 key={variable.name}
                 nameMouseDown={(x, y) => this.varDragStart(variable, x, y)}
-                connectorMouseDown={input => this.fieldLinkDragStart(variable, input, undefined)}
-                connectorMouseUp={input => this.fieldLinkDragStop(variable, input, undefined)}
+                connectorMouseDown={() => this.fieldLinkDragStart(variable, undefined, undefined)}
+                connectorMouseUp={() => this.fieldLinkDragStop(variable, undefined, undefined)}
             />
         ));
     }
@@ -205,7 +205,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 let endConnector = stepDisplay.getInputConnector(parameter);
 
                 let variableDisplay = this.getVariableDisplay(parameter.link);
-                let beginConnector = variableDisplay.outputConnector;
+                let beginConnector = variableDisplay.connector;
 
                 this.drawFieldLink(parameter.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
             }
@@ -218,7 +218,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 let beginConnector = stepDisplay.getOutputConnector(parameter);
 
                 let variableDisplay = this.getVariableDisplay(parameter.link);
-                let endConnector = variableDisplay.inputConnector;
+                let endConnector = variableDisplay.connector;
 
                 this.drawFieldLink(parameter.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
             }
@@ -265,9 +265,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             }
             else {
                 let varDisplay = this.getVariableDisplay(dragInfo.field as Variable);
-                connector = dragInfo.input
-                    ? varDisplay.inputConnector
-                    : varDisplay.outputConnector;
+                connector = varDisplay.connector;
             }
 
             if (dragInfo.input) {
@@ -570,7 +568,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.drawLinks();
     }
 
-    private fieldLinkDragStart(field: DataField, input: boolean, step?: Step) {
+    private fieldLinkDragStart(field: DataField, input?: boolean, step?: Step) {
         this.draggingParamConnector = {
             field: field,
             input: input,
@@ -578,7 +576,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         };
     }
 
-    private fieldLinkDragStop(field: DataField, input: boolean, step?: Step) {
+    private fieldLinkDragStop(field: DataField, input?: boolean, step?: Step) {
         if (this.draggingParamConnector === undefined) {
             return;
         }
@@ -620,7 +618,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
 
         if (from.input === to.input) {
-            return false; // must be from an input to an output
+            return false; // must be from an input to an output, or from a variable to a non-variable
         }
 
         if (from.input) {

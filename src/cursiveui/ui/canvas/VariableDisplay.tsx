@@ -7,8 +7,8 @@ import './VariableDisplay.css';
 interface VariableDisplayProps {
     variable: Variable;
     nameMouseDown: (mouseX: number, mouseY: number) => void;
-    connectorMouseDown: (input: boolean) => void;
-    connectorMouseUp: (input: boolean) => void;
+    connectorMouseDown: () => void;
+    connectorMouseUp: () => void;
 }
 
 interface VariableDisplayState {
@@ -17,11 +17,9 @@ interface VariableDisplayState {
 
 export class VariableDisplay extends React.PureComponent<VariableDisplayProps, VariableDisplayState> {
     private root: HTMLDivElement | undefined;
-    private _inputConnector: HTMLDivElement | undefined;
-    private _outputConnector: HTMLDivElement | undefined;
+    private _connector: HTMLDivElement | undefined;
 
-    public get inputConnector() { return this._inputConnector!; }
-    public get outputConnector() { return this._outputConnector!; }
+    public get connector() { return this._connector!; }
     
     public get maxX() {
         return this.root!.offsetLeft + this.root!.offsetWidth;
@@ -61,15 +59,6 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, V
 
         return (
             <div className={classes} style={posStyle} ref={r => { if (r !== null) { this.root = r; }}}>
-                <ParameterConnector
-                    className="variable__connector variable__input"
-                    type={this.props.variable.type}
-                    state={numInputs === 0 ? ConnectorState.Disconnected : ConnectorState.Connected}
-                    input={true}
-                    onMouseDown={() => this.props.connectorMouseDown(true)}
-                    onMouseUp={() => this.props.connectorMouseUp(true)}
-                    ref={c => { if (c !== null) { this._inputConnector = c.connector; }}}
-                />
                 <div
                     className="variable__name"
                     style={colorStyle}
@@ -78,13 +67,13 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, V
                     {this.props.variable.name}
                 </div>
                 <ParameterConnector
-                    className="variable__connector variable__output"
+                    className="variable__connector"
                     type={this.props.variable.type}
-                    state={numOutputs === 0 ? ConnectorState.Disconnected : ConnectorState.Connected}
-                    input={false}
-                    onMouseDown={() => this.props.connectorMouseDown(false)}
-                    onMouseUp={() => this.props.connectorMouseUp(false)}
-                    ref={c => { if (c !== null) { this._outputConnector = c.connector; }}}
+                    state={numInputs + numOutputs === 0 ? ConnectorState.Disconnected : ConnectorState.Connected}
+                    input={true}
+                    onMouseDown={() => this.props.connectorMouseDown()}
+                    onMouseUp={() => this.props.connectorMouseUp()}
+                    ref={c => { if (c !== null) { this._connector = c.connector; }}}
                 />
             </div>
         );
