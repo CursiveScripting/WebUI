@@ -17,6 +17,7 @@ interface Props {
     isSelected?: boolean;
     hasError?: boolean;
     onMouseDown: () => void;
+    onMouseUp?: () => void;
     clickHeader?: () => void;
     clickEdit?: () => void;
 }
@@ -66,7 +67,7 @@ export const ToolboxItem = (props: Props) => {
             : <div className="toolboxItem__subname">{props.subName}</div>
 
         return (
-            <div className={classes} onMouseDown={props.onMouseDown}>
+            <div className={classes} onMouseDown={props.onMouseDown} onMouseUp={props.onMouseUp}>
                 <div className="toolboxItem__header" onClick={clickHeader}>
                     <div className="toolboxItem__name">{props.name}</div>
                     {subName}

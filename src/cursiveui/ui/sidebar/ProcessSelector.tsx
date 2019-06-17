@@ -13,7 +13,7 @@ interface Props {
     errorProcesses: UserProcess[];
     processOpened: (process: UserProcess) => void;
     editDefinition: (process: UserProcess) => void;
-    processSelected: (process: Process) => void;
+    processSelected: (process?: Process) => void;
     stopStepSelected: (name: string | null) => void;
 }
 
@@ -109,6 +109,7 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
 
     private renderStopStep(returnPath: string | null, index?: number) {
         const select = () => this.props.stopStepSelected(returnPath);
+        const deselect = () => this.props.processSelected(undefined);
 
         const subName = returnPath === null
             ? undefined
@@ -120,6 +121,7 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
             type={ToolboxItemType.StopStep}
             key={index}
             onMouseDown={select}
+            onMouseUp={deselect}
         />
     }
 
@@ -156,6 +158,7 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
         }
 
         const select = () => this.props.processSelected(process);
+        const deselect = () => this.props.processSelected(undefined);
 
         return (
             <ToolboxItem
@@ -169,6 +172,7 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
                 clickHeader={openProcess}
                 clickEdit={editDef}
                 onMouseDown={select}
+                onMouseUp={deselect}
             />
         );
     }
