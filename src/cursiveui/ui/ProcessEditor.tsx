@@ -108,6 +108,9 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                 processSelected={process => this.selectProcess(process)}
                 errorProcesses={this.state.processesWithErrors}
                 stopStepSelected={step => this.selectStopStep(step)}
+                dataTypes={this.props.workspace.types}
+                dataTypeSelected={type => this.selectDataType(type)}
+                deselect={() => this.clearSelectedTools()}
             />
         );
     }
@@ -138,16 +141,13 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
     private renderProcessToolbar() {
         return (
             <ProcessToolbar
-                types={Array.from(this.props.workspace.types.values())}
                 validationErrors={this.state.processErrors}
                 otherProcessesHaveErrors={this.state.otherProcessesHaveErrors}
                 selectedStep={this.state.draggingStep}
                 selectedVariable={this.state.draggingVariable}
-                selectedType={this.state.droppingDataType}
                 className="processEditor__toolbar"
                 saveProcesses={() => this.props.save()}
                 focusError={error => this.focusOnError(error)}
-                selectType={type => this.selectDataType(type)}
                 removeSelectedItem={() => this.removeSelectedItem()}
             />
         );
@@ -243,13 +243,19 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         });
     }
 
-    private dropCompleted() {
-        this.revalidateOpenProcess();
-
+    private clearSelectedTools() {
         this.setState({
             droppingDataType: undefined,
             droppingProcess: undefined,
             droppingStopStep: undefined,
+        });
+    }
+
+    private dropCompleted() {
+        this.clearSelectedTools();
+        this.revalidateOpenProcess();
+
+        this.setState({
             openProcess: this.state.openProcess,
         });
     }

@@ -5,6 +5,7 @@ export enum ToolboxItemType {
     SystemProcess,
     UserProcess,
     StopStep,
+    Variable,
 }
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
     isOpen?: boolean;
     isSelected?: boolean;
     hasError?: boolean;
+    colorOverride?: string;
     onMouseDown: () => void;
     onMouseUp?: () => void;
     clickHeader?: () => void;
@@ -66,9 +68,13 @@ export const ToolboxItem = (props: Props) => {
             ? undefined
             : <div className="toolboxItem__subname">{props.subName}</div>
 
+        const headerStyle: React.CSSProperties | undefined = props.colorOverride === undefined
+            ? undefined
+            : { backgroundColor: props.colorOverride }
+
         return (
             <div className={classes} onMouseDown={props.onMouseDown} onMouseUp={props.onMouseUp}>
-                <div className="toolboxItem__header" onClick={clickHeader}>
+                <div className="toolboxItem__header" onClick={clickHeader} style={headerStyle}>
                     <div className="toolboxItem__name">{props.name}</div>
                     {subName}
                 </div>

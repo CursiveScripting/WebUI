@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { UserProcess, SystemProcess, Process } from '../../data';
+import { UserProcess, SystemProcess, Process, Type } from '../../data';
 import { ToolboxItem, ToolboxItemType } from './ToolboxItem';
 import './ProcessSelector.css';
 import { ProcessFolder } from './ProcessFolder';
@@ -11,10 +11,15 @@ interface Props {
     selectedProcess?: Process;
     className?: string;
     errorProcesses: UserProcess[];
+    dataTypes: Map<string, Type>;
+
+    deselect: () => void;
+    processSelected: (process: Process) => void;
+    stopStepSelected: (name: string | null) => void;
+    dataTypeSelected: (type: Type) => void;
+    
     processOpened: (process: UserProcess) => void;
     editDefinition: (process: UserProcess) => void;
-    processSelected: (process?: Process) => void;
-    stopStepSelected: (name: string | null) => void;
 }
 
 interface State {
@@ -98,10 +103,22 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
             </ProcessFolder>);
         }
 
+        const dataTypeItems = [];
+        for (const type of this.props.dataTypes.values()) {
+            dataTypeItems.push(this.renderDataType(type));
+        }
+
+        const dataTypeRoot = dataTypeItems.length === 0
+            ? undefined
+            : <ProcessFolder name="Variables">
+                {dataTypeItems}
+            </ProcessFolder>;
+
         return (
             <div className={classes}>
                 {stopSteps}
                 {rootProcesses}
+                {dataTypeRoot}
                 {folders}
             </div>
         );
@@ -109,7 +126,7 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
 
     private renderStopStep(returnPath: string | null, index?: number) {
         const select = () => this.props.stopStepSelected(returnPath);
-        const deselect = () => this.props.processSelected(undefined);
+        const deselect = () => this.props.deselect();
 
         const subName = returnPath === null
             ? undefined
@@ -120,6 +137,21 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
             subName={subName}
             type={ToolboxItemType.StopStep}
             key={index}
+            onMouseDown={select}
+            onMouseUp={deselect}
+        />
+    }
+
+    renderDataType(type: Type) {
+        const select = () => this.props.dataTypeSelected(type);
+        const deselect = () => this.props.deselect();
+
+        return <ToolboxItem
+            name={type.name}
+            description={type.guidance}
+            type={ToolboxItemType.Variable}
+            key={type.name}
+            colorOverride={type.color}
             onMouseDown={select}
             onMouseUp={deselect}
         />
@@ -158,7 +190,7 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
         }
 
         const select = () => this.props.processSelected(process);
-        const deselect = () => this.props.processSelected(undefined);
+        const deselect = () => this.props.deselect();
 
         return (
             <ToolboxItem
