@@ -8,7 +8,6 @@
     border: solid black 1px;
     user-select: none;
     overflow: hidden;
-    height: 50px;
 }
 
 .variable__name {
@@ -20,5 +19,13 @@
     text-shadow: 0px 0px 4px black;
     border-bottom: solid black 1px;
     text-align: center;
+    height: 25px;
+}
+
+.variable__connector {
+    height: 25px;
+}
+
+.variable__default {
     height: 25px;
 }

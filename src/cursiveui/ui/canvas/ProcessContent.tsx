@@ -173,11 +173,17 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 ref={v => { if (v !== null) { this.variableDisplays.push(v); }}}
                 variable={variable}
                 key={variable.name}
+                defaultChanged={val => this.variableDefaultChanged(variable, val)}
                 nameMouseDown={(x, y) => this.varDragStart(variable, x, y)}
                 connectorMouseDown={() => this.fieldLinkDragStart(variable, undefined, undefined)}
                 connectorMouseUp={() => this.fieldLinkDragStop(variable, undefined, undefined)}
             />
         ));
+    }
+
+    private variableDefaultChanged(variable: Variable, value: string | null) {
+        variable.initialValue = value;
+        // TODO: some sort of refresh or revalidation?
     }
 
     private drawLinks() {

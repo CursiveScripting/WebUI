@@ -3,9 +3,11 @@ import { Variable } from '../../data';
 import { growToFitGrid } from './gridSize';
 import { ParameterConnector, ConnectorState } from './ParameterConnector';
 import './VariableDisplay.css';
+import { ValueInput } from './ValueInput';
 
 interface VariableDisplayProps {
     variable: Variable;
+    defaultChanged: (val: string | null) => void;
     nameMouseDown: (mouseX: number, mouseY: number) => void;
     connectorMouseDown: () => void;
     connectorMouseUp: () => void;
@@ -57,6 +59,15 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, V
         const numOutputs = this.props.variable.links.filter(p => p.input).length;
         const numInputs = numLinks - numOutputs;
 
+        const defaultInput = this.props.variable.type.allowInput
+            ? <ValueInput
+                className="variable__default"
+                value={this.props.variable.initialValue}
+                valueChanged={val => this.props.defaultChanged(val)}
+                isValid={this.props.variable.initialValue === null ? true : this.props.variable.type.isValid(this.props.variable.initialValue)}
+            />
+            : undefined;
+
         return (
             <div className={classes} style={posStyle} ref={r => { if (r !== null) { this.root = r; }}}>
                 <div
@@ -69,12 +80,13 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, V
                 <ParameterConnector
                     className="variable__connector"
                     type={this.props.variable.type}
-                    state={numInputs + numOutputs === 0 ? ConnectorState.Disconnected : ConnectorState.Connected}
+                    state={numInputs === 0 ? ConnectorState.Disconnected : ConnectorState.Connected}
                     input={true}
                     onMouseDown={() => this.props.connectorMouseDown()}
                     onMouseUp={() => this.props.connectorMouseUp()}
                     ref={c => { if (c !== null) { this._connector = c.connector; }}}
                 />
+                {defaultInput}
             </div>
         );
     }

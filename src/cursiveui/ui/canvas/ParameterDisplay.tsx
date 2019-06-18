@@ -70,6 +70,7 @@ export class ParameterDisplay extends React.PureComponent<ParameterDisplayProps,
         }
     }
 
+    // TODO: remove from here?
     private renderFixedInputValue() {
         if (!this.props.input || !this.props.parameter.type.allowInput || this.props.parameter.link !== null) {
             return undefined;
