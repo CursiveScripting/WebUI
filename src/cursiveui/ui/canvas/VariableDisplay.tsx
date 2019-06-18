@@ -14,8 +14,8 @@ interface VariableDisplayProps {
     initialValue: string | null;
     initialValueChanged: (val: string | null) => void;
     nameMouseDown: (mouseX: number, mouseY: number) => void;
-    connectorMouseDown: () => void;
-    connectorMouseUp: () => void;
+    connectorMouseDown: (input: boolean) => void;
+    connectorMouseUp: (input: boolean) => void;
 }
 
 interface VariableDisplayState {
@@ -24,9 +24,11 @@ interface VariableDisplayState {
 
 export class VariableDisplay extends React.PureComponent<VariableDisplayProps, VariableDisplayState> {
     private root: HTMLDivElement | undefined;
-    private _connector: HTMLDivElement | undefined;
+    private _inputConnector: HTMLDivElement | undefined;
+    private _outputConnector: HTMLDivElement | undefined;
 
-    public get connector() { return this._connector!; }
+    public get inputConnector() { return this._inputConnector!; }
+    public get outputConnector() { return this._outputConnector!; }
     
     public get maxX() {
         return this.root!.offsetLeft + this.root!.offsetWidth;
@@ -58,13 +60,8 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, V
             backgroundColor: this.props.type.color,
         };
 
-        let classes = 'variable';
-
-        if (this.props.type.allowInput) {
-            classes += ' variable--initialValue';
-        }
-
-        const numInputs = this.props.links.filter(p => !p.input).length;
+        const numOutputs = this.props.links.filter(p => p.input).length;
+        const numInputs = this.props.links.length - numOutputs;
 
         const defaultInput = this.props.type.allowInput
             ? <ValueInput
@@ -76,7 +73,7 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, V
             : undefined;
 
         return (
-            <div className={classes} style={posStyle} ref={r => { if (r !== null) { this.root = r; }}}>
+            <div className="variable" style={posStyle} ref={r => { if (r !== null) { this.root = r; }}}>
                 <div
                     className="variable__name"
                     style={colorStyle}
@@ -84,16 +81,27 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, V
                 >
                     {this.props.name}
                 </div>
-                <ParameterConnector
-                    className="variable__connector"
-                    type={this.props.type}
-                    state={numInputs === 0 ? ConnectorState.Disconnected : ConnectorState.Connected}
-                    input={true}
-                    onMouseDown={() => this.props.connectorMouseDown()}
-                    onMouseUp={() => this.props.connectorMouseUp()}
-                    ref={c => { if (c !== null) { this._connector = c.connector; }}}
-                />
-                {defaultInput}
+                <div className="variable__body">
+                    <ParameterConnector
+                        className="variable__connector variable__input"
+                        type={this.props.type}
+                        state={numInputs === 0 ? ConnectorState.Disconnected : ConnectorState.Connected}
+                        input={true}
+                        onMouseDown={() => this.props.connectorMouseDown(true)}
+                        onMouseUp={() => this.props.connectorMouseUp(true)}
+                        ref={c => { if (c !== null) { this._inputConnector = c.connector; }}}
+                    />
+                    {defaultInput}
+                    <ParameterConnector
+                        className="variable__connector variable__output"
+                        type={this.props.type}
+                        state={numOutputs === 0 ? ConnectorState.Disconnected : ConnectorState.Connected}
+                        input={false}
+                        onMouseDown={() => this.props.connectorMouseDown(false)}
+                        onMouseUp={() => this.props.connectorMouseUp(false)}
+                        ref={c => { if (c !== null) { this._outputConnector = c.connector; }}}
+                    />
+                </div>
             </div>
         );
     }

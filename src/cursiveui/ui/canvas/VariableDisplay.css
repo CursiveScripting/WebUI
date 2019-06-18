@@ -11,10 +11,6 @@
     height: 50px;
 }
 
-.variable--initialValue {
-    height: 75px;
-}
-
 .variable__name {
     cursor: move;
     user-select: none;
@@ -27,7 +23,12 @@
     height: 24px;
 }
 
-.variable__connector, .variable__default {
+.variable__body {
+    display: flex;
+    justify-content: space-between;
+}
+
+.variable__default {
     flex-grow: 1;
     flex-shrink: 1;
 }
