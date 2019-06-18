@@ -1,5 +1,5 @@
 <Workspace>
-	<Type name="number" color="#0cf" validation="[0-9]+" />
+	<Type name="number" color="#0cf" validation="^[0-9]+$" />
 	<Type name="text" color="#c0f" validation=".*" />
 	<Type name="deck" color="#f00" />
 	<Type name="card" color="#cc0" />

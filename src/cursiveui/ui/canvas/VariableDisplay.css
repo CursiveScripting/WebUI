@@ -8,6 +8,11 @@
     border: solid black 1px;
     user-select: none;
     overflow: hidden;
+    height: 50px;
+}
+
+.variable--initialValue {
+    height: 75px;
 }
 
 .variable__name {
@@ -19,13 +24,10 @@
     text-shadow: 0px 0px 4px black;
     border-bottom: solid black 1px;
     text-align: center;
-    height: 25px;
+    height: 24px;
 }
 
-.variable__connector {
-    height: 25px;
-}
-
-.variable__default {
-    height: 25px;
+.variable__connector, .variable__default {
+    flex-grow: 1;
+    flex-shrink: 1;
 }

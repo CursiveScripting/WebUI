@@ -1,13 +1,18 @@
 import * as React from 'react';
-import { Variable } from '../../data';
+import { Type, Parameter } from '../../data';
 import { growToFitGrid } from './gridSize';
 import { ParameterConnector, ConnectorState } from './ParameterConnector';
 import './VariableDisplay.css';
 import { ValueInput } from './ValueInput';
 
 interface VariableDisplayProps {
-    variable: Variable;
-    defaultChanged: (val: string | null) => void;
+    name: string;
+    type: Type;
+    x: number;
+    y: number;
+    links: Parameter[];
+    initialValue: string | null;
+    initialValueChanged: (val: string | null) => void;
     nameMouseDown: (mouseX: number, mouseY: number) => void;
     connectorMouseDown: () => void;
     connectorMouseUp: () => void;
@@ -44,27 +49,29 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, V
     
     render() {
         let posStyle = {
-            left: this.props.variable.x,
-            top: this.props.variable.y,
+            left: this.props.x,
+            top: this.props.y,
             minWidth: this.state.width,
         };
 
         let colorStyle = {
-            backgroundColor: this.props.variable.type.color,
+            backgroundColor: this.props.type.color,
         };
 
         let classes = 'variable';
 
-        const numLinks = this.props.variable.links.length;
-        const numOutputs = this.props.variable.links.filter(p => p.input).length;
-        const numInputs = numLinks - numOutputs;
+        if (this.props.type.allowInput) {
+            classes += ' variable--initialValue';
+        }
 
-        const defaultInput = this.props.variable.type.allowInput
+        const numInputs = this.props.links.filter(p => !p.input).length;
+
+        const defaultInput = this.props.type.allowInput
             ? <ValueInput
                 className="variable__default"
-                value={this.props.variable.initialValue}
-                valueChanged={val => this.props.defaultChanged(val)}
-                isValid={this.props.variable.initialValue === null ? true : this.props.variable.type.isValid(this.props.variable.initialValue)}
+                value={this.props.initialValue}
+                valueChanged={val => this.props.initialValueChanged(val)}
+                isValid={this.props.initialValue === null ? true : this.props.type.isValid(this.props.initialValue)}
             />
             : undefined;
 
@@ -75,11 +82,11 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, V
                     style={colorStyle}
                     onMouseDown={e => this.props.nameMouseDown(e.clientX, e.clientY)}
                 >
-                    {this.props.variable.name}
+                    {this.props.name}
                 </div>
                 <ParameterConnector
                     className="variable__connector"
-                    type={this.props.variable.type}
+                    type={this.props.type}
                     state={numInputs === 0 ? ConnectorState.Disconnected : ConnectorState.Connected}
                     input={true}
                     onMouseDown={() => this.props.connectorMouseDown()}

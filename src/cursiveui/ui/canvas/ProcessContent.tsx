@@ -53,8 +53,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     private draggingParamConnector?: ParamConnectorDragInfo;
     private dragX: number = 0;
     private dragY: number = 0;
-    private stepDisplays: StepDisplay[] = [];
-    private variableDisplays: VariableDisplay[] = [];
+    private readonly stepDisplays = new Map<Step, StepDisplay>();
+    private readonly variableDisplays = new Map<Variable, VariableDisplay>();
 
     constructor(props: ProcessContentProps) {
         super(props);
@@ -142,11 +142,11 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
     
     private renderSteps() {
-        this.stepDisplays = [];
+        this.stepDisplays.clear();
 
         return Array.from(this.props.process.steps.values()).map(step => (
             <StepDisplay
-                ref={s => { if (s !== null) { this.stepDisplays.push(s); }}}
+                ref={s => { if (s !== null) { this.stepDisplays.set(step, s); } else { this.stepDisplays.delete(step); }}}
                 key={step.uniqueID}
                 step={step}
                 focused={step === this.props.focusStep}
@@ -166,14 +166,19 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
     
     private renderVariables() {
-        this.variableDisplays = [];
+        this.variableDisplays.clear();
 
         return this.props.process.variables.map(variable => (
             <VariableDisplay
-                ref={v => { if (v !== null) { this.variableDisplays.push(v); }}}
-                variable={variable}
+                ref={v => { if (v !== null) { this.variableDisplays.set(variable, v); } else { this.variableDisplays.delete(variable); }}}
+                name={variable.name}
+                type={variable.type}
+                x={variable.x}
+                y={variable.y}
+                initialValue={variable.initialValue}
+                links={variable.links}
                 key={variable.name}
-                defaultChanged={val => this.variableDefaultChanged(variable, val)}
+                initialValueChanged={val => this.variableDefaultChanged(variable, val)}
                 nameMouseDown={(x, y) => this.varDragStart(variable, x, y)}
                 connectorMouseDown={() => this.fieldLinkDragStart(variable, undefined, undefined)}
                 connectorMouseUp={() => this.fieldLinkDragStop(variable, undefined, undefined)}
@@ -183,7 +188,10 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
 
     private variableDefaultChanged(variable: Variable, value: string | null) {
         variable.initialValue = value;
-        // TODO: some sort of refresh or revalidation?
+
+        // TODO: some sort of revalidation?
+
+        this.forceUpdate();
     }
 
     private drawLinks() {
@@ -191,8 +199,8 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         
         let root = this.root.getBoundingClientRect();
         
-        for (let stepDisplay of this.stepDisplays) {
-            for (let path of stepDisplay.props.step.incomingPaths) {
+        for (const [step, stepDisplay] of this.stepDisplays) {
+            for (const path of step.incomingPaths) {
                 let beginStepDisplay = this.getStepDisplay(path.fromStep);
                 
                 let beginConnector = beginStepDisplay.getReturnConnector(path.name);
@@ -320,11 +328,11 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     private getStepDisplay(step: Step) {
-        return this.stepDisplays.filter(d => d.props.step === step)[0];
+        return this.stepDisplays.get(step)!;
     }
 
     private getVariableDisplay(variable: Variable) {
-        return this.variableDisplays.filter(d => d.props.variable === variable)[0];
+        return this.variableDisplays.get(variable)!;
     }
 
     private updateViewSize() {
@@ -340,12 +348,12 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         const extraCells = 5;
         let maxX = 0, maxY = 0;
 
-        for (const display of this.stepDisplays) {
+        for (const [, display] of this.stepDisplays) {
             maxX = Math.max(maxX, display.maxX);
             maxY = Math.max(maxY, display.maxY);
         }
 
-        for (const display of this.variableDisplays) {
+        for (const [, display] of this.variableDisplays) {
             maxX = Math.max(maxX, display.maxX);
             maxY = Math.max(maxY, display.maxY);
         }
