@@ -8,7 +8,7 @@
     border: solid black 1px;
     user-select: none;
     overflow: hidden;
-    height: 50px;
+    max-width: 475px;
 }
 
 .variable__name {
@@ -26,6 +26,7 @@
 .variable__body {
     display: flex;
     justify-content: space-between;
+    flex-grow: 1;
 }
 
 .variable__default {

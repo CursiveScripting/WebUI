@@ -1,17 +1,11 @@
 .valueInput {
-    display: flex;
-    padding: 0;
-}
-
-.valueInput__input {
-    border: none;
     flex-grow: 1;
     flex-shrink: 1;
     padding: 0 0.2em;
     text-align: center;
-    background-color: transparent;
 }
 
-.valueInput--invalid > .valueInput__input {
-    color: red;
+.valueInput--invalid {
+    color: #c00;
+    text-decoration: underline;
 }

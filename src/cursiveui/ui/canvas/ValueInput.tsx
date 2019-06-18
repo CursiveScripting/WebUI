@@ -1,4 +1,5 @@
 import * as React from 'react';
+import ContentEditable from 'react-contenteditable';
 import './ValueInput.css';
 
 interface Props {
@@ -26,7 +27,9 @@ export const ValueInput: React.FunctionComponent<Props> = props => {
         ? ''
         : props.value;
 
-    return <div className={classes}>
-        <input className="valueInput__input" placeholder="Initial value" onChange={valueChanged} value={strValue} size={1} />
-    </div>
+    return <ContentEditable
+        className={classes}
+        html={strValue}
+        onChange={valueChanged}
+    />
 }

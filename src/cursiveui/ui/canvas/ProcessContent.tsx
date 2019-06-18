@@ -516,11 +516,9 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     private stopDraggingItem(item: Positionable, display: React.Component) {
-
         item.x = alignToGrid(item.x);
         item.y = alignToGrid(item.y);
 
-        display.forceUpdate();
         this.drawLinks();
     }
 

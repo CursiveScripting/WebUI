@@ -5,7 +5,7 @@ import { ParameterConnector, ConnectorState } from './ParameterConnector';
 import './VariableDisplay.css';
 import { ValueInput } from './ValueInput';
 
-interface VariableDisplayProps {
+interface Props {
     name: string;
     type: Type;
     x: number;
@@ -18,11 +18,12 @@ interface VariableDisplayProps {
     connectorMouseUp: (input: boolean) => void;
 }
 
-interface VariableDisplayState {
-    width?: number;
+interface State {
+    width: number;
+    height: number;
 }
 
-export class VariableDisplay extends React.PureComponent<VariableDisplayProps, VariableDisplayState> {
+export class VariableDisplay extends React.PureComponent<Props, State> {
     private root: HTMLDivElement | undefined;
     private _inputConnector: HTMLDivElement | undefined;
     private _outputConnector: HTMLDivElement | undefined;
@@ -38,22 +39,52 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, V
         return this.root!.offsetTop + this.root!.offsetHeight;
     }
 
-    constructor(props: VariableDisplayProps) {
+    constructor(props: Props) {
         super(props);
-        this.state = {};
+        this.state = {
+            width: 0,
+            height: 0,
+        };
     }
 
     componentDidMount() {
         this.setState({
             width: growToFitGrid(this.root!.offsetWidth),
+            height: growToFitGrid(this.root!.offsetHeight),
         });
+    }
+
+    componentWillReceiveProps(newProps: Props) {
+        if (newProps.initialValue !== this.props.initialValue) {
+            const widthIncreased = newProps.initialValue !== null
+                && (this.props.initialValue === null || newProps.initialValue.length >= this.props.initialValue.length);
+
+            this.setState({
+                width: widthIncreased
+                    ? growToFitGrid(this.root!.offsetWidth)
+                    : 0,
+                height: widthIncreased
+                    ? growToFitGrid(this.root!.offsetHeight)
+                    : 0,
+            });
+        }
+    }
+
+    componentDidUpdate() {
+        if (this.state.width === 0) {
+            this.setState({
+                width: growToFitGrid(this.root!.offsetWidth),
+                height: growToFitGrid(this.root!.offsetHeight),
+            }); 
+        }
     }
     
     render() {
-        let posStyle = {
+        const style = {
             left: this.props.x,
             top: this.props.y,
             minWidth: this.state.width,
+            minHeight: this.state.height,
         };
 
         let colorStyle = {
@@ -79,7 +110,7 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, V
                 : ConnectorState.Disconnected;
 
         return (
-            <div className="variable" style={posStyle} ref={r => { if (r !== null) { this.root = r; }}}>
+            <div className="variable" style={style} ref={r => { if (r !== null) { this.root = r; }}}>
                 <div
                     className="variable__name"
                     style={colorStyle}
