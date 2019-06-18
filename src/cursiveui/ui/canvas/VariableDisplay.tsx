@@ -72,6 +72,12 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, V
             />
             : undefined;
 
+        const inputState = numInputs > 0
+            ? ConnectorState.Connected
+            : this.props.initialValue !== null
+                ? ConnectorState.Fixed
+                : ConnectorState.Disconnected;
+
         return (
             <div className="variable" style={posStyle} ref={r => { if (r !== null) { this.root = r; }}}>
                 <div
@@ -85,7 +91,7 @@ export class VariableDisplay extends React.PureComponent<VariableDisplayProps, V
                     <ParameterConnector
                         className="variable__connector variable__input"
                         type={this.props.type}
-                        state={numInputs === 0 ? ConnectorState.Disconnected : ConnectorState.Connected}
+                        state={inputState}
                         input={true}
                         onMouseDown={() => this.props.connectorMouseDown(true)}
                         onMouseUp={() => this.props.connectorMouseUp(true)}

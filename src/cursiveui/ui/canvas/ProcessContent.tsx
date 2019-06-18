@@ -187,11 +187,11 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     private variableDefaultChanged(variable: Variable, value: string | null) {
-        variable.initialValue = value;
+        variable.initialValue = value === ''
+            ? null
+            : value;
 
-        // TODO: some sort of revalidation?
-
-        this.forceUpdate();
+        this.props.revalidate();
     }
 
     private drawLinks() {
