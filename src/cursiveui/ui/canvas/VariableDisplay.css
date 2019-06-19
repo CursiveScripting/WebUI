@@ -19,7 +19,9 @@
     font-weight: bold;
     text-shadow: 0px 0px 4px black;
     border-bottom: solid black 1px;
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     height: 24px;
 }
 
