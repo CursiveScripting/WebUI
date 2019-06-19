@@ -171,12 +171,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         return this.props.process.variables.map(variable => (
             <VariableDisplay
                 ref={v => { if (v !== null) { this.variableDisplays.set(variable, v); } else { this.variableDisplays.delete(variable); }}}
-                name={variable.name}
-                type={variable.type}
-                x={variable.x}
-                y={variable.y}
-                initialValue={variable.initialValue}
-                links={variable.links}
+                variable={variable}
                 key={variable.name}
                 initialValueChanged={val => this.variableDefaultChanged(variable, val)}
                 nameMouseDown={(x, y) => this.varDragStart(variable, x, y)}
