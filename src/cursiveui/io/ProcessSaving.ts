@@ -81,8 +81,8 @@ export class ProcessSaving {
         element.setAttribute('x', step.x.toString());
         element.setAttribute('y', step.y.toString());
 
-        this.saveStepParameters(step.inputs, element, 'MapInput', 'source');
-        this.saveStepParameters(step.outputs, element, 'MapOutput', 'destination');
+        this.saveStepParameters(step.inputs, element, 'Input', 'source');
+        this.saveStepParameters(step.outputs, element, 'Output', 'destination');
 
         for (let path of step.returnPaths) {
             let pathElement: HTMLElement;
@@ -121,14 +121,11 @@ export class ProcessSaving {
         nodeName: string,
         variableAttributeName: string
     ) {
-        let element = parent.ownerDocument!.createElement(parameter.initialValue === null ? nodeName : 'FixedInput');
+        let element = parent.ownerDocument!.createElement(nodeName);
         element.setAttribute('name', parameter.name);
         parent.appendChild(element);
 
-        if (parameter.initialValue !== null) {
-            element.setAttribute('value', parameter.initialValue);
-        }
-        else if (parameter.link != null) {
+        if (parameter.link != null) {
             element.setAttribute(variableAttributeName, parameter.link.name);
         }
     }

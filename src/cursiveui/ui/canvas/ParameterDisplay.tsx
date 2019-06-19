@@ -35,7 +35,6 @@ export class ParameterDisplay extends React.PureComponent<ParameterDisplayProps,
                 >
                     {this.props.parameter.name}
                 </div>
-                {this.renderFixedInputValue()}
             </div>
         );
     }
@@ -68,39 +67,5 @@ export class ParameterDisplay extends React.PureComponent<ParameterDisplayProps,
         else {
             return ConnectorState.Disconnected;
         }
-    }
-
-    // TODO: remove from here?
-    private renderFixedInputValue() {
-        if (!this.props.input || !this.props.parameter.type.allowInput || this.props.parameter.link !== null) {
-            return undefined;
-        }
-        
-        let val = this.props.parameter.initialValue;
- 
-        let classes = 'parameter__fixedValueInput';
-        if (val !== null && val.length > 0 && !this.props.parameter.type.isValid(val)) {
-            classes += ' parameter__fixedValueInput--invalid';
-        }
-        if (val === null) {
-            val = '';
-        }
-
-        return (
-            <div className="parameter__fixedValue">
-                <input className={classes} onChange={e => this.fixedValChanged(e)} value={val} size={1} />
-                <div className="parameter__fixedValueMeasure">{val}</div>
-            </div>
-        );
-    }
-
-    private fixedValChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        this.props.parameter.initialValue = e.target.value.length > 0 ? e.target.value : null;
-
-        if (this.props.defaultChanged !== undefined) {
-            this.props.defaultChanged();
-        }
-
-        this.forceUpdate();
     }
 }

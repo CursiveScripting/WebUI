@@ -202,7 +202,7 @@ export class ProcessLoading {
     }
 
     private static loadStepInputs(workspace: Workspace, process: UserProcess, step: Step, stepNode: Element) {
-        let inputNodes = stepNode.getElementsByTagName('MapInput');
+        let inputNodes = stepNode.getElementsByTagName('Input');
         let inputs = step.inputs;
         for (const mapNode of inputNodes) {
             let paramName = mapNode.getAttribute('name') as string;
@@ -224,27 +224,10 @@ export class ProcessLoading {
             parameter.link = source;
             source.links.push(parameter);
         }
-
-        inputNodes = stepNode.getElementsByTagName('FixedInput');
-        for (const mapNode of inputNodes) {
-            let paramName = mapNode.getAttribute('name') as string;
-            let value = mapNode.getAttribute('value') as string;
-
-            let parameter = this.getNamed(inputs, paramName) as Parameter;
-            if (parameter === null) {
-                continue;
-            }
-
-            if (!parameter.type.isValid(value)) {
-                continue;
-            }
-            
-            parameter.initialValue = value;
-        }
     }
 
     private static loadStepOutputs(workspace: Workspace, process: UserProcess, step: Step, stepNode: Element) {
-        let outputNodes = stepNode.getElementsByTagName('MapOutput');
+        let outputNodes = stepNode.getElementsByTagName('Output');
         let outputs = step.outputs;
         
         for (const mapNode of outputNodes) {
