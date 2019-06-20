@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { UserProcess, Type } from '../data';
+import { UserProcess, Type } from '../../data';
 import './SignatureEditor.css';
 
 interface SignatureEditorProps {
@@ -193,5 +193,13 @@ Leave blank unless there are multiple return paths."
         // TODO: save inputs and outputs
 
         this.props.save(process);
+    }
+
+    private isPathNameValid(pathIndex: number, pathNames: string[]) {
+        // A path name with space on the end or that exactly matches another is invalid
+        const pathName = pathNames[pathIndex];
+        const trimmed = pathNames[pathIndex].trim();
+    
+        return pathName === trimmed && pathNames.indexOf(pathName) === pathIndex;
     }
 }

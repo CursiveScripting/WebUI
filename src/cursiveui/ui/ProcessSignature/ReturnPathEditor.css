@@ -1,0 +1,7 @@
+.returnPathEditor {
+    display: flex;
+}
+
+.returnPathEditor--invalid {
+    background-color: red;
+}

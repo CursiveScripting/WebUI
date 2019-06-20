@@ -1,0 +1,8 @@
+.returnPathsEditor {
+    display: flex;
+    flex-direction: column;
+}
+
+.returnPathsEditor--invalid {
+    color: red;
+}

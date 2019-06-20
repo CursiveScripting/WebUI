@@ -92,14 +92,18 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
         const numOutputs = this.props.variable.links.filter(p => p.input).length;
         const numInputs = this.props.variable.links.length - numOutputs;
 
-        const defaultInput = this.props.variable.type.allowInput
-            ? <ValueInput
+        let defaultInput;
+        if (this.props.variable.type.allowInput) {
+            const strVal = this.props.variable.initialValue === null ? '' : this.props.variable.initialValue;
+            const valChanged = (val: string) => this.props.initialValueChanged(val === '' ? null : val);
+
+            defaultInput = <ValueInput
                 className="variable__default"
-                value={this.props.variable.initialValue}
-                valueChanged={val => this.props.initialValueChanged(val)}
+                value={strVal}
+                valueChanged={val => valChanged(val)}
                 isValid={this.props.variable.initialValue === null ? true : this.props.variable.type.isValid(this.props.variable.initialValue)}
             />
-            : undefined;
+        }
 
         const inputState = numInputs > 0
             ? ConnectorState.Connected

@@ -4,7 +4,7 @@ import { ValidationError } from '../data/ValidationError';
 import { ProcessContent } from './ProcessContent/ProcessContent';
 import { ProcessSelector } from './sidebar/ProcessSelector';
 import { ProcessToolbar } from './toolbar/ProcessToolbar';
-import { SignatureEditor } from './SignatureEditor';
+import { SignatureEditor } from './ProcessSignature/SignatureEditor';
 import './ProcessEditor.css';
 
 interface ProcessEditorProps {

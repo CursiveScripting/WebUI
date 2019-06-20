@@ -4,14 +4,14 @@ import './ValueInput.css';
 
 interface Props {
     className?: string;
-    value: string | null;
+    value: string;
     isValid: boolean;
-    valueChanged: (value: string | null) => void;
+    valueChanged: (value: string) => void;
 }
 
 export const ValueInput: React.FunctionComponent<Props> = props => {
     let classes = 'valueInput';
-    if (props.value === null) {
+    if (props.value.trim().length === 0) {
         classes += ' valueInput--noValue';
     }
     if (!props.isValid) {
@@ -21,15 +21,11 @@ export const ValueInput: React.FunctionComponent<Props> = props => {
         classes += ' ' + props.className;
     }
 
-    const valueChanged = (e: React.ChangeEvent<HTMLInputElement>) => props.valueChanged(e.target.value === '' ? null : e.target.value);
-
-    const strValue = props.value === null
-        ? ''
-        : props.value;
+    const valueChanged = (e: React.ChangeEvent<HTMLInputElement>) => props.valueChanged(e.target.value);
 
     return <ContentEditable
         className={classes}
-        html={strValue}
+        html={props.value}
         onChange={valueChanged}
     />
 }

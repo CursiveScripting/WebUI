@@ -1,0 +1,7 @@
+.parameterEditor {
+    display: flex;
+}
+
+.parameterEditor--invalid {
+    background-color: red;
+}

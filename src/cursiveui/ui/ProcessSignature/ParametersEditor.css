@@ -1,0 +1,8 @@
+.parametersEditor {
+    display: flex;
+    flex-direction: column;
+}
+
+.parametersEditor--invalid {
+    color: red;
+}

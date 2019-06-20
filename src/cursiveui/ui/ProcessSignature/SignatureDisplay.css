@@ -1,0 +1,20 @@
+.signatureDisplay {
+    display: flex;
+    flex-direction: column;
+}
+
+.signatureDisplay__name {
+    color: white;
+    background-color: green; /* TODO: styling from user process display */
+}
+
+.signatureDisplay__body {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.signatureDisplay__description {
+    flex-grow: 1;
+    align-self: stretch;
+}
