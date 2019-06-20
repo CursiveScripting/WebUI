@@ -5,7 +5,7 @@ import { Variable } from './Variable';
 import { Type } from './Type';
 import { StartStep } from './StartStep';
 import { ValidationError } from './ValidationError';
-import { gridSize } from '../ui/canvas/gridSize';
+import { gridSize } from '../ui/ProcessContent/gridSize';
 import { findInMap } from './findInMap';
 
 export class UserProcess extends Process {
