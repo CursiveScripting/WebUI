@@ -34,14 +34,6 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
     constructor(props: ProcessEditorProps) {
         super(props);
 
-        const errorProcessNames = props.workspace.validationSummary.errorProcessNames;
-        const errorProcesses: UserProcess[] = [];
-        for (const [name, proc] of props.workspace.userProcesses) {
-            if (errorProcessNames.indexOf(name) !== -1) {
-                errorProcesses.push(proc);
-            }
-        }
-
         this.state = {
             openProcess: props.initialProcess === undefined
                 ? props.workspace.userProcesses.values().next().value
@@ -49,7 +41,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             editingSignature: false,
             otherProcessesHaveErrors: false,
             processErrors: [],
-            processesWithErrors: errorProcesses,
+            processesWithErrors: this.getProcessesWithErrors(props.workspace),
         };
     }
     
@@ -155,11 +147,11 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
 
     private renderSignatureHeader() {
         const text = this.state.openProcess === undefined
-            ? 'Define new process'
+            ? 'Add new process'
             : 'Edit process definition: ' + this.state.openProcess.name;
 
         return (
-            <div className="processEditor__definitionHeader">
+            <div className="processEditor__header">
                 {text}
             </div>
         );
@@ -171,7 +163,9 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                 process={this.state.openProcess}
                 className="processEditor__content"
                 allTypes={Array.from(this.props.workspace.types.values())}
-                save={process => this.saveSignature(process)}
+                allSystemProcesses={this.props.workspace.systemProcesses}
+                allUserProcesses={this.props.workspace.userProcesses}
+                processUpdated={(existingName, process) => this.saveSignature(existingName, process)}
                 cancel={() => this.closeSignatureEditor()}
             />
         );
@@ -213,8 +207,27 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         });
     }
     
-    private saveSignature(process: UserProcess) {
-        // TODO: add new or replace existing user process
+    private saveSignature(existingProcessName: string | null, process: UserProcess) {
+        const userProcesses = this.props.workspace.userProcesses;
+
+        if (existingProcessName !== null && userProcesses.has(existingProcessName)) {
+            // if name has changed, remove from old name and save it under the new one
+            if (existingProcessName !== process.name) {
+                userProcesses.delete(existingProcessName);
+                userProcesses.set(process.name, process);
+            }
+
+            // TODO: unhook any input links, output links and return paths that are no longer valid?
+
+            this.props.workspace.validateAll();
+            this.setState({
+                processesWithErrors: this.getProcessesWithErrors(this.props.workspace),
+            });
+        }
+        else {
+            // adding new process
+            userProcesses.set(process.name, process);
+        }
 
         this.closeSignatureEditor();
     }
@@ -281,6 +294,12 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         });
     }
 
+    private getProcessesWithErrors(workspace: Workspace) {
+        return workspace.validationSummary.errorProcessNames
+            .map(n => workspace.userProcesses.get(n)!)
+            .filter(p => p !== undefined);
+    }
+
     private revalidateOpenProcess() {
         if (this.state.openProcess === undefined) {
             return;
@@ -302,18 +321,16 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         }
         
         // validity has changed, update the "invalid processes" list for the sidebar
-        this.setState(prev => {
-            const processesWithErrors = prev.processesWithErrors.slice();
-
-            if (prev.openProcess !== undefined) {
+        this.setState(prevState => {
+            const processesWithErrors = prevState.processesWithErrors.slice();
+            if (prevState.openProcess !== undefined) {
                 if (isValid) {
-                    processesWithErrors.splice(processesWithErrors.indexOf(prev.openProcess, 1));
+                    processesWithErrors.splice(processesWithErrors.indexOf(prevState.openProcess, 1));
                 }
                 else {
-                    processesWithErrors.push(prev.openProcess);
+                    processesWithErrors.push(prevState.openProcess);
                 }
             }
-
             return {
                 processesWithErrors: processesWithErrors,
             };

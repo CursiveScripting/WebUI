@@ -2,52 +2,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-left: 1em;
-}
-
-.signatureEditor__wrapper {
-    display: flex;
-    flex-direction: column;
-}
-
-.signatureEditor__section {
-    background-color: #ccc;
-    padding: 0.5em 1em;
-    border-radius: 1em;
-    margin-bottom: 1em;
-}
-
-@media (min-width: 1024px) {
-    .signatureEditor__section {
-        padding: 0.5em 5em;
-    }
-}
-
-.signatureEditor__section label {
-    display: flex;
-    flex-direction: column;
-}
-
-.signatureEditor__section--horizontal label {
-    display: flex;
-    flex-direction: row;
-    align-items: baseline;
+    justify-content: center;
 }
 
 .signatureEditor__footer {
-    align-self: center;
-}
+    margin-top: 2em;
+    height: 20em; /* this is just to force the signature display closer to the top on a large screen. Probably a dumb approach. */
 
-.signatureEditor__label {
-    font-weight: bold;
-    margin-right: 1em;
-}
-
-.signatureEditor__text {
-    flex-grow: 1;
-}
-
-.signatureEditor__textarea {
-    width: 35em;
-    height: 6em;
+    display: flex;
+    align-items: flex-start;
 }

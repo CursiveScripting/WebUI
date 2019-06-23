@@ -1,51 +1,58 @@
 import * as React from 'react';
-import { UserProcess, Type } from '../../data';
+import { UserProcess, Type, SystemProcess, Parameter } from '../../data';
 import './SignatureEditor.css';
+import { ParamInfo, SignatureDisplay } from './SignatureDisplay';
 
 interface SignatureEditorProps {
     process?: UserProcess;
     className?: string;
+    allUserProcesses: Map<string, UserProcess>;
+    allSystemProcesses: Map<string, SystemProcess>;
     allTypes: Type[];
-    save: (process: UserProcess) => void;
+    processUpdated: (oldName: string | null, process: UserProcess) => void;
     cancel: () => void;
-}
-
-interface ParamInfo {
-    type: Type;
-    name: string;
 }
 
 interface SignatureEditorState {
     name: string;
+    nameValid: boolean;
     description: string;
     returnPaths: string[];
+    returnPathValidity: boolean[];
     inputs: ParamInfo[];
+    inputValidity: boolean[];
     outputs: ParamInfo[];
+    outputValidity: boolean[];
+    // TODO: folder
 }
 
 export class SignatureEditor extends React.PureComponent<SignatureEditorProps, SignatureEditorState> {
     constructor(props: SignatureEditorProps) {
         super(props);
 
-        if (props.process === undefined) {
-            this.state = {
+        this.state = props.process === undefined
+            ? {
                 name: '',
+                nameValid: false,
                 description: '',
                 returnPaths: [],
+                returnPathValidity: [],
                 inputs: [],
+                inputValidity: [],
                 outputs: [],
+                outputValidity: [],
+            }
+            : {
+                name: props.process.name,
+                nameValid: this.isProcessNameValid(props.process.name, props.process, props.allUserProcesses, props.allSystemProcesses),
+                description: props.process.description,
+                returnPaths: props.process.returnPaths,
+                returnPathValidity: props.process.returnPaths.map((path, index) => this.isReturnPathNameValid(index, props.process!.returnPaths)),
+                inputs: props.process.inputs.map(i => { return { type: i.type, name: i.name }; }),
+                inputValidity: props.process.inputs.map((param, index) => this.isParameterNameValid(index, props.process!.inputs)),
+                outputs: props.process.outputs.map(o => { return { type: o.type, name: o.name }; }),
+                outputValidity: props.process.outputs.map((param, index) => this.isParameterNameValid(index, props.process!.outputs)),
             };
-
-            return;
-        }
-
-        this.state = {
-            name: props.process.name,
-            description: props.process.description,
-            returnPaths: props.process.returnPaths,
-            inputs: props.process.inputs.map(i => { return { type: i.type, name: i.name }; }),
-            outputs: props.process.outputs.map(o => { return { type: o.type, name: o.name }; }),
-        };
     }
 
     render() {
@@ -54,152 +61,139 @@ export class SignatureEditor extends React.PureComponent<SignatureEditorProps, S
             classes += ' ' + this.props.className;
         }
 
-        const setName = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ name: e.target.value });
-        const setDesc = (e: React.ChangeEvent<HTMLTextAreaElement>) => this.setState({ description: e.target.value });
-
-        const joinedReturnPaths = this.state.returnPaths.join('\n');
-        const setReturnPaths = (e: React.ChangeEvent<HTMLTextAreaElement>) => this.setState({
-            returnPaths: e.target.value.split('\n').map(val => val.trim()),
+        const nameChanged = (name: string) => this.setState({
+            name,
+            nameValid: this.isProcessNameValid(name, this.props.process, this.props.allUserProcesses, this.props.allSystemProcesses),
         });
 
-        const addInput = () => this.addInput();
-        const addOutput = () => this.addOutput();
+        const descChanged = (description: string) => this.setState({
+            description,
+        });
+
+        const returnPathsChanged = (returnPaths: string[]) => this.setState({
+            returnPaths,
+            returnPathValidity: returnPaths.map((path, index) => this.isReturnPathNameValid(index, returnPaths)),
+        });
+
+        const inputsChanged = (params: ParamInfo[]) => this.setState({
+            inputs: params,
+            inputValidity: params.map((param, index) => this.isParameterNameValid(index, params)),
+        });
+
+        const outputsChanged = (params: ParamInfo[]) => this.setState({
+            outputs: params,
+            outputValidity: params.map((param, index) => this.isParameterNameValid(index, params)),
+        });
+
+        const canSave = this.canSave();
         const save = () => this.saveChanges();
         const cancel = () => this.props.cancel();
 
         return (
             <div className={classes}>
-                <div className="signatureEditor__wrapper">
-                    <div className="signatureEditor__section signatureEditor__section--horizontal">
-                        <label>
-                            <span className="signatureEditor__label">Process name </span>
-                            <input
-                                type="text"
-                                className="signatureEditor__text"
-                                value={this.state.name}
-                                onChange={setName}
-                                placeholder="Enter a unique name"
-                            />
-                        </label>
-                    </div>
-                    <div className="signatureEditor__section">
-                        <label>
-                            <div className="signatureEditor__label">Description</div>
-                            <textarea
-                                className="signatureEditor__textarea"
-                                value={this.state.description}
-                                onChange={setDesc}
-                                placeholder="Describe what this process does"
-                            />
-                        </label>
-                    </div>
-                    <div className="signatureEditor__section">
-                        <label>
-                            <div className="signatureEditor__label">Return paths</div>
-                            <textarea
-                                className="signatureEditor__textarea"
-                                value={joinedReturnPaths}
-                                onChange={setReturnPaths}
-                                placeholder="Enter each path name on a separate line.
-Leave blank unless there are multiple return paths."
-                            />
-                        </label>
-                    </div>
-                    <div className="signatureEditor__section">
-                        <label>
-                            <div className="signatureEditor__label">Inputs</div>
-                            {this.renderParameters(true)}
-                            <input type="button" className="signatureEditor__button" onClick={addInput} value="add new" />
-                        </label>
-                    </div>
-                    <div className="signatureEditor__section">
-                        <label>
-                            <span className="signatureEditor__label">Outputs</span>
-                            {this.renderParameters(false)}
-                            <input type="button" className="signatureEditor__button" onClick={addOutput} value="add new" />
-                        </label>
-                    </div>
-                    <div className="signatureEditor__footer">
-                        <input type="button" className="signatureEditor__button signatureEditor__button--save" value="Save changes" onClick={save} />
-                        <input type="button" className="signatureEditor__button" value="Cancel" onClick={cancel} />
-                    </div>
+                <SignatureDisplay
+                    dataTypes={this.props.allTypes}
+
+                    name={this.state.name}
+                    nameValid={this.state.nameValid}
+                    nameChanged={nameChanged}
+
+                    description={this.state.description}
+                    descriptionChanged={descChanged}
+
+                    returnPaths={this.state.returnPaths}
+                    returnPathsValid={this.state.returnPathValidity}
+                    returnPathsChanged={returnPathsChanged}
+
+                    inputs={this.state.inputs}
+                    inputsValid={this.state.inputValidity}
+                    inputsChanged={inputsChanged}
+
+                    outputs={this.state.outputs}
+                    outputsValid={this.state.outputValidity}
+                    outputsChanged={outputsChanged}
+                />
+                
+                <div className="signatureEditor__footer">
+                    <input type="button" className="signatureEditor__button signatureEditor__button--save" value="Save changes" onClick={save} disabled={!canSave} />
+                    <input type="button" className="signatureEditor__button" value="Cancel" onClick={cancel} />
                 </div>
             </div>
         );
     }
 
-    private renderParameters(input: boolean) {
-        const params = input ? this.state.inputs : this.state.outputs;
-
-        return params.map((param, idx) => {
-            return (
-                <div className="signatureEditor__parameter" key={idx}>
-                    {param.type.name}
-
-                    <input
-                        type="text"
-                        className="signatureEditor__text"
-                        value={param.name}
-                        onChange={e => this.setParamName(param, e.target.validationMessage, input)}
-                        placeholder="Enter a unique name"
-                    />
-                </div>
-            );
-        });
-    }
-
-    private addInput() {
-        this.setState(prevState => {
-            const newInputs = prevState.inputs.slice();
-            newInputs.push({
-                name: 'New input',
-                type: this.props.allTypes[0],
-            });
-            return { inputs: newInputs };
-        });
-    }
-
-    private addOutput() {
-        this.setState(prevState => {
-            const newOutputs = prevState.outputs.slice();
-            newOutputs.push({
-                name: 'New output',
-                type: this.props.allTypes[0],
-            });
-            return { outputs: newOutputs };
-        });
-    }
-
-    private setParamName(param: ParamInfo, name: string, input: boolean) {
-        param.name = name;
-
-        if (input) {
-            this.setState(prevState => { return { inputs: prevState.inputs.slice() }; });
-        }
-        else {
-            this.setState(prevState => { return { outputs: prevState.outputs.slice() }; });
-        }
+    private canSave() {
+        return this.state.nameValid
+            && this.state.returnPathValidity.reduce((prev, curr) => prev && curr, true)
+            && this.state.inputValidity.reduce((prev, curr) => prev && curr, true)
+            && this.state.inputValidity.reduce((prev, curr) => prev && curr, true)
     }
 
     private saveChanges() {
-        const process = this.props.process === undefined
-            ? new UserProcess(this.state.name, [], [], [], [], false, this.state.description, null)
-            : this.props.process;
+        let process: UserProcess;
+        let oldProcessName: string | null;
 
-        process.name = this.state.name;
-        process.description = this.state.description;
-        // process.returnPaths = this.state.returnPaths.filter(name => name.length > 0);
+        if (this.props.process === undefined) {
+            oldProcessName = null;
+            process = new UserProcess(this.state.name, [], [], [], [], false, this.state.description, null)
+        }
+        else {
+            oldProcessName = this.props.process.name;
+
+            process = this.props.process;
+            process.name = this.state.name;
+            process.description = this.state.description;
+        }
+
+
+        // remove all return paths, add all new ones
+        process.returnPaths.splice(0, process.returnPaths.length, ...this.state.returnPaths);
         
-        // TODO: save inputs and outputs
+        this.saveParameters(this.state.inputs, process.inputs, true);
+        this.saveParameters(this.state.outputs, process.outputs, false);
 
-        this.props.save(process);
+        this.props.processUpdated(oldProcessName, process);
     }
 
-    private isPathNameValid(pathIndex: number, pathNames: string[]) {
-        // A path name with space on the end or that exactly matches another is invalid
+    private saveParameters(source: ParamInfo[], destination: Parameter[], isInput: boolean) {
+        // empty the destination array
+        destination.splice(0, destination.length);
+
+        // add all new parameters back in, hooking up to existing parameter objects if their type hasn't changed
+        for (const paramInfo of source) {
+            let parameter: Parameter;
+
+            if (paramInfo.underlyingParameter === undefined || paramInfo.underlyingParameter.type !== paramInfo.type) {
+                parameter = new Parameter(paramInfo.name, paramInfo.type, isInput);
+            }
+            else {
+                parameter = paramInfo.underlyingParameter;
+                parameter.name = paramInfo.name;
+                parameter.type = paramInfo.type;
+            }
+        }
+    }
+
+    private isProcessNameValid(name: string, thisProcess: UserProcess | undefined, userProcesses: Map<string, UserProcess>, systemProcesses: Map<string, SystemProcess>) {
+        // A process name with space on the end or that exactly matches another is invalid.
+        return name === name.trim()
+            && systemProcesses.get(name) === undefined
+            && userProcesses.get(name) === thisProcess
+    }
+
+    private isReturnPathNameValid(pathIndex: number, pathNames: string[]) {
+        // A path name with space on the end or that exactly matches another is invalid.
+        // A path name is also invalid if we only have one: we should have 0 or 2+.
         const pathName = pathNames[pathIndex];
-        const trimmed = pathNames[pathIndex].trim();
-    
-        return pathName === trimmed && pathNames.indexOf(pathName) === pathIndex;
+        return pathName === pathName.trim()
+            && pathNames.indexOf(pathName) === pathIndex
+            && pathName.length !== 1;
+    }
+
+    private isParameterNameValid(paramIndex: number, parameters: ParamInfo[]) {
+        // A parameter name with space on the end or that exactly matches another is invalid.
+        const paramName = parameters[paramIndex].name;
+        return paramName === paramName.trim()
+            && parameters.findIndex(p => p.name === paramName) === paramIndex;
     }
 }

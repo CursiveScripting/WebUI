@@ -1,13 +1,14 @@
 import * as React from 'react';
-import { Type } from '../../data';
+import { Type, Parameter } from '../../data';
 import './SignatureDisplay.css';
 import { ValueInput } from '../ProcessContent/ValueInput';
 import { ReturnPathsEditor } from './ReturnPathsEditor';
 import { ParametersEditor } from './ParametersEditor';
 
-export interface Parameter {
+export interface ParamInfo {
     name: string;
     type: Type;
+    underlyingParameter?: Parameter;
 }
 
 interface Props {
@@ -22,18 +23,18 @@ interface Props {
     returnPathsValid: boolean[];
     returnPathsChanged: (paths: string[]) => void;
 
-    inputs: Parameter[];
+    inputs: ParamInfo[];
     inputsValid: boolean[];
-    inputsChanged: (inputs: Parameter[]) => void;
+    inputsChanged: (inputs: ParamInfo[]) => void;
 
-    outputs: Parameter[];
+    outputs: ParamInfo[];
     outputsValid: boolean[];
-    outputsChanged: (outputs: Parameter[]) => void;
+    outputsChanged: (outputs: ParamInfo[]) => void;
 
     dataTypes: Type[];
 }
 
-export const SignatureDisplay: React.FunctionComponent<Props> = props => {
+export const SignatureDisplay = (props: Props) => {
     let classes = 'signatureDisplay';
 
     const parametersSection = props.dataTypes.length === 0

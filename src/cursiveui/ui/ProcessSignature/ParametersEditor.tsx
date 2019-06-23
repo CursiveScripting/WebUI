@@ -1,16 +1,15 @@
 import * as React from 'react';
 import './ParametersEditor.css';
-import { ReturnPathEditor } from './ReturnPathEditor';
-import { Parameter } from './SignatureDisplay';
+import { ParamInfo } from './SignatureDisplay';
 import { Type } from '../../data';
 import { ParameterEditor } from './ParameterEditor';
 
 interface Props {
     className?: string;
     input: boolean;
-    parameters: Parameter[];
+    parameters: ParamInfo[];
     parameterValidity: boolean[];
-    parametersChanged: (parameters: Parameter[]) => void;
+    parametersChanged: (parameters: ParamInfo[]) => void;
     dataTypes: Type[];
 }
 
@@ -28,9 +27,12 @@ export const ParametersEditor: React.FunctionComponent<Props> = props => {
 
     const changeParam = (index: number, newName: string, newType: Type) => {
         const newParams = props.parameters.slice();
+        const prevParam = newParams[index];
+
         newParams[index] = {
             name: newName,
             type: newType,
+            underlyingParameter: prevParam.underlyingParameter,
         };
         props.parametersChanged(newParams);
     };
@@ -40,7 +42,7 @@ export const ParametersEditor: React.FunctionComponent<Props> = props => {
         props.parametersChanged(newParams);
     };
 
-    const parameters = props.parameters.map((param: Parameter, index: number) => (
+    const parameters = props.parameters.map((param: ParamInfo, index: number) => (
         <ParameterEditor
             key={index}
             name={param.name}
