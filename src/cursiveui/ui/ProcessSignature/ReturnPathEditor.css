@@ -5,3 +5,7 @@
 .returnPathEditor--invalid {
     background-color: red;
 }
+
+.returnPathEditor__path {
+    min-width: 4em;
+}

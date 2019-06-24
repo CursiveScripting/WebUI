@@ -1,20 +1,37 @@
 .signatureDisplay {
     display: flex;
     flex-direction: column;
+    border: solid black 1px;
+    overflow: hidden;
+    border-radius: 0.5em;
+    background-color: #ccc;
 }
 
 .signatureDisplay__name {
     color: white;
-    background-color: green; /* TODO: styling from user process display */
+    background-color: green; /* TODO: share stylign with user process display? */
+    padding: 0.2em 0 0.2em 1.2em;
+    display: flex;
+    align-items: center;
 }
 
 .signatureDisplay__body {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    padding: 0.2em 0;
+}
+
+.signatureDisplay__body + .signatureDisplay__body {
+    border-top: solid grey 1px;
 }
 
 .signatureDisplay__description {
     flex-grow: 1;
     align-self: stretch;
+    min-width: 8em;
+}
+
+.signatureDisplay__spacer {
+    min-width: 1em;
 }

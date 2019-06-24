@@ -39,7 +39,7 @@ export const SignatureDisplay = (props: Props) => {
 
     const parametersSection = props.dataTypes.length === 0
         ? undefined
-        :  <div className="signatureDisplay__bodySection">
+        :  <div className="signatureDisplay__body">
             <ParametersEditor
                 input={true}
                 parameters={props.inputs}
@@ -47,6 +47,7 @@ export const SignatureDisplay = (props: Props) => {
                 parametersChanged={props.inputsChanged}
                 dataTypes={props.dataTypes}
             />
+            <div className="signatureDisplay__spacer" />
             <ParametersEditor
                 input={false}
                 parameters={props.outputs}

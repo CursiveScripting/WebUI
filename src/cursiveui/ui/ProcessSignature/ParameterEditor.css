@@ -5,3 +5,7 @@
 .parameterEditor--invalid {
     background-color: red;
 }
+
+.parameterEditor__name {
+    min-width: 4em;
+}
