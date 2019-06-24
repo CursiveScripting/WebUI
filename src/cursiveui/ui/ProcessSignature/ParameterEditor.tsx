@@ -36,5 +36,7 @@ export const ParameterEditor: React.FunctionComponent<Props> = props => {
         >
             {types}
         </select>
+
+        <button onClick={props.removeParameter}>remove</button>
     </div>
 }

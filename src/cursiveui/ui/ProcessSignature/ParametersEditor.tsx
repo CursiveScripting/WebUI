@@ -38,7 +38,8 @@ export const ParametersEditor: React.FunctionComponent<Props> = props => {
     };
 
     const removeParam = (index: number) => {
-        const newParams = props.parameters.slice().splice(index, 1);
+        const newParams = props.parameters.slice();
+        newParams.splice(index, 1);
         props.parametersChanged(newParams);
     };
 
