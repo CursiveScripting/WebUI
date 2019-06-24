@@ -33,7 +33,8 @@ export const ReturnPathsEditor: React.FunctionComponent<Props> = props => {
         };
 
         const removePath = (index: number) => {
-            const newPaths = props.pathNames.slice().splice(index, 1);
+            const newPaths = props.pathNames.slice();
+            newPaths.splice(index, 1);
             props.pathsChanged(newPaths);
         };
 
