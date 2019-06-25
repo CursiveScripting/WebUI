@@ -9,7 +9,11 @@
 
 .signatureDisplay__name {
     color: white;
-    background-color: green; /* TODO: share stylign with user process display? */
+    font-weight: bold;
+    font-size: 1.5em;
+    height: 1.4em;
+    text-shadow: 0px 0px 4px black;
+    background-color: #00aaaa;
     padding: 0.2em 0 0.2em 1.2em;
     display: flex;
     align-items: center;

@@ -7,6 +7,8 @@ interface Props {
     isValid: boolean;
     renamePath: (name: string) => void;
     removePath: () => void;
+    moveUp?: () => void;
+    moveDown?: () => void;
 }
 
 export const ReturnPathEditor: React.FunctionComponent<Props> = props => {
@@ -15,6 +17,20 @@ export const ReturnPathEditor: React.FunctionComponent<Props> = props => {
         classes += ' returnPathEditor--invalid'
     }
 
+    const moveUp = props.moveUp === undefined
+        ? <div className="returnPathEditor__spacer" />
+        : <button
+            className="returnPathEditor__moveUp"
+            onClick={props.moveUp}
+        />
+
+    const moveDown = props.moveDown === undefined
+        ? <div className="returnPathEditor__spacer" />
+        : <button
+            className="returnPathEditor__moveDown"
+            onClick={props.moveDown}
+        />
+
     return <div className={classes}>
         <ValueInput
             className="returnPathEditor__path"
@@ -22,9 +38,12 @@ export const ReturnPathEditor: React.FunctionComponent<Props> = props => {
             valueChanged={props.renamePath}
             isValid={props.isValid}
         />
-        
-        <button className="returnPathEditor__remove" onClick={props.removePath}>
-            Remove path
-        </button>
+
+        {moveUp}
+        {moveDown}
+        <button
+            className="returnPathEditor__remove"
+            onClick={props.removePath}
+        />
     </div>
 }

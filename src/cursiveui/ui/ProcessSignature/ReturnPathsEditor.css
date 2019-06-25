@@ -6,3 +6,7 @@
 .returnPathsEditor--invalid {
     color: red;
 }
+
+.returnPathsEditor__prompt {
+    font-style: italic;
+}

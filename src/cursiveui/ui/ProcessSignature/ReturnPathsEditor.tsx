@@ -21,11 +21,15 @@ export const ReturnPathsEditor: React.FunctionComponent<Props> = props => {
         classes += ' returnPathsEditor--invalid';
     }
 
+    let prompt: string;
     let paths;
+
     if (props.pathNames.length === 0) {
-        paths = 'No named return paths';
+        prompt = 'No named return paths';
     }
     else {
+        prompt = 'Return paths:';
+
         const changePath = (name: string, index: number) => {
             const newPaths = props.pathNames.slice();
             newPaths[index] = name;
@@ -38,15 +42,37 @@ export const ReturnPathsEditor: React.FunctionComponent<Props> = props => {
             props.pathsChanged(newPaths);
         };
 
-        paths = props.pathNames.map((path: string, index: number) => (
-            <ReturnPathEditor
-                key={index}
-                path={path}
-                isValid={props.pathValidity[index]}
-                renamePath={name => changePath(name, index)}
-                removePath={() => removePath(index)}
-            />
-        ));
+        paths = props.pathNames.map((path: string, index: number) => {
+            const moveUp = index === 0
+                ? undefined
+                : () => {
+                    const newPaths = props.pathNames.slice();
+                    newPaths.splice(index, 1);
+                    newPaths.splice(index - 1, 0, path);
+                    props.pathsChanged(newPaths);
+                };
+
+            const moveDown = index === props.pathNames.length - 1
+                ? undefined
+                : () => {
+                    const newPaths = props.pathNames.slice();
+                    newPaths.splice(index, 1);
+                    newPaths.splice(index + 1, 0, path);
+                    props.pathsChanged(newPaths);
+                };
+
+            return (
+                <ReturnPathEditor
+                    key={index}
+                    path={path}
+                    isValid={props.pathValidity[index]}
+                    renamePath={name => changePath(name, index)}
+                    removePath={() => removePath(index)}
+                    moveUp={moveUp}
+                    moveDown={moveDown}
+                />
+            )
+        });
     }
 
     const addPath = props.pathNames.length === 0
@@ -54,9 +80,10 @@ export const ReturnPathsEditor: React.FunctionComponent<Props> = props => {
         : () => props.pathsChanged([...props.pathNames, '']);
 
     return <div className={classes}>
+        <div className="returnPathsEditor__prompt">{prompt}</div>
         {paths}
-        <button className="returnPathEditor__add" onClick={addPath}>
-            {props.pathNames.length === 0 ? 'Use named paths' : 'Add path'}
+        <button className="returnPathsEditor__add" onClick={addPath}>
+            {props.pathNames.length === 0 ? 'Use named paths' : 'Add return path'}
         </button>
     </div>
 }

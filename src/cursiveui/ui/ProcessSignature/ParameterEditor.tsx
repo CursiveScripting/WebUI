@@ -11,6 +11,8 @@ interface Props {
     renameParameter: (name: string) => void;
     changeType: (type: Type) => void;
     removeParameter: () => void;
+    moveUp?: () => void;
+    moveDown?: () => void;
 }
 
 export const ParameterEditor: React.FunctionComponent<Props> = props => {
@@ -20,6 +22,20 @@ export const ParameterEditor: React.FunctionComponent<Props> = props => {
     }
 
     const types = props.allTypes.map((type, index) => <option key={index} value={index}>{type.name}</option>)
+
+    const moveUp = props.moveUp === undefined
+        ? <div className="parameterEditor__spacer" />
+        : <button
+            className="parameterEditor__moveUp"
+            onClick={props.moveUp}
+        />
+
+    const moveDown = props.moveDown === undefined
+        ? <div className="parameterEditor__spacer" />
+        : <button
+            className="parameterEditor__moveDown"
+            onClick={props.moveDown}
+        />
 
     return <div className={classes}>
         <ValueInput
@@ -37,6 +53,11 @@ export const ParameterEditor: React.FunctionComponent<Props> = props => {
             {types}
         </select>
 
-        <button onClick={props.removeParameter}>remove</button>
+        {moveUp}
+        {moveDown}
+        <button
+            onClick={props.removeParameter}
+            className="parameterEditor__remove"
+        />
     </div>
 }

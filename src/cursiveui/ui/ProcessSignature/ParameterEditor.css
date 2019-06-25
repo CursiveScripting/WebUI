@@ -3,9 +3,40 @@
 }
 
 .parameterEditor--invalid {
-    background-color: red;
+    color: red;
 }
 
 .parameterEditor__name {
     min-width: 4em;
+}
+
+.parameterEditor__moveUp {
+    /* "arrow-up" from feather icons */
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='blue' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='feather feather-arrow-up'><line x1='12' y1='19' x2='12' y2='5'></line><polyline points='5 12 12 5 19 12'></polyline></svg>");
+}
+
+.parameterEditor__moveDown {
+    /* "arrow-down" from feather icons */
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='blue' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='feather feather-arrow-down'><line x1='12' y1='5' x2='12' y2='19'></line><polyline points='19 12 12 19 5 12'></polyline></svg>");
+}
+
+.parameterEditor__remove {
+    /* "x-circle" from feather icons */
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='red' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='feather feather-x-circle'><circle cx='12' cy='12' r='10'></circle><line x1='15' y1='9' x2='9' y2='15'></line><line x1='9' y1='9' x2='15' y2='15'></line></svg>");
+}
+
+.parameterEditor__moveUp, .parameterEditor__moveDown, .parameterEditor__remove, .parameterEditor__spacer {
+    min-width: 1.5em;
+    min-height: 1.5em;
+    margin: 0;
+    padding: 0;
+    font-size: 1rem;
+}
+
+.parameterEditor__moveUp, .parameterEditor__moveDown, .parameterEditor__remove {
+    background-repeat: no-repeat;
+    background-color: transparent;
+    background-position: center;
+    border: none;
+    cursor: pointer;
 }

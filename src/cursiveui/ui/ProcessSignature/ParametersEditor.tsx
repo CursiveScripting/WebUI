@@ -25,6 +25,18 @@ export const ParametersEditor: React.FunctionComponent<Props> = props => {
         classes += ' parametersEditor--invalid';
     }
 
+    let prompt: string;
+    if (props.input) {
+        prompt = props.parameters.length === 0
+            ? 'No inputs'
+            : 'Inputs:';
+    }
+    else {
+        prompt = props.parameters.length === 0
+            ? 'No outputs'
+            : 'Outputs:';
+    }
+
     const changeParam = (index: number, newName: string, newType: Type) => {
         const newParams = props.parameters.slice();
         const prevParam = newParams[index];
@@ -43,26 +55,48 @@ export const ParametersEditor: React.FunctionComponent<Props> = props => {
         props.parametersChanged(newParams);
     };
 
-    const parameters = props.parameters.map((param: ParamInfo, index: number) => (
-        <ParameterEditor
-            key={index}
-            name={param.name}
-            type={param.type}
-            isValid={props.parameterValidity[index]}
-            renameParameter={name => changeParam(index, name, param.type)}
-            changeType={type => changeParam(index, param.name, type)}
-            removeParameter={() => removeParam(index)}
+    const parameters = props.parameters.map((param: ParamInfo, index: number) => {
+        const moveUp = index === 0
+            ? undefined
+            : () => {
+                const newParams = props.parameters.slice();
+                newParams.splice(index, 1);
+                newParams.splice(index - 1, 0, param);
+                props.parametersChanged(newParams);
+            };
+
+        const moveDown = index === props.parameters.length - 1
+            ? undefined
+            : () => {
+                const newParams = props.parameters.slice();
+                newParams.splice(index, 1);
+                newParams.splice(index + 1, 0, param);
+                props.parametersChanged(newParams);
+            };
             
-            allTypes={props.dataTypes}
-        />
-    ));
+        return (
+            <ParameterEditor
+                key={index}
+                name={param.name}
+                type={param.type}
+                isValid={props.parameterValidity[index]}
+                renameParameter={name => changeParam(index, name, param.type)}
+                changeType={type => changeParam(index, param.name, type)}
+                removeParameter={() => removeParam(index)}
+                moveUp={moveUp}
+                moveDown={moveDown}
+                allTypes={props.dataTypes}
+            />
+        )
+    });
 
     const addParameter = () => props.parametersChanged([...props.parameters, { name: '', type: props.dataTypes[0] }]);
 
-    return <div className={classes}>
+    return <div className={classes}>   
+        <div className="parametersEditor__prompt">{prompt}</div>
         {parameters}
-        <button className="returnPathEditor__add" onClick={addParameter}>
-            Add parameter
+        <button className="parametersEditor__add" onClick={addParameter}>
+            Add {props.input ? 'input' : 'output'}
         </button>
     </div>
 }

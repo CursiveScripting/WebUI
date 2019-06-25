@@ -176,7 +176,8 @@ export class SignatureEditor extends React.PureComponent<SignatureEditorProps, S
 
     private isProcessNameValid(name: string, thisProcess: UserProcess | undefined, userProcesses: Map<string, UserProcess>, systemProcesses: Map<string, SystemProcess>) {
         // A process name with space on the end or that exactly matches another is invalid.
-        return name === name.trim()
+        return name !== ''
+            && name === name.trim()
             && systemProcesses.get(name) === undefined
             && userProcesses.get(name) === thisProcess
     }
@@ -185,7 +186,8 @@ export class SignatureEditor extends React.PureComponent<SignatureEditorProps, S
         // A path name with space on the end or that exactly matches another is invalid.
         // A path name is also invalid if we only have one: we should have 0 or 2+.
         const pathName = pathNames[pathIndex];
-        return pathName === pathName.trim()
+        return pathName !== ''
+            && pathName === pathName.trim()
             && pathNames.indexOf(pathName) === pathIndex
             && pathName.length !== 1;
     }
@@ -193,7 +195,8 @@ export class SignatureEditor extends React.PureComponent<SignatureEditorProps, S
     private isParameterNameValid(paramIndex: number, parameters: ParamInfo[]) {
         // A parameter name with space on the end or that exactly matches another is invalid.
         const paramName = parameters[paramIndex].name;
-        return paramName === paramName.trim()
+        return paramName !== ''
+            && paramName === paramName.trim()
             && parameters.findIndex(p => p.name === paramName) === paramIndex;
     }
 }

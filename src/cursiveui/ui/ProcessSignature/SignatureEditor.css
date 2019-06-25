@@ -7,8 +7,6 @@
 
 .signatureEditor__footer {
     margin-top: 2em;
-    height: 20em; /* this is just to force the signature display closer to the top on a large screen. Probably a dumb approach. */
-
     display: flex;
     align-items: flex-start;
 }
