@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { UserProcess, Type, SystemProcess, Parameter } from '../../data';
 import './ProcessEditor.css';
-import { ParamInfo, SignatureDisplay } from './SignatureDisplay';
+import { ParamInfo, SignatureEditor } from './SignatureEditor';
 
 interface Props {
     process?: UserProcess;
@@ -91,7 +91,7 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
 
         return (
             <div className={classes}>
-                <SignatureDisplay
+                <SignatureEditor
                     dataTypes={this.props.allTypes}
 
                     name={this.state.name}

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import './ParametersEditor.css';
-import { ParamInfo } from './SignatureDisplay';
+import { ParamInfo } from './SignatureEditor';
 import { Type } from '../../data';
 import { ParameterEditor } from './ParameterEditor';
 

@@ -1,4 +1,4 @@
-.signatureDisplay {
+.signatureEditor {
     display: flex;
     flex-direction: column;
     border: solid black 1px;
@@ -7,7 +7,7 @@
     background-color: #ccc;
 }
 
-.signatureDisplay__name {
+.signatureEditor__name {
     color: white;
     font-weight: bold;
     font-size: 1.5em;
@@ -19,23 +19,23 @@
     align-items: center;
 }
 
-.signatureDisplay__body {
+.signatureEditor__body {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     padding: 0.2em 0;
 }
 
-.signatureDisplay__body + .signatureDisplay__body {
+.signatureEditor__body + .signatureEditor__body {
     border-top: solid grey 1px;
 }
 
-.signatureDisplay__description {
+.signatureEditor__description {
     flex-grow: 1;
     align-self: stretch;
     min-width: 8em;
 }
 
-.signatureDisplay__spacer {
+.signatureEditor__spacer {
     min-width: 1em;
 }

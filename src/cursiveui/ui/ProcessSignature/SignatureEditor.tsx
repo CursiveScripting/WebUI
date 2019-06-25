@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Type, Parameter } from '../../data';
-import './SignatureDisplay.css';
+import './SignatureEditor.css';
 import { ValueInput } from '../ProcessContent/ValueInput';
 import { ReturnPathsEditor } from './ReturnPathsEditor';
 import { ParametersEditor } from './ParametersEditor';
@@ -34,12 +34,12 @@ interface Props {
     dataTypes: Type[];
 }
 
-export const SignatureDisplay = (props: Props) => {
-    let classes = 'signatureDisplay';
+export const SignatureEditor = (props: Props) => {
+    let classes = 'signatureEditor';
 
     const parametersSection = props.dataTypes.length === 0
         ? undefined
-        :  <div className="signatureDisplay__body">
+        :  <div className="signatureEditor__body">
             <ParametersEditor
                 input={true}
                 parameters={props.inputs}
@@ -47,7 +47,7 @@ export const SignatureDisplay = (props: Props) => {
                 parametersChanged={props.inputsChanged}
                 dataTypes={props.dataTypes}
             />
-            <div className="signatureDisplay__spacer" />
+            <div className="signatureEditor__spacer" />
             <ParametersEditor
                 input={false}
                 parameters={props.outputs}
@@ -61,14 +61,14 @@ export const SignatureDisplay = (props: Props) => {
 
     return <div className={classes}>
         <ValueInput
-            className="signatureDisplay__name"
+            className="signatureEditor__name"
             value={props.name}
             valueChanged={props.nameChanged}
             isValid={props.nameValid}
         />
-        <div className="signatureDisplay__body">
+        <div className="signatureEditor__body">
             <ValueInput
-                className="signatureDisplay__description"
+                className="signatureEditor__description"
                 value={props.description}
                 valueChanged={props.descriptionChanged}
                 isValid={true}
