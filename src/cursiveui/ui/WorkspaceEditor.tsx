@@ -4,7 +4,7 @@ import { ValidationError } from '../data/ValidationError';
 import { ProcessContent } from './ProcessContent/ProcessContent';
 import { ProcessSelector } from './sidebar/ProcessSelector';
 import { ProcessToolbar } from './toolbar/ProcessToolbar';
-import { SignatureEditor } from './ProcessSignature/SignatureEditor';
+import { ProcessEditor } from './ProcessSignature/ProcessEditor';
 import './WorkspaceEditor.css';
 
 interface Props {
@@ -159,7 +159,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
 
     private renderSignatureEditor() {
         return (
-            <SignatureEditor
+            <ProcessEditor
                 process={this.state.openProcess}
                 className="workspaceEditor__content"
                 allTypes={Array.from(this.props.workspace.types.values())}

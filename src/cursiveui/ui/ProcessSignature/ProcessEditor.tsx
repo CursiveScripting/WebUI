@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { UserProcess, Type, SystemProcess, Parameter } from '../../data';
-import './SignatureEditor.css';
+import './ProcessEditor.css';
 import { ParamInfo, SignatureDisplay } from './SignatureDisplay';
 
-interface SignatureEditorProps {
+interface Props {
     process?: UserProcess;
     className?: string;
     allUserProcesses: Map<string, UserProcess>;
@@ -13,7 +13,7 @@ interface SignatureEditorProps {
     cancel: () => void;
 }
 
-interface SignatureEditorState {
+interface State {
     name: string;
     nameValid: boolean;
     description: string;
@@ -26,8 +26,8 @@ interface SignatureEditorState {
     // TODO: folder
 }
 
-export class SignatureEditor extends React.PureComponent<SignatureEditorProps, SignatureEditorState> {
-    constructor(props: SignatureEditorProps) {
+export class ProcessEditor extends React.PureComponent<Props, State> {
+    constructor(props: Props) {
         super(props);
 
         this.state = props.process === undefined
@@ -56,7 +56,7 @@ export class SignatureEditor extends React.PureComponent<SignatureEditorProps, S
     }
 
     render() {
-        let classes = 'signatureEditor';
+        let classes = 'processEditor';
         if (this.props.className !== undefined) {
             classes += ' ' + this.props.className;
         }
@@ -114,9 +114,9 @@ export class SignatureEditor extends React.PureComponent<SignatureEditorProps, S
                     outputsChanged={outputsChanged}
                 />
                 
-                <div className="signatureEditor__footer">
-                    <input type="button" className="signatureEditor__button signatureEditor__button--save" value="Save changes" onClick={save} disabled={!canSave} />
-                    <input type="button" className="signatureEditor__button" value="Cancel" onClick={cancel} />
+                <div className="processEditor__footer">
+                    <input type="button" className="processEditor__button processEditor__button--save" value="Save changes" onClick={save} disabled={!canSave} />
+                    <input type="button" className="processEditor__button" value="Cancel" onClick={cancel} />
                 </div>
             </div>
         );
