@@ -5,16 +5,16 @@ import { ProcessContent } from './ProcessContent/ProcessContent';
 import { ProcessSelector } from './sidebar/ProcessSelector';
 import { ProcessToolbar } from './toolbar/ProcessToolbar';
 import { SignatureEditor } from './ProcessSignature/SignatureEditor';
-import './ProcessEditor.css';
+import './WorkspaceEditor.css';
 
-interface ProcessEditorProps {
+interface Props {
     workspace: Workspace;
     initialProcess?: UserProcess;
     className?: string;
     save: () => void;
 }
 
-interface ProcessEditorState {
+interface State {
     openProcess?: UserProcess;
     editingSignature: boolean;
     droppingDataType?: Type;
@@ -30,8 +30,8 @@ interface ProcessEditorState {
     focusStepReturnPath?: string | null;
 }
 
-export class ProcessEditor extends React.PureComponent<ProcessEditorProps, ProcessEditorState> {
-    constructor(props: ProcessEditorProps) {
+export class WorkspaceEditor extends React.PureComponent<Props, State> {
+    constructor(props: Props) {
         super(props);
 
         this.state = {
@@ -51,20 +51,20 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         }
     }
 
-    componentDidUpdate(prevProps: ProcessEditorProps, prevState: ProcessEditorState) {
+    componentDidUpdate(prevProps: Props, prevState: State) {
         if (prevProps.workspace !== this.props.workspace) {
             this.openProcess(this.props.workspace.userProcesses.values().next().value);
         }
     }
 
     render() {
-        let classes = 'processEditor';
+        let classes = 'workspaceEditor';
         if (this.props.className !== undefined) {
             classes += ' ' + this.props.className;
         }
 
         if (this.state.editingSignature) {
-            classes += ' processEditor--editDef';
+            classes += ' workspaceEditor--editDef';
 
             return (
                 <div className={classes}>
@@ -75,7 +75,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             );
         }
 
-        const addButton = <div role="button" className="processEditor__addNew" onClick={() => this.showNewProcess()}>Add process</div>;
+        const addButton = <div role="button" className="workspaceEditor__addNew" onClick={() => this.showNewProcess()}>Add process</div>;
 
         return (
             <div className={classes}>
@@ -90,7 +90,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
     private renderProcessList() {
         return (
             <ProcessSelector
-                className="processEditor__sidebar"
+                className="workspaceEditor__sidebar"
                 userProcesses={Array.from(this.props.workspace.userProcesses.values())}
                 systemProcesses={Array.from(this.props.workspace.systemProcesses.values())}
                 openProcess={this.state.openProcess}
@@ -114,7 +114,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
 
         return (
             <ProcessContent
-                className="processEditor__content"
+                className="workspaceEditor__content"
                 process={this.state.openProcess}
                 dropVariableType={this.state.droppingDataType}
                 dropStep={this.state.droppingProcess}
@@ -137,7 +137,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
                 otherProcessesHaveErrors={this.state.otherProcessesHaveErrors}
                 selectedStep={this.state.draggingStep}
                 selectedVariable={this.state.draggingVariable}
-                className="processEditor__toolbar"
+                className="workspaceEditor__toolbar"
                 saveProcesses={() => this.props.save()}
                 focusError={error => this.focusOnError(error)}
                 removeSelectedItem={() => this.removeSelectedItem()}
@@ -151,7 +151,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
             : 'Edit process definition: ' + this.state.openProcess.name;
 
         return (
-            <div className="processEditor__header">
+            <div className="workspaceEditor__header">
                 {text}
             </div>
         );
@@ -161,7 +161,7 @@ export class ProcessEditor extends React.PureComponent<ProcessEditorProps, Proce
         return (
             <SignatureEditor
                 process={this.state.openProcess}
-                className="processEditor__content"
+                className="workspaceEditor__content"
                 allTypes={Array.from(this.props.workspace.types.values())}
                 allSystemProcesses={this.props.workspace.systemProcesses}
                 allUserProcesses={this.props.workspace.userProcesses}

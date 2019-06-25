@@ -1,6 +1,6 @@
 import { Workspace } from './data';
 import React from 'react';
-import { ProcessEditor } from './ui/ProcessEditor';
+import { WorkspaceEditor } from './ui/WorkspaceEditor';
 
 interface UIProps {
     className: string;
@@ -28,7 +28,7 @@ export class CursiveUI extends React.PureComponent<UIProps, UIState> {
         if (this.state.workspace !== undefined) {
             const doSave = () => this.save();
 
-            return <ProcessEditor
+            return <WorkspaceEditor
                 className={this.props.className}
                 workspace={this.state.workspace}
                 save={doSave}

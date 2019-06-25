@@ -1,4 +1,4 @@
-.processEditor {
+.workspaceEditor {
     display: grid;
     grid-template-columns: 12em 1fr;
     grid-template-rows: 3em 3em 1fr;
@@ -9,7 +9,7 @@
 }
 
 @media (min-width: 1024px) {
-    .processEditor {
+    .workspaceEditor {
         grid-template-rows: 3em 1fr;
         grid-template-areas:
             "addnew header"
@@ -17,23 +17,23 @@
     }
 }
 
-.processEditor * {
+.workspaceEditor * {
     box-sizing: border-box;
 }
 
-.processEditor__sidebar {
+.workspaceEditor__sidebar {
     grid-area: sidebar;
 }
 
-.processEditor__toolbar {
+.workspaceEditor__toolbar {
     grid-area: header;
 }
 
-.processEditor__content {
+.workspaceEditor__content {
     grid-area: content;
 }
 
-.processEditor__addNew {
+.workspaceEditor__addNew {
     grid-area: addnew;
     display: flex;
     justify-content: center;
@@ -45,7 +45,7 @@
     cursor: pointer;
 }
 
-.processEditor__header {
+.workspaceEditor__header {
     grid-area: header;
     text-align: center;
     font-size: 2em;
