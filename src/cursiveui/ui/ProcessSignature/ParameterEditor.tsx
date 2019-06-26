@@ -2,6 +2,7 @@ import * as React from 'react';
 import './ParameterEditor.css';
 import { ValueInput } from '../ProcessContent/ValueInput';
 import { Type } from '../../data';
+import { SortableListItem } from './SortableListItem';
 
 interface Props {
     name: string;
@@ -16,28 +17,14 @@ interface Props {
 }
 
 export const ParameterEditor: React.FunctionComponent<Props> = props => {
-    let classes = 'parameterEditor';
-    if (!props.isValid) {
-        classes += ' parameterEditor--invalid'
-    }
+    const typeOptions = props.allTypes.map((type, index) => <option key={index} value={index}>{type.name}</option>)
 
-    const types = props.allTypes.map((type, index) => <option key={index} value={index}>{type.name}</option>)
-
-    const moveUp = props.moveUp === undefined
-        ? <div className="parameterEditor__spacer" />
-        : <button
-            className="parameterEditor__moveUp"
-            onClick={props.moveUp}
-        />
-
-    const moveDown = props.moveDown === undefined
-        ? <div className="parameterEditor__spacer" />
-        : <button
-            className="parameterEditor__moveDown"
-            onClick={props.moveDown}
-        />
-
-    return <div className={classes}>
+    return <SortableListItem className="parameterEditor"
+        isValid={props.isValid}
+        moveUp={props.moveUp}
+        moveDown={props.moveDown}
+        remove={props.removeParameter}
+    >
         <ValueInput
             className="parameterEditor__name"
             value={props.name}
@@ -50,14 +37,7 @@ export const ParameterEditor: React.FunctionComponent<Props> = props => {
             value={props.allTypes.indexOf(props.type)}
             onChange={e => props.changeType(props.allTypes[e.target.selectedIndex])}
         >
-            {types}
+            {typeOptions}
         </select>
-
-        {moveUp}
-        {moveDown}
-        <button
-            onClick={props.removeParameter}
-            className="parameterEditor__remove"
-        />
-    </div>
+    </SortableListItem>
 }
