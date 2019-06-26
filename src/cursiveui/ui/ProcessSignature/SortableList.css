@@ -1,0 +1,13 @@
+.sortableList {
+    display: flex;
+    flex-direction: column;
+}
+
+.sortableList__prompt {
+    font-style: italic;
+    margin-left: 0.3em;
+}
+
+.sortableList--invalid  .sortableList__prompt {
+    color: red;
+}

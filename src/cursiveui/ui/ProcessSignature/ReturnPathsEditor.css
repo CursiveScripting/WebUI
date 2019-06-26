@@ -1,12 +1,3 @@
-.returnPathsEditor {
-    display: flex;
-    flex-direction: column;
-}
-
-.returnPathsEditor--invalid {
-    color: red;
-}
-
-.returnPathsEditor__prompt {
-    font-style: italic;
+.returnPathEditor__path {
+    min-width: 4em;
 }
