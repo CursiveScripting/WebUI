@@ -85,8 +85,16 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
             outputValidity: params.map((param, index) => this.isParameterNameValid(index, params)),
         });
 
-        const canSave = this.canSave();
-        const save = () => this.saveChanges();
+        const errors = this.getErrors();
+
+        const canSave = errors.length === 0;
+        const validationSummary = canSave
+            ? undefined
+            : <ul className="processEditor__errors">
+                {errors.map((msg, index) => <li className="processEditor__error" key={index}>{msg}</li>)}
+            </ul>
+
+        const save = !canSave ? undefined : () => this.saveChanges();
         const cancel = () => this.props.cancel();
 
         return (
@@ -113,6 +121,8 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
                     outputsValid={this.state.outputValidity}
                     outputsChanged={outputsChanged}
                 />
+
+                {validationSummary}
                 
                 <div className="processEditor__footer">
                     <input type="button" className="processEditor__button processEditor__button--save" value="Save changes" onClick={save} disabled={!canSave} />
@@ -122,11 +132,34 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
         );
     }
 
-    private canSave() {
-        return this.state.nameValid
-            && this.state.returnPathValidity.reduce((prev, curr) => prev && curr, true)
-            && this.state.inputValidity.reduce((prev, curr) => prev && curr, true)
-            && this.state.inputValidity.reduce((prev, curr) => prev && curr, true)
+    private getErrors() {
+        const errors = [];
+
+        if (!this.state.nameValid) {
+            errors.push(
+                this.state.name.trim() === ''
+                    ? 'Give this process a name.'
+                    : 'This name is already in use, give this process a different name.'
+            );
+        }
+
+        if (!this.state.returnPathValidity.reduce((prev, curr) => prev && curr, true)) {
+            errors.push(
+                this.state.returnPaths.length === 1
+                ? 'Cannot have only one named return path. Either add more or remove this named path.'
+                : 'Ensure that all return paths have unique names.'
+            );
+        }
+
+        if (!this.state.inputValidity.reduce((prev, curr) => prev && curr, true)) {
+            errors.push('Ensure that all inputs have unique names.');
+        }
+
+        if (!this.state.outputValidity.reduce((prev, curr) => prev && curr, true)) {
+            errors.push('Ensure that all outputs have unique names.');
+        }
+        
+        return errors;
     }
 
     private saveChanges() {
