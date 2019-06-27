@@ -43,6 +43,11 @@ interface ParamConnectorDragInfo {
     step?: Step;
 }
 
+interface Coord {
+    x: number;
+    y: number;
+}
+
 export class ProcessContent extends React.PureComponent<ProcessContentProps, ProcessContentState> {
     private root: HTMLDivElement = undefined as unknown as HTMLDivElement;
     private ctx: CanvasRenderingContext2D = undefined as unknown as CanvasRenderingContext2D;
@@ -192,17 +197,20 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     private drawLinks() {
         this.ctx.clearRect(0, 0, this.state.viewWidth, this.state.viewHeight);
         
-        let root = this.root.getBoundingClientRect();
+        const root = this.root.getBoundingClientRect();
         
         for (const [step, stepDisplay] of this.stepDisplays) {
             for (const path of step.incomingPaths) {
-                let beginStepDisplay = this.getStepDisplay(path.fromStep);
+                const beginStepDisplay = this.getStepDisplay(path.fromStep);
                 
-                let beginConnector = beginStepDisplay.getReturnConnector(path.name);
-                let endConnector = stepDisplay.entryConnector;
+                const beginConnector = beginStepDisplay.getReturnConnector(path.name);
+                const endConnector = stepDisplay.entryConnector;
                 
                 if (beginConnector !== null && endConnector !== null) {
-                    this.drawProcessLink(root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
+                    const bounds = step === path.fromStep
+                        ? stepDisplay.bounds
+                        : undefined;
+                    this.drawProcessLink(root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect(), bounds);
                 }
             }
 
@@ -291,14 +299,58 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     private drawProcessLink(
         root: ClientRect | DOMRect,
         begin: ClientRect | DOMRect,
-        end: ClientRect | DOMRect
+        end: ClientRect | DOMRect,
+        fitBelow?: ClientRect | DOMRect,
     ) {
-        let x1 = begin.right - root.left, y1 = begin.top + begin.height / 2 - root.top;
-        let x2 = end.left - root.left, y2 = end.top + end.height / 2 - root.top;
+        // TODO: if linkToSelf then drawCurve needs to use a down-offset midpoint, somehow.
+        // Do we need to pass in the bounds of the step display in question?
+        // Or replace linkToSelf with an optional midPoint?
+
+        const startPos = {
+            x: begin.right - root.left,
+            y: begin.top + begin.height / 2 - root.top,
+        };
+
+        const endPos = {
+            x: end.left - root.left,
+            y: end.top + end.height / 2 - root.top,
+        };
 
         this.ctx.lineWidth = 4;
         this.ctx.strokeStyle = '#000000';
-        this.drawCurve(x1, y1, x2, y2);
+
+        if (fitBelow === undefined) {
+            this.drawCurve(startPos, endPos);
+        }
+        else {
+            const midPos = {
+                x: (startPos.x + endPos.x) / 2,
+                y: fitBelow.bottom,
+            }
+
+            const cp1 = {
+                x: startPos.x + 100,
+                y: startPos.y,
+            }
+
+            const cp2 = {
+                x: midPos.x + 150,
+                y: midPos.y,
+            }
+
+            const cp3 = {
+                x: midPos.x - 150,
+                y: midPos.y,
+            }
+
+            const cp4 = {
+                x: endPos.x - 100,
+                y: endPos.y,
+            }
+
+            this.drawCurveWithControlPoints(startPos, cp1, cp2, midPos);
+            this.drawCurveWithControlPoints(midPos, cp3, cp4, endPos);
+        }
     }
 
     private drawFieldLink(
@@ -307,20 +359,41 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         begin: ClientRect | DOMRect,
         end: ClientRect | DOMRect
     ) {
-        let x1 = begin.right - root.left, y1 = begin.top + begin.height / 2 - root.top;
-        let x2 = end.left - root.left, y2 = end.top + end.height / 2 - root.top;
+        const startPos = {
+            x: begin.right - root.left,
+            y: begin.top + begin.height / 2 - root.top,
+        };
 
+        const endPos = {
+            x: end.left - root.left,
+            y: end.top + end.height / 2 - root.top,
+        }
+        
         this.ctx.lineWidth = 2;
         this.ctx.strokeStyle = type.color;
-        this.drawCurve(x1, y1, x2, y2);
+        this.drawCurve(startPos, endPos);
     }
 
-    private drawCurve(startX: number, startY: number, endX: number, endY: number) {
-        let cpOffset = Math.min(150, Math.abs(endY - startY));
+    private drawCurve(start: Coord, end: Coord) {
+        const cpOffset = Math.min(150, Math.abs(end.y - start.y));
 
+        const mid1 = {
+            x: start.x + cpOffset,
+            y: start.y,
+        }
+
+        const mid2 = {
+            x: end.x - cpOffset,
+            y: end.y,
+        }
+
+        this.drawCurveWithControlPoints(start, mid1, mid2, end);
+    }
+
+    private drawCurveWithControlPoints(start: Coord, mid1: Coord, mid2: Coord, end: Coord) {
         this.ctx.beginPath();
-        this.ctx.moveTo(startX, startY);
-        this.ctx.bezierCurveTo(startX + cpOffset, startY, endX - cpOffset, endY, endX, endY);
+        this.ctx.moveTo(start.x, start.y);
+        this.ctx.bezierCurveTo(mid1.x, mid1.y, mid2.x, mid2.y, end.x, end.y);
         this.ctx.stroke();
     }
 
@@ -533,7 +606,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         let dragInfo = this.draggingStepConnector;
         this.draggingStepConnector = undefined;
 
-        if (dragInfo.step === step || dragInfo.input === input) {
+        if (dragInfo.input === input) {
             this.drawLinks();
             return;
         }

@@ -63,6 +63,10 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
         return this.root!.offsetTop + this.root!.offsetHeight;
     }
 
+    public get bounds() {
+        return this.root!.getBoundingClientRect();
+    }
+
     componentDidMount() {
         this.updateWidth();
     }
