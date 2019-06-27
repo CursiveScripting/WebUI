@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { UserProcess, Workspace, Type, Process, Step, Variable, StepType, Parameter } from '../data';
+import { UserProcess, Workspace, Type, Process, Step, Variable, StepType, Parameter, ProcessStep } from '../data';
 import { ValidationError } from '../data/ValidationError';
 import { ProcessContent } from './ProcessContent/ProcessContent';
 import { ProcessSelector } from './sidebar/ProcessSelector';
@@ -158,6 +158,10 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
     }
 
     private renderSignatureEditor() {
+        const deleteProcess = this.state.openProcess !== undefined && this.isProcessUsedAnywhere(this.state.openProcess)
+            ? undefined
+            : () => this.deleteProcess(this.state.openProcess!);
+
         return (
             <ProcessEditor
                 process={this.state.openProcess}
@@ -167,8 +171,40 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 allUserProcesses={this.props.workspace.userProcesses}
                 processUpdated={(existingName, process) => this.saveSignature(existingName, process)}
                 cancel={() => this.closeSignatureEditor()}
+                delete={deleteProcess}
             />
         );
+    }
+
+    private isProcessUsedAnywhere(process: UserProcess) {
+        for (const [, otherProcess] of this.props.workspace.userProcesses) {
+            if (otherProcess !== process) {
+                for (const [, step] of otherProcess.steps) {
+                    if (step.stepType === StepType.UserProcess && (step as ProcessStep).process === process) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private deleteProcess(process: UserProcess) {
+        this.props.workspace.userProcesses.delete(process.name);
+        
+        const processIterator = this.props.workspace.userProcesses.values();
+
+        let nextProcess = processIterator.next().value;
+        if (nextProcess === process) {
+            nextProcess = processIterator.next().value;
+        }
+
+        this.setState({
+            openProcess: nextProcess,
+        });
+
+        this.closeSignatureEditor();
     }
 
     private showNewProcess() {

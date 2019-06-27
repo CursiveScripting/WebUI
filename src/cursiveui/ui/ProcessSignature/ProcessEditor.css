@@ -10,3 +10,7 @@
     display: flex;
     align-items: flex-start;
 }
+
+.processEditor__button + .processEditor__button {
+    margin-left: 1em;
+}

@@ -11,6 +11,7 @@ interface Props {
     allTypes: Type[];
     processUpdated: (oldName: string | null, process: UserProcess) => void;
     cancel: () => void;
+    delete: undefined | (() => void);
 }
 
 interface State {
@@ -96,6 +97,13 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
 
         const save = !canSave ? undefined : () => this.saveChanges();
         const cancel = () => this.props.cancel();
+        const deleteProc = () => this.props.delete!();
+
+        const deleteButton = this.props.process === undefined
+            ? undefined
+            : this.props.delete === undefined
+                ? <input type="button" className="processEditor__button" value="Cannot delete" title="This process is used in other processes" disabled={true} />
+                : <input type="button" className="processEditor__button" value="Delete process" onClick={deleteProc} />
 
         return (
             <div className={classes}>
@@ -127,6 +135,7 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
                 <div className="processEditor__footer">
                     <input type="button" className="processEditor__button processEditor__button--save" value="Save changes" onClick={save} disabled={!canSave} />
                     <input type="button" className="processEditor__button" value="Cancel" onClick={cancel} />
+                    {deleteButton}
                 </div>
             </div>
         );
