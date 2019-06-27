@@ -37,7 +37,7 @@ export class ProcessLoading {
     }
 
     private static loadProcessDefinition(workspace: Workspace, processNode: Element): UserProcess {
-        let processName = processNode.getAttribute('name') as string;
+        let processName = processNode.getAttribute('name')!;
         let folder = processNode.hasAttribute('folder') ? processNode.getAttribute('folder') : null;
         let descNodes = processNode.getElementsByTagName('Description');
         let description = descNodes.length > 0 ? descNodes[0].innerHTML : '';
@@ -62,7 +62,7 @@ export class ProcessLoading {
                 continue;
             }
 
-            let returnPathName = paramNode.getAttribute('name') as string;
+            let returnPathName = paramNode.getAttribute('name')!;
             if (returnPathName !== '' && !usedNames.hasOwnProperty(returnPathName)) {
                 returnPaths.push(returnPathName);
             }
@@ -81,8 +81,8 @@ export class ProcessLoading {
         const isInput = paramTypeName === 'input';
 
         for (const node of paramNodes) {
-            let paramName = node.getAttribute('name') as string;
-            let typeName = node.getAttribute('type') as string;
+            let paramName = node.getAttribute('name')!;
+            let typeName = node.getAttribute('type')!;
             let dataType = workspace.types.get(typeName);
 
             if (dataType === undefined) {
@@ -92,8 +92,8 @@ export class ProcessLoading {
 
             let dataField: DataField;
             if (isVariable) {
-                let x = node.hasAttribute('x') ? parseInt(node.getAttribute('x') as string) : -1;
-                let y = node.hasAttribute('y') ? parseInt(node.getAttribute('y') as string) : -1;
+                let x = node.hasAttribute('x') ? parseInt(node.getAttribute('x')!) : -1;
+                let y = node.hasAttribute('y') ? parseInt(node.getAttribute('y')!) : -1;
                 dataField = new Variable(paramName, dataType, x, y);
             }
             else {
@@ -115,7 +115,7 @@ export class ProcessLoading {
         userProcesses: Map<string, UserProcess>,
         systemProcesses: Map<string, SystemProcess>
     ) {
-        let name = processNode.getAttribute('name') as string;
+        let name = processNode.getAttribute('name')!;
 
         let process = userProcesses.get(name);
         if (process === undefined) {
@@ -127,9 +127,9 @@ export class ProcessLoading {
 
         const startNodes = processNode.getElementsByTagName('Start');
         for (const stepNode of startNodes) {
-            let id = stepNode.getAttribute('ID') as string;
-            let x = parseInt(stepNode.getAttribute('x') as string);
-            let y = parseInt(stepNode.getAttribute('y') as string);
+            let id = stepNode.getAttribute('ID')!;
+            let x = parseInt(stepNode.getAttribute('x')!);
+            let y = parseInt(stepNode.getAttribute('y')!);
 
             let step = new StartStep(id, process, x, y);
             this.loadStepOutputs(workspace, process, step, stepNode);
@@ -139,13 +139,13 @@ export class ProcessLoading {
 
         const stopNodes = processNode.getElementsByTagName('Stop');
         for (const stepNode of stopNodes) {
-            let id = stepNode.getAttribute('ID') as string;
-            let x = parseInt(stepNode.getAttribute('x') as string);
-            let y = parseInt(stepNode.getAttribute('y') as string);
+            let id = stepNode.getAttribute('ID')!;
+            let x = parseInt(stepNode.getAttribute('x')!);
+            let y = parseInt(stepNode.getAttribute('y')!);
 
             let returnPath: string | null;
             if (stepNode.hasAttribute('name')) {
-                returnPath = stepNode.getAttribute('name') as string;
+                returnPath = stepNode.getAttribute('name')!;
                 if (process.returnPaths.indexOf(returnPath) === -1) {
                     workspace.showError(`Step ${id} of the "${process.name}" process uses an unspecified return path name: ${name}.`
                      + ' That name isn\'t a return path on this process.');
@@ -167,12 +167,12 @@ export class ProcessLoading {
 
         const stepNodes = processNode.getElementsByTagName('Step');
         for (const stepNode of stepNodes) {
-            let id = stepNode.getAttribute('ID') as string;
-            let x = parseInt(stepNode.getAttribute('x') as string);
-            let y = parseInt(stepNode.getAttribute('y') as string);
+            let id = stepNode.getAttribute('ID')!;
+            let x = parseInt(stepNode.getAttribute('x')!);
+            let y = parseInt(stepNode.getAttribute('y')!);
 
             let childProcess: Process | null;
-            let childProcessName = stepNode.getAttribute('process') as string;
+            let childProcessName = stepNode.getAttribute('process')!;
             if (systemProcesses.has(childProcessName)) {
                 childProcess = systemProcesses.get(childProcessName)!;
             }
@@ -205,8 +205,8 @@ export class ProcessLoading {
         let inputNodes = stepNode.getElementsByTagName('Input');
         let inputs = step.inputs;
         for (const mapNode of inputNodes) {
-            let paramName = mapNode.getAttribute('name') as string;
-            let sourceName = mapNode.getAttribute('source') as string;
+            let paramName = mapNode.getAttribute('name')!;
+            let sourceName = mapNode.getAttribute('source')!;
 
             let parameter = this.getNamed(inputs, paramName) as Parameter;
             let source = this.getNamed(process.variables, sourceName) as Variable;
@@ -231,8 +231,8 @@ export class ProcessLoading {
         let outputs = step.outputs;
         
         for (const mapNode of outputNodes) {
-            let paramName = mapNode.getAttribute('name') as string;
-            let destinationName = mapNode.getAttribute('destination') as string;
+            let paramName = mapNode.getAttribute('name')!;
+            let destinationName = mapNode.getAttribute('destination')!;
 
             let parameter = this.getNamed(outputs, paramName) as Parameter;
             let destination = this.getNamed(process.variables, destinationName) as Variable;
@@ -265,7 +265,7 @@ export class ProcessLoading {
         let returnPathNodes = stepNode.getElementsByTagName('ReturnPath');
         
         for (const returnPathNode of returnPathNodes) {
-            let targetStepID = returnPathNode.getAttribute('targetStepID') as string;
+            let targetStepID = returnPathNode.getAttribute('targetStepID')!;
             let targetStep = process.steps.get(targetStepID);
 
             if (targetStep === undefined) {
@@ -280,7 +280,7 @@ export class ProcessLoading {
         returnPathNodes = stepNode.getElementsByTagName('NamedReturnPath');
 
         for (const returnPathNode of returnPathNodes) {
-            let targetStepID = returnPathNode.getAttribute('targetStepID') as string;
+            let targetStepID = returnPathNode.getAttribute('targetStepID')!;
             let targetStep = process.steps.get(targetStepID);
 
             if (targetStep === undefined) {
