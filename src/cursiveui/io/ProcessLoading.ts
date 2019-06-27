@@ -92,8 +92,8 @@ export class ProcessLoading {
 
             let dataField: DataField;
             if (isVariable) {
-                let x = node.hasAttribute('x') ? parseInt(node.getAttribute('x')!) : -1;
-                let y = node.hasAttribute('y') ? parseInt(node.getAttribute('y')!) : -1;
+                let x = parseInt(node.getAttribute('x')!);
+                let y = parseInt(node.getAttribute('y')!);
                 dataField = new Variable(paramName, dataType, x, y);
             }
             else {
