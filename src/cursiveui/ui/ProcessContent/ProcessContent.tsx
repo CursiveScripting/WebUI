@@ -598,13 +598,20 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
     }
 
-    private getContentDragCoordinates(): Coord {
-        let root = this.root.getBoundingClientRect();
+    private screenToGrid(screen: Coord): Coord {
+        const root = this.root.getBoundingClientRect();
 
         return {
-            x: alignToGrid(this.dragX - root.left),
-            y: alignToGrid(this.dragY - root.top),
+            x: alignToGrid(screen.x - root.left),
+            y: alignToGrid(screen.y - root.top),
         };
+    }
+
+    private getContentDragCoordinates(): Coord {
+        return this.screenToGrid({
+            x: this.dragX,
+            y: this.dragY,
+        });
     }
 
     private dragItem(dx: number, dy: number, item: Positionable, display: React.Component) {
@@ -723,7 +730,6 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
 
         this.props.revalidate();
-        this.drawLinks();
     }
 
     private createLink(from: ParamConnectorDragInfo, to: ParamConnectorDragInfo) {
@@ -736,38 +742,33 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
 
         if (from.input) {
-            let tmp = from;
-            from = to;
-            to = tmp;
+            [from, to] = [to, from];
         }
 
         if (from.field.type !== to.field.type && !from.field.type.isAssignableFrom(to.field.type)) {
             return false; // fields must be of the same type, or output type must extend input type
         }
 
-        if ((from.step === undefined) === (to.step === undefined)) {
-            return false; // must be between a parameter and a variable, for now
+        if (from.step === to.step) {
+            return false; // mustn't be on the same step, or between two variables (which don't have a step)
         }
 
-        if (from.step !== undefined && from.step === to.step) {
-            return false; // mustn't be on the same step
+        if (from.step !== undefined && to.step !== undefined) {
+            return this.linkStepsWithVariable(from, to);
         }
-
-        let parameter: Parameter;
-        let variable: Variable;
-
+        
         if (from.field instanceof Parameter) {
-            parameter = from.field as Parameter;
-            variable = to.field as Variable;
+            return this.linkStepToVariable(from.field as Parameter, to.field as Variable);
         }
-        else if (to.field instanceof Parameter) {
-            parameter = to.field as Parameter;
-            variable = from.field as Variable;
+        
+        if (to.field instanceof Parameter) {
+            return this.linkStepToVariable(to.field as Parameter, from.field as Variable);
         }
-        else {
-            return false; // not going to/from any parameter... ?
-        }
+        
+        return false; // not going to/from any parameter... ?
+    }
 
+    private linkStepToVariable(parameter: Parameter, variable: Variable) {
         if (parameter.link === variable) {
             return false; // they already link, do nothing
         }
@@ -782,5 +783,32 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         variable.links.push(parameter);
 
         return true;
+    }
+
+    private linkStepsWithVariable(from: ParamConnectorDragInfo, to: ParamConnectorDragInfo) {
+        const type = to.field.type;
+
+        const fromPos = this.stepDisplays
+            .get(from.step!)!
+            .getOutputConnector(from.field as Parameter)
+            .getBoundingClientRect();
+
+        const toPos = this.stepDisplays
+            .get(to.step!)!
+            .getInputConnector(to.field as Parameter)
+            .getBoundingClientRect();
+
+        const dropPos = this.screenToGrid({
+            x: (fromPos.left + fromPos.right + toPos.left + toPos.right) / 4,
+            y: (fromPos.top + fromPos.bottom + toPos.top + toPos.bottom) / 4,
+        });
+
+        const newVar = new Variable(this.props.process.getNewVariableName(type), type, dropPos.x, dropPos.y);
+        this.props.process.variables.push(newVar);
+
+        this.props.itemDropped();
+
+        return this.linkStepToVariable(from.field as Parameter, newVar)
+            && this.linkStepToVariable(to.field as Parameter, newVar);
     }
 }
