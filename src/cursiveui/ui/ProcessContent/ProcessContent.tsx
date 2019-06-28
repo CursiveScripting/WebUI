@@ -504,7 +504,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 return;
             }
 
-            this.stopDraggingItem(this.draggingStep, this.getStepDisplay(this.draggingStep));
+            this.stopDraggingItem(this.draggingStep);
             
             this.draggingStep = undefined;
             this.props.stepDragging(undefined);
@@ -515,7 +515,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 return;
             }
 
-            this.stopDraggingItem(this.draggingVariable, this.getVariableDisplay(this.draggingVariable));
+            this.stopDraggingItem(this.draggingVariable);
 
             this.draggingVariable = undefined;
             this.props.variableDragging(undefined);
@@ -622,7 +622,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.drawLinks();
     }
 
-    private stopDraggingItem(item: Positionable, display: React.Component) {
+    private stopDraggingItem(item: Positionable) {
         item.x = alignToGrid(item.x);
         item.y = alignToGrid(item.y);
 
