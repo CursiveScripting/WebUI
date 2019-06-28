@@ -472,27 +472,31 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
 
     private dragStop() {
         if (this.props.dropVariableType !== undefined) {
-            let dropVariableType = this.props.dropVariableType;
-            this.dropNewItem((x, y) => {
-                let newVar = new Variable(this.props.process.getNewVariableName(dropVariableType), dropVariableType, x, y);
-                this.props.process.variables.push(newVar);
-            });
+            const type = this.props.dropVariableType;
+            const dropPos = this.getContentDragCoordinates();
+            
+            const newVar = new Variable(this.props.process.getNewVariableName(type), type, dropPos.x, dropPos.y);
+            this.props.process.variables.push(newVar);
+
+            this.props.itemDropped();
         }
 
         else if (this.props.dropStep !== undefined) {
-            let dropStep = this.props.dropStep;
-            this.dropNewItem((x, y) => {
-                let newStep = new ProcessStep(this.props.process.getNextStepID(), dropStep, this.props.process, x, y);
-                this.props.process.steps.set(newStep.uniqueID, newStep);
-            });
+            const dropPos = this.getContentDragCoordinates();
+
+            const newStep = new ProcessStep(this.props.process.getNextStepID(), this.props.dropStep, this.props.process, dropPos.x, dropPos.y);
+            this.props.process.steps.set(newStep.uniqueID, newStep);
+
+            this.props.itemDropped();
         }
 
         else if (this.props.dropStopStep !== undefined) {
-            let dropStopStep = this.props.dropStopStep;
-            this.dropNewItem((x, y) => {
-                let newStep = new StopStep(this.props.process.getNextStepID(), this.props.process, dropStopStep, x, y);
-                this.props.process.steps.set(newStep.uniqueID, newStep);
-            });
+            const dropPos = this.getContentDragCoordinates();
+            
+            const newStep = new StopStep(this.props.process.getNextStepID(), this.props.process, this.props.dropStopStep, dropPos.x, dropPos.y);
+            this.props.process.steps.set(newStep.uniqueID, newStep);
+            
+            this.props.itemDropped();
         }
 
         else if (this.draggingStep !== undefined) {
@@ -523,8 +527,38 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
 
         else if (this.draggingParamConnector !== undefined) {
-            this.draggingParamConnector = undefined;
-            this.drawLinks();
+            if (this.draggingParamConnector.step !== undefined) {
+                const dropPos = this.getContentDragCoordinates();
+
+                const type = this.draggingParamConnector!.field.type;
+                let newVar = new Variable(this.props.process.getNewVariableName(type), type, dropPos.x, dropPos.y);
+                this.props.process.variables.push(newVar);
+
+                let dragInfo = {
+                    field: this.draggingParamConnector!.field,
+                    input: this.draggingParamConnector!.input,
+                    step: this.draggingParamConnector!.step!,
+                };
+                
+                let dropInfo = {
+                    field: newVar,
+                    input: !this.draggingParamConnector!.input,
+                };
+                
+                if (this.createLink(dragInfo, dropInfo)) {
+                    dragInfo.step.setInvalid();
+                    this.getStepDisplay(dragInfo.step).forceUpdate();
+                }
+
+                this.draggingParamConnector = undefined;
+
+                this.props.itemDropped();
+                this.props.revalidate();
+            }
+            else {
+                this.draggingParamConnector = undefined;
+                this.drawLinks();
+            }
         }
 
         else {
@@ -564,15 +598,13 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
     }
 
-    private dropNewItem(createAction: (x: number, y: number) => void) {
+    private getContentDragCoordinates(): Coord {
         let root = this.root.getBoundingClientRect();
 
-        // get content-relative coordinates from screen-relative drag coordinates
-        let x = alignToGrid(this.dragX - root.left);
-        let y = alignToGrid(this.dragY - root.top);
-
-        createAction(x, y);
-        this.props.itemDropped();
+        return {
+            x: alignToGrid(this.dragX - root.left),
+            y: alignToGrid(this.dragY - root.top),
+        };
     }
 
     private dragItem(dx: number, dy: number, item: Positionable, display: React.Component) {
