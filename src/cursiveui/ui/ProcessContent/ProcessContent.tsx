@@ -7,6 +7,7 @@ import { VariableDisplay } from './VariableDisplay';
 import { Positionable } from '../../data/Positionable';
 import './ProcessContent.css';
 import { LinkCanvas, DragInfo } from './LinkCanvas';
+import { ScrollWrapper } from './ScrollWrapper';
 
 interface ProcessContentProps {
     process: UserProcess;
@@ -82,11 +83,6 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         if (this.props.className !== undefined) {
             classes += ' ' + this.props.className;
         }
-
-        const contentSizeStyle = {
-            width: this.state.contentWidth + 'px',
-            height: this.state.contentHeight + 'px'
-        };
         
         let canvasWidth = this.state.viewWidth;
         if (this.state.viewWidth < this.state.contentWidth) {
@@ -130,16 +126,18 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                     dragging={dragging}
                     ref={c => this.canvas = c}
                 />
-                <div
-                    className="processContent__scrollWrapper"
+
+                <ScrollWrapper
+                    rootClassName="processContent__scrollWrapper"
+                    backgroundClassName="processContent__backgroundScroll" 
+                    scrollRootClassName="processContent__scrollRoot"
+                    width={this.state.contentWidth}
+                    height={this.state.contentHeight}
                     onScroll={() => this.canvas!.drawLinks()}
                 >
-                    <div className="processContent__backgroundScroll" style={contentSizeStyle} />
-                    <div className="processContent__scrollRoot" style={contentSizeStyle}>
-                        {this.renderSteps()}
-                        {this.renderVariables()}
-                    </div>
-                </div>
+                    {this.renderSteps()}
+                    {this.renderVariables()}
+                </ScrollWrapper>
             </div>
         );
     }
