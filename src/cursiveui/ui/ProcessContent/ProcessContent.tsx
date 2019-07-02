@@ -201,8 +201,9 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                 ref={v => { if (v !== null) { this.variableDisplays.set(variable, v); } else { this.variableDisplays.delete(variable); }}}
                 variable={variable}
                 key={variable.name}
+                deleteClicked={() => this.props.removeVariable(variable)}
                 initialValueChanged={val => this.variableDefaultChanged(variable, val)}
-                nameMouseDown={(x, y) => this.varDragStart(variable, x, y)}
+                headerMouseDown={(x, y) => this.varDragStart(variable, x, y)}
                 connectorMouseDown={input => this.fieldLinkDragStart(variable, input, undefined)}
                 connectorMouseUp={input => this.fieldLinkDragStop(variable, input, undefined)}
             />

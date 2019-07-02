@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Parameter, Step, StepType, StopStep } from '../../data';
 import { growToFitGrid } from './gridSize';
 import { ParameterDisplay } from './ParameterDisplay';
-import './StepDisplay.css';
+import './ProcessItem.css';
 
 interface StepDisplayProps {
     step: Step;
@@ -86,25 +86,25 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
 
         const deleteStep = this.props.deleteClicked === undefined
             ? undefined
-            : <div className="step__delete" onClick={() => this.props.deleteClicked!()} />
+            : <div className="processItem__delete" onClick={() => this.props.deleteClicked!()} title="remove this step" />
 
         return (
             <div className={this.determineRootClasses()} style={posStyle} ref={r => { if (r !== null) { this.root = r; }}}>
                 <div
-                    className="step__header"
+                    className="processItem__header"
                     title={this.props.step.description}
                     onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY)}
                 >
-                    <div className="step__icon" />
-                    <div className="step__processName">{this.props.step.name}</div>
+                    <div className="processItem__icon" />
+                    <div className="processItem__name">{this.props.step.name}</div>
                     {deleteStep}
                 </div>
-                <div className="step__connectors">
+                <div className="processItem__connectors">
                     {this.renderInConnector()}
-                    <div className="step__betweenConnectors" />
+                    <div className="processItem__betweenConnectors" />
                     {this.renderOutConnectors()}
                 </div>
-                <div className="step__parameters">
+                <div className="processItem__parameters">
                     {this.renderParameters(this.props.step.inputs, true)}
                     {this.renderParameters(this.props.step.outputs, false)}
                 </div>
@@ -117,28 +117,28 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
     }
 
     private determineRootClasses() {
-        let classes = 'step';
+        let classes = 'processItem';
         if (this.props.readonly) {
-            classes += 'step--readonly';
+            classes += ' processItem--readonly';
         }
 
         if (this.props.focused) {
-            classes += ' step--focused';
+            classes += ' processItem--focused';
         }
         
         if (!this.props.step.isValid) {
-            classes += ' step--invalid';
+            classes += ' processItem--invalid';
         }
 
         switch (this.props.step.stepType) {
             case StepType.Start:
-                classes += ' step--start'; break;
+                classes += ' processItem--start'; break;
             case StepType.Stop:
-                classes += ' step--stop'; break;
+                classes += ' processItem--stop'; break;
             case StepType.SystemProcess:
-                classes += ' step--system'; break;
+                classes += ' processItem--system'; break;
             case StepType.UserProcess:
-                classes += ' step--user'; break;
+                classes += ' processItem--user'; break;
             default:
                 break;
         }
@@ -151,12 +151,12 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
         }
 
         let conClasses = this.props.step.incomingPaths.length === 0
-            ? 'step__connector step__connector--in step__connector--connected'
-            : 'step__connector step__connector--in';
+            ? 'processItem__connector processItem__connector--in processItem__connector--connected'
+            : 'processItem__connector processItem__connector--in';
     
         if (this.props.focused && this.props.focusParameter === undefined && this.props.focusReturnPath === undefined) {
             // not focused on a parameter, nor a return path, so must be the input connector
-            conClasses += ' step__connector--focused';
+            conClasses += ' processItem__connector--focused';
         }
 
         return (
@@ -175,9 +175,9 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
             if (this.props.step.stepType === StepType.Stop) {
                 let pathName = (this.props.step as StopStep).returnPath;
                 if (pathName !== null) {
-                    let classes = 'step__returnPathName';
+                    let classes = 'processItem__returnPathName';
                     if (this.props.focused && this.props.focusParameter === undefined) {
-                        classes += ' step__returnPathName--focused';
+                        classes += ' processItem__returnPathName--focused';
                     }
                     return <div className={classes}>{pathName}</div>;
                 }
@@ -195,11 +195,11 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
             let pathName = identifier === '' ? null : identifier;
             let hasConnectedPath = this.props.step.returnPaths.filter(p => p.name === pathName).length === 0;
             let classes = hasConnectedPath
-                ? 'step__connector step__connector--out step__connector--connected'
-                : 'step__connector step__connector--out';
+                ? 'processItem__connector processItem__connector--out processItem__connector--connected'
+                : 'processItem__connector processItem__connector--out';
             
             if (this.props.focused && this.props.focusReturnPath === pathName) {
-                classes += ' step__connector--focused';
+                classes += ' processItem__connector--focused';
             }
 
             return (
@@ -216,7 +216,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
         });
 
         return (
-            <div className="step__outConnectors">
+            <div className="processItem__outConnectors">
                 {connectors}
             </div>
         );
@@ -236,7 +236,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
         }
 
         return (
-            <div className={input ? 'step__inputs' : 'step__outputs'}>
+            <div className={input ? 'processItem__inputs' : 'processItem__outputs'}>
                 {parameters.map((param, idx) => {
                     return (
                     <ParameterDisplay

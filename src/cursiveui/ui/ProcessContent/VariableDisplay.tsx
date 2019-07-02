@@ -2,15 +2,16 @@ import * as React from 'react';
 import { Variable } from '../../data';
 import { growToFitGrid } from './gridSize';
 import { ParameterConnector, ConnectorState } from './ParameterConnector';
-import './VariableDisplay.css';
+import './ProcessItem.css';
 import { ValueInput } from './ValueInput';
 
 interface Props {
     variable: Variable;
     initialValueChanged: (val: string | null) => void;
-    nameMouseDown: (mouseX: number, mouseY: number) => void;
+    headerMouseDown: (mouseX: number, mouseY: number) => void;
     connectorMouseDown: (input: boolean) => void;
     connectorMouseUp: (input: boolean) => void;
+    deleteClicked: () => void;
 }
 
 interface State {
@@ -98,7 +99,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
             const valChanged = (val: string) => this.props.initialValueChanged(val === '' ? null : val);
 
             defaultInput = <ValueInput
-                className="variable__default"
+                className="processItem__default"
                 value={strVal}
                 valueChanged={val => valChanged(val)}
                 isValid={this.props.variable.initialValue === null ? true : this.props.variable.type.isValid(this.props.variable.initialValue)}
@@ -112,17 +113,18 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                 : ConnectorState.Disconnected;
 
         return (
-            <div className="variable" style={style} ref={r => { if (r !== null) { this.root = r; }}}>
+            <div className="processItem processItem--var" style={style} ref={r => { if (r !== null) { this.root = r; }}}>
                 <div
-                    className="variable__name"
+                    className="processItem__header"
+                    onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY)}
                     style={colorStyle}
-                    onMouseDown={e => this.props.nameMouseDown(e.clientX, e.clientY)}
                 >
-                    {this.props.variable.name}
+                    <div className="processItem__name">{this.props.variable.name}</div>
+                    <div className="processItem__delete" onClick={() => this.props.deleteClicked!()} title="remove this variable" />
                 </div>
-                <div className="variable__body">
+                
+                <div className="processItem__parameters">
                     <ParameterConnector
-                        className="variable__connector variable__input"
                         type={this.props.variable.type}
                         state={inputState}
                         input={true}
@@ -132,7 +134,6 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                     />
                     {defaultInput}
                     <ParameterConnector
-                        className="variable__connector variable__output"
                         type={this.props.variable.type}
                         state={numOutputs === 0 ? ConnectorState.Disconnected : ConnectorState.Connected}
                         input={false}
