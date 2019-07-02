@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Step, ReturnPath, Type, Variable, DataField, Process, Parameter, StepType } from '../../data';
+import { Step, ReturnPath, Type, Variable, DataField, Process, Parameter } from '../../data';
 import { getScrollbarSize } from '../getScrollbarSize';
 import { gridSize, growToFitGrid, alignToGrid } from './gridSize';
 import { StepDisplay } from './StepDisplay';
@@ -8,6 +8,8 @@ import { Positionable } from '../../data/Positionable';
 import './ProcessContent.css';
 import { LinkCanvas, DragInfo } from './LinkCanvas';
 import { ScrollWrapper } from './ScrollWrapper';
+import { VariablesDisplay } from './VariablesDisplay';
+import { StepsDisplay } from './StepsDisplay';
 
 interface Props {
     steps: Step[];
@@ -138,8 +140,38 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     height={this.state.contentHeight}
                     onScroll={() => this.canvas!.drawLinks()}
                 >
-                    {this.renderSteps()}
-                    {this.renderVariables()}
+                    <StepsDisplay
+                        steps={this.props.steps}
+                        refs={this.stepDisplays}
+
+                        focusStep={this.props.focusStep}
+                        focusParameter={this.props.focusStepParameter}
+                        focusReturnPath={this.props.focusStepReturnPath}
+                        removeStep={step => this.props.removeStep(step)}
+
+                        startDragHeader={(step, x, y) => this.stepDragStart(step, x, y)}
+
+                        startDragInputPath={step => this.stepLinkDragStart(step, true, null)}
+                        stopDragInputPath={step => this.stepLinkDragStop(step, true, null)}
+                    
+                        startDragReturnPath={(step, path) => this.stepLinkDragStart(step, false, path)}
+                        stopDragReturnPath={(step, path) => this.stepLinkDragStop(step, false, path)}
+                    
+                        startDragConnector={(param, step, input) => this.fieldLinkDragStart(param, input, step)}
+                        stopDragConnector={(param, step, input) => this.fieldLinkDragStop(param, input, step)}
+                    />
+                    
+                    <VariablesDisplay
+                        variables={this.props.variables}
+                        refs={this.variableDisplays}
+                        removeVariable={variable => this.props.removeVariable(variable)}
+                        initialValueChanged={(variable, val) => this.variableDefaultChanged(variable, val)}
+
+                        startDragHeader={(variable, x, y) => this.varDragStart(variable, x, y)}
+
+                        startDragConnector={(variable, input) => this.fieldLinkDragStart(variable, input, undefined)}
+                        stopDragConnector={(variable, input) => this.fieldLinkDragStop(variable, input, undefined)}
+                    />
                 </ScrollWrapper>
             </div>
         );
@@ -167,47 +199,6 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         }
     }
     
-    private renderSteps() {
-        this.stepDisplays.clear();
-
-        return this.props.steps.map(step => (
-            <StepDisplay
-                ref={s => { if (s !== null) { this.stepDisplays.set(step, s); } else { this.stepDisplays.delete(step); }}}
-                key={step.uniqueID}
-                step={step}
-                focused={step === this.props.focusStep}
-                focusParameter={this.props.focusStepParameter}
-                focusReturnPath={this.props.focusStepReturnPath}
-                readonly={false}
-                deleteClicked={step.stepType === StepType.Start ? undefined : () => this.props.removeStep(step)}
-                headerMouseDown={(x, y) => this.stepDragStart(step, x, y)}
-                inputLinkMouseDown={() => this.stepLinkDragStart(step, true, null)}
-                outputLinkMouseDown={returnPath => this.stepLinkDragStart(step, false, returnPath)}
-                inputLinkMouseUp={() => this.stepLinkDragStop(step, true, null)}
-                outputLinkMouseUp={returnPath => this.stepLinkDragStop(step, false, returnPath)}
-                parameterLinkMouseDown={(param, input) => this.fieldLinkDragStart(param, input, step)}
-                parameterLinkMouseUp={(param, input) => this.fieldLinkDragStop(param, input, step)}
-            />
-        ));
-    }
-    
-    private renderVariables() {
-        this.variableDisplays.clear();
-
-        return this.props.variables.map(variable => (
-            <VariableDisplay
-                ref={v => { if (v !== null) { this.variableDisplays.set(variable, v); } else { this.variableDisplays.delete(variable); }}}
-                variable={variable}
-                key={variable.name}
-                deleteClicked={() => this.props.removeVariable(variable)}
-                initialValueChanged={val => this.variableDefaultChanged(variable, val)}
-                headerMouseDown={(x, y) => this.varDragStart(variable, x, y)}
-                connectorMouseDown={input => this.fieldLinkDragStart(variable, input, undefined)}
-                connectorMouseUp={input => this.fieldLinkDragStop(variable, input, undefined)}
-            />
-        ));
-    }
-
     private variableDefaultChanged(variable: Variable, value: string | null) {
         variable.initialValue = value === ''
             ? null
