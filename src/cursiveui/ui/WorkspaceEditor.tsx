@@ -20,8 +20,6 @@ interface State {
     droppingDataType?: Type;
     droppingProcess?: Process;
     droppingStopStep?: string | null;
-    draggingStep?: Step;
-    draggingVariable?: Variable;
     processErrors: ValidationError[];
     processesWithErrors: UserProcess[];
     otherProcessesHaveErrors: boolean;
@@ -161,8 +159,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
 
                 dropStep={this.state.droppingProcess}
                 dropStopStep={this.state.droppingStopStep}
-                stepDragging={step => this.setState({ draggingStep: step })}
-                variableDragging={variable => this.setState({ draggingVariable: variable })}
                 revalidate={() => this.revalidateOpenProcess()}
                 focusStep={this.state.focusStep}
                 focusStepParameter={this.state.focusStepParameter}
@@ -176,12 +172,9 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
             <ProcessToolbar
                 validationErrors={this.state.processErrors}
                 otherProcessesHaveErrors={this.state.otherProcessesHaveErrors}
-                selectedStep={this.state.draggingStep}
-                selectedVariable={this.state.draggingVariable}
                 className="workspaceEditor__toolbar"
                 saveProcesses={() => this.props.save()}
                 focusError={error => this.focusOnError(error)}
-                removeSelectedItem={() => this.removeSelectedItem()}
             />
         );
     }
@@ -347,27 +340,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
 
         this.setState({
             openProcess: this.state.openProcess,
-        });
-    }
-
-    private removeSelectedItem() {
-        if (this.state.openProcess === undefined) {
-            return;
-        }
-
-        if (this.state.draggingStep !== undefined && this.state.draggingStep.stepType !== StepType.Start) {
-            this.state.openProcess.removeStep(this.state.draggingStep);
-            this.revalidateOpenProcess();
-        }
-
-        else if (this.state.draggingVariable !== undefined) {
-            this.state.openProcess.removeVariable(this.state.draggingVariable);
-            this.revalidateOpenProcess();
-        }
-
-        this.setState({
-            draggingStep: undefined,
-            draggingVariable: undefined,
         });
     }
 

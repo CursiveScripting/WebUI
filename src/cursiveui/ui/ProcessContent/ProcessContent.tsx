@@ -27,8 +27,6 @@ interface Props {
     focusStep?: Step;
     focusStepParameter?: Parameter;
     focusStepReturnPath?: string | null;
-    stepDragging: (step: Step | undefined) => void; // TODO: remove this. Only needed for bin.
-    variableDragging: (variable: Variable | undefined) => void; // TODO: remove this. Only needed for bin.
     revalidate: () => void;
 }
 
@@ -279,16 +277,12 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         this.draggingStep = step;
         this.dragX = startX;
         this.dragY = startY;
-
-        this.props.stepDragging(step);
     }
 
     private varDragStart(variable: Variable, startX: number, startY: number) {
         this.draggingVariable = variable;
         this.dragX = startX;
         this.dragY = startY;
-
-        this.props.variableDragging(variable);
     }
 
     private dragStop() {
@@ -314,14 +308,12 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             this.stopDraggingItem(this.draggingStep);
             
             this.draggingStep = undefined;
-            this.props.stepDragging(undefined);
         }
 
         else if (this.draggingVariable !== undefined) {
             this.stopDraggingItem(this.draggingVariable);
 
             this.draggingVariable = undefined;
-            this.props.variableDragging(undefined);
         }
 
         else if (this.draggingStepConnector !== undefined) {
