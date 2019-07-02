@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { UserProcess, Workspace, Type, Process, Step, Variable, StepType, Parameter, ProcessStep } from '../data';
+import { UserProcess, Workspace, Type, Process, Step, Variable, StepType, Parameter, ProcessStep, StopStep } from '../data';
 import { ValidationError } from '../data/ValidationError';
 import { ProcessContent } from './ProcessContent/ProcessContent';
 import { ProcessSelector } from './sidebar/ProcessSelector';
@@ -112,14 +112,42 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
             return undefined;
         }
 
+        const openProcess = this.state.openProcess!;
+        const allSteps = Array.from(openProcess.steps.values());
+
+        const addVariable = (type: Type, x: number, y: number) => {
+            const newVar = new Variable(openProcess.getNewVariableName(type), type, x, y);
+            openProcess.variables.push(newVar);
+            this.dropCompleted();
+            return newVar;
+        };
+
+        const addStep = (process: Process, x: number, y: number) => {
+            const newStep = new ProcessStep(openProcess.getNextStepID(), process, openProcess, x, y);
+            openProcess.steps.set(newStep.uniqueID, newStep);
+            this.dropCompleted();
+        };
+
+        const addStopStep = (returnPath: string | null, x: number, y: number) => {
+            const newStep = new StopStep(openProcess.getNextStepID(), openProcess, returnPath, x, y);
+            openProcess.steps.set(newStep.uniqueID, newStep);
+            this.dropCompleted();
+        };
+
         return (
             <ProcessContent
                 className="workspaceEditor__content"
-                process={this.state.openProcess}
+                steps={allSteps}
+                variables={openProcess.variables}
+
+                addVariable={addVariable}
                 dropVariableType={this.state.droppingDataType}
+
+                addStep={addStep}
+                addStopStep={addStopStep}
+
                 dropStep={this.state.droppingProcess}
                 dropStopStep={this.state.droppingStopStep}
-                itemDropped={() => this.dropCompleted()}
                 stepDragging={step => this.setState({ draggingStep: step })}
                 variableDragging={variable => this.setState({ draggingVariable: variable })}
                 revalidate={() => this.revalidateOpenProcess()}

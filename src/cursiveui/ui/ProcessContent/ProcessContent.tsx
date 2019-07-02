@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Step, UserProcess, ReturnPath, Type, Variable, DataField, StopStep, ProcessStep, Process, Parameter } from '../../data';
+import { Step, ReturnPath, Type, Variable, DataField, Process, Parameter } from '../../data';
 import { getScrollbarSize } from '../getScrollbarSize';
 import { gridSize, growToFitGrid, alignToGrid } from './gridSize';
 import { StepDisplay } from './StepDisplay';
@@ -9,8 +9,14 @@ import './ProcessContent.css';
 import { LinkCanvas, DragInfo } from './LinkCanvas';
 import { ScrollWrapper } from './ScrollWrapper';
 
-interface ProcessContentProps {
-    process: UserProcess;
+interface Props {
+    steps: Step[];
+    variables: Variable[];
+    
+    addStep: (process: Process, x: number, y: number) => void;
+    addStopStep: (returnPath: string | null, x: number, y: number) => void;
+    addVariable: (type: Type, x: number, y: number) => Variable;
+
     className?: string;
     dropVariableType?: Type;
     dropStep?: Process;
@@ -18,13 +24,12 @@ interface ProcessContentProps {
     focusStep?: Step;
     focusStepParameter?: Parameter;
     focusStepReturnPath?: string | null;
-    itemDropped: () => void;
-    stepDragging: (step: Step | undefined) => void; // TODO: ultimately, remove this
-    variableDragging: (variable: Variable | undefined) => void; // TODO: ultimately, remove this
+    stepDragging: (step: Step | undefined) => void; // TODO: remove this. Only needed for bin.
+    variableDragging: (variable: Variable | undefined) => void; // TODO: remove this. Only needed for bin.
     revalidate: () => void;
 }
 
-interface ProcessContentState {
+interface State {
     viewWidth: number;
     viewHeight: number;
     contentWidth: number;
@@ -50,7 +55,7 @@ export interface Coord {
     y: number;
 }
 
-export class ProcessContent extends React.PureComponent<ProcessContentProps, ProcessContentState> {
+export class ProcessContent extends React.PureComponent<Props, State> {
     private root: HTMLDivElement = undefined as unknown as HTMLDivElement;
     private canvas: LinkCanvas | null = null;
     private resizeListener?: () => void;
@@ -63,7 +68,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     private readonly stepDisplays = new Map<Step, StepDisplay>();
     private readonly variableDisplays = new Map<Variable, VariableDisplay>();
 
-    constructor(props: ProcessContentProps) {
+    constructor(props: Props) {
         super(props);
 
         const scrollSize = getScrollbarSize();
@@ -79,20 +84,17 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     render() {
-        let classes = 'processContent';
-        if (this.props.className !== undefined) {
-            classes += ' ' + this.props.className;
-        }
+        const classes = this.props.className === undefined
+            ? 'processContent'
+            : `processContent ${this.props.className}`;
         
-        let canvasWidth = this.state.viewWidth;
-        if (this.state.viewWidth < this.state.contentWidth) {
-            canvasWidth -= this.state.scrollbarWidth;
-        }
+        const canvasWidth = this.state.viewWidth < this.state.contentWidth
+            ? this.state.viewWidth - this.state.scrollbarWidth
+            : this.state.viewWidth;
 
-        let canvasHeight = this.state.viewHeight;
-        if (this.state.viewHeight < this.state.contentHeight) {
-            canvasHeight -= this.state.scrollbarHeight;
-        }
+        const canvasHeight = this.state.viewHeight < this.state.contentHeight
+            ? this.state.viewHeight - this.state.scrollbarHeight
+            : this.state.viewHeight;
 
         const dragging: DragInfo | undefined = this.draggingStepConnector !== undefined
             ? {
@@ -150,7 +152,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.canvas!.drawLinks();
     }
 
-    componentDidUpdate(prevProps: ProcessContentProps, prevState: ProcessContentState) {
+    componentDidUpdate(prevProps: Props, prevState: State) {
         if (prevProps.focusStep === undefined && this.props.focusStep !== undefined) {
             this.getStepDisplay(this.props.focusStep).scrollIntoView();
         }
@@ -167,7 +169,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     private renderSteps() {
         this.stepDisplays.clear();
 
-        return Array.from(this.props.process.steps.values()).map(step => (
+        return this.props.steps.map(step => (
             <StepDisplay
                 ref={s => { if (s !== null) { this.stepDisplays.set(step, s); } else { this.stepDisplays.delete(step); }}}
                 key={step.uniqueID}
@@ -191,7 +193,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     private renderVariables() {
         this.variableDisplays.clear();
 
-        return this.props.process.variables.map(variable => (
+        return this.props.variables.map(variable => (
             <VariableDisplay
                 ref={v => { if (v !== null) { this.variableDisplays.set(variable, v); } else { this.variableDisplays.delete(variable); }}}
                 variable={variable}
@@ -287,38 +289,24 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
 
     private dragStop() {
         if (this.props.dropVariableType !== undefined) {
-            const type = this.props.dropVariableType;
             const dropPos = this.getContentDragCoordinates();
             
-            const newVar = new Variable(this.props.process.getNewVariableName(type), type, dropPos.x, dropPos.y);
-            this.props.process.variables.push(newVar);
-
-            this.props.itemDropped();
+            this.props.addVariable(this.props.dropVariableType, dropPos.x, dropPos.y);
         }
 
         else if (this.props.dropStep !== undefined) {
             const dropPos = this.getContentDragCoordinates();
 
-            const newStep = new ProcessStep(this.props.process.getNextStepID(), this.props.dropStep, this.props.process, dropPos.x, dropPos.y);
-            this.props.process.steps.set(newStep.uniqueID, newStep);
-
-            this.props.itemDropped();
+            this.props.addStep(this.props.dropStep!, dropPos.x, dropPos.y);
         }
 
         else if (this.props.dropStopStep !== undefined) {
             const dropPos = this.getContentDragCoordinates();
-            
-            const newStep = new StopStep(this.props.process.getNextStepID(), this.props.process, this.props.dropStopStep, dropPos.x, dropPos.y);
-            this.props.process.steps.set(newStep.uniqueID, newStep);
-            
-            this.props.itemDropped();
+
+            this.props.addStopStep(this.props.dropStopStep, dropPos.x, dropPos.y);
         }
 
         else if (this.draggingStep !== undefined) {
-            if (!this.props.process.steps.has(this.draggingStep.uniqueID)) {
-                return;
-            }
-
             this.stopDraggingItem(this.draggingStep);
             
             this.draggingStep = undefined;
@@ -326,10 +314,6 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
 
         else if (this.draggingVariable !== undefined) {
-            if (this.props.process.variables.indexOf(this.draggingVariable) === -1) {
-                return;
-            }
-
             this.stopDraggingItem(this.draggingVariable);
 
             this.draggingVariable = undefined;
@@ -345,17 +329,15 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             if (this.draggingParamConnector.step !== undefined) {
                 const dropPos = this.getContentDragCoordinates();
 
-                const type = this.draggingParamConnector!.field.type;
-                let newVar = new Variable(this.props.process.getNewVariableName(type), type, dropPos.x, dropPos.y);
-                this.props.process.variables.push(newVar);
+                const newVar = this.props.addVariable(this.draggingParamConnector!.field.type, dropPos.x, dropPos.y);
 
-                let dragInfo = {
+                const dragInfo = {
                     field: this.draggingParamConnector!.field,
                     input: this.draggingParamConnector!.input,
                     step: this.draggingParamConnector!.step!,
                 };
                 
-                let dropInfo = {
+                const dropInfo = {
                     field: newVar,
                     input: !this.draggingParamConnector!.input,
                 };
@@ -367,7 +349,6 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
 
                 this.draggingParamConnector = undefined;
 
-                this.props.itemDropped();
                 this.props.revalidate();
             }
             else {
@@ -400,18 +381,10 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
 
         else if (this.draggingStep !== undefined) {
-            if (!this.props.process.steps.has(this.draggingStep.uniqueID)) {
-                return;
-            }
-
             this.dragItem(dx, dy, this.draggingStep, this.getStepDisplay(this.draggingStep));
         }
 
         else if (this.draggingVariable !== undefined) {
-            if (this.props.process.variables.indexOf(this.draggingVariable) === -1) {
-                return;
-            }
-
             this.dragItem(dx, dy, this.draggingVariable, this.getVariableDisplay(this.draggingVariable));
         }
     }
@@ -604,8 +577,6 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
     }
 
     private linkStepsWithVariable(from: ParamConnectorDragInfo, to: ParamConnectorDragInfo) {
-        const type = to.field.type;
-
         const fromPos = this.stepDisplays
             .get(from.step!)!
             .getOutputConnector(from.field as Parameter)
@@ -621,10 +592,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             y: (fromPos.top + fromPos.bottom + toPos.top + toPos.bottom) / 4,
         });
 
-        const newVar = new Variable(this.props.process.getNewVariableName(type), type, dropPos.x, dropPos.y);
-        this.props.process.variables.push(newVar);
-
-        this.props.itemDropped();
+        const newVar = this.props.addVariable(to.field.type, dropPos.x, dropPos.y);
 
         return this.linkStepToVariable(from.field as Parameter, newVar)
             && this.linkStepToVariable(to.field as Parameter, newVar);
