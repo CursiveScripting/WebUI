@@ -135,11 +135,13 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         };
 
         const removeStep = (step: Step) => {
-            // TODO: this
+            openProcess.removeStep(step);
+            this.revalidateOpenProcess();
         }
 
         const removeVariable = (variable: Variable) => {
-            // TODO: this
+            openProcess.removeVariable(variable);
+            this.revalidateOpenProcess();
         }
 
         return (
