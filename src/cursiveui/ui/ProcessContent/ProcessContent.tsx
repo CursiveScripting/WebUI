@@ -302,10 +302,6 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         end: ClientRect | DOMRect,
         fitBelow?: ClientRect | DOMRect,
     ) {
-        // TODO: if linkToSelf then drawCurve needs to use a down-offset midpoint, somehow.
-        // Do we need to pass in the bounds of the step display in question?
-        // Or replace linkToSelf with an optional midPoint?
-
         const startPos = {
             x: begin.right - root.left,
             y: begin.top + begin.height / 2 - root.top,
