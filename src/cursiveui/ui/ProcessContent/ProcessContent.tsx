@@ -185,7 +185,6 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                 outputLinkMouseUp={returnPath => this.stepLinkDragStop(step, false, returnPath)}
                 parameterLinkMouseDown={(param, input) => this.fieldLinkDragStart(param, input, step)}
                 parameterLinkMouseUp={(param, input) => this.fieldLinkDragStop(param, input, step)}
-                defaultChanged={param => this.props.revalidate()}
             />
         ));
     }

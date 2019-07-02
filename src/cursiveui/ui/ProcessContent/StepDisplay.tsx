@@ -17,7 +17,6 @@ interface StepDisplayProps {
     outputLinkMouseUp: (returnPath: string | null) => void;
     parameterLinkMouseDown: (param: Parameter, input: boolean) => void;
     parameterLinkMouseUp: (param: Parameter, input: boolean) => void;
-    defaultChanged: (inputParam: Parameter) => void;
 }
 
 interface StepDisplayState {
@@ -242,20 +241,11 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
                         focused={param === this.props.focusParameter}
                         linkMouseDown={() => this.props.parameterLinkMouseDown(param, input)}
                         linkMouseUp={() => this.props.parameterLinkMouseUp(param, input)}
-                        defaultChanged={input ? () => this.defaultChanged(param) : undefined}
                     />
                     );
                 })}
             </div>
         );
-    }
-
-    private defaultChanged(param: Parameter) {
-        this.props.defaultChanged(param);
-
-        this.setState({
-            width: undefined, // trigger a width recalculation, but need to be able to get narrower, so unset it first
-        });
     }
 
     private updateWidth() {
