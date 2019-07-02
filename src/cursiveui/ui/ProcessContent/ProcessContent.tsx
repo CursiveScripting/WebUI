@@ -6,6 +6,7 @@ import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
 import { Positionable } from '../../data/Positionable';
 import './ProcessContent.css';
+import { LinkCanvas, DragInfo } from './LinkCanvas';
 
 interface ProcessContentProps {
     process: UserProcess;
@@ -17,8 +18,8 @@ interface ProcessContentProps {
     focusStepParameter?: Parameter;
     focusStepReturnPath?: string | null;
     itemDropped: () => void;
-    stepDragging: (step: Step | undefined) => void;
-    variableDragging: (variable: Variable | undefined) => void;
+    stepDragging: (step: Step | undefined) => void; // TODO: ultimately, remove this
+    variableDragging: (variable: Variable | undefined) => void; // TODO: ultimately, remove this
     revalidate: () => void;
 }
 
@@ -31,26 +32,26 @@ interface ProcessContentState {
     scrollbarHeight: number;
 }
 
-interface StepConnectorDragInfo {
+export interface StepConnectorDragInfo {
     step: Step;
     input: boolean;
     returnPath: string | null;
 }
 
-interface ParamConnectorDragInfo {
+export interface ParamConnectorDragInfo {
     field: DataField;
     input: boolean;
     step?: Step;
 }
 
-interface Coord {
+export interface Coord {
     x: number;
     y: number;
 }
 
 export class ProcessContent extends React.PureComponent<ProcessContentProps, ProcessContentState> {
     private root: HTMLDivElement = undefined as unknown as HTMLDivElement;
-    private ctx: CanvasRenderingContext2D = undefined as unknown as CanvasRenderingContext2D;
+    private canvas: LinkCanvas | null = null;
     private resizeListener?: () => void;
     private draggingStep?: Step;
     private draggingVariable?: Variable;
@@ -97,6 +98,22 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             canvasHeight -= this.state.scrollbarHeight;
         }
 
+        const dragging: DragInfo | undefined = this.draggingStepConnector !== undefined
+            ? {
+                isParam: false,
+                pathInfo: this.draggingStepConnector,
+                x: this.dragX,
+                y: this.dragY,
+            }
+            : this.draggingParamConnector !== undefined
+                ? {
+                    isParam: true,
+                    paramInfo: this.draggingParamConnector,
+                    x: this.dragX,
+                    y: this.dragY,
+                }
+                : undefined;
+
         return (
             <div
                 className={classes}
@@ -104,15 +121,18 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
                 onMouseMove={e => this.mouseMove(e)}
                 onMouseUp={e => this.dragStop()}
             >
-                <canvas
+                <LinkCanvas
                     className="processContent__canvas"
-                    ref={c => {if (c !== null) { let ctx = c.getContext('2d'); if (ctx !== null) { this.ctx = ctx; }}}}
                     width={canvasWidth}
                     height={canvasHeight}
+                    stepDisplays={this.stepDisplays}
+                    variableDisplays={this.variableDisplays}
+                    dragging={dragging}
+                    ref={c => this.canvas = c}
                 />
                 <div
                     className="processContent__scrollWrapper"
-                    onScroll={() => this.drawLinks()}
+                    onScroll={() => this.canvas!.drawLinks()}
                 >
                     <div className="processContent__backgroundScroll" style={contentSizeStyle} />
                     <div className="processContent__scrollRoot" style={contentSizeStyle}>
@@ -129,7 +149,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         window.addEventListener('resize', this.resizeListener);
     
         this.updateViewSize();
-        this.drawLinks();
+        this.canvas!.drawLinks();
     }
 
     componentDidUpdate(prevProps: ProcessContentProps, prevState: ProcessContentState) {
@@ -137,7 +157,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             this.getStepDisplay(this.props.focusStep).scrollIntoView();
         }
 
-        this.drawLinks();
+        this.canvas!.drawLinks();
     }
     
     componentWillUnmount() {
@@ -192,205 +212,6 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             : value;
 
         this.props.revalidate();
-    }
-
-    private drawLinks() {
-        this.ctx.clearRect(0, 0, this.state.viewWidth, this.state.viewHeight);
-        
-        const root = this.root.getBoundingClientRect();
-        
-        for (const [step, stepDisplay] of this.stepDisplays) {
-            for (const path of step.incomingPaths) {
-                const beginStepDisplay = this.getStepDisplay(path.fromStep);
-                
-                const beginConnector = beginStepDisplay.getReturnConnector(path.name);
-                const endConnector = stepDisplay.entryConnector;
-                
-                if (beginConnector !== null && endConnector !== null) {
-                    const bounds = step === path.fromStep
-                        ? stepDisplay.bounds
-                        : undefined;
-                    this.drawProcessLink(root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect(), bounds);
-                }
-            }
-
-            for (let parameter of stepDisplay.props.step.inputs) {
-                if (parameter.link === null) {
-                    continue;
-                }
-
-                let endConnector = stepDisplay.getInputConnector(parameter);
-
-                let variableDisplay = this.getVariableDisplay(parameter.link);
-                let beginConnector = variableDisplay.outputConnector;
-
-                this.drawFieldLink(parameter.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
-            }
-
-            for (let parameter of stepDisplay.props.step.outputs) {
-                if (parameter.link === null) {
-                    continue;
-                }
-
-                let beginConnector = stepDisplay.getOutputConnector(parameter);
-
-                let variableDisplay = this.getVariableDisplay(parameter.link);
-                let endConnector = variableDisplay.inputConnector;
-
-                this.drawFieldLink(parameter.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
-            }
-        }
-
-        if (this.draggingStepConnector !== undefined) {
-            let dragRect = {
-                left: this.dragX, right: this.dragX,
-                top: this.dragY, bottom: this.dragY,
-                width: 0, height: 0,
-            };
-
-            let dragInfo = this.draggingStepConnector;
-            
-            if (dragInfo.input) {
-                let beginConnector = this.getStepDisplay(dragInfo.step).entryConnector;
-                if (beginConnector !== null) {
-                    this.drawProcessLink(root, dragRect, beginConnector.getBoundingClientRect());
-                }
-            }
-            else {
-                let endConnector = this.getStepDisplay(dragInfo.step).getReturnConnector(dragInfo.returnPath);
-                if (endConnector !== null) {
-                    this.drawProcessLink(root, endConnector.getBoundingClientRect(), dragRect);
-                }
-            }
-        }
-
-        if (this.draggingParamConnector !== undefined) {
-            let dragRect = {
-                left: this.dragX, right: this.dragX,
-                top: this.dragY, bottom: this.dragY,
-                width: 0, height: 0,
-            };
-            
-            let dragInfo = this.draggingParamConnector;
-            let connector: HTMLDivElement;
-
-            if (dragInfo.step !== undefined) {
-                let stepDisplay = this.getStepDisplay(dragInfo.step);
-                connector = dragInfo.input
-                    ? stepDisplay.getInputConnector(dragInfo.field as Parameter)
-                    : stepDisplay.getOutputConnector(dragInfo.field as Parameter);
-            }
-            else {
-                let varDisplay = this.getVariableDisplay(dragInfo.field as Variable);
-                connector = dragInfo.input
-                    ? varDisplay.inputConnector
-                    : varDisplay.outputConnector;
-            }
-
-            if (dragInfo.input) {
-                this.drawFieldLink(dragInfo.field.type, root, dragRect, connector.getBoundingClientRect());
-            }
-            else {
-                this.drawFieldLink(dragInfo.field.type, root, connector.getBoundingClientRect(), dragRect);
-            }
-        }
-    }
-    
-    private drawProcessLink(
-        root: ClientRect | DOMRect,
-        begin: ClientRect | DOMRect,
-        end: ClientRect | DOMRect,
-        fitBelow?: ClientRect | DOMRect,
-    ) {
-        const startPos = {
-            x: begin.right - root.left,
-            y: begin.top + begin.height / 2 - root.top,
-        };
-
-        const endPos = {
-            x: end.left - root.left,
-            y: end.top + end.height / 2 - root.top,
-        };
-
-        this.ctx.lineWidth = 4;
-        this.ctx.strokeStyle = '#000000';
-
-        if (fitBelow === undefined) {
-            this.drawCurve(startPos, endPos);
-        }
-        else {
-            const midPos = {
-                x: (startPos.x + endPos.x) / 2,
-                y: fitBelow.bottom,
-            }
-
-            const cp1 = {
-                x: startPos.x + 100,
-                y: startPos.y,
-            }
-
-            const cp2 = {
-                x: midPos.x + 150,
-                y: midPos.y,
-            }
-
-            const cp3 = {
-                x: midPos.x - 150,
-                y: midPos.y,
-            }
-
-            const cp4 = {
-                x: endPos.x - 100,
-                y: endPos.y,
-            }
-
-            this.drawCurveWithControlPoints(startPos, cp1, cp2, midPos);
-            this.drawCurveWithControlPoints(midPos, cp3, cp4, endPos);
-        }
-    }
-
-    private drawFieldLink(
-        type: Type,
-        root: ClientRect | DOMRect,
-        begin: ClientRect | DOMRect,
-        end: ClientRect | DOMRect
-    ) {
-        const startPos = {
-            x: begin.right - root.left,
-            y: begin.top + begin.height / 2 - root.top,
-        };
-
-        const endPos = {
-            x: end.left - root.left,
-            y: end.top + end.height / 2 - root.top,
-        }
-        
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeStyle = type.color;
-        this.drawCurve(startPos, endPos);
-    }
-
-    private drawCurve(start: Coord, end: Coord) {
-        const cpOffset = Math.min(150, Math.abs(end.y - start.y));
-
-        const mid1 = {
-            x: start.x + cpOffset,
-            y: start.y,
-        }
-
-        const mid2 = {
-            x: end.x - cpOffset,
-            y: end.y,
-        }
-
-        this.drawCurveWithControlPoints(start, mid1, mid2, end);
-    }
-
-    private drawCurveWithControlPoints(start: Coord, mid1: Coord, mid2: Coord, end: Coord) {
-        this.ctx.beginPath();
-        this.ctx.moveTo(start.x, start.y);
-        this.ctx.bezierCurveTo(mid1.x, mid1.y, mid2.x, mid2.y, end.x, end.y);
-        this.ctx.stroke();
     }
 
     private getStepDisplay(step: Step) {
@@ -519,7 +340,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
 
         else if (this.draggingStepConnector !== undefined) {
             this.draggingStepConnector = undefined;
-            this.drawLinks();
+            this.canvas!.drawLinks();
         }
 
         else if (this.draggingParamConnector !== undefined) {
@@ -553,7 +374,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
             }
             else {
                 this.draggingParamConnector = undefined;
-                this.drawLinks();
+                this.canvas!.drawLinks();
             }
         }
 
@@ -574,7 +395,10 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.dragY = e.clientY;
 
         if (this.draggingStepConnector !== undefined || this.draggingParamConnector !== undefined) {
-            this.drawLinks();
+            // TODO: without forcing a re-render, the updated dragX / dragY don't propagate to the LinkCanvas
+            // ... if we split everything into separate components such that this component's render method is dead simple,
+            // then dragX / dragY could be state here.
+            this.canvas!.drawLinks();
         }
 
         else if (this.draggingStep !== undefined) {
@@ -615,14 +439,14 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         item.y += dy;
         
         display.forceUpdate();
-        this.drawLinks();
+        this.canvas!.drawLinks();
     }
 
     private stopDraggingItem(item: Positionable) {
         item.x = alignToGrid(item.x);
         item.y = alignToGrid(item.y);
 
-        this.drawLinks();
+        this.canvas!.drawLinks();
     }
 
     private stepLinkDragStart(step: Step, input: boolean, returnPath: string | null) {
@@ -642,7 +466,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         this.draggingStepConnector = undefined;
 
         if (dragInfo.input === input) {
-            this.drawLinks();
+            this.canvas!.drawLinks();
             return;
         }
 
@@ -682,7 +506,7 @@ export class ProcessContent extends React.PureComponent<ProcessContentProps, Pro
         }
 
         this.props.revalidate();
-        this.drawLinks();
+        this.canvas!.drawLinks();
     }
 
     private fieldLinkDragStart(field: DataField, input: boolean, step?: Step) {
