@@ -134,6 +134,14 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
             this.dropCompleted();
         };
 
+        const removeStep = (step: Step) => {
+            // TODO: this
+        }
+
+        const removeVariable = (variable: Variable) => {
+            // TODO: this
+        }
+
         return (
             <ProcessContent
                 className="workspaceEditor__content"
@@ -145,6 +153,9 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
 
                 addStep={addStep}
                 addStopStep={addStopStep}
+
+                removeStep={removeStep}
+                removeVariable={removeVariable}
 
                 dropStep={this.state.droppingProcess}
                 dropStopStep={this.state.droppingStopStep}

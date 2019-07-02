@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Step, ReturnPath, Type, Variable, DataField, Process, Parameter } from '../../data';
+import { Step, ReturnPath, Type, Variable, DataField, Process, Parameter, StepType } from '../../data';
 import { getScrollbarSize } from '../getScrollbarSize';
 import { gridSize, growToFitGrid, alignToGrid } from './gridSize';
 import { StepDisplay } from './StepDisplay';
@@ -17,6 +17,9 @@ interface Props {
     addStopStep: (returnPath: string | null, x: number, y: number) => void;
     addVariable: (type: Type, x: number, y: number) => Variable;
 
+    removeStep: (step: Step) => void;
+    removeVariable: (variable: Variable) => void;
+    
     className?: string;
     dropVariableType?: Type;
     dropStep?: Process;
@@ -178,6 +181,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                 focusParameter={this.props.focusStepParameter}
                 focusReturnPath={this.props.focusStepReturnPath}
                 readonly={false}
+                deleteClicked={step.stepType === StepType.Start ? undefined : () => this.props.removeStep(step)}
                 headerMouseDown={(x, y) => this.stepDragStart(step, x, y)}
                 inputLinkMouseDown={() => this.stepLinkDragStart(step, true, null)}
                 outputLinkMouseDown={returnPath => this.stepLinkDragStart(step, false, returnPath)}

@@ -17,6 +17,7 @@ interface StepDisplayProps {
     outputLinkMouseUp: (returnPath: string | null) => void;
     parameterLinkMouseDown: (param: Parameter, input: boolean) => void;
     parameterLinkMouseUp: (param: Parameter, input: boolean) => void;
+    deleteClicked?: () => void;
 }
 
 interface StepDisplayState {
@@ -83,6 +84,10 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
             minWidth: this.state.width,
         };
 
+        const deleteStep = this.props.deleteClicked === undefined
+            ? undefined
+            : <div className="step__delete" onClick={() => this.props.deleteClicked!()} />
+
         return (
             <div className={this.determineRootClasses()} style={posStyle} ref={r => { if (r !== null) { this.root = r; }}}>
                 <div
@@ -92,6 +97,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
                 >
                     <div className="step__icon" />
                     <div className="step__processName">{this.props.step.name}</div>
+                    {deleteStep}
                 </div>
                 <div className="step__connectors">
                     {this.renderInConnector()}
