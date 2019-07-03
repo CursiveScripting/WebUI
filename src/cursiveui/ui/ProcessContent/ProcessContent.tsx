@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Step, ReturnPath, Type, Variable, DataField, Process, Parameter } from '../../data';
-import { getScrollbarSize } from '../getScrollbarSize';
-import { gridSize, growToFitGrid, alignToGrid } from './gridSize';
+import { alignToGrid, growToFitGrid, gridSize } from './gridSize';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
 import { Positionable } from '../../data/Positionable';
@@ -10,6 +9,7 @@ import { LinkCanvas, DragInfo } from './LinkCanvas';
 import { ScrollWrapper } from './ScrollWrapper';
 import { VariablesDisplay } from './VariablesDisplay';
 import { StepsDisplay } from './StepsDisplay';
+import { ContentWrapper } from './ContentWrapper';
 
 interface Props {
     steps: Step[];
@@ -33,12 +33,14 @@ interface Props {
 }
 
 interface State {
-    viewWidth: number;
-    viewHeight: number;
     contentWidth: number;
     contentHeight: number;
-    scrollbarWidth: number;
-    scrollbarHeight: number;
+    canvasWidth: number;
+    canvasHeight: number;
+    dragX: number;
+    dragY: number;
+    minScreenX: number;
+    minScreenY: number;
 }
 
 export interface StepConnectorDragInfo {
@@ -59,73 +61,68 @@ export interface Coord {
 }
 
 export class ProcessContent extends React.PureComponent<Props, State> {
-    private root: HTMLDivElement = undefined as unknown as HTMLDivElement;
     private canvas: LinkCanvas | null = null;
-    private resizeListener?: () => void;
-    private draggingStep?: Step;
-    private draggingVariable?: Variable;
+    private draggingStep?: Step; // TODO: add to state
+    private draggingVariable?: Variable; // TODO: add to state
     private draggingStepConnector?: StepConnectorDragInfo;
     private draggingParamConnector?: ParamConnectorDragInfo;
-    private dragX: number = 0;
-    private dragY: number = 0;
     private readonly stepDisplays = new Map<Step, StepDisplay>();
     private readonly variableDisplays = new Map<Variable, VariableDisplay>();
 
     constructor(props: Props) {
         super(props);
 
-        const scrollSize = getScrollbarSize();
-
         this.state = {
-            viewWidth: 0,
-            viewHeight: 0,
+            canvasWidth: 0,
+            canvasHeight: 0,
             contentWidth: 0,
             contentHeight: 0,
-            scrollbarWidth: scrollSize.width,
-            scrollbarHeight: scrollSize.height,
+            dragX : 0,
+            dragY : 0,
+            minScreenX: 0,
+            minScreenY: 0,
         };
+    }
+
+    componentDidMount() {
+        this.updateContentSize();
     }
 
     render() {
         const classes = this.props.className === undefined
             ? 'processContent'
             : `processContent ${this.props.className}`;
-        
-        const canvasWidth = this.state.viewWidth < this.state.contentWidth
-            ? this.state.viewWidth - this.state.scrollbarWidth
-            : this.state.viewWidth;
-
-        const canvasHeight = this.state.viewHeight < this.state.contentHeight
-            ? this.state.viewHeight - this.state.scrollbarHeight
-            : this.state.viewHeight;
 
         const dragging: DragInfo | undefined = this.draggingStepConnector !== undefined
             ? {
                 isParam: false,
                 pathInfo: this.draggingStepConnector,
-                x: this.dragX,
-                y: this.dragY,
+                x: this.state.dragX,
+                y: this.state.dragY,
             }
             : this.draggingParamConnector !== undefined
                 ? {
                     isParam: true,
                     paramInfo: this.draggingParamConnector,
-                    x: this.dragX,
-                    y: this.dragY,
+                    x: this.state.dragX,
+                    y: this.state.dragY,
                 }
                 : undefined;
 
         return (
-            <div
+            <ContentWrapper
                 className={classes}
-                ref={r => { if (r !== null) { this.root = r; }}}
+                contentWidth={this.state.contentWidth}
+                contentHeight={this.state.contentHeight}
+                setScreenOffset={(x, y) => this.setState({ minScreenX: x, minScreenY: y })}
+                setDisplayExtent={(w, h) => this.setState({ canvasWidth: w, canvasHeight: h })}
                 onMouseMove={e => this.mouseMove(e)}
                 onMouseUp={e => this.dragStop()}
             >
                 <LinkCanvas
                     className="processContent__canvas"
-                    width={canvasWidth}
-                    height={canvasHeight}
+                    width={this.state.canvasWidth}
+                    height={this.state.canvasHeight}
                     stepDisplays={this.stepDisplays}
                     variableDisplays={this.variableDisplays}
                     dragging={dragging}
@@ -136,8 +133,8 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     rootClassName="processContent__scrollWrapper"
                     backgroundClassName="processContent__backgroundScroll" 
                     scrollRootClassName="processContent__scrollRoot"
-                    width={this.state.contentWidth}
-                    height={this.state.contentHeight}
+                    width={Math.max(this.state.contentWidth, this.state.canvasWidth)}
+                    height={Math.max(this.state.contentHeight, this.state.canvasHeight)}
                     onScroll={() => this.canvas!.drawLinks()}
                 >
                     <StepsDisplay
@@ -173,32 +170,23 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                         stopDragConnector={(variable, input) => this.fieldLinkDragStop(variable, input, undefined)}
                     />
                 </ScrollWrapper>
-            </div>
+            </ContentWrapper>
         );
     }
 
-    componentDidMount() {
-        this.resizeListener = () => this.updateViewSize();
-        window.addEventListener('resize', this.resizeListener);
-    
-        this.updateViewSize();
-        this.canvas!.drawLinks();
+    componentWillReceiveProps(nextProps: Props) {
+        if (nextProps.steps.length !== this.props.steps.length
+            || nextProps.variables.length !== this.props.variables.length) {
+            this.updateContentSize();
+        }
     }
 
     componentDidUpdate(prevProps: Props, prevState: State) {
         if (prevProps.focusStep === undefined && this.props.focusStep !== undefined) {
             this.getStepDisplay(this.props.focusStep).scrollIntoView();
         }
-
-        this.canvas!.drawLinks();
     }
-    
-    componentWillUnmount() {
-        if (this.resizeListener !== undefined) {
-            window.removeEventListener('resize', this.resizeListener);
-        }
-    }
-    
+        
     private variableDefaultChanged(variable: Variable, value: string | null) {
         variable.initialValue = value === ''
             ? null
@@ -215,65 +203,20 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         return this.variableDisplays.get(variable)!;
     }
 
-    private updateViewSize() {
-        this.setState({
-            viewWidth: this.root.offsetWidth,
-            viewHeight: this.root.offsetHeight,
-            contentWidth: Math.max(this.state.contentWidth, this.root.offsetWidth - this.state.scrollbarWidth),
-            contentHeight: Math.max(this.state.contentHeight, this.root.offsetHeight - this.state.scrollbarHeight),
-        });
-    }
-
-    private updateContentSize() {
-        const extraCells = 5;
-        let maxX = 0, maxY = 0;
-
-        for (const [, display] of this.stepDisplays) {
-            maxX = Math.max(maxX, display.maxX);
-            maxY = Math.max(maxY, display.maxY);
-        }
-
-        for (const [, display] of this.variableDisplays) {
-            maxX = Math.max(maxX, display.maxX);
-            maxY = Math.max(maxY, display.maxY);
-        }
-
-        let contentWidth = growToFitGrid(maxX);
-        let contentHeight = growToFitGrid(maxY);
-        
-        const viewWidth = this.state.viewWidth - this.state.scrollbarWidth;
-        const viewHeight = this.state.viewHeight - this.state.scrollbarHeight;
-
-        if (contentWidth > viewWidth) {
-            contentWidth += gridSize * extraCells;
-        }
-        else {
-            contentWidth = viewWidth;
-        }
-        
-        if (contentHeight > viewHeight) {
-            contentHeight += gridSize * extraCells;
-        }
-        else {
-            contentHeight = viewHeight;
-        }
-
-        this.setState({
-            contentWidth: contentWidth,
-            contentHeight:  contentHeight,
-        });
-    }
-
     private stepDragStart(step: Step, startX: number, startY: number) {
         this.draggingStep = step;
-        this.dragX = startX;
-        this.dragY = startY;
+        this.setState({
+            dragX: startX,
+            dragY: startY,
+        });
     }
 
     private varDragStart(variable: Variable, startX: number, startY: number) {
         this.draggingVariable = variable;
-        this.dragX = startX;
-        this.dragY = startY;
+        this.setState({
+            dragX: startX,
+            dragY: startY,
+        });
     }
 
     private dragStop() {
@@ -299,12 +242,14 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             this.stopDraggingItem(this.draggingStep);
             
             this.draggingStep = undefined;
+            this.updateContentSize();
         }
 
         else if (this.draggingVariable !== undefined) {
             this.stopDraggingItem(this.draggingVariable);
 
             this.draggingVariable = undefined;
+            this.updateContentSize();
         }
 
         else if (this.draggingStepConnector !== undefined) {
@@ -348,47 +293,61 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             return;
         }
 
-        this.dragX = 0;
-        this.dragY = 0;
-        this.updateContentSize();
+        this.setState({
+            dragX: 0,
+            dragY: 0,
+        });
+    }
+
+    private updateContentSize() {
+        let maxX = 0, maxY = 0;
+
+        for (const [, display] of this.stepDisplays) {
+            maxX = Math.max(maxX, display.maxX);
+            maxY = Math.max(maxY, display.maxY);
+        }
+
+        for (const [, display] of this.variableDisplays) {
+            maxX = Math.max(maxX, display.maxX);
+            maxY = Math.max(maxY, display.maxY);
+        }
+
+        const extraCells = 5;
+        
+        this.setState({
+            contentWidth: growToFitGrid(maxX) + gridSize * extraCells,
+            contentHeight: growToFitGrid(maxY) + gridSize * extraCells,
+        })
     }
 
     private mouseMove(e: React.MouseEvent<HTMLDivElement>) {
-        let dx = e.clientX - this.dragX;
-        let dy = e.clientY - this.dragY;
+        let dx = e.clientX - this.state.dragX;
+        let dy = e.clientY - this.state.dragY;
         
-        this.dragX = e.clientX;
-        this.dragY = e.clientY;
+        this.setState({
+            dragX: e.clientX,
+            dragY: e.clientY,
+        });
 
-        if (this.draggingStepConnector !== undefined || this.draggingParamConnector !== undefined) {
-            // TODO: without forcing a re-render, the updated dragX / dragY don't propagate to the LinkCanvas
-            // ... if we split everything into separate components such that this component's render method is dead simple,
-            // then dragX / dragY could be state here.
-            this.canvas!.drawLinks();
-        }
-
-        else if (this.draggingStep !== undefined) {
+        if (this.draggingStep !== undefined) {
             this.dragItem(dx, dy, this.draggingStep, this.getStepDisplay(this.draggingStep));
         }
-
         else if (this.draggingVariable !== undefined) {
             this.dragItem(dx, dy, this.draggingVariable, this.getVariableDisplay(this.draggingVariable));
         }
     }
 
     private screenToGrid(screen: Coord): Coord {
-        const root = this.root.getBoundingClientRect();
-
         return {
-            x: alignToGrid(screen.x - root.left),
-            y: alignToGrid(screen.y - root.top),
+            x: alignToGrid(screen.x - this.state.minScreenX),
+            y: alignToGrid(screen.y - this.state.minScreenY),
         };
     }
 
     private getContentDragCoordinates(): Coord {
         return this.screenToGrid({
-            x: this.dragX,
-            y: this.dragY,
+            x: this.state.dragX,
+            y: this.state.dragY,
         });
     }
 
