@@ -48,16 +48,8 @@ export class ContentWrapper extends React.PureComponent<Props, State> {
     }
     
     private updateViewSize() {
-        const viewWidth = this.root.offsetWidth;
-        const viewHeight = this.root.offsetHeight;
-
-        const canvasWidth = viewWidth < this.props.contentWidth
-            ? viewWidth - this.state.scrollbarWidth
-            : viewWidth;
-
-        const canvasHeight = viewHeight < this.props.contentHeight
-            ? viewHeight - this.state.scrollbarHeight
-            : viewHeight;
+        const canvasWidth = this.root.offsetWidth - this.state.scrollbarWidth;
+        const canvasHeight = this.root.offsetHeight - this.state.scrollbarHeight;
 
         this.props.setDisplayExtent(canvasWidth, canvasHeight);
     }
