@@ -4,7 +4,7 @@ import { Coord, ParamConnectorDragInfo, StepConnectorDragInfo } from './ProcessC
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
 
-export type DragInfo  = {
+export type LinkDragInfo = {
     isParam: false;
     pathInfo: StepConnectorDragInfo;
     x: number;
@@ -24,7 +24,7 @@ interface Props {
     stepDisplays: Map<Step, StepDisplay>;
     variableDisplays: Map<Variable, VariableDisplay>;
 
-    dragging?: DragInfo;
+    dragging?: LinkDragInfo;
 }
 
 export class LinkCanvas extends React.Component<Props> {
