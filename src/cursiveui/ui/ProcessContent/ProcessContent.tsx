@@ -267,74 +267,66 @@ export class ProcessContent extends React.PureComponent<Props, State> {
     }
 
     private dragStop() {
-        if (this.state.dragging !== undefined) {
-            switch (this.state.dragging.type) {
-                case DragType.Step:
-                    this.stopDraggingItem(this.state.dragging.step);
-                    this.updateContentSize();
-                    break;
-                case DragType.Variable:
-                    this.stopDraggingItem(this.state.dragging.variable);
-                    this.updateContentSize();
-                    break;
-                case DragType.StepConnector:
-                    this.canvas!.drawLinks(); // stop drawing this link ... it will be abandoned
-                    break;
-                case DragType.ParamConnector:
-                    const connector = this.state.dragging.paramConnector;
-                    if (connector.step !== undefined) {
-                        const gridDropPos = this.screenToGrid({
-                            x: this.state.dragging.x,
-                            y: this.state.dragging.x,
-                        })
-
-                        const newVar = this.props.addVariable(connector.field.type, gridDropPos.x, gridDropPos.y);
-    
-                        const dragInfo = connector;
-                        
-                        const dropInfo = {
-                            field: newVar,
-                            input: !connector.input,
-                        };
-                        
-                        if (this.createLink(dragInfo, dropInfo)) {
-                            connector.step.setInvalid();
-                            this.getStepDisplay(connector.step).forceUpdate();
-                        }
-    
-                        this.props.revalidate();
-                    }
-                    else {
-                        this.canvas!.drawLinks();
-                    }
-                    break;
-                case DragType.DropNew:
-                    const gridDropPos = this.screenToGrid({
-                        x: this.state.dragging.x,
-                        y: this.state.dragging.x,
-                    })
-
-                    if (this.props.dropStep !== undefined) {
-                        this.props.addStep(this.props.dropStep!, gridDropPos.x, gridDropPos.y);
-                    }
-                    else if (this.props.dropVariableType !== undefined) {
-                        this.props.addVariable(this.props.dropVariableType, gridDropPos.x, gridDropPos.y);
-                    }
-                    else if (this.props.dropStopStep !== undefined) {
-                        this.props.addStopStep(this.props.dropStopStep, gridDropPos.x, gridDropPos.y);
-                    }
-                    break;
-                default:
-                    return;
-            }
-        }
-        else {
+        const dragging = this.state.dragging;
+        if (dragging === undefined) {
             return;
         }
 
         this.setState({
             dragging: undefined,
         });
+
+        switch (dragging.type) {
+            case DragType.Step:
+                this.stopDraggingItem(dragging.step);
+                this.updateContentSize();
+                break;
+            case DragType.Variable:
+                this.stopDraggingItem(dragging.variable);
+                this.updateContentSize();
+                break;
+            case DragType.StepConnector:
+                this.canvas!.drawLinks(); // stop drawing this link ... it will be abandoned
+                break;
+            case DragType.ParamConnector:
+                const connector = dragging.paramConnector;
+                if (connector.step !== undefined) {
+                    const gridDropPos = this.screenToGrid(dragging);
+
+                    const newVar = this.props.addVariable(connector.field.type, gridDropPos.x, gridDropPos.y);
+
+                    const dragInfo = connector;
+                    
+                    const dropInfo = {
+                        field: newVar,
+                        input: !connector.input,
+                    };
+                    
+                    if (this.createLink(dragInfo, dropInfo)) {
+                        connector.step.setInvalid();
+                        this.getStepDisplay(connector.step).forceUpdate();
+                    }
+
+                    this.props.revalidate();
+                }
+                else {
+                    this.canvas!.drawLinks();
+                }
+                break;
+            case DragType.DropNew:
+                const gridDropPos = this.screenToGrid(dragging);
+
+                if (this.props.dropStep !== undefined) {
+                    this.props.addStep(this.props.dropStep!, gridDropPos.x, gridDropPos.y);
+                }
+                else if (this.props.dropVariableType !== undefined) {
+                    this.props.addVariable(this.props.dropVariableType, gridDropPos.x, gridDropPos.y);
+                }
+                else if (this.props.dropStopStep !== undefined) {
+                    this.props.addStopStep(this.props.dropStopStep, gridDropPos.x, gridDropPos.y);
+                }
+                break;
+        }
     }
 
     private updateContentSize() {
