@@ -64,6 +64,7 @@ enum DragType {
     Variable,
     StepConnector,
     ParamConnector,
+    DropNew,
 }
 
 type DragInfo = {
@@ -86,6 +87,10 @@ type DragInfo = {
     x: number;
     y: number;
     paramConnector: ParamConnectorDragInfo;
+} | {
+    type: DragType.DropNew;
+    x: number;
+    y: number;
 }
 
 export class ProcessContent extends React.PureComponent<Props, State> {
@@ -203,6 +208,18 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             || nextProps.variables.length !== this.props.variables.length) {
             this.updateContentSize();
         }
+
+        if ((nextProps.dropStep !== undefined && this.props.dropStep === undefined)
+            || (nextProps.dropStopStep !== undefined && this.props.dropStopStep === undefined)
+            || (nextProps.dropVariableType !== undefined && this.props.dropVariableType === undefined)) {
+            this.setState({
+                dragging: {
+                    type: DragType.DropNew,
+                    x: 0, // TODO: this this work with 0,0 coordinates?
+                    y: 0,
+                }
+            });
+        }
     }
 
     componentDidUpdate(prevProps: Props, prevState: State) {
@@ -250,25 +267,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
     }
 
     private dragStop() {
-        if (this.props.dropVariableType !== undefined) {
-            const dropPos = this.getContentDragCoordinates();
-            
-            this.props.addVariable(this.props.dropVariableType, dropPos.x, dropPos.y);
-        }
-
-        else if (this.props.dropStep !== undefined) {
-            const dropPos = this.getContentDragCoordinates();
-
-            this.props.addStep(this.props.dropStep!, dropPos.x, dropPos.y);
-        }
-
-        else if (this.props.dropStopStep !== undefined) {
-            const dropPos = this.getContentDragCoordinates();
-
-            this.props.addStopStep(this.props.dropStopStep, dropPos.x, dropPos.y);
-        }
-
-        else if (this.state.dragging !== undefined) {
+        if (this.state.dragging !== undefined) {
             switch (this.state.dragging.type) {
                 case DragType.Step:
                     this.stopDraggingItem(this.state.dragging.step);
@@ -307,6 +306,22 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     }
                     else {
                         this.canvas!.drawLinks();
+                    }
+                    break;
+                case DragType.DropNew:
+                    const gridDropPos = this.screenToGrid({
+                        x: this.state.dragging.x,
+                        y: this.state.dragging.x,
+                    })
+
+                    if (this.props.dropStep !== undefined) {
+                        this.props.addStep(this.props.dropStep!, gridDropPos.x, gridDropPos.y);
+                    }
+                    else if (this.props.dropVariableType !== undefined) {
+                        this.props.addVariable(this.props.dropVariableType, gridDropPos.x, gridDropPos.y);
+                    }
+                    else if (this.props.dropStopStep !== undefined) {
+                        this.props.addStopStep(this.props.dropStopStep, gridDropPos.x, gridDropPos.y);
                     }
                     break;
                 default:
@@ -365,7 +380,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         if (dragging.type === DragType.Step) {
             this.dragItem(dx, dy, dragging.step, this.getStepDisplay(dragging.step));
         }
-        else if (dragging.type == DragType.Variable) {
+        else if (dragging.type === DragType.Variable) {
             this.dragItem(dx, dy, dragging.variable, this.getVariableDisplay(dragging.variable));
         }
     }
