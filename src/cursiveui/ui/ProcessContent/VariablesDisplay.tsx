@@ -9,7 +9,7 @@ interface Props {
     initialValueChanged: (variable: Variable, value: string | null) => void;
 
     startDragHeader: (variable: Variable, x: number, y: number) => void;
-    startDragConnector: (variable: Variable, input: boolean) => void;
+    startDragConnector: (variable: Variable, input: boolean, x: number, y: number) => void;
     stopDragConnector: (variable: Variable, input: boolean) => void;
 }
 
@@ -24,7 +24,7 @@ export const VariablesDisplay = (props: Props) => {
             deleteClicked={() => props.removeVariable(variable)}
             initialValueChanged={val => props.initialValueChanged(variable, val)}
             headerMouseDown={(x, y) => props.startDragHeader(variable, x, y)}
-            connectorMouseDown={input => props.startDragConnector(variable, input)}
+            connectorMouseDown={(input, x, y) => props.startDragConnector(variable, input, x, y)}
             connectorMouseUp={input => props.stopDragConnector(variable, input)}
         />
     ));

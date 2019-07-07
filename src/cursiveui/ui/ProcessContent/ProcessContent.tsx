@@ -172,13 +172,13 @@ export class ProcessContent extends React.PureComponent<Props, State> {
 
                         startDragHeader={(step, x, y) => this.stepDragStart(step, x, y)}
 
-                        startDragInputPath={step => this.stepLinkDragStart(step, true, null)}
+                        startDragInputPath={(step, x, y) => this.stepLinkDragStart(step, x, y, true, null)}
                         stopDragInputPath={step => this.stepLinkDragStop(step, true, null)}
                     
-                        startDragReturnPath={(step, path) => this.stepLinkDragStart(step, false, path)}
+                        startDragReturnPath={(step, path, x, y) => this.stepLinkDragStart(step, x, y, false, path)}
                         stopDragReturnPath={(step, path) => this.stepLinkDragStop(step, false, path)}
                     
-                        startDragConnector={(param, step, input) => this.fieldLinkDragStart(param, input, step)}
+                        startDragConnector={(param, step, x, y, input) => this.fieldLinkDragStart(param, input, x, y, step)}
                         stopDragConnector={(param, step, input) => this.fieldLinkDragStop(param, input, step)}
                     />
                     
@@ -190,7 +190,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
 
                         startDragHeader={(variable, x, y) => this.varDragStart(variable, x, y)}
 
-                        startDragConnector={(variable, input) => this.fieldLinkDragStart(variable, input, undefined)}
+                        startDragConnector={(variable, input, x, y) => this.fieldLinkDragStart(variable, input, x, y, undefined)}
                         stopDragConnector={(variable, input) => this.fieldLinkDragStop(variable, input, undefined)}
                     />
                 </ScrollWrapper>
@@ -284,9 +284,12 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                 case DragType.ParamConnector:
                     const connector = this.state.dragging.paramConnector;
                     if (connector.step !== undefined) {
-                        const dropPos = this.getContentDragCoordinates();
+                        const gridDropPos = this.screenToGrid({
+                            x: this.state.dragging.x,
+                            y: this.state.dragging.x,
+                        })
 
-                        const newVar = this.props.addVariable(connector.field.type, dropPos.x, dropPos.y);
+                        const newVar = this.props.addVariable(connector.field.type, gridDropPos.x, gridDropPos.y);
     
                         const dragInfo = connector;
                         
@@ -374,13 +377,6 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         };
     }
 
-    private getContentDragCoordinates(): Coord {
-        return this.screenToGrid({
-            x: this.state.dragX,
-            y: this.state.dragY,
-        });
-    }
-
     private dragItem(dx: number, dy: number, item: Positionable, display: React.Component) {
         item.x += dx;
         item.y += dy;
@@ -396,43 +392,50 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         this.canvas!.drawLinks();
     }
 
-    private stepLinkDragStart(step: Step, input: boolean, returnPath: string | null) {
+    private stepLinkDragStart(step: Step, x: number, y: number, input: boolean, returnPath: string | null) {
         this.setState({
             dragging: {
                 type: DragType.StepConnector,
-                x: wtf,
-                y: wtf,
                 stepConnector: {
                     step: step,
                     input: input,
                     returnPath: returnPath,
-                }
+                },
+                x,
+                y,
             }
         });
     }
 
     private stepLinkDragStop(step: Step, input: boolean, returnPath: string | null) {
-        if (this.draggingStepConnector === undefined) {
+        if (this.state.dragging === undefined) {
             return;
         }
 
-        let dragInfo = this.draggingStepConnector;
-        this.draggingStepConnector = undefined;
+        const dragInfo = this.state.dragging;
 
-        if (dragInfo.input === input) {
+        if (dragInfo.type !== DragType.StepConnector) {
+            return;
+        }
+
+        this.setState({
+            dragging: undefined,
+        })
+
+        if (dragInfo.stepConnector.input === input) {
             this.canvas!.drawLinks();
             return;
         }
 
         let fromStep: Step, toStep: Step;
         if (input) {
-            fromStep = dragInfo.step;
+            fromStep = dragInfo.stepConnector.step;
             toStep = step;
-            returnPath = dragInfo.returnPath;
+            returnPath = dragInfo.stepConnector.returnPath;
         }
         else {
             fromStep = step;
-            toStep = dragInfo.step;
+            toStep = dragInfo.stepConnector.step;
         }
 
         let existingPaths = fromStep.returnPaths.filter(r => r.name === returnPath);
@@ -463,42 +466,49 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         this.canvas!.drawLinks();
     }
 
-    private fieldLinkDragStart(field: DataField, input: boolean, step?: Step) {
+    private fieldLinkDragStart(field: DataField, input: boolean, x: number, y: number, step?: Step) {
         this.setState({
             dragging: {
                 type: DragType.ParamConnector,
-                x: wtf,
-                y: wtf,
                 paramConnector: {
                     field: field,
                     input: input,
                     step: step,
-                }
+                },
+                x,
+                y,
             }
         });
     }
 
     private fieldLinkDragStop(field: DataField, input: boolean, step?: Step) {
-        if (this.draggingParamConnector === undefined) {
+        if (this.state.dragging === undefined) {
             return;
         }
         
-        let dragInfo = this.draggingParamConnector;
+        const dragInfo = this.state.dragging;
+
+        if (dragInfo.type !== DragType.ParamConnector) {
+            return;
+        }
+
         let dropInfo = {
             field: field,
             input: input,
             step: step,
         };
 
-        this.draggingParamConnector = undefined;
+        this.setState({
+            dragging: undefined,
+        })
         
-        if (this.createLink(dragInfo, dropInfo)) {
-            if (dragInfo.step !== undefined) {
-                dragInfo.step.setInvalid();
-                this.getStepDisplay(dragInfo.step).forceUpdate();
+        if (this.createLink(dragInfo.paramConnector, dropInfo)) {
+            if (dragInfo.paramConnector.step !== undefined) {
+                dragInfo.paramConnector.step.setInvalid();
+                this.getStepDisplay(dragInfo.paramConnector.step).forceUpdate();
             }
             else {
-                this.getVariableDisplay(dragInfo.field as Variable).forceUpdate();
+                this.getVariableDisplay(dragInfo.paramConnector.field as Variable).forceUpdate();
             }
 
             if (dropInfo.step !== undefined) {

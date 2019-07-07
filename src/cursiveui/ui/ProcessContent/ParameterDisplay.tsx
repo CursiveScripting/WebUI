@@ -7,8 +7,8 @@ interface ParameterDisplayProps {
     parameter: Parameter;
     input: boolean;
     focused: boolean;
-    linkMouseDown?: () => void;
-    linkMouseUp?: () => void;
+    linkMouseDown?: (e: React.MouseEvent<HTMLDivElement>) => void;
+    linkMouseUp?: (e: React.MouseEvent<HTMLDivElement>) => void;
     defaultChanged?: () => void;
 }
 

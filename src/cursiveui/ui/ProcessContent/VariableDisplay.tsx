@@ -9,7 +9,7 @@ interface Props {
     variable: Variable;
     initialValueChanged: (val: string | null) => void;
     headerMouseDown: (mouseX: number, mouseY: number) => void;
-    connectorMouseDown: (input: boolean) => void;
+    connectorMouseDown: (input: boolean, x: number, y: number) => void;
     connectorMouseUp: (input: boolean) => void;
     deleteClicked: () => void;
 }
@@ -128,7 +128,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                         type={this.props.variable.type}
                         state={inputState}
                         input={true}
-                        onMouseDown={() => this.props.connectorMouseDown(true)}
+                        onMouseDown={e => this.props.connectorMouseDown(true, e.clientX, e.clientY)}
                         onMouseUp={() => this.props.connectorMouseUp(true)}
                         ref={c => { if (c !== null) { this._inputConnector = c.connector; }}}
                     />
@@ -137,7 +137,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                         type={this.props.variable.type}
                         state={numOutputs === 0 ? ConnectorState.Disconnected : ConnectorState.Connected}
                         input={false}
-                        onMouseDown={() => this.props.connectorMouseDown(false)}
+                        onMouseDown={e => this.props.connectorMouseDown(false, e.clientX, e.clientY)}
                         onMouseUp={() => this.props.connectorMouseUp(false)}
                         ref={c => { if (c !== null) { this._outputConnector = c.connector; }}}
                     />

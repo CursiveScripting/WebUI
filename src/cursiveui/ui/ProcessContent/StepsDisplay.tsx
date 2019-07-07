@@ -9,13 +9,13 @@ interface Props {
 
     startDragHeader: (step: Step, x: number, y: number) => void;
 
-    startDragInputPath: (step: Step) => void;
+    startDragInputPath: (step: Step, x: number, y: number) => void;
     stopDragInputPath: (step: Step) => void;
 
-    startDragReturnPath: (step: Step, path: string | null) => void;
+    startDragReturnPath: (step: Step, path: string | null, x: number, y: number) => void;
     stopDragReturnPath: (step: Step, path: string | null) => void;
 
-    startDragConnector: (param: Parameter, step: Step, input: boolean) => void;
+    startDragConnector: (param: Parameter, step: Step, x: number, y: number, input: boolean) => void;
     stopDragConnector: (param: Parameter, step: Step, input: boolean) => void;
 
     focusStep?: Step;
@@ -37,11 +37,11 @@ export const StepsDisplay = (props: Props) => {
             readonly={false}
             deleteClicked={step.stepType === StepType.Start ? undefined : () => props.removeStep(step)}
             headerMouseDown={(x, y) => props.startDragHeader(step, x, y)}
-            inputLinkMouseDown={() => props.startDragInputPath(step)}
+            inputLinkMouseDown={(x, y) => props.startDragInputPath(step, x, y)}
             inputLinkMouseUp={() => props.stopDragInputPath(step)}
-            outputLinkMouseDown={returnPath => props.startDragReturnPath(step, returnPath)}
+            outputLinkMouseDown={(x, y, returnPath) => props.startDragReturnPath(step, returnPath, x, y)}
             outputLinkMouseUp={returnPath => props.stopDragReturnPath(step, returnPath)}
-            parameterLinkMouseDown={(param, input) => props.startDragConnector(param, step, input)}
+            parameterLinkMouseDown={(x, y, param, input) => props.startDragConnector(param, step, x, y, input)}
             parameterLinkMouseUp={(param, input) => props.stopDragConnector(param, step, input)}
         />
     ));

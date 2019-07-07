@@ -13,8 +13,8 @@ interface ParameterConnectorProps {
     state: ConnectorState;
     input: boolean;
     className?: string;
-    onMouseDown?: () => void;
-    onMouseUp?: () => void;
+    onMouseDown?: (e: React.MouseEvent<HTMLDivElement>) => void;
+    onMouseUp?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 export class ParameterConnector extends React.PureComponent<ParameterConnectorProps, {}> {
