@@ -21,7 +21,7 @@ type LoadingState = {
 } | {
     loading: false;
     error: true;
-    messages: string[];
+    message: string;
 }
 
 export const CursiveUI = (props: Props) => {
@@ -45,10 +45,16 @@ export const CursiveUI = (props: Props) => {
 
                 setLoadingState({
                     loading: false,
-                    error: false
+                    error: false,
                 });
             })
-            //.catch(err => {})
+            .catch((err: Error) => {
+                setLoadingState({
+                    loading: false,
+                    error: true,
+                    message: err.message,
+                });
+            })
     }, []);
 
     if (loadingState.loading) {
@@ -58,7 +64,7 @@ export const CursiveUI = (props: Props) => {
         return (
             <div>
                 <h1>Error</h1>
-                {loadingState.messages.map((m, i) => <div key={i}>{m}</div>)}
+                <p>{loadingState.message}</p>
             </div>
         )
     }
@@ -83,14 +89,12 @@ export const CursiveUI = (props: Props) => {
 async function loadWorkspace(loadWorkspace: () => Promise<Document | string>, loadProcesses?: () => Promise<string | null>) {
     const workspaceData = await loadWorkspace();
 
-    const workspace = WorkspaceLoading.load(workspaceData, showError);
-
-    // TODO: showError should cause this promise to fail, I guess?
+    const workspace = WorkspaceLoading.load(workspaceData);
 
     if (loadProcesses !== undefined) {
         const processXml = await loadProcesses();
         if (processXml !== null) {
-            ProcessLoading.load(workspace, processXml, showError);
+            ProcessLoading.load(workspace, processXml);
         }
     }
     

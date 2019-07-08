@@ -6,17 +6,16 @@ import { isString } from './DataFunctions';
 import { IProcess } from '../workspaceState/IProcess';
 
 export class WorkspaceLoading {
-    public static load(workspaceData: Document | string, showError: (msg: string) => void) {
+    public static load(workspaceData: Document | string) {
         const rootElement = isString(workspaceData)
             ? new DOMParser().parseFromString(workspaceData, 'application/xml').documentElement
             : workspaceData.firstChild as HTMLElement;
 
-        return this.loadWorkspace(rootElement, showError);
+        return this.loadWorkspace(rootElement);
     }
 
     private static loadWorkspace(
-        workspaceXml: HTMLElement,
-        showError: (msg: string) => void
+        workspaceXml: HTMLElement
     ): IWorkspace {
         const processesByName = new Map<string, IProcess>();
 
@@ -24,11 +23,10 @@ export class WorkspaceLoading {
         const typeNodes = workspaceXml.getElementsByTagName('Type');
         
         for (const typeNode of typeNodes) {
-            const type = this.loadType(typeNode, typesByName, showError);
+            const type = this.loadType(typeNode, typesByName);
             
             if (typesByName.has(type.name)) {
-                showError('There are two types in the workspace with the same name: ' + type.name + '. Type names must be unique.');
-                continue;
+                throw new Error(`There are two types in the workspace with the same name: ${type.name}. Type names must be unique.`);
             }
 
             typesByName.set(type.name, type);
@@ -36,13 +34,13 @@ export class WorkspaceLoading {
     
         let procNodes = workspaceXml.getElementsByTagName('SystemProcess');
         for (const procNode of procNodes) {
-            const process = this.loadProcessDefinition(procNode, typesByName, true, showError) as ISystemProcess;
+            const process = this.loadProcessDefinition(procNode, typesByName, true) as ISystemProcess;
             processesByName.set(process.name, process);
         }
 
         procNodes = workspaceXml.getElementsByTagName('RequiredProcess');
         for (const procNode of procNodes) {
-            const process = this.loadProcessDefinition(procNode, typesByName, false, showError) as IUserProcess;
+            const process = this.loadProcessDefinition(procNode, typesByName, false) as IUserProcess;
             processesByName.set(process.name, process);
         }
 
@@ -52,7 +50,7 @@ export class WorkspaceLoading {
         };
     }
 
-    private static loadType(typeNode: Element, typesByName: Map<string, Type>, showError: (msg: string) => void) {
+    private static loadType(typeNode: Element, typesByName: Map<string, Type>) {
         const name = typeNode.getAttribute('name') as string;
         const color = typeNode.getAttribute('color') as string;
         
@@ -68,12 +66,10 @@ export class WorkspaceLoading {
             const tmpExtendsType = typesByName.get(extendsName)
             
             if (tmpExtendsType === undefined) {
-                extendsType = null;
-                showError(`Type ${name} extends a type which has not been defined: ${extendsName}.`);
+                throw new Error(`Type ${name} extends a type which has not been defined: ${extendsName}.`);
             }
-            else {
-                extendsType = tmpExtendsType;
-            }
+            
+            extendsType = tmpExtendsType;
         }
         else {
             extendsType = null;
@@ -90,8 +86,7 @@ export class WorkspaceLoading {
     private static loadProcessDefinition(
         procNode: Element,
         typesByName: Map<string, Type>,
-        isSystemProcess: boolean,
-        showError: (msg: string) => void
+        isSystemProcess: boolean
     ): ISystemProcess | IUserProcess {
         const processName = procNode.getAttribute('name') as string;
         const inputs: Parameter[] = [];
@@ -104,10 +99,10 @@ export class WorkspaceLoading {
         const description = descNodes.length > 0 ? descNodes[0].innerHTML : '';
         
         let paramNodes = procNode.getElementsByTagName('Input');
-        this.loadParameters(processName, typesByName, paramNodes, inputs, 'input', procTypeName, showError);
+        this.loadParameters(processName, typesByName, paramNodes, inputs, 'input', procTypeName);
 
         paramNodes = procNode.getElementsByTagName('Output');
-        this.loadParameters(processName, typesByName, paramNodes, outputs, 'output', procTypeName, showError);
+        this.loadParameters(processName, typesByName, paramNodes, outputs, 'output', procTypeName);
         
         const returnPathNodes = procNode.getElementsByTagName('ReturnPath');
         const usedNames: {[key: string]: boolean} = {};
@@ -115,7 +110,7 @@ export class WorkspaceLoading {
             let path = returnPathNode.getAttribute('name') as string;
             
             if (usedNames.hasOwnProperty(path)) {
-                showError(`The '${processName}' ${procTypeName} process has two return paths with the same name: ${path}.`
+                throw new Error(`The '${processName}' ${procTypeName} process has two return paths with the same name: ${path}.`
                 + ` Return path names must be unique within a process.`);
             }
             else {
@@ -154,8 +149,7 @@ export class WorkspaceLoading {
         paramNodes: HTMLCollectionOf<Element>,
         parameters: Parameter[],
         inputOrOutput: 'input' | 'output',
-        procTypeName: string,
-        showError: (msg: string) => void
+        procTypeName: string
     ) {
         const usedNames = new Set<string>();
         const isInput = inputOrOutput === 'input';
@@ -166,13 +160,13 @@ export class WorkspaceLoading {
             
             const paramType = types.get(paramTypeName);
             if (paramType === undefined) {
-                showError(`The '${processName}' ${procTypeName} process has an ${inputOrOutput} (${paramName})`
+                throw new Error(`The '${processName}' ${procTypeName} process has an ${inputOrOutput} (${paramName})`
                  + ` with an unrecognised type: ${paramTypeName}.`);
                 continue;
             }    
             
             if (usedNames.has(paramName)) {
-                showError(`The '${processName}' ${procTypeName} process has two ${inputOrOutput}s`
+                throw new Error(`The '${processName}' ${procTypeName} process has two ${inputOrOutput}s`
                     + ` with the same name: ${paramName}. The names of ${paramTypeName}s must be unique within a process.`);
                 continue;
             }

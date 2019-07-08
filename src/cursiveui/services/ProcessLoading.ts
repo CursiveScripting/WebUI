@@ -1,7 +1,7 @@
 ﻿import { Type } from '../data';
 import { IWorkspace } from '../workspaceState/IWorkspace';
 import { createMap, isString } from './DataFunctions';
-import { isUserProcess, usesReturnPaths } from './StepFunctions';
+import { isUserProcess, usesOutputs } from './StepFunctions';
 import { IUserProcess } from '../workspaceState/IUserProcess';
 import { IVariable } from '../workspaceState/IVariable';
 import { IStep, StepType } from '../workspaceState/IStep';
@@ -12,21 +12,21 @@ import { IStopStep } from '../workspaceState/IStopStep';
 import { IProcessStep } from '../workspaceState/IProcessStep';
 
 export class ProcessLoading {
-    public static load(workspace: IWorkspace, processData: Document | string, showError: (msg: string) => void) {
+    public static load(workspace: IWorkspace, processData: Document | string) {
         const rootElement = isString(processData)
             ? new DOMParser().parseFromString(processData, 'application/xml').documentElement
             : processData.firstChild as HTMLElement;
 
-        return this.loadProcesses(workspace, rootElement, showError);
+        return this.loadProcesses(workspace, rootElement);
     }
 
-    private static loadProcesses(workspace: IWorkspace, processXml: HTMLElement, showError: (msg: string) => void) {
+    private static loadProcesses(workspace: IWorkspace, processXml: HTMLElement) {
         const processNodes = processXml.getElementsByTagName('Process');
         const typesByName = createMap(workspace.types, t => t.name);
         const processesByName = createMap(workspace.processes, p => p.name);
         
         for (const processNode of processNodes) {
-            const process = this.loadProcessDefinition(typesByName, processNode, showError);
+            const process = this.loadProcessDefinition(typesByName, processNode);
             
             const existing = processesByName.get(process.name);
             if (existing !== undefined) {
@@ -37,11 +37,11 @@ export class ProcessLoading {
                         existing.description = process.description;
                     }
                     else {
-                        showError(`There are two user processes with the same name: ${process.name}. Process names must be unique.`);
+                        throw new Error(`There are two user processes with the same name: ${process.name}. Process names must be unique.`);
                     }
                 }
                 else {
-                    showError(`A user process has the same name as a system processes: ${process.name}. Process names must be unique.`);
+                    throw new Error(`A user process has the same name as a system processes: ${process.name}. Process names must be unique.`);
                 }
                 continue;
             }
@@ -53,11 +53,11 @@ export class ProcessLoading {
         }
 
         for (const processNode of processNodes) {
-            this.loadProcessSteps(processNode, processesByName, showError);
+            this.loadProcessSteps(processNode, processesByName);
         }
     }
 
-    private static loadProcessDefinition(typesByName: Map<string, Type>, processNode: Element, showError: (msg: string) => void): IUserProcess {
+    private static loadProcessDefinition(typesByName: Map<string, Type>, processNode: Element): IUserProcess {
         const name = processNode.getAttribute('name')!;
         const folder = processNode.hasAttribute('folder') ? processNode.getAttribute('folder') : null;
         const descNodes = processNode.getElementsByTagName('Description');
@@ -65,16 +65,16 @@ export class ProcessLoading {
 
         const inputs: IParameter[] = [];
         let paramNodes = processNode.getElementsByTagName('Input');
-        this.loadProcessParameters(typesByName, paramNodes, inputs, 'input', showError);
+        this.loadProcessParameters(typesByName, paramNodes, inputs, 'input');
 
         const outputs: IParameter[] = [];
         paramNodes = processNode.getElementsByTagName('Output');
-        this.loadProcessParameters(typesByName, paramNodes, outputs, 'output', showError);
+        this.loadProcessParameters(typesByName, paramNodes, outputs, 'output');
 
         // TODO: why the heck are variables part of the process definition?
         const variables: IVariable[] = [];
         paramNodes = processNode.getElementsByTagName('Variable');
-        this.loadProcessParameters(typesByName, paramNodes, variables, 'variable', showError);
+        this.loadProcessParameters(typesByName, paramNodes, variables, 'variable');
 
         const returnPaths: string[] = [];
         const usedNames: {[key: string]: boolean} = {};
@@ -108,8 +108,7 @@ export class ProcessLoading {
         typesByName: Map<string, Type>,
         paramNodes: HTMLCollectionOf<Element>,
         dataFields: IParameter[],
-        paramTypeName: 'input' | 'output' | 'variable',
-        showError: (msg: string) => void
+        paramTypeName: 'input' | 'output' | 'variable'
     ) {
         const isVariable = paramTypeName === 'variable';
 
@@ -119,7 +118,7 @@ export class ProcessLoading {
             const dataType = typesByName.get(typeName);
 
             if (dataType === undefined) {
-                showError(`The ${paramName} ${paramTypeName} has an invalid type: ${typeName}. That type doesn't exist in this workspace.`);
+                throw new Error(`The ${paramName} ${paramTypeName} has an invalid type: ${typeName}. That type doesn't exist in this workspace.`);
                 continue;
             }
 
@@ -148,8 +147,7 @@ export class ProcessLoading {
 
     private static loadProcessSteps(
         processNode: Element,
-        processesByName: Map<string, IProcess>,
-        showError: (msg: string) => void
+        processesByName: Map<string, IProcess>
     ) {
         const name = processNode.getAttribute('name')!;
 
@@ -167,7 +165,7 @@ export class ProcessLoading {
             const step: IStartStep = {
                 uniqueId: id,
                 stepType: StepType.Start,
-                outputs: this.loadStepOutputs(id, process, process.inputs, stepNode, showError),
+                outputs: this.loadStepOutputs(id, process, process.inputs, stepNode),
                 returnPaths: this.loadReturnPaths(stepNode),
                 x: parseInt(stepNode.getAttribute('x')!),
                 y: parseInt(stepNode.getAttribute('y')!),
@@ -184,14 +182,14 @@ export class ProcessLoading {
             if (stepNode.hasAttribute('name')) {
                 returnPath = stepNode.getAttribute('name')!;
                 if (process.returnPaths.indexOf(returnPath) === -1) {
-                    showError(`Step ${id} of the "${process.name}" process uses an unspecified return path name: ${name}.`
+                    throw new Error(`Step ${id} of the "${process.name}" process uses an unspecified return path name: ${name}.`
                      + ' That name isn\'t a return path on this process.');
                 }
             }
             else {
                 returnPath = null;
                 if (process.returnPaths.length > 0) {
-                    showError(`Step ${id} of the "${process.name}" process has no return path name.`
+                    throw new Error(`Step ${id} of the "${process.name}" process has no return path name.`
                      + ' This process uses named return paths, so a name is required.');
                 }
             }
@@ -199,7 +197,7 @@ export class ProcessLoading {
             const step: IStopStep = {
                 uniqueId: id,
                 stepType: StepType.Stop,
-                inputs: this.loadStepInputs(id, process, process.outputs, stepNode, showError),
+                inputs: this.loadStepInputs(id, process, process.outputs, stepNode),
                 x: parseInt(stepNode.getAttribute('x')!),
                 y: parseInt(stepNode.getAttribute('y')!),
                 returnPath,
@@ -216,7 +214,7 @@ export class ProcessLoading {
             const childProcess = processesByName.get(childProcessName);
             
             if (childProcess === undefined) {
-                showError(`Step ${id} of the "${process.name}" process wraps an unknown process: ${name}.`
+                throw new Error(`Step ${id} of the "${process.name}" process wraps an unknown process: ${name}.`
                  + ' That process doesn\'t exist in this workspace.');
                 continue;
             }
@@ -227,8 +225,8 @@ export class ProcessLoading {
                 uniqueId: id,
                 stepType: isUser ? StepType.UserProcess : StepType.SystemProcess,
                 processName: childProcess.name,
-                inputs: this.loadStepInputs(id, process, childProcess.inputs, stepNode, showError),
-                outputs: this.loadStepOutputs(id, process, childProcess.outputs, stepNode, showError),
+                inputs: this.loadStepInputs(id, process, childProcess.inputs, stepNode),
+                outputs: this.loadStepOutputs(id, process, childProcess.outputs, stepNode),
                 returnPaths: this.loadReturnPaths(stepNode),
                 x: parseInt(stepNode.getAttribute('x')!),
                 y: parseInt(stepNode.getAttribute('y')!),
@@ -237,17 +235,17 @@ export class ProcessLoading {
             stepsById.set(id, step);
         }
         
-        this.verifyReturnPaths(process.name, stepsById, showError);
+        this.verifyReturnPaths(process.name, stepsById);
         
         process.steps = Array.from(stepsById.values());
     }
 
-    private static loadStepInputs(stepId: string, process: IUserProcess, inputs: IParameter[], stepNode: Element, showError: (msg: string) => void) {
-        return this.loadStepParameters(stepId, process, inputs, stepNode, 'input', 'Input', 'source', showError);
+    private static loadStepInputs(stepId: string, process: IUserProcess, inputs: IParameter[], stepNode: Element) {
+        return this.loadStepParameters(stepId, process, inputs, stepNode, 'input', 'Input', 'source');
     }
 
-    private static loadStepOutputs(stepId: string, process: IUserProcess, outputs: IParameter[], stepNode: Element, showError: (msg: string) => void) {
-        return this.loadStepParameters(stepId, process, outputs, stepNode, 'output', 'Output', 'destination', showError);
+    private static loadStepOutputs(stepId: string, process: IUserProcess, outputs: IParameter[], stepNode: Element) {
+        return this.loadStepParameters(stepId, process, outputs, stepNode, 'output', 'Output', 'destination');
     }
 
     private static loadStepParameters(
@@ -257,8 +255,7 @@ export class ProcessLoading {
         stepNode: Element,
         parameterTypeName: string,
         parameterElementTagName: string,
-        linkAttributeName: string,
-        showError: (msg: string) => void
+        linkAttributeName: string
     ) {
         const sourceNodes = stepNode.getElementsByTagName(parameterElementTagName);
         const results: Record<string, string> = {};
@@ -271,11 +268,11 @@ export class ProcessLoading {
             const destination = process.variables.find(v => v.name === destinationName);
 
             if (parameter === undefined) {
-                showError(`Step ${stepId} of the "${process.name}" process tries to map a non-existant ${parameterTypeName}: ${paramName}`);
+                throw new Error(`Step ${stepId} of the "${process.name}" process tries to map a non-existant ${parameterTypeName}: ${paramName}`);
                 continue;
             }
             if (destination === undefined) {
-                showError(`Step ${stepId} of the "${process.name}" process tries to map an ${parameterTypeName} to a non-existant variable: ${destinationName}`);
+                throw new Error(`Step ${stepId} of the "${process.name}" process tries to map an ${parameterTypeName} to a non-existant variable: ${destinationName}`);
                 continue;
             }
 
@@ -308,14 +305,14 @@ export class ProcessLoading {
         return returnValue;
     }
 
-    private static verifyReturnPaths(processName: string, stepsById: Map<string, IStep>, showError: (msg: string) => void) {
+    private static verifyReturnPaths(processName: string, stepsById: Map<string, IStep>) {
         for (const [, step] of stepsById) {
-            if (usesReturnPaths(step)) {
+            if (usesOutputs(step)) {
                 for (const path in step.returnPaths) {
                     const destination = step.returnPaths[path];
 
                     if (!stepsById.has(destination)) {
-                        showError(`Step ${step.uniqueId} of the "${processName}" links a return path to an unknown step unknown process: ${name}.`
+                        throw new Error(`Step ${step.uniqueId} of the "${processName}" links a return path to an unknown step unknown process: ${name}.`
                         + ' That process doesn\'t exist in this workspace.');
                     }
                 }
