@@ -5,7 +5,7 @@
         readonly name: string,
         public color: string,
         readonly extendsType: Type | null,
-        private readonly validation: RegExp | undefined,
+        private readonly validation?: RegExp,
         readonly guidance?: string
     ) {
         this.allowInput = validation !== undefined;

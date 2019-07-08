@@ -3,7 +3,7 @@ import { Step, ReturnPath, Type, Variable, DataField, Process, Parameter } from 
 import { alignToGrid, growToFitGrid, gridSize } from './gridSize';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
-import { Positionable } from '../../data/Positionable';
+import { Positionable } from '../../workspaceState/IPositionable';
 import './ProcessContent.css';
 import { LinkCanvas, LinkDragInfo } from './LinkCanvas';
 import { ScrollWrapper } from './ScrollWrapper';

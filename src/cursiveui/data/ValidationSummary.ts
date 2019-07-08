@@ -1,10 +1,10 @@
 ﻿import { ValidationError } from './ValidationError';
-import { UserProcess } from './UserProcess';
+import { IUserProcess } from '../workspaceState/IUserProcess';
 
 export class ValidationSummary {
     private readonly errorsByProcess = new Map<string, ValidationError[]>();
 
-    addError(process: UserProcess, error: ValidationError) {
+    addError(process: IUserProcess, error: ValidationError) {
         var errorList = this.errorsByProcess.get(process.name)!;
         if (errorList === undefined) {
             this.errorsByProcess.set(process.name, [error]);
@@ -14,7 +14,7 @@ export class ValidationSummary {
         }
     }
 
-    setProcessErrors(process: UserProcess, errors: ValidationError[]) {
+    setProcessErrors(process: IUserProcess, errors: ValidationError[]) {
         if (errors.length === 0) {
             this.errorsByProcess.delete(process.name);
         }
@@ -35,7 +35,7 @@ export class ValidationSummary {
         return this.errorsByProcess.size > 0;
     }
 
-    getErrorsForProcess(process: UserProcess) {
+    getErrorsForProcess(process: IUserProcess) {
         let errors = this.errorsByProcess.get(process.name);
         return errors === undefined ? [] : errors;
     }

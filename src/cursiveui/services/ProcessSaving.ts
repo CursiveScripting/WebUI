@@ -1,17 +1,26 @@
-﻿import { DataField, Parameter, Step, StepType, StopStep, UserProcess } from '../data';
+﻿import { IProcess } from '../workspaceState/IProcess';
+import { isUserProcess, isStopStep, usesInputs, usesOutputs } from './StepFunctions';
+import { IUserProcess } from '../workspaceState/IUserProcess';
+import { IParameter } from '../workspaceState/IParameter';
+import { StepType, IStep } from '../workspaceState/IStep';
+import { IStopStep } from '../workspaceState/IStopStep';
+import { IProcessStep } from '../workspaceState/IProcessStep';
 
 export class ProcessSaving {
-    static saveProcesses(processes: Map<string, UserProcess>) {
-        let saveDoc = document.implementation.createDocument(null, 'processes', null);
-        let rootNode = saveDoc.createElement('Processes');
+    static saveProcesses(processes: IProcess[]) {
+        const saveDoc = document.implementation.createDocument(null, 'processes', null);
+        const rootNode = saveDoc.createElement('Processes');
 
-        for (const [, process] of processes) {
-            this.saveProcess(process, rootNode);
+        for (const process of processes) {
+            if (isUserProcess(process)) {
+                this.saveProcess(process, rootNode);
+            }
         }
+
         return rootNode.outerHTML;
     }
 
-    private static saveProcess(process: UserProcess, parent: HTMLElement) {
+    private static saveProcess(process: IUserProcess, parent: HTMLElement) {
         let element = parent.ownerDocument!.createElement('Process');
         parent.appendChild(element);
         element.setAttribute('name', process.name);
@@ -49,59 +58,64 @@ export class ProcessSaving {
         }
 
         // write steps
-        let steps = parent.ownerDocument!.createElement('Steps');
+        const steps = parent.ownerDocument!.createElement('Steps');
         element.appendChild(steps);
 
-        for (let [, step] of process.steps) {
+        for (const step of process.steps) {
             this.saveStep(step, steps);
         }
     }
 
-    private static saveStep(step: Step, parent: HTMLElement) {
+    private static saveStep(step: IStep, parent: HTMLElement) {
         let element: HTMLElement;
 
         if (step.stepType === StepType.Start) {
             element = parent.ownerDocument!.createElement('Start');
         }
-        else if (step.stepType === StepType.Stop) {
+        else if (isStopStep(step)) {
             element = parent.ownerDocument!.createElement('Stop');
-            let returnPath = (step as StopStep).returnPath;
+            let returnPath = (step as IStopStep).returnPath;
             if (returnPath !== null) {
                 element.setAttribute('name', returnPath);
             }
         }
         else {
             element = parent.ownerDocument!.createElement('Step');
-            element.setAttribute('process', step.name);
+            element.setAttribute('process', (step as IProcessStep).processName);
         }
         parent.appendChild(element);
     
-        element.setAttribute('ID', step.uniqueID.toString());
+        element.setAttribute('ID', step.uniqueId.toString());
 
         element.setAttribute('x', step.x.toString());
         element.setAttribute('y', step.y.toString());
 
-        this.saveStepParameters(step.inputs, element, 'Input', 'source');
-        this.saveStepParameters(step.outputs, element, 'Output', 'destination');
+        if (usesInputs(step)) {
+            this.saveStepParameters(step.inputs, element, 'Input', 'source');
+        }
 
-        for (let path of step.returnPaths) {
-            let pathElement: HTMLElement;
-            
-            if (path.name !== null) {
-                pathElement = parent.ownerDocument!.createElement('NamedReturnPath');
-                pathElement.setAttribute('name', path.name);
-            }
-            else {
-                pathElement = parent.ownerDocument!.createElement('ReturnPath');
-            }
+        if (usesOutputs(step)) {
+            this.saveStepParameters(step.outputs, element, 'Output', 'destination');
 
-            pathElement.setAttribute('targetStepID', path.toStep.uniqueID.toString());
-            element.appendChild(pathElement);
+            for (const pathName in step.returnPaths) {
+                let pathElement: HTMLElement;
+                
+                if (pathName !== '') { // TODO: was null, not empty
+                    pathElement = parent.ownerDocument!.createElement('NamedReturnPath');
+                    pathElement.setAttribute('name', pathName);
+                }
+                else {
+                    pathElement = parent.ownerDocument!.createElement('ReturnPath');
+                }
+
+                pathElement.setAttribute('targetStepID', step.returnPaths[pathName]);
+                element.appendChild(pathElement);
+            }
         }
     }
 
     private static saveStepParameters(
-        parameters: Parameter[],
+        parameters: Record<string, string>,
         parent: Element,
         nodeName: string,
         variableAttributeName: string
@@ -110,27 +124,29 @@ export class ProcessSaving {
             return;
         }
 
-        for (let parameter of parameters) {
-            this.saveStepParameter(parameter, parent, nodeName, variableAttributeName);
+        for (const parameterName in parameters) {
+            const variableName = parameters[parameterName];
+            this.saveStepParameter(parameterName, variableName, parent, nodeName, variableAttributeName);
         }
     }
 
     private static saveStepParameter(
-        parameter: Parameter,
+        parameterName: string,
+        variableName: string | undefined,
         parent: Element,
         nodeName: string,
         variableAttributeName: string
     ) {
         let element = parent.ownerDocument!.createElement(nodeName);
-        element.setAttribute('name', parameter.name);
+        element.setAttribute('name', parameterName);
         parent.appendChild(element);
 
-        if (parameter.link != null) {
-            element.setAttribute(variableAttributeName, parameter.link.name);
+        if (variableName !== undefined) {
+            element.setAttribute(variableAttributeName, variableName);
         }
     }
 
-    private static saveProcessParameter(parameter: DataField, parent: Element, nodeName: string) {
+    private static saveProcessParameter(parameter: IParameter, parent: Element, nodeName: string) {
         let element = parent.ownerDocument!.createElement(nodeName);
         element.setAttribute('name', parameter.name);
         element.setAttribute('type', parameter.type.name);

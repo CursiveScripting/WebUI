@@ -1,7 +1,7 @@
-import { Step } from './Step';
+import { IStep } from '../workspaceState/IStep';
 
 export class ReturnPath {
-    constructor (readonly fromStep: Step, readonly toStep: Step, readonly name: string | null) {
+    constructor (readonly fromStep: IStep, readonly toStep: IStep, readonly name: string | null) {
         
     }
 }

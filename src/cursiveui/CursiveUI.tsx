@@ -1,75 +1,100 @@
-import { Workspace } from './data';
-import React from 'react';
+import React, { createContext, useReducer, Dispatch, useEffect, useState } from 'react';
 import { WorkspaceEditor } from './ui/WorkspaceEditor';
+import { workspaceReducer } from './workspaceState/reducer';
+import { WorkspaceAction } from './workspaceState/actions';
+import { WorkspaceLoading } from './services/WorkspaceLoading';
+import { ProcessSaving } from './services/ProcessSaving';
+import { ProcessLoading } from './services/ProcessLoading';
 
-interface UIProps {
+interface Props {
     className: string;
     loadWorkspace: () => Promise<Document | string>;
     loadProcesses: undefined | (() => Promise<string | null>);
-    saveProcesses: (processXml: string) => void;
+    saveProcesses: (processXml: string) => Promise<void>;
 }
 
-interface UIState {
-    workspace?: Workspace;
+type LoadingState = {
+    loading: true;
+} | {
+    loading: false;
+    error: false;
+} | {
+    loading: false;
+    error: true;
+    messages: string[];
 }
 
-export class CursiveUI extends React.PureComponent<UIProps, UIState> {
-    constructor(props: UIProps) {
-        super(props);
+export const CursiveUI = (props: Props) => {
+    const [workspace, dispatchWorkspace] = useReducer(workspaceReducer, {
+        types: [],
+        processes: [],
+    });
 
-        this.state = {};
+    const WorkspaceDispatchContext = createContext<Dispatch<WorkspaceAction>>(ignore => {});
+
+    const [loadingState, setLoadingState] = useState<LoadingState>({ loading: true });
+
+    // Load the workspace and processes only after the initial render
+    useEffect(() => {
+        loadWorkspace(props.loadWorkspace, props.loadProcesses)
+            .then(result => {
+                dispatchWorkspace({
+                    ...result,
+                    type: 'load',
+                });
+
+                setLoadingState({
+                    loading: false,
+                    error: false
+                });
+            })
+            //.catch(err => {})
+    }, []);
+
+    if (loadingState.loading) {
+        return <div>Loading...</div>
     }
-
-    componentDidMount() {
-        this.initialize();
+    else if (loadingState.error) {
+        return (
+            <div>
+                <h1>Error</h1>
+                {loadingState.messages.map((m, i) => <div key={i}>{m}</div>)}
+            </div>
+        )
     }
+    else {
+        const doSave = () => {
+            const xml = ProcessSaving.saveProcesses(workspace.processes);
+            props.saveProcesses(xml)
+        };
 
-    render() {
-        if (this.state.workspace !== undefined) {
-            const doSave = () => this.save();
+        return (
+            <WorkspaceDispatchContext.Provider value={dispatchWorkspace}>
+                <WorkspaceEditor
+                    className={props.className}
+                    workspace={workspace}
+                    save={doSave}
+                />
+            </WorkspaceDispatchContext.Provider>
+        )
+    }
+}
 
-            return <WorkspaceEditor
-                className={this.props.className}
-                workspace={this.state.workspace}
-                save={doSave}
-            />
-        }
-        else {
-            return <div>Loading...</div>
+async function loadWorkspace(loadWorkspace: () => Promise<Document | string>, loadProcesses?: () => Promise<string | null>) {
+    const workspaceData = await loadWorkspace();
+
+    const workspace = WorkspaceLoading.load(workspaceData, showError);
+
+    // TODO: showError should cause this promise to fail, I guess?
+
+    if (loadProcesses !== undefined) {
+        const processXml = await loadProcesses();
+        if (processXml !== null) {
+            ProcessLoading.load(workspace, processXml, showError);
         }
     }
     
-    private async initialize() {
-        const workspaceData = await this.props.loadWorkspace();
+    // workspace.validateAll();
 
-        const workspace = this.isString(workspaceData)
-            ? Workspace.loadFromString(workspaceData)
-            : Workspace.loadFromDOM(workspaceData);
-
-        if (this.props.loadProcesses !== undefined) {
-            const processXml = await this.props.loadProcesses();
-            if (processXml !== null) {
-                workspace.loadProcessesFromString(processXml);
-            }
-        }
-
-        workspace.validateAll();
-
-        this.setState({
-            workspace: workspace,
-        });
-    }
-
-    private isString(data: string | Document): data is string {
-        return typeof data === 'string';
-    }
-
-    private save() {
-        if (this.state.workspace === undefined) {
-            return;
-        }
-
-        const processXml = this.state.workspace.saveProcesses();
-        this.props.saveProcesses(processXml);
-    }
+    return workspace;
 }

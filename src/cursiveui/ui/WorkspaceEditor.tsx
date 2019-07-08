@@ -1,15 +1,17 @@
 import * as React from 'react';
-import { UserProcess, Workspace, Type, Process, Step, Variable, StepType, Parameter, ProcessStep, StopStep } from '../data';
+import { Type, Parameter } from '../data';
 import { ValidationError } from '../data/ValidationError';
 import { ProcessContent } from './ProcessContent/ProcessContent';
 import { ProcessSelector } from './sidebar/ProcessSelector';
 import { ProcessToolbar } from './toolbar/ProcessToolbar';
 import { ProcessEditor } from './ProcessSignature/ProcessEditor';
 import './WorkspaceEditor.css';
+import { IWorkspace } from '../workspaceState/IWorkspace';
+import { IUserProcess } from '../workspaceState/IUserProcess';
 
 interface Props {
-    workspace: Workspace;
-    initialProcess?: UserProcess;
+    workspace: IWorkspace;
+    initialProcess?: IUserProcess;
     className?: string;
     save: () => void;
 }

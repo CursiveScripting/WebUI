@@ -1,9 +1,9 @@
 ﻿import { Type } from './Type';
 import { DataField } from './DataField';
-import { Variable } from './Variable';
+import { IVariable } from '../workspaceState/IVariable';
 
 export class Parameter extends DataField {
-    link: Variable | null;
+    link: IVariable | null;
     isValid: boolean;
     constructor(name: string, dataType: Type, readonly input: boolean) {
         super(name, dataType);
