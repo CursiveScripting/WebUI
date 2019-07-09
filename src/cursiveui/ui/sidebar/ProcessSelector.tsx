@@ -1,30 +1,32 @@
 import * as React from 'react';
-import { UserProcess, SystemProcess, Process, Type } from '../../data';
+import { Type } from '../../data';
 import { ToolboxItem, ToolboxItemType } from './ToolboxItem';
 import './ProcessSelector.css';
 import { ProcessFolder } from './ProcessFolder';
+import { IProcess } from '../../workspaceState/IProcess';
+import { IUserProcess } from '../../workspaceState/IUserProcess';
+import { isUserProcess } from '../../services/StepFunctions';
 
 interface Props {
-    systemProcesses: SystemProcess[];
-    userProcesses: UserProcess[];
-    openProcess?: UserProcess;
-    selectedProcess?: Process;
+    processes: IProcess[];
+    openProcess?: IUserProcess;
+    selectedProcess?: IProcess;
     className?: string;
-    errorProcesses: UserProcess[];
-    dataTypes: Map<string, Type>;
+    errorProcesses: IUserProcess[];
+    dataTypes: Type[];
 
     deselect: () => void;
-    processSelected: (process: Process) => void;
+    processSelected: (process: IProcess) => void;
     stopStepSelected: (name: string | null) => void;
     dataTypeSelected: (type: Type) => void;
     
-    processOpened: (process: UserProcess) => void;
-    editDefinition: (process: UserProcess) => void;
+    processOpened: (process: IUserProcess) => void;
+    editDefinition: (process: IUserProcess) => void;
 }
 
 interface State {
-    rootProcesses: Process[];
-    processFolders: Map<string, Process[]>;
+    rootProcesses: IProcess[];
+    processFolders: Map<string, IProcess[]>;
     returnPathNames: string[];
 }
 
@@ -33,15 +35,14 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
         super(props);
 
         this.state = {
-            ...this.arrangeProcesses(props),
+            ...this.arrangeProcesses(props.processes),
             ...this.determineReturnPaths(props),
         };
     }
 
     componentWillReceiveProps(nextProps: Props) {
-        if (nextProps.userProcesses !== this.props.userProcesses
-            || nextProps.systemProcesses !== this.props.systemProcesses) {
-            this.setState(this.arrangeProcesses(nextProps));
+        if (nextProps.processes !== this.props.processes) {
+            this.setState(this.arrangeProcesses(nextProps.processes));
         }
 
         if (nextProps.openProcess !== this.props.openProcess) {
@@ -49,11 +50,9 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
         }
     }
 
-    private arrangeProcesses(props: Props) {
-        const rootProcesses: Process[] = [];
-        const processFolders = new Map<string, Process[]>();
-
-        const allProcesses = [...props.userProcesses, ...props.systemProcesses];
+    private arrangeProcesses(allProcesses: IProcess[]) {
+        const rootProcesses: IProcess[] = [];
+        const processFolders = new Map<string, IProcess[]>();
 
         for (const process of allProcesses) {
             if (process.folder === null) {
@@ -104,7 +103,7 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
         }
 
         const dataTypeItems = [];
-        for (const type of this.props.dataTypes.values()) {
+        for (const type of this.props.dataTypes) {
             dataTypeItems.push(this.renderDataType(type));
         }
 
@@ -157,18 +156,14 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
         />
     }
 
-    private isUserProcess(process: Process): process is UserProcess {
-        return !process.isSystem;
-    }
-
-    private renderProcess(process: Process, index: number) {
+    private renderProcess(process: IProcess, index: number) {
         let hasErrors: boolean;
         let isOpen: boolean;
         let openProcess: undefined | (() => void);
         let editDef: undefined | (() => void);
         let type: ToolboxItemType;
 
-        if (this.isUserProcess(process)) {
+        if (isUserProcess(process)) {
             type = ToolboxItemType.UserProcess;
             hasErrors = this.props.errorProcesses.indexOf(process) !== -1;
             isOpen = process === this.props.openProcess;

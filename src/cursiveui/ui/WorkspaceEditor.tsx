@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Type, Parameter } from '../data';
+import { Type } from '../data';
 import { ValidationError } from '../data/ValidationError';
 import { ProcessContent } from './ProcessContent/ProcessContent';
 import { ProcessSelector } from './sidebar/ProcessSelector';
@@ -8,6 +8,9 @@ import { ProcessEditor } from './ProcessSignature/ProcessEditor';
 import './WorkspaceEditor.css';
 import { IWorkspace } from '../workspaceState/IWorkspace';
 import { IUserProcess } from '../workspaceState/IUserProcess';
+import { IProcess } from '../workspaceState/IProcess';
+import { IStep } from '../workspaceState/IStep';
+import { IParameter } from '../workspaceState/IParameter';
 
 interface Props {
     workspace: IWorkspace;
@@ -17,16 +20,16 @@ interface Props {
 }
 
 interface State {
-    openProcess?: UserProcess;
+    openProcess?: IUserProcess;
     editingSignature: boolean;
     droppingDataType?: Type;
-    droppingProcess?: Process;
+    droppingProcess?: IProcess;
     droppingStopStep?: string | null;
     processErrors: ValidationError[];
-    processesWithErrors: UserProcess[];
+    processesWithErrors: IUserProcess[];
     otherProcessesHaveErrors: boolean;
-    focusStep?: Step;
-    focusStepParameter?: Parameter;
+    focusStep?: IStep;
+    focusStepParameter?: IParameter;
     focusStepReturnPath?: string | null;
 }
 
@@ -91,8 +94,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         return (
             <ProcessSelector
                 className="workspaceEditor__sidebar"
-                userProcesses={Array.from(this.props.workspace.userProcesses.values())}
-                systemProcesses={Array.from(this.props.workspace.systemProcesses.values())}
+                processes={this.props.workspace.processes}
                 openProcess={this.state.openProcess}
                 selectedProcess={this.state.droppingProcess}
                 processOpened={process => this.openProcess(process)}
@@ -150,7 +152,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 steps={allSteps}
                 variables={openProcess.variables}
 
-                addVariable={addVariable}
+                // addVariable={addVariable}
                 dropVariableType={this.state.droppingDataType}
 
                 addStep={addStep}
@@ -163,7 +165,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 dropStopStep={this.state.droppingStopStep}
                 revalidate={() => this.revalidateOpenProcess()}
                 focusStep={this.state.focusStep}
-                focusStepParameter={this.state.focusStepParameter}
+                //focusStepParameter={this.state.focusStepParameter}
                 focusStepReturnPath={this.state.focusStepReturnPath}
             />
         );

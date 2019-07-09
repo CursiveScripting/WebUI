@@ -1,6 +1,7 @@
 import { Type } from '../data';
 import { IParameter } from './IParameter';
 import { IProcess } from './IProcess';
+import { createContext, Dispatch } from 'react';
 
 export type WorkspaceAction = {
     type: 'load';
@@ -28,3 +29,5 @@ export type WorkspaceAction = {
     processName: string;
     stepId: string;
 }
+
+export const WorkspaceDispatchContext = createContext<Dispatch<WorkspaceAction>>(ignore => {});
