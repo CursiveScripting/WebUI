@@ -3,6 +3,8 @@ import { IStopStep } from '../workspaceState/IStopStep';
 import { IProcessStep } from '../workspaceState/IProcessStep';
 import { IVariable } from '../workspaceState/IVariable';
 import { IStartStep } from '../workspaceState/IStartStep';
+import { IUserProcess } from '../workspaceState/IUserProcess';
+import { IProcess } from '../workspaceState/IProcess';
 
 export function usesInputs(step: IStep): step is IStepWithInputs {
     return step.stepType !== StepType.Start;

@@ -57,12 +57,12 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
         return this._returnConnectors[returnPathName];
     }
 
-    public getInputConnector(param: IParameter) {
+    public getInputConnector(paramName: string) {
         if (this.props.inputs === undefined) {
             return undefined;
         }
 
-        const index = this.props.inputs.indexOf(param);
+        const index = this.props.inputs.findIndex(p => p.name === paramName);
         if (index === -1) {
             return undefined;
         }
@@ -70,12 +70,12 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
         return this._inputConnectors[index];
     }
 
-    public getOutputConnector(param: IParameter) {
+    public getOutputConnector(paramName: string) {
         if (this.props.outputs === undefined) {
             return undefined;
         }
 
-        const index = this.props.outputs.indexOf(param);
+        const index = this.props.outputs.findIndex(p => p.name === paramName);
         if (index === -1) {
             return undefined;
         }
@@ -201,7 +201,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
         let pathIdentifiers = this.props.returnPathNames;
         if (pathIdentifiers === null) {
             if (this.props.stepType === StepType.Stop) {
-                let pathName = (this.props.step as StopStep).returnPath;
+                let pathName = (this.props.step as IStopStep).returnPath;
                 if (pathName !== null) {
                     let classes = 'processItem__returnPathName';
                     if (this.props.focused && this.props.focusParameter === undefined) {

@@ -16,11 +16,13 @@ import { IType } from '../../workspaceState/IType';
 import { IParameter } from '../../workspaceState/IParameter';
 import { IPositionable } from '../../workspaceState/IPositionable';
 import { determineVariableName } from '../../services/StepFunctions';
+import { IFullStep } from './IFullStep';
 
 interface Props {
     processName: string;
-    steps: IStep[];
+    steps: IFullStep[];
     variables: IVariable[];
+    typesByName: Map<string, IType>;
     
     className?: string;
     
@@ -54,6 +56,7 @@ export interface StepConnectorDragInfo {
 
 export interface ParamConnectorDragInfo {
     field: IParameter | IVariable;
+    type: IType;
     input: boolean;
     step?: IStep;
 }
@@ -102,8 +105,8 @@ export class ProcessContent extends React.PureComponent<Props, State> {
     context!: React.ContextType<typeof WorkspaceDispatchContext>;
 
     private canvas: LinkCanvas | null = null;
-    private readonly stepDisplays = new Map<IStep, StepDisplay>();
-    private readonly variableDisplays = new Map<IVariable, VariableDisplay>();
+    private readonly stepDisplays = new Map<string, StepDisplay>();
+    private readonly variableDisplays = new Map<string, VariableDisplay>();
 
     constructor(props: Props) {
         super(props);
@@ -159,6 +162,8 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     className="processContent__canvas"
                     width={this.state.canvasWidth}
                     height={this.state.canvasHeight}
+                    steps={this.props.steps}
+                    variables={this.props.variables}
                     stepDisplays={this.stepDisplays}
                     variableDisplays={this.variableDisplays}
                     dragging={dragging}
@@ -181,6 +186,12 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                         focusStep={this.props.focusStep}
                         focusParameter={this.props.focusStepParameter}
                         focusReturnPath={this.props.focusStepReturnPath}
+
+                        /*
+                        TODO: still need to report these out
+                        startDragParameter={}
+                        startDragPath={}
+                        */
                     />
                     
                     <VariablesDisplay
@@ -232,11 +243,11 @@ export class ProcessContent extends React.PureComponent<Props, State> {
     }
 
     private getStepDisplay(step: IStep) {
-        return this.stepDisplays.get(step)!;
+        return this.stepDisplays.get(step.uniqueId)!;
     }
 
     private getVariableDisplay(variable: IVariable) {
-        return this.variableDisplays.get(variable)!;
+        return this.variableDisplays.get(variable.name)!;
     }
 
     private varDragStart(variable: IVariable, startX: number, startY: number) {

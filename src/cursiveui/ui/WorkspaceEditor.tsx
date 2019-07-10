@@ -14,6 +14,9 @@ import { WorkspaceDispatchContext } from '../workspaceState/actions';
 import { IType } from '../workspaceState/IType';
 import { createMap } from '../services/DataFunctions';
 import { useMemo } from 'react';
+import { isStartStep, isStopStep } from '../services/StepFunctions';
+import { IFullStep } from './ProcessContent/IFullStep';
+import { IProcessStep } from '../workspaceState/IProcessStep';
 
 interface Props {
     workspace: IWorkspaceState;
@@ -72,8 +75,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
     }
 
     render() {
-        const typesByName = useMemo(() => createMap(this.props.workspace.types, t => t.name), [this.props.workspace.types])
-
         let classes = 'workspaceEditor';
         if (this.props.className !== undefined) {
             classes += ' ' + this.props.className;
@@ -122,6 +123,44 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         );
     }
 
+    private populateFullStep(
+        step: IStep,
+        inProcess: IProcess,
+        processesByName: Map<string, IProcess>,
+        typesByName: Map<string, IType>
+    ): IFullStep {
+        if (isStartStep(step)) {
+            return {
+                ...step,
+                name: 'Start',
+                inputParams: [],
+                outputParams: inProcess.inputs.map(p => { return { name: p.name, type: typesByName.get(p.typeName)! }}),
+                returnPathNames: [''],
+            }
+        }
+
+        if (isStopStep(step)) {
+            return {
+                ...step,
+                name: 'Stop',
+                inputParams: inProcess.outputs.map(p => { return { name: p.name, type: typesByName.get(p.typeName)! }}),
+                outputParams: [],
+                returnPathNames: [],
+            }
+        }
+
+        const process = processesByName.get((step as IProcessStep).processName)!;
+
+        return {
+            ...step,
+            name: process.name,
+            description: process.description,
+            inputParams: process.inputs.map(p => { return { name: p.name, type: typesByName.get(p.typeName)! }}),
+            outputParams: process.outputs.map(p => { return { name: p.name, type: typesByName.get(p.typeName)! }}),
+            returnPathNames: process.returnPaths,
+        };
+    }
+
     private renderProcessContent() {
         if (this.state.openProcess === undefined) {
             return undefined;
@@ -129,12 +168,28 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
 
         const openProcess = this.state.openProcess;
 
+        const typesByName = useMemo(
+            () => createMap(this.props.workspace.types, t => t.name),
+            [this.props.workspace.types]
+        );
+
+        const processesByName = useMemo(
+            () => createMap(this.props.workspace.processes, p => p.name),
+            [this.props.workspace.processes]
+        );
+
+        const steps = useMemo(
+            () => openProcess.steps.map(s => this.populateFullStep(s, openProcess, processesByName, typesByName)),
+            [openProcess, openProcess.steps, processesByName, typesByName]
+        );
+
         return (
             <ProcessContent
                 className="workspaceEditor__content"
                 processName={openProcess.name}
-                steps={openProcess.steps}
+                steps={steps}
                 variables={openProcess.variables}
+                typesByName={typesByName}
 
                 dropVariableType={this.state.droppingDataType}
                 dropStep={this.state.droppingProcess}

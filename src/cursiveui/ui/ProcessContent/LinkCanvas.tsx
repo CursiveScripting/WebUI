@@ -1,8 +1,12 @@
 import * as React from 'react';
-import { Type, Variable, Step, Parameter } from '../../data';
 import { Coord, ParamConnectorDragInfo, StepConnectorDragInfo } from './ProcessContent';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
+import { IVariable } from '../../workspaceState/IVariable';
+import { IType } from '../../workspaceState/IType';
+import { usesOutputs, usesInputs } from '../../services/StepFunctions';
+import { IStep } from '../../workspaceState/IStep';
+import { IFullStep } from './IFullStep';
 
 export type LinkDragInfo = {
     isParam: false;
@@ -21,8 +25,11 @@ interface Props {
     width: number;
     height: number;
 
-    stepDisplays: Map<Step, StepDisplay>;
-    variableDisplays: Map<Variable, VariableDisplay>;
+    steps: IFullStep[];
+    variables: IVariable[];
+
+    stepDisplays: Map<string, StepDisplay>;
+    variableDisplays: Map<string, VariableDisplay>;
 
     dragging?: LinkDragInfo;
 }
@@ -32,7 +39,7 @@ export class LinkCanvas extends React.Component<Props> {
     private ctx: CanvasRenderingContext2D = undefined as unknown as CanvasRenderingContext2D;
 
     shouldComponentUpdate(nextProps: Props) {
-        // Don't re-render if only dragging changes. Just redraw the links.
+        // Don't re-render if only the lines should change, just redraw the links.
         const rerender = nextProps.width !== this.props.width
             || nextProps.height !== this.props.height
             || nextProps.className !== this.props.className;
@@ -71,45 +78,56 @@ export class LinkCanvas extends React.Component<Props> {
         const stepDisplays = this.props.stepDisplays;
         const variableDisplays = this.props.variableDisplays;
         
-        for (const [step, stepDisplay] of stepDisplays) {
-            for (const path of step.incomingPaths) {
-                const beginStepDisplay = stepDisplays.get(path.fromStep)!;
-                
-                const beginConnector = beginStepDisplay.getReturnConnector(path.name);
-                const endConnector = stepDisplay.entryConnector;
-                
-                if (beginConnector !== null && endConnector !== null) {
-                    const bounds = step === path.fromStep
-                        ? stepDisplay.bounds
-                        : undefined;
-                    this.drawProcessLink(root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect(), bounds);
+        for (const step of this.props.steps) {
+            const stepDisplay = this.props.stepDisplays.get(step.uniqueId)!;
+            
+            if (usesInputs(step)) {    
+                for (const param of step.inputParams) {
+                    const varName = step.inputs[param.name];
+
+                    if (varName === undefined) {
+                        continue;
+                    }
+
+                    const endConnector = stepDisplay.getInputConnector(param.name)!;
+
+                    const variableDisplay = variableDisplays.get(varName)!;
+                    const beginConnector = variableDisplay.outputConnector;
+
+                    this.drawFieldLink(param.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
                 }
             }
 
-            for (const parameter of stepDisplay.props.step.inputs) {
-                if (parameter.link === null) {
-                    continue;
+            if (usesOutputs(step)) {
+                for (const param of step.outputParams) {
+                    const varName = step.outputs[param.name];
+
+                    if (varName === undefined) {
+                        continue;
+                    }
+
+                    const beginConnector = stepDisplay.getOutputConnector(param.name)!;
+
+                    const variableDisplay = variableDisplays.get(varName)!;
+                    const endConnector = variableDisplay.inputConnector;
+
+                    this.drawFieldLink(param.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
                 }
 
-                const endConnector = stepDisplay.getInputConnector(parameter);
-
-                const variableDisplay = variableDisplays.get(parameter.link)!;
-                const beginConnector = variableDisplay.outputConnector;
-
-                this.drawFieldLink(parameter.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
-            }
-
-            for (const parameter of stepDisplay.props.step.outputs) {
-                if (parameter.link === null) {
-                    continue;
+                for (const pathName in step.returnPaths) {
+                    const toStepId = step.returnPaths[pathName];
+                    const toStepDisplay = stepDisplays.get(toStepId)!;
+                    
+                    const beginConnector = stepDisplay.getReturnConnector(pathName);
+                    const endConnector = toStepDisplay.entryConnector;
+                    
+                    if (beginConnector !== null && endConnector !== null) {
+                        const bounds = step.uniqueId === toStepId
+                            ? stepDisplay.bounds
+                            : undefined;
+                        this.drawProcessLink(root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect(), bounds);
+                    }
                 }
-
-                const beginConnector = stepDisplay.getOutputConnector(parameter);
-
-                const variableDisplay = variableDisplays.get(parameter.link)!;
-                const endConnector = variableDisplay.inputConnector;
-
-                this.drawFieldLink(parameter.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
             }
         }
 
@@ -126,36 +144,36 @@ export class LinkCanvas extends React.Component<Props> {
                 let connector: HTMLDivElement;
     
                 if (dragInfo.step !== undefined) {
-                    const stepDisplay = stepDisplays.get(dragInfo.step)!;
+                    const stepDisplay = stepDisplays.get(dragInfo.step.uniqueId)!;
                     connector = dragInfo.input
-                        ? stepDisplay.getInputConnector(dragInfo.field as Parameter)
-                        : stepDisplay.getOutputConnector(dragInfo.field as Parameter);
+                        ? stepDisplay.getInputConnector(dragInfo.field.name)!
+                        : stepDisplay.getOutputConnector(dragInfo.field.name)!;
                 }
                 else {
-                    const varDisplay = variableDisplays.get(dragInfo.field as Variable)!;
+                    const varDisplay = variableDisplays.get(dragInfo.field.name)!;
                     connector = dragInfo.input
                         ? varDisplay.inputConnector
                         : varDisplay.outputConnector;
                 }
     
                 if (dragInfo.input) {
-                    this.drawFieldLink(dragInfo.field.type, root, dragRect, connector.getBoundingClientRect());
+                    this.drawFieldLink(dragInfo.type, root, dragRect, connector.getBoundingClientRect());
                 }
                 else {
-                    this.drawFieldLink(dragInfo.field.type, root, connector.getBoundingClientRect(), dragRect);
+                    this.drawFieldLink(dragInfo.type, root, connector.getBoundingClientRect(), dragRect);
                 }
             }
             else {
                 const dragInfo = dragging.pathInfo;
                 
                 if (dragInfo.input) {
-                    const beginConnector = stepDisplays.get(dragInfo.step)!.entryConnector;
+                    const beginConnector = stepDisplays.get(dragInfo.step.uniqueId)!.entryConnector;
                     if (beginConnector !== null) {
                         this.drawProcessLink(root, dragRect, beginConnector.getBoundingClientRect());
                     }
                 }
                 else {
-                    const endConnector = stepDisplays.get(dragInfo.step)!.getReturnConnector(dragInfo.returnPath);
+                    const endConnector = stepDisplays.get(dragInfo.step.uniqueId)!.getReturnConnector(dragInfo.returnPath);
                     if (endConnector !== null) {
                         this.drawProcessLink(root, endConnector.getBoundingClientRect(), dragRect);
                     }
@@ -218,7 +236,7 @@ export class LinkCanvas extends React.Component<Props> {
     }
 
     private drawFieldLink(
-        type: Type,
+        type: IType,
         root: ClientRect | DOMRect,
         begin: ClientRect | DOMRect,
         end: ClientRect | DOMRect

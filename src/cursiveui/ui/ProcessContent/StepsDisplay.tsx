@@ -2,26 +2,14 @@ import * as React from 'react';
 import { useState } from 'react';
 import { StepDisplay } from './StepDisplay';
 import { IParameter } from '../../workspaceState/IParameter';
-import { IStep, StepType } from '../../workspaceState/IStep';
-import { isStopStep } from '../../services/StepFunctions';
+import { IStep, StepType, IStepWithParams } from '../../workspaceState/IStep';
 import { WorkspaceDispatchContext } from '../../workspaceState/actions';
+import { getStepInputParameters, getStepOutputParameters, getStepReturnPaths } from '../../services/StepFunctions';
 
 interface Props {
-    steps: IStep[];
-    refs: Map<IStep, StepDisplay>;
+    steps: IStepWithParams[];
+    refs: Map<string, StepDisplay>;
 
-    /*
-    startDragHeader: (step: IStep, x: number, y: number) => void;
-
-    startDragInputPath: (step: IStep, x: number, y: number) => void;
-    stopDragInputPath: (step: IStep) => void;
-
-    startDragReturnPath: (step: IStep, path: string | null, x: number, y: number) => void;
-    stopDragReturnPath: (step: IStep, path: string | null) => void;
-
-    startDragConnector: (param: IParameter, step: IStep, x: number, y: number, input: boolean) => void;
-    stopDragConnector: (param: IParameter, step: IStep, input: boolean) => void;
-*/
     processName: string;
     focusStep?: IStep;
     focusParameter?: IParameter;
@@ -136,21 +124,18 @@ export const StepsDisplay = (props: Props) => {
         
         const displayName = 'something'; // TODO: determine this
         const description = ''; // TODO: determine this
-        const inputs: IParameter[] = []; // TODO: determine this
-        const outputs: IParameter[] = []; // TODO: determine this
-        const returnPaths: string[] = []; // TODO: determine this
         const isValid = true; // TODO: determine this
 
         return (
 
         <StepDisplay
-            ref={s => { if (s !== null) { props.refs.set(step, s); } else { props.refs.delete(step); }}}
+            ref={s => { if (s !== null) { props.refs.set(step.uniqueId, s); } else { props.refs.delete(step.uniqueId); }}}
             key={step.uniqueId}
             displayName={displayName}
             description={description}
-            inputs={inputs}
-            outputs={outputs}
-            returnPaths={returnPaths}
+            inputs={step.inputParams}
+            outputs={step.outputParams}
+            returnPaths={step.returnPathNames}
             isValid={isValid}
             stepType={step.stepType}
             stepId={step.uniqueId}
