@@ -1,17 +1,7 @@
-import { IUserProcess } from '../workspaceState/IUserProcess';
-import { IProcess } from '../workspaceState/IProcess';
 import { StepType, IStepWithOutputs, IStep, IStepWithInputs } from '../workspaceState/IStep';
 import { IStopStep } from '../workspaceState/IStopStep';
 import { IProcessStep } from '../workspaceState/IProcessStep';
 import { IVariable } from '../workspaceState/IVariable';
-
-export function isUserProcess(process: IProcess): process is IUserProcess {
-    return !process.isSystem;
-}
-
-export function hasEditableSignature(process: IProcess): process is IUserProcess {
-    return isUserProcess(process) && !process.fixedSignature;
-}
 
 export function usesInputs(step: IStep): step is IStepWithInputs {
     return step.stepType !== StepType.Start;

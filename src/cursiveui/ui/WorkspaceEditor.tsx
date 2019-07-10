@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Type } from '../data';
 import { ValidationError } from '../data/ValidationError';
 import { ProcessContent } from './ProcessContent/ProcessContent';
 import { ProcessSelector } from './sidebar/ProcessSelector';
@@ -11,6 +10,8 @@ import { IUserProcess } from '../workspaceState/IUserProcess';
 import { IProcess } from '../workspaceState/IProcess';
 import { IStep } from '../workspaceState/IStep';
 import { IParameter } from '../workspaceState/IParameter';
+import { WorkspaceDispatchContext } from '../workspaceState/actions';
+import { IType } from '../workspaceState/IType';
 
 interface Props {
     workspace: IWorkspaceState;
@@ -22,7 +23,7 @@ interface Props {
 interface State {
     openProcess?: IUserProcess;
     editingSignature: boolean;
-    droppingDataType?: Type;
+    droppingDataType?: IType;
     droppingProcess?: IProcess;
     droppingStopStep?: string | null;
     processErrors: ValidationError[];
@@ -34,6 +35,9 @@ interface State {
 }
 
 export class WorkspaceEditor extends React.PureComponent<Props, State> {
+    static contextType = WorkspaceDispatchContext;
+    context!: React.ContextType<typeof WorkspaceDispatchContext>;
+
     constructor(props: Props) {
         super(props);
 
@@ -119,14 +123,13 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
             return undefined;
         }
 
-        const openProcess = this.state.openProcess!;
-        const allSteps = Array.from(openProcess.steps.values());
+        const openProcess = this.state.openProcess;
 
         return (
             <ProcessContent
                 className="workspaceEditor__content"
-                processName={this.state.openProcess.name}
-                steps={allSteps}
+                processName={openProcess.name}
+                steps={openProcess.steps}
                 variables={openProcess.variables}
 
                 dropVariableType={this.state.droppingDataType}
@@ -167,60 +170,22 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
     }
 
     private renderSignatureEditor() {
-        const deleteProcess = this.state.openProcess !== undefined && this.isProcessUsedAnywhere(this.state.openProcess)
-            ? undefined
-            : () => this.deleteProcess(this.state.openProcess!);
-
         return (
             <ProcessEditor
                 process={this.state.openProcess}
                 className="workspaceEditor__content"
-                allTypes={Array.from(this.props.workspace.types.values())}
-                allSystemProcesses={this.props.workspace.systemProcesses}
-                allUserProcesses={this.props.workspace.userProcesses}
-                processUpdated={(existingName, process) => this.saveSignature(existingName, process)}
-                cancel={() => this.closeSignatureEditor()}
-                delete={deleteProcess}
+                allTypes={Array.from(this.props.workspace.types)}
+                allProcesses={this.props.workspace.processes}
+                close={() => this.closeSignatureEditor()}
             />
         );
-    }
-
-    private isProcessUsedAnywhere(process: UserProcess) {
-        for (const [, otherProcess] of this.props.workspace.userProcesses) {
-            if (otherProcess !== process) {
-                for (const [, step] of otherProcess.steps) {
-                    if (step.stepType === StepType.UserProcess && (step as ProcessStep).process === process) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private deleteProcess(process: UserProcess) {
-        this.props.workspace.userProcesses.delete(process.name);
-        
-        const processIterator = this.props.workspace.userProcesses.values();
-
-        let nextProcess = processIterator.next().value;
-        if (nextProcess === process) {
-            nextProcess = processIterator.next().value;
-        }
-
-        this.setState({
-            openProcess: nextProcess,
-        });
-
-        this.closeSignatureEditor();
     }
 
     private showNewProcess() {
         this.showEditProcess();
     }
 
-    private showEditProcess(process?: UserProcess) {
+    private showEditProcess(process?: IUserProcess) {
         this.setState({
             editingSignature: true,
             openProcess: process,
@@ -234,12 +199,12 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
 
         if (this.state.openProcess === undefined) {
             this.setState({
-                openProcess: this.props.workspace.userProcesses.values().next().value,
+                openProcess: this.props.workspace.processes.find(p => !p.isSystem) as IUserProcess,
             });
         }
     }
 
-    private openProcess(process: UserProcess) {
+    private openProcess(process: IUserProcess) {
         const processErrors = this.props.workspace.validationSummary.getErrorsForProcess(process);
         let isValid = processErrors.length === 0;
 
@@ -251,33 +216,8 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
             otherProcessesHaveErrors: otherProcessesHaveErrors,
         });
     }
-    
-    private saveSignature(existingProcessName: string | null, process: UserProcess) {
-        const userProcesses = this.props.workspace.userProcesses;
 
-        if (existingProcessName !== null && userProcesses.has(existingProcessName)) {
-            // if name has changed, remove from old name and save it under the new one
-            if (existingProcessName !== process.name) {
-                userProcesses.delete(existingProcessName);
-                userProcesses.set(process.name, process);
-            }
-
-            // TODO: unhook any input links, output links and return paths that are no longer valid?
-
-            this.props.workspace.validateAll();
-            this.setState({
-                processesWithErrors: this.getProcessesWithErrors(this.props.workspace),
-            });
-        }
-        else {
-            // adding new process
-            userProcesses.set(process.name, process);
-        }
-
-        this.closeSignatureEditor();
-    }
-
-    private selectDataType(type: Type | undefined) {
+    private selectDataType(type: IType | undefined) {
         this.setState({
             droppingDataType: type === this.state.droppingDataType ? undefined : type,
             droppingProcess: undefined,
@@ -285,7 +225,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         });
     }
 
-    private selectProcess(process: Process | undefined) {
+    private selectProcess(process: IProcess | undefined) {
         this.setState({
             droppingDataType: undefined,
             droppingProcess: process === this.state.droppingProcess ? undefined : process,
@@ -318,7 +258,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         });
     }
 
-    private getProcessesWithErrors(workspace: Workspace) {
+    private getProcessesWithErrors(workspace: IWorkspaceState) {
         return workspace.validationSummary.errorProcessNames
             .map(n => workspace.userProcesses.get(n)!)
             .filter(p => p !== undefined);

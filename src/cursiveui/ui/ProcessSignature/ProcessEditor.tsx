@@ -1,17 +1,20 @@
 import * as React from 'react';
-import { UserProcess, Type, SystemProcess, Parameter } from '../../data';
+import { Type, Parameter } from '../../data';
 import './ProcessEditor.css';
 import { ParamInfo, SignatureEditor } from './SignatureEditor';
+import { IProcess } from '../../workspaceState/IProcess';
+import { IUserProcess } from '../../workspaceState/IUserProcess';
+import { IParameter } from '../../workspaceState/IParameter';
+import { WorkspaceDispatchContext } from '../../workspaceState/actions';
+import { useMemo } from 'react';
+import { isProcessUsedAnywhere } from '../../services/ProcessFunctions';
 
 interface Props {
-    process?: UserProcess;
+    process?: IUserProcess;
     className?: string;
-    allUserProcesses: Map<string, UserProcess>;
-    allSystemProcesses: Map<string, SystemProcess>;
+    allProcesses: IProcess[];
     allTypes: Type[];
-    processUpdated: (oldName: string | null, process: UserProcess) => void;
-    cancel: () => void;
-    delete: undefined | (() => void);
+    close: () => void;
 }
 
 interface State {
@@ -28,6 +31,9 @@ interface State {
 }
 
 export class ProcessEditor extends React.PureComponent<Props, State> {
+    static contextType = WorkspaceDispatchContext;
+    context!: React.ContextType<typeof WorkspaceDispatchContext>;
+    
     constructor(props: Props) {
         super(props);
 
@@ -45,7 +51,7 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
             }
             : {
                 name: props.process.name,
-                nameValid: this.isProcessNameValid(props.process.name, props.process, props.allUserProcesses, props.allSystemProcesses),
+                nameValid: this.isProcessNameValid(props.process.name, props.process, props.allProcesses),
                 description: props.process.description,
                 returnPaths: props.process.returnPaths,
                 returnPathValidity: props.process.returnPaths.map((path, index) => this.isReturnPathNameValid(index, props.process!.returnPaths)),
@@ -64,7 +70,7 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
 
         const nameChanged = (name: string) => this.setState({
             name,
-            nameValid: this.isProcessNameValid(name, this.props.process, this.props.allUserProcesses, this.props.allSystemProcesses),
+            nameValid: this.isProcessNameValid(name, this.props.process, this.props.allProcesses),
         });
 
         const descChanged = (description: string) => this.setState({
@@ -96,14 +102,26 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
             </ul>
 
         const save = !canSave ? undefined : () => this.saveChanges();
-        const cancel = () => this.props.cancel();
-        const deleteProc = () => this.props.delete!();
+        const cancel = () => this.props.close();
+
+        const canDelete = useMemo(() => this.props.process !== undefined && !isProcessUsedAnywhere(this.props.process, this.props.allProcesses), [this.props.process, this.props.allProcesses])
+        
+        const deleteProcess = canDelete
+            ? () => {
+                this.context({
+                    type: 'remove process',
+                    name: this.props.process!.name,
+                });
+
+                this.props.close();
+            }
+            : undefined
 
         const deleteButton = this.props.process === undefined
             ? undefined
-            : this.props.delete === undefined
-                ? <input type="button" className="processEditor__button" value="Cannot delete" title="This process is used in other processes" disabled={true} />
-                : <input type="button" className="processEditor__button" value="Delete process" onClick={deleteProc} />
+            : canDelete
+                ? <input type="button" className="processEditor__button" value="Delete process" onClick={deleteProcess} />
+                : <input type="button" className="processEditor__button" value="Cannot delete" title="This process is used in other processes" disabled={true} />
 
         return (
             <div className={classes}>
@@ -172,38 +190,60 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
     }
 
     private saveChanges() {
-        let process: UserProcess;
-        let oldProcessName: string | null;
-
         if (this.props.process === undefined) {
-            oldProcessName = null;
-            process = new UserProcess(this.state.name, [], [], [], [], false, this.state.description, null)
+            this.context({
+                type: 'add process',
+                name: this.state.name,
+                description: this.state.description,
+                inputs: this.state.inputs.map(i => { return {
+                    name: i.name,
+                    type: i.type,
+                }}),
+                outputs: this.state.outputs.map(o => { return {
+                    name: o.name,
+                    type: o.type,
+                }}),
+                returnPaths: this.state.returnPaths,
+                folder: null, // TODO handle these
+            });
         }
         else {
-            oldProcessName = this.props.process.name;
+            // TODO: implement this ... how to update in dispatch but also track parameters across moving and renaming?
+                
+            /*
+            let process: IUserProcess;
+            let oldProcessName: string | null;
 
-            process = this.props.process;
-            process.name = this.state.name;
-            process.description = this.state.description;
+            if (this.props.process === undefined) {
+                oldProcessName = null;
+                process = new UserProcess(this.state.name, [], [], [], [], false, this.state.description, null)
+            }
+            else {
+                oldProcessName = this.props.process.name;
+
+                process = this.props.process;
+                process.name = this.state.name;
+                process.description = this.state.description;
+            }
+
+            // remove all return paths, add all new ones
+            process.returnPaths.splice(0, process.returnPaths.length, ...this.state.returnPaths);
+            
+            this.saveParameters(this.state.inputs, process.inputs, true);
+            this.saveParameters(this.state.outputs, process.outputs, false);
+            */
         }
 
-
-        // remove all return paths, add all new ones
-        process.returnPaths.splice(0, process.returnPaths.length, ...this.state.returnPaths);
-        
-        this.saveParameters(this.state.inputs, process.inputs, true);
-        this.saveParameters(this.state.outputs, process.outputs, false);
-
-        this.props.processUpdated(oldProcessName, process);
+        this.props.close();
     }
 
-    private saveParameters(source: ParamInfo[], destination: Parameter[], isInput: boolean) {
+    private saveParameters(source: ParamInfo[], destination: IParameter[], isInput: boolean) {
         // empty the destination array
         destination.splice(0, destination.length);
 
         // add all new parameters back in, hooking up to existing parameter objects if their type hasn't changed
         for (const paramInfo of source) {
-            let parameter: Parameter;
+            let parameter: IParameter;
 
             if (paramInfo.underlyingParameter === undefined || paramInfo.underlyingParameter.type !== paramInfo.type) {
                 parameter = new Parameter(paramInfo.name, paramInfo.type, isInput);
@@ -216,12 +256,11 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
         }
     }
 
-    private isProcessNameValid(name: string, thisProcess: UserProcess | undefined, userProcesses: Map<string, UserProcess>, systemProcesses: Map<string, SystemProcess>) {
+    private isProcessNameValid(name: string, thisProcess: IUserProcess | undefined, allProcesses: IProcess[]) {
         // A process name with space on the end or that exactly matches another is invalid.
         return name !== ''
             && name === name.trim()
-            && systemProcesses.get(name) === undefined
-            && userProcesses.get(name) === thisProcess
+            && allProcesses.find(p => p.name === name) === thisProcess;
     }
 
     private isReturnPathNameValid(pathIndex: number, pathNames: string[]) {

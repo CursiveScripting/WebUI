@@ -2,11 +2,12 @@ import { Reducer} from 'react';
 import { WorkspaceAction } from './actions';
 import { IWorkspaceState } from './IWorkspaceState';
 import { IUserProcess } from './IUserProcess';
-import { hasEditableSignature, isUserProcess, determineStepId, usesOutputs } from '../services/StepFunctions';
+import { determineStepId, usesOutputs } from '../services/StepFunctions';
 import { IVariable } from './IVariable';
 import { IProcessStep } from './IProcessStep';
 import { StepType } from './IStep';
 import { IStopStep } from './IStopStep';
+import { isUserProcess, hasEditableSignature } from '../services/ProcessFunctions';
 
 export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (state, action) => {
     const processes = state.processes.slice();

@@ -1,14 +1,15 @@
 import * as React from 'react';
-import { Type, Parameter } from '../../data';
+import { Type } from '../../data';
 import './SignatureEditor.css';
 import { ValueInput } from '../ProcessContent/ValueInput';
 import { ReturnPathsEditor } from './ReturnPathsEditor';
 import { ParametersEditor } from './ParametersEditor';
+import { IParameter } from '../../workspaceState/IParameter';
 
 export interface ParamInfo {
     name: string;
     type: Type;
-    underlyingParameter?: Parameter;
+    underlyingParameter?: IParameter;
 }
 
 interface Props {

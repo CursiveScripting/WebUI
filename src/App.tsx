@@ -11,7 +11,7 @@ async function loadProcesses() {
     return sessionStorage.getItem('saved');
 }
 
-function saveProcesses(processXml: string) {
+async function saveProcesses(processXml: string) {
     sessionStorage.setItem('saved', processXml);
 }
 

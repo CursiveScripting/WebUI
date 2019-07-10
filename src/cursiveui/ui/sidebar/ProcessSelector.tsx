@@ -4,8 +4,8 @@ import './ProcessSelector.css';
 import { ProcessFolder } from './ProcessFolder';
 import { IProcess } from '../../workspaceState/IProcess';
 import { IUserProcess } from '../../workspaceState/IUserProcess';
-import { isUserProcess } from '../../services/StepFunctions';
 import { IType } from '../../workspaceState/IType';
+import { isUserProcess } from '../../services/ProcessFunctions';
 
 interface Props {
     processes: IProcess[];

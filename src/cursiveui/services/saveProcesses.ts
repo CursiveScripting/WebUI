@@ -1,10 +1,11 @@
 ﻿import { IProcess } from '../workspaceState/IProcess';
-import { isUserProcess, isStopStep, usesInputs, usesOutputs } from './StepFunctions';
+import { isStopStep, usesInputs, usesOutputs } from './StepFunctions';
 import { IUserProcess } from '../workspaceState/IUserProcess';
 import { IParameter } from '../workspaceState/IParameter';
 import { StepType, IStep } from '../workspaceState/IStep';
 import { IStopStep } from '../workspaceState/IStopStep';
 import { IProcessStep } from '../workspaceState/IProcessStep';
+import { isUserProcess } from './ProcessFunctions';
 
 export function saveProcesses(processes: IProcess[]) {
     const saveDoc = document.implementation.createDocument(null, 'processes', null);

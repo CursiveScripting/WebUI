@@ -1,6 +1,6 @@
 ﻿import { IWorkspaceState } from '../workspaceState/IWorkspaceState';
 import { createMap, isString } from './DataFunctions';
-import { isUserProcess, usesOutputs } from './StepFunctions';
+import { usesOutputs } from './StepFunctions';
 import { IUserProcess } from '../workspaceState/IUserProcess';
 import { IVariable } from '../workspaceState/IVariable';
 import { IStep, StepType } from '../workspaceState/IStep';
@@ -10,6 +10,7 @@ import { IStartStep } from '../workspaceState/IStartStep';
 import { IStopStep } from '../workspaceState/IStopStep';
 import { IProcessStep } from '../workspaceState/IProcessStep';
 import { IType } from '../workspaceState/IType';
+import { isUserProcess } from './ProcessFunctions';
 
 export function loadProcesses(workspace: IWorkspaceState, processData: Document | string) {
     const rootElement = isString(processData)
@@ -286,7 +287,7 @@ function loadReturnPaths(stepNode: Element) {
         const targetStepID = returnPathNode.getAttribute('targetStepID')!;
 
         returnValue[''] = targetStepID;
-        returnValue; // can only ever have one non-named return path
+        return returnValue; // can only ever have one non-named return path
     }
 
     returnPathNodes = stepNode.getElementsByTagName('NamedReturnPath');
@@ -305,11 +306,10 @@ function verifyReturnPaths(processName: string, stepsById: Map<string, IStep>) {
     for (const [, step] of stepsById) {
         if (usesOutputs(step)) {
             for (const path in step.returnPaths) {
-                const destination = step.returnPaths[path];
+                const destinationStepId = step.returnPaths[path];
 
-                if (!stepsById.has(destination)) {
-                    throw new Error(`Step ${step.uniqueId} of the "${processName}" links a return path to an unknown step unknown process: ${name}.`
-                    + ' That process doesn\'t exist in this workspace.');
+                if (!stepsById.has(destinationStepId)) {
+                    throw new Error(`Step ${step.uniqueId} of process "${processName}" links a return path to an unknown step: ${destinationStepId}.`);
                 }
             }
         }

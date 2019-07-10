@@ -174,24 +174,13 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     onScroll={() => this.canvas!.drawLinks()}
                 >
                     <StepsDisplay
+                        processName={this.props.processName}
                         steps={this.props.steps}
                         refs={this.stepDisplays}
 
                         focusStep={this.props.focusStep}
                         focusParameter={this.props.focusStepParameter}
                         focusReturnPath={this.props.focusStepReturnPath}
-
-                        // TODO: these operations shouldn't be passed up out of the StepsDisplay, it should handle them internally
-                        startDragHeader={(step, x, y) => this.stepDragStart(step, x, y)}
-
-                        startDragInputPath={(step, x, y) => this.stepLinkDragStart(step, x, y, true, null)}
-                        stopDragInputPath={step => this.stepLinkDragStop(step, true, null)}
-                    
-                        startDragReturnPath={(step, path, x, y) => this.stepLinkDragStart(step, x, y, false, path)}
-                        stopDragReturnPath={(step, path) => this.stepLinkDragStop(step, false, path)}
-                    
-                        startDragConnector={(param, step, x, y, input) => this.fieldLinkDragStart(param, input, x, y, step)}
-                        stopDragConnector={(param, step, input) => this.fieldLinkDragStop(param, input, step)}
                     />
                     
                     <VariablesDisplay
@@ -248,17 +237,6 @@ export class ProcessContent extends React.PureComponent<Props, State> {
 
     private getVariableDisplay(variable: IVariable) {
         return this.variableDisplays.get(variable)!;
-    }
-
-    private stepDragStart(step: IStep, startX: number, startY: number) {
-        this.setState({
-            dragging: {
-                type: DragType.Step,
-                step,
-                x: startX,
-                y: startY,
-            }
-        });
     }
 
     private varDragStart(variable: IVariable, startX: number, startY: number) {
@@ -436,80 +414,6 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         item.x = alignToGrid(item.x);
         item.y = alignToGrid(item.y);
 
-        this.canvas!.drawLinks();
-    }
-
-    private stepLinkDragStart(step: IStep, x: number, y: number, input: boolean, returnPath: string | null) {
-        this.setState({
-            dragging: {
-                type: DragType.StepConnector,
-                stepConnector: {
-                    step: step,
-                    input: input,
-                    returnPath: returnPath,
-                },
-                x,
-                y,
-            }
-        });
-    }
-
-    private stepLinkDragStop(step: IStep, input: boolean, returnPath: string | null) {
-        if (this.state.dragging === undefined) {
-            return;
-        }
-
-        const dragInfo = this.state.dragging;
-
-        if (dragInfo.type !== DragType.StepConnector) {
-            return;
-        }
-
-        this.setState({
-            dragging: undefined,
-        })
-
-        if (dragInfo.stepConnector.input === input) {
-            this.canvas!.drawLinks();
-            return;
-        }
-
-        let fromStep: IStep, toStep: IStep;
-        if (input) {
-            fromStep = dragInfo.stepConnector.step;
-            toStep = step;
-            returnPath = dragInfo.stepConnector.returnPath;
-        }
-        else {
-            fromStep = step;
-            toStep = dragInfo.stepConnector.step;
-        }
-
-        let existingPaths = fromStep.returnPaths.filter(r => r.name === returnPath);
-        let prevConnectedSteps = existingPaths.map(path => path.toStep);
-        
-        for (let existingPath of existingPaths) {
-            let removeFrom = existingPath.toStep;
-            removeFrom.incomingPaths = removeFrom.incomingPaths.filter(rp => rp.fromStep !== fromStep || rp.name !== returnPath);
-        }
-
-        fromStep.returnPaths = fromStep.returnPaths.filter(r => r.name !== returnPath);
-        let newPath = new ReturnPath(fromStep, toStep, returnPath);
-        fromStep.returnPaths.push(newPath);
-        toStep.incomingPaths.push(newPath);
-
-        fromStep.setInvalid();
-        toStep.setInvalid();
-
-        this.getStepDisplay(fromStep).forceUpdate();
-        this.getStepDisplay(toStep).forceUpdate();
-        
-        for (let prevConnectedStep of prevConnectedSteps) {
-            prevConnectedStep.setInvalid();
-            this.getStepDisplay(prevConnectedStep).forceUpdate();
-        }
-
-        this.props.revalidate();
         this.canvas!.drawLinks();
     }
 
