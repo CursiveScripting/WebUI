@@ -1,15 +1,15 @@
-import { WorkspaceLoading } from './WorkspaceLoading';
-import { ProcessLoading } from './ProcessLoading';
+import { loadWorkspace } from "./loadWorkspace";
+import { loadProcesses } from "./loadProcesses";
 
-export async function loadWorkspaceAndProcesses(loadWorkspace: () => Promise<Document | string>, loadProcesses?: () => Promise<Document | string | null>) {
-    const workspaceData = await loadWorkspace();
+export async function loadWorkspaceAndProcesses(getWorkspace: () => Promise<Document | string>, getProcesses?: () => Promise<Document | string | null>) {
+    const workspaceData = await getWorkspace();
 
-    const workspace = WorkspaceLoading.load(workspaceData);
+    const workspace = loadWorkspace(workspaceData);
 
-    if (loadProcesses !== undefined) {
-        const processXml = await loadProcesses();
+    if (getProcesses !== undefined) {
+        const processXml = await getProcesses();
         if (processXml !== null) {
-            ProcessLoading.load(workspace, processXml);
+            loadProcesses(workspace, processXml);
         }
     }
     

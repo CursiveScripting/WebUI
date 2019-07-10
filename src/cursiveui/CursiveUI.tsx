@@ -2,7 +2,7 @@ import React, { useReducer, useEffect, useState } from 'react';
 import { WorkspaceEditor } from './ui/WorkspaceEditor';
 import { workspaceReducer } from './workspaceState/reducer';
 import { WorkspaceDispatchContext } from './workspaceState/actions';
-import { ProcessSaving } from './services/ProcessSaving';
+import { saveProcesses } from './services/saveProcesses';
 import { loadWorkspaceAndProcesses } from './services/loadWorkspaceAndProcesses';
 
 interface Props {
@@ -68,7 +68,7 @@ export const CursiveUI = (props: Props) => {
     }
     
     const doSave = () => {
-        const xml = ProcessSaving.saveProcesses(workspace.processes);
+        const xml = saveProcesses(workspace.processes);
         props.saveProcesses(xml)
     };
 
