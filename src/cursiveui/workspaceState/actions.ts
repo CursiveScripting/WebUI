@@ -45,6 +45,24 @@ export type WorkspaceAction = {
     type: 'remove variable';
     inProcessName: string;
     varName: string;
-} 
+} | {
+    type: 'move step';
+    inProcessName: string;
+    stepId: string;
+    x: number;
+    y: number;
+} | {
+    type: 'move variable';
+    inProcessName: string;
+    varName: string;
+    x: number;
+    y: number;
+} | {
+    type: 'set return path';
+    inProcessName: string;
+    fromStepId: string;
+    toStepId?: string;
+    pathName: string | null;
+}
 
 export const WorkspaceDispatchContext = createContext<Dispatch<WorkspaceAction>>(ignore => {});

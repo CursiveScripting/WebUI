@@ -2,7 +2,7 @@ import { Reducer} from 'react';
 import { WorkspaceAction } from './actions';
 import { IWorkspaceState } from './IWorkspaceState';
 import { IUserProcess } from './IUserProcess';
-import { hasEditableSignature, isUserProcess, determineStepId } from '../services/StepFunctions';
+import { hasEditableSignature, isUserProcess, determineStepId, usesOutputs } from '../services/StepFunctions';
 import { IVariable } from './IVariable';
 import { IProcessStep } from './IProcessStep';
 import { StepType } from './IStep';
@@ -217,6 +217,100 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
 
             process.variables = process.variables.slice();
             process.variables.splice(varIndex, 1);
+
+            return {
+                ...state,
+                processes,
+            };
+        }
+
+        case 'move step': {
+            const processIndex = processes.findIndex(p => p.name === action.inProcessName);
+
+            const process = { ...processes[processIndex] };
+
+            if (!isUserProcess(process)) {
+                return state;
+            }
+            
+            process.steps = process.steps.slice();
+
+            const stepIndex = process.steps.findIndex(step => step.uniqueId === action.stepId);
+
+            if (stepIndex === -1) {
+                return state;
+            }
+
+            process.steps[processIndex] = { ...process.steps[stepIndex], x: action.x, y: action.y };
+
+            return {
+                ...state,
+                processes,
+            };
+        }
+
+        case 'move variable': {
+            const processIndex = processes.findIndex(p => p.name === action.inProcessName);
+
+            const process = { ...processes[processIndex] };
+
+            if (!isUserProcess(process)) {
+                return state;
+            }
+
+            const varIndex = process.variables.findIndex(v => v.name === action.varName);
+
+            if (varIndex === -1) {
+                return state;
+            }
+
+            process.variables = process.variables.slice();
+            process.variables[varIndex] = { ...process.variables[varIndex], x: action.x, y: action.y };
+
+            return {
+                ...state,
+                processes,
+            };
+        }
+
+        case 'set return path': {
+            const processIndex = processes.findIndex(p => p.name === action.inProcessName);
+
+            const process = { ...processes[processIndex] };
+
+            if (!isUserProcess(process)) {
+                return state;
+            }
+
+            process.steps = process.steps.slice();
+
+            const fromStepIndex = process.steps.findIndex(step => step.uniqueId === action.fromStepId);
+
+            if (fromStepIndex === -1
+                || (action.toStepId !== undefined && process.steps.findIndex(step => step.uniqueId === action.toStepId) === -1)) {
+                return state;
+            }
+
+            const fromStep = { ...process.steps[fromStepIndex] };
+
+            if (!usesOutputs(fromStep)) {
+                return state;
+            }
+
+            process.steps[fromStepIndex] = fromStep;
+
+            fromStep.returnPaths = { ...fromStep.returnPaths };
+
+            const pathNameProperty = action.pathName === null
+                ? ''
+                : action.pathName;
+
+            if (action.toStepId === undefined) {
+                delete fromStep.returnPaths[pathNameProperty];
+            }
+            else {
+                fromStep.returnPaths[pathNameProperty] = action.toStepId;
+            }
 
             return {
                 ...state,
