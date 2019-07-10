@@ -27,3 +27,13 @@ export function isStopStep(step: IStep): step is IStopStep {
 export function isProcessStep(step: IStep): step is IProcessStep {
     return step.stepType === StepType.UserProcess || step.stepType === StepType.SystemProcess;
 }
+
+export function determineStepId(otherSteps: IStep[]) {
+    let testId = 1;
+
+    while (otherSteps.find(s => s.uniqueId === testId.toString()) !== undefined) {
+        testId ++;
+    }
+
+    return testId.toString();
+}

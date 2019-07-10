@@ -1,9 +1,14 @@
-import { Type, Parameter } from '../data';
-import { IWorkspace } from '../workspaceState/IWorkspace';
+import { IWorkspaceState } from '../workspaceState/IWorkspaceState';
 import { IUserProcess } from '../workspaceState/IUserProcess';
 import { ISystemProcess } from '../workspaceState/ISystemProcess';
 import { isString } from './DataFunctions';
 import { IProcess } from '../workspaceState/IProcess';
+import { IType } from '../workspaceState/IType';
+import { IParameter } from '../workspaceState/IParameter';
+import { StepType } from '../workspaceState/IStep';
+import { determineStepId } from './StepFunctions';
+import { gridSize } from '../ui/ProcessContent/gridSize';
+import { IStartStep } from '../workspaceState/IStartStep';
 
 export class WorkspaceLoading {
     public static load(workspaceData: Document | string) {
@@ -16,20 +21,20 @@ export class WorkspaceLoading {
 
     private static loadWorkspace(
         workspaceXml: HTMLElement
-    ): IWorkspace {
+    ): IWorkspaceState {
         const processesByName = new Map<string, IProcess>();
 
-        const typesByName = new Map<string, Type>();
+        const typesByName: Record<string, IType> = {};
         const typeNodes = workspaceXml.getElementsByTagName('Type');
         
         for (const typeNode of typeNodes) {
             const type = this.loadType(typeNode, typesByName);
             
-            if (typesByName.has(type.name)) {
+            if (typesByName.hasOwnProperty(type.name)) {
                 throw new Error(`There are two types in the workspace with the same name: ${type.name}. Type names must be unique.`);
             }
 
-            typesByName.set(type.name, type);
+            typesByName[type.name] = type;
         }
     
         let procNodes = workspaceXml.getElementsByTagName('SystemProcess');
@@ -45,52 +50,44 @@ export class WorkspaceLoading {
         }
 
         return {
-            types: Array.from(typesByName.values()),
+            types: typesByName,
             processes: Array.from(processesByName.values()),
         };
     }
 
-    private static loadType(typeNode: Element, typesByName: Map<string, Type>) {
-        const name = typeNode.getAttribute('name') as string;
-        const color = typeNode.getAttribute('color') as string;
+    private static loadType(typeNode: Element, typesByName: Record<string, IType>): IType {
+        const name = typeNode.getAttribute('name')!;
+        const color = typeNode.getAttribute('color')!;
         
-        let validationExpression: RegExp | undefined;
-        if (typeNode.hasAttribute('validation')) {
-            const validation = typeNode.getAttribute('validation') as string;
-            validationExpression = new RegExp(validation);
-        }
+        const validationExpression = typeNode.getAttribute('validation');
 
-        let extendsType: Type | null;
-        if (typeNode.hasAttribute('extends')) {
-            const extendsName = typeNode.getAttribute('extends') as string;
-            const tmpExtendsType = typesByName.get(extendsName)
-            
-            if (tmpExtendsType === undefined) {
-                throw new Error(`Type ${name} extends a type which has not been defined: ${extendsName}.`);
+        let extendsTypeName = typeNode.getAttribute('extends');
+
+        if (extendsTypeName !== null) {
+            if (!typesByName.hasOwnProperty(extendsTypeName)) {
+                throw new Error(`Type ${name} extends a type which has not been defined: ${extendsTypeName}.`);
             }
-            
-            extendsType = tmpExtendsType;
-        }
-        else {
-            extendsType = null;
         }
 
-        let guidance: string | undefined;
-        if (typeNode.hasAttribute('guidance')) {
-            guidance = typeNode.getAttribute('guidance') as string;
-        }
+        const guidance = typeNode.getAttribute('guidance');
 
-        return new Type(name, color, extendsType, validationExpression, guidance);
+        return {
+            name,
+            color,
+            extendsTypeName: extendsTypeName === null ? undefined : extendsTypeName,
+            guidance: guidance === null ? undefined : guidance,
+            validationExpression: validationExpression === null ? undefined : validationExpression,
+        };
     }
 
     private static loadProcessDefinition(
         procNode: Element,
-        typesByName: Map<string, Type>,
+        typesByName: Record<string, IType>,
         isSystemProcess: boolean
     ): ISystemProcess | IUserProcess {
         const processName = procNode.getAttribute('name') as string;
-        const inputs: Parameter[] = [];
-        const outputs: Parameter[] = [];
+        const inputs: IParameter[] = [];
+        const outputs: IParameter[] = [];
         const returnPaths: string[] = [];
         const procTypeName = isSystemProcess ? 'system' : 'fixed';
         
@@ -107,7 +104,7 @@ export class WorkspaceLoading {
         const returnPathNodes = procNode.getElementsByTagName('ReturnPath');
         const usedNames: {[key: string]: boolean} = {};
         for (const returnPathNode of returnPathNodes) {
-            let path = returnPathNode.getAttribute('name') as string;
+            const path = returnPathNode.getAttribute('name') as string;
             
             if (usedNames.hasOwnProperty(path)) {
                 throw new Error(`The '${processName}' ${procTypeName} process has two return paths with the same name: ${path}.`
@@ -136,7 +133,14 @@ export class WorkspaceLoading {
                 inputs: inputs,
                 outputs: outputs,
                 returnPaths,
-                steps: [], // TODO: createDefaultSteps
+                steps: [<IStartStep>{
+                    uniqueId: determineStepId([]),
+                    stepType: StepType.Start,
+                    x: gridSize * 2,
+                    y: gridSize * 2,
+                    outputs: {},
+                    returnPaths: {},
+                }],
                 variables: [],
                 isSystem: false,
                 fixedSignature: true,
@@ -145,34 +149,34 @@ export class WorkspaceLoading {
 
     private static loadParameters(
         processName: string,
-        types: Map<string, Type>,
+        typesByName: Record<string, IType>,
         paramNodes: HTMLCollectionOf<Element>,
-        parameters: Parameter[],
+        parameters: IParameter[],
         inputOrOutput: 'input' | 'output',
         procTypeName: string
     ) {
         const usedNames = new Set<string>();
-        const isInput = inputOrOutput === 'input';
 
         for (const paramNode of paramNodes) {
             const paramName = paramNode.getAttribute('name') as string;
             const paramTypeName = paramNode.getAttribute('type') as string;
             
-            const paramType = types.get(paramTypeName);
-            if (paramType === undefined) {
+            if (!typesByName.hasOwnProperty(paramTypeName)) {
                 throw new Error(`The '${processName}' ${procTypeName} process has an ${inputOrOutput} (${paramName})`
                  + ` with an unrecognised type: ${paramTypeName}.`);
-                continue;
             }    
             
             if (usedNames.has(paramName)) {
                 throw new Error(`The '${processName}' ${procTypeName} process has two ${inputOrOutput}s`
                     + ` with the same name: ${paramName}. The names of ${paramTypeName}s must be unique within a process.`);
-                continue;
             }
                 
             usedNames.add(paramName);
-            parameters.push(new Parameter(paramName, paramType, isInput));
+
+            parameters.push({
+                name: paramName,
+                typeName: paramTypeName   
+            });
         }
     }
 }

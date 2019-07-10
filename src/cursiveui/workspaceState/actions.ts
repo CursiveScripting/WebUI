@@ -1,11 +1,11 @@
-import { Type } from '../data';
+import { createContext, Dispatch } from 'react';
 import { IParameter } from './IParameter';
 import { IProcess } from './IProcess';
-import { createContext, Dispatch } from 'react';
+import { IType } from './IType';
 
 export type WorkspaceAction = {
     type: 'load';
-    types: Type[];
+    types: Record<string, IType>;
     processes: IProcess[];
 } | {
     type: 'add process';
@@ -28,6 +28,17 @@ export type WorkspaceAction = {
     type: 'remove step';
     processName: string;
     stepId: string;
-}
+} | {
+    type: 'add variable';
+    inProcessName: string;
+    typeName: string;
+    varName: string;
+    x: number;
+    y: number;
+} | {
+    type: 'remove variable';
+    inProcessName: string;
+    varName: string;
+} 
 
 export const WorkspaceDispatchContext = createContext<Dispatch<WorkspaceAction>>(ignore => {});

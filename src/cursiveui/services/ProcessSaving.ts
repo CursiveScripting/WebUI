@@ -149,7 +149,7 @@ export class ProcessSaving {
     private static saveProcessParameter(parameter: IParameter, parent: Element, nodeName: string) {
         let element = parent.ownerDocument!.createElement(nodeName);
         element.setAttribute('name', parameter.name);
-        element.setAttribute('type', parameter.type.name);
+        element.setAttribute('type', parameter.typeName);
         parent.appendChild(element);
         return element;
     }

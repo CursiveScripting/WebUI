@@ -6,14 +6,14 @@ import { ProcessSelector } from './sidebar/ProcessSelector';
 import { ProcessToolbar } from './toolbar/ProcessToolbar';
 import { ProcessEditor } from './ProcessSignature/ProcessEditor';
 import './WorkspaceEditor.css';
-import { IWorkspace } from '../workspaceState/IWorkspace';
+import { IWorkspaceState } from '../workspaceState/IWorkspaceState';
 import { IUserProcess } from '../workspaceState/IUserProcess';
 import { IProcess } from '../workspaceState/IProcess';
 import { IStep } from '../workspaceState/IStep';
 import { IParameter } from '../workspaceState/IParameter';
 
 interface Props {
-    workspace: IWorkspace;
+    workspace: IWorkspaceState;
     initialProcess?: IUserProcess;
     className?: string;
     save: () => void;
@@ -39,7 +39,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
 
         this.state = {
             openProcess: props.initialProcess === undefined
-                ? props.workspace.userProcesses.values().next().value
+                ? props.workspace.processes.find(p => !p.isSystem) as IUserProcess
                 : props.initialProcess,
             editingSignature: false,
             otherProcessesHaveErrors: false,
@@ -56,7 +56,12 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
 
     componentDidUpdate(prevProps: Props, prevState: State) {
         if (prevProps.workspace !== this.props.workspace) {
-            this.openProcess(this.props.workspace.userProcesses.values().next().value);
+            if (this.state.openProcess === undefined) {
+                this.openProcess(this.props.workspace.processes.find(p => !p.isSystem) as IUserProcess);
+            }
+            else if (this.props.workspace.processes.indexOf(this.state.openProcess) === -1) {
+                this.openProcess(this.props.workspace.processes.find(p => p.name === this.state.openProcess!.name) as IUserProcess);
+            }
         }
     }
 

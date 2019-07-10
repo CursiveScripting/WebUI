@@ -1,5 +1,4 @@
-﻿import { Type } from '../data';
-import { IWorkspace } from '../workspaceState/IWorkspace';
+﻿import { IWorkspaceState } from '../workspaceState/IWorkspaceState';
 import { createMap, isString } from './DataFunctions';
 import { isUserProcess, usesOutputs } from './StepFunctions';
 import { IUserProcess } from '../workspaceState/IUserProcess';
@@ -10,9 +9,10 @@ import { IParameter } from '../workspaceState/IParameter';
 import { IStartStep } from '../workspaceState/IStartStep';
 import { IStopStep } from '../workspaceState/IStopStep';
 import { IProcessStep } from '../workspaceState/IProcessStep';
+import { IType } from '../workspaceState/IType';
 
 export class ProcessLoading {
-    public static load(workspace: IWorkspace, processData: Document | string) {
+    public static load(workspace: IWorkspaceState, processData: Document | string) {
         const rootElement = isString(processData)
             ? new DOMParser().parseFromString(processData, 'application/xml').documentElement
             : processData.firstChild as HTMLElement;
@@ -20,13 +20,12 @@ export class ProcessLoading {
         return this.loadProcesses(workspace, rootElement);
     }
 
-    private static loadProcesses(workspace: IWorkspace, processXml: HTMLElement) {
+    private static loadProcesses(workspace: IWorkspaceState, processXml: HTMLElement) {
         const processNodes = processXml.getElementsByTagName('Process');
-        const typesByName = createMap(workspace.types, t => t.name);
         const processesByName = createMap(workspace.processes, p => p.name);
         
         for (const processNode of processNodes) {
-            const process = this.loadProcessDefinition(typesByName, processNode);
+            const process = this.loadProcessDefinition(workspace.types, processNode);
             
             const existing = processesByName.get(process.name);
             if (existing !== undefined) {
@@ -57,7 +56,7 @@ export class ProcessLoading {
         }
     }
 
-    private static loadProcessDefinition(typesByName: Map<string, Type>, processNode: Element): IUserProcess {
+    private static loadProcessDefinition(typesByName: Record<string, IType>, processNode: Element): IUserProcess {
         const name = processNode.getAttribute('name')!;
         const folder = processNode.hasAttribute('folder') ? processNode.getAttribute('folder') : null;
         const descNodes = processNode.getElementsByTagName('Description');
@@ -105,7 +104,7 @@ export class ProcessLoading {
     }
 
     private static loadProcessParameters(
-        typesByName: Map<string, Type>,
+        typesByName: Record<string, IType>,
         paramNodes: HTMLCollectionOf<Element>,
         dataFields: IParameter[],
         paramTypeName: 'input' | 'output' | 'variable'
@@ -115,18 +114,16 @@ export class ProcessLoading {
         for (const node of paramNodes) {
             const paramName = node.getAttribute('name')!;
             const typeName = node.getAttribute('type')!;
-            const dataType = typesByName.get(typeName);
 
-            if (dataType === undefined) {
+            if (!typesByName.hasOwnProperty(typeName)) {
                 throw new Error(`The ${paramName} ${paramTypeName} has an invalid type: ${typeName}. That type doesn't exist in this workspace.`);
-                continue;
             }
 
             let dataField: IVariable | IParameter;
             if (isVariable) {
                 dataField = {
                     name: paramName,
-                    type: dataType,
+                    typeName: typeName,
                     fromLinks: [],
                     toLinks: [],
                     x: parseInt(node.getAttribute('x')!),
@@ -137,7 +134,7 @@ export class ProcessLoading {
             else {
                 dataField = {
                     name: paramName,
-                    type: dataType,   
+                    typeName: typeName,   
                 }
             }
 
