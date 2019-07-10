@@ -122,55 +122,21 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         const openProcess = this.state.openProcess!;
         const allSteps = Array.from(openProcess.steps.values());
 
-        const addVariable = (type: Type, x: number, y: number) => {
-            const newVar = new Variable(openProcess.getNewVariableName(type), type, x, y);
-            openProcess.variables.push(newVar);
-            this.dropCompleted();
-            return newVar;
-        };
-
-        const addStep = (process: Process, x: number, y: number) => {
-            const newStep = new ProcessStep(openProcess.getNextStepID(), process, openProcess, x, y);
-            openProcess.steps.set(newStep.uniqueID, newStep);
-            this.dropCompleted();
-        };
-
-        const addStopStep = (returnPath: string | null, x: number, y: number) => {
-            const newStep = new StopStep(openProcess.getNextStepID(), openProcess, returnPath, x, y);
-            openProcess.steps.set(newStep.uniqueID, newStep);
-            this.dropCompleted();
-        };
-
-        const removeStep = (step: Step) => {
-            openProcess.removeStep(step);
-            this.revalidateOpenProcess();
-        }
-
-        const removeVariable = (variable: Variable) => {
-            openProcess.removeVariable(variable);
-            this.revalidateOpenProcess();
-        }
-
         return (
             <ProcessContent
                 className="workspaceEditor__content"
+                processName={this.state.openProcess.name}
                 steps={allSteps}
                 variables={openProcess.variables}
 
-                // addVariable={addVariable}
                 dropVariableType={this.state.droppingDataType}
-
-                addStep={addStep}
-                addStopStep={addStopStep}
-
-                removeStep={removeStep}
-                removeVariable={removeVariable}
-
                 dropStep={this.state.droppingProcess}
                 dropStopStep={this.state.droppingStopStep}
+                dropComplete={() => this.dropCompleted()}
+
                 revalidate={() => this.revalidateOpenProcess()}
                 focusStep={this.state.focusStep}
-                //focusStepParameter={this.state.focusStepParameter}
+                focusStepParameter={this.state.focusStepParameter}
                 focusStepReturnPath={this.state.focusStepReturnPath}
             />
         );

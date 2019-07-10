@@ -25,6 +25,12 @@ export type WorkspaceAction = {
     x: number;
     y: number;
 } | {
+    type: 'add stop step';
+    inProcessName: string;
+    returnPath: string | null;
+    x: number;
+    y: number;
+} | {
     type: 'remove step';
     processName: string;
     stepId: string;

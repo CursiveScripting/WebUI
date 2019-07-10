@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { Type } from '../../data';
 import { ToolboxItem, ToolboxItemType } from './ToolboxItem';
 import './ProcessSelector.css';
 import { ProcessFolder } from './ProcessFolder';
 import { IProcess } from '../../workspaceState/IProcess';
 import { IUserProcess } from '../../workspaceState/IUserProcess';
 import { isUserProcess } from '../../services/StepFunctions';
+import { IType } from '../../workspaceState/IType';
 
 interface Props {
     processes: IProcess[];
@@ -13,12 +13,12 @@ interface Props {
     selectedProcess?: IProcess;
     className?: string;
     errorProcesses: IUserProcess[];
-    dataTypes: Type[];
+    dataTypes: IType[];
 
     deselect: () => void;
     processSelected: (process: IProcess) => void;
     stopStepSelected: (name: string | null) => void;
-    dataTypeSelected: (type: Type) => void;
+    dataTypeSelected: (type: IType) => void;
     
     processOpened: (process: IUserProcess) => void;
     editDefinition: (process: IUserProcess) => void;
@@ -141,7 +141,7 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
         />
     }
 
-    renderDataType(type: Type) {
+    renderDataType(type: IType) {
         const select = () => this.props.dataTypeSelected(type);
         const deselect = () => this.props.deselect();
 

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Type } from '../../data';
+import { IType } from '../../workspaceState/IType';
 import './ParameterConnector.css';
 
 export enum ConnectorState {
@@ -9,7 +9,7 @@ export enum ConnectorState {
 }
 
 interface ParameterConnectorProps {
-    type: Type;
+    type: IType;
     state: ConnectorState;
     input: boolean;
     className?: string;

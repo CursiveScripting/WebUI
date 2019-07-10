@@ -1,23 +1,35 @@
 import * as React from 'react';
-import { Parameter, Step, StepType, StopStep } from '../../data';
 import { growToFitGrid } from './gridSize';
 import { ParameterDisplay } from './ParameterDisplay';
 import './ProcessItem.css';
+import { StepType } from '../../workspaceState/IStep';
+import { IParameter } from '../../workspaceState/IParameter';
+import { ConnectorState } from './ParameterConnector';
 
 interface StepDisplayProps {
-    step: Step;
+    stepId: string;
+    displayName: string;
+    description: string;
+    stepType: StepType;
+    inputs?: IParameter[];
+    outputs?: IParameter[];
+    returnPaths: string[] | null;
+    x: number;
+    y: number;
+
     readonly: boolean;
+    isValid: boolean;
     focused: boolean;
-    focusParameter?: Parameter;
+    focusParameter?: IParameter;
     focusReturnPath?: string | null;
     headerMouseDown: (mouseX: number, mouseY: number) => void;
     inputLinkMouseDown: (x: number, y: number) => void;
     outputLinkMouseDown: (x: number, y: number, returnPath: string | null) => void;
     inputLinkMouseUp: () => void;
     outputLinkMouseUp: (returnPath: string | null) => void;
-    parameterLinkMouseDown: (x: number, y: number, param: Parameter, input: boolean) => void;
-    parameterLinkMouseUp: (param: Parameter, input: boolean) => void;
-    deleteClicked?: () => void;
+    parameterLinkMouseDown: (x: number, y: number, param: IParameter, input: boolean) => void;
+    parameterLinkMouseUp: (param: IParameter, input: boolean) => void;
+    canDelete: boolean;
 }
 
 interface StepDisplayState {
@@ -45,13 +57,29 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
         return this._returnConnectors[returnPathName];
     }
 
-    public getInputConnector(param: Parameter) {
-        let index = this.props.step.inputs.indexOf(param);
+    public getInputConnector(param: IParameter) {
+        if (this.props.inputs === undefined) {
+            return undefined;
+        }
+
+        const index = this.props.inputs.indexOf(param);
+        if (index === -1) {
+            return undefined;
+        }
+
         return this._inputConnectors[index];
     }
 
-    public getOutputConnector(param: Parameter) {
-        let index = this.props.step.outputs.indexOf(param);
+    public getOutputConnector(param: IParameter) {
+        if (this.props.outputs === undefined) {
+            return undefined;
+        }
+
+        const index = this.props.outputs.indexOf(param);
+        if (index === -1) {
+            return undefined;
+        }
+
         return this._outputConnectors[index];
     }
 
@@ -79,24 +107,24 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
 
     render() {
         let posStyle = {
-            left: this.props.step.x,
-            top: this.props.step.y,
+            left: this.props.x,
+            top: this.props.y,
             minWidth: this.state.width,
         };
 
-        const deleteStep = this.props.deleteClicked === undefined
-            ? undefined
-            : <div className="processItem__delete" onClick={() => this.props.deleteClicked!()} title="remove this step" />
+        const deleteStep = this.props.canDelete
+            ? <div className="processItem__delete" onClick={() => this.props.deleteClicked!()} title="remove this step" />
+            : undefined
 
         return (
             <div className={this.determineRootClasses()} style={posStyle} ref={r => { if (r !== null) { this.root = r; }}}>
                 <div
                     className="processItem__header"
-                    title={this.props.step.description}
+                    title={this.props.description}
                     onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY)}
                 >
                     <div className="processItem__icon" />
-                    <div className="processItem__name">{this.props.step.name}</div>
+                    <div className="processItem__name">{this.props.displayName}</div>
                     {deleteStep}
                 </div>
                 <div className="processItem__connectors">
@@ -105,8 +133,8 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
                     {this.renderOutConnectors()}
                 </div>
                 <div className="processItem__parameters">
-                    {this.renderParameters(this.props.step.inputs, true)}
-                    {this.renderParameters(this.props.step.outputs, false)}
+                    {this.renderParameters(this.props.inputs, true)}
+                    {this.renderParameters(this.props.outputs, false)}
                 </div>
             </div>
         );
@@ -126,11 +154,11 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
             classes += ' processItem--focused';
         }
         
-        if (!this.props.step.isValid) {
+        if (!this.props.isValid) {
             classes += ' processItem--invalid';
         }
 
-        switch (this.props.step.stepType) {
+        switch (this.props.stepType) {
             case StepType.Start:
                 classes += ' processItem--start'; break;
             case StepType.Stop:
@@ -146,7 +174,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
     }
 
     private renderInConnector() {
-        if (this.props.step.stepType === StepType.Start) {
+        if (this.props.stepType === StepType.Start) {
             return undefined;
         }
 
@@ -170,9 +198,9 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
     }
     
     private renderOutConnectors() {
-        let pathIdentifiers = this.props.step.returnPathNames;
+        let pathIdentifiers = this.props.returnPathNames;
         if (pathIdentifiers === null) {
-            if (this.props.step.stepType === StepType.Stop) {
+            if (this.props.stepType === StepType.Stop) {
                 let pathName = (this.props.step as StopStep).returnPath;
                 if (pathName !== null) {
                     let classes = 'processItem__returnPathName';
@@ -222,7 +250,7 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
         );
     }
 
-    private renderParameters(parameters: Parameter[], input: boolean) {
+    private renderParameters(parameters: IParameter[] | undefined, input: boolean) {
         let connectors: HTMLDivElement[] = [];
         if (input) {
             this._inputConnectors = connectors;
@@ -231,19 +259,25 @@ export class StepDisplay extends React.PureComponent<StepDisplayProps, StepDispl
             this._outputConnectors = connectors;
         }
 
-        if (parameters.length === 0) {
+        if (parameters === undefined || parameters.length === 0) {
             return undefined;
         }
 
         return (
             <div className={input ? 'processItem__inputs' : 'processItem__outputs'}>
                 {parameters.map((param, idx) => {
+                    const isValid = true; // TODO: determine this
+                    const connectorState = ConnectorState.Connected; // TODO: determine this
+
                     return (
                     <ParameterDisplay
                         key={idx}
                         ref={c => { if (c !== null) { connectors.push(c.connector); }}}
                         input={input}
-                        parameter={param}
+                        name={param.name}
+                        connectorState={connectorState}
+                        type={param.typeName}
+                        isValid={isValid}
                         focused={param === this.props.focusParameter}
                         linkMouseDown={e => this.props.parameterLinkMouseDown(e.clientX, e.clientY, param, input)}
                         linkMouseUp={() => this.props.parameterLinkMouseUp(param, input)}

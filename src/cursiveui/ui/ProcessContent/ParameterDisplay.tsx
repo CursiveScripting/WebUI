@@ -1,10 +1,13 @@
 import * as React from 'react';
-import { Parameter } from '../../data';
 import { ParameterConnector, ConnectorState } from './ParameterConnector';
 import './ParameterDisplay.css';
+import { IType } from '../../workspaceState/IType';
 
 interface ParameterDisplayProps {
-    parameter: Parameter;
+    name: string;
+    type: IType;
+    isValid: boolean;
+    connectorState: ConnectorState;
     input: boolean;
     focused: boolean;
     linkMouseDown?: (e: React.MouseEvent<HTMLDivElement>) => void;
@@ -21,9 +24,9 @@ export class ParameterDisplay extends React.PureComponent<ParameterDisplayProps,
             <div className={this.determineRootClasses()}>
                 <ParameterConnector
                     className="parameter__connector"
-                    type={this.props.parameter.type}
+                    type={this.props.type}
                     input={this.props.input}
-                    state={this.determineConnectorState()}
+                    state={this.props.connectorState}
                     onMouseDown={this.props.linkMouseDown}
                     onMouseUp={this.props.linkMouseUp}
                     ref={c => { if (c !== null) { this._connector = c.connector; }}}
@@ -33,39 +36,29 @@ export class ParameterDisplay extends React.PureComponent<ParameterDisplayProps,
                     onMouseDown={this.props.linkMouseDown}
                     onMouseUp={this.props.linkMouseUp}
                 >
-                    {this.props.parameter.name}
+                    {this.props.name}
                 </div>
             </div>
         );
     }
 
     private determineRootClasses() {
-        let classes = this.props.input ? 'parameter parameter--input' : 'parameter parameter--output';
+        let classes = this.props.input
+            ? 'parameter parameter--input'
+            : 'parameter parameter--output';
 
         if (this.props.focused) {
             classes += ' parameter--focused';
         }
 
-        if (!this.props.parameter.isValid) {
+        if (!this.props.isValid) {
             classes += ' parameter--invalid';
         }
 
-        if (this.props.parameter.link === null && this.props.parameter.initialValue !== null) {
+        if (this.props.connectorState === ConnectorState.Fixed) {
             classes += ' parameter--fixed';
         }
 
         return classes;
-    }
-
-    private determineConnectorState() {
-        if (this.props.parameter.link !== null) {
-            return ConnectorState.Connected;
-        }
-        else if (this.props.parameter.initialValue !== null) {
-            return ConnectorState.Fixed;
-        }
-        else {
-            return ConnectorState.Disconnected;
-        }
     }
 }

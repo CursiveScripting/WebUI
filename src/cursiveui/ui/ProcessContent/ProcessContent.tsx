@@ -1,33 +1,37 @@
 import * as React from 'react';
-import { Step, ReturnPath, Type, Variable, DataField, Process, Parameter } from '../../data';
 import { alignToGrid, growToFitGrid, gridSize } from './gridSize';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
-import { Positionable } from '../../workspaceState/IPositionable';
 import './ProcessContent.css';
 import { LinkCanvas, LinkDragInfo } from './LinkCanvas';
 import { ScrollWrapper } from './ScrollWrapper';
 import { VariablesDisplay } from './VariablesDisplay';
 import { StepsDisplay } from './StepsDisplay';
 import { ContentWrapper } from './ContentWrapper';
+import { WorkspaceDispatchContext } from '../../workspaceState/actions';
+import { IStep } from '../../workspaceState/IStep';
+import { IVariable } from '../../workspaceState/IVariable';
+import { IProcess } from '../../workspaceState/IProcess';
+import { IType } from '../../workspaceState/IType';
+import { IParameter } from '../../workspaceState/IParameter';
+import { IPositionable } from '../../workspaceState/IPositionable';
+import { determineVariableName } from '../../services/StepFunctions';
 
 interface Props {
-    steps: Step[];
-    variables: Variable[];
-    
-    addStep: (process: Process, x: number, y: number) => void;
-    addStopStep: (returnPath: string | null, x: number, y: number) => void;
-    addVariable: (type: Type, x: number, y: number) => Variable;
-
-    removeStep: (step: Step) => void;
-    removeVariable: (variable: Variable) => void;
+    processName: string;
+    steps: IStep[];
+    variables: IVariable[];
     
     className?: string;
-    dropVariableType?: Type;
-    dropStep?: Process;
+    
+    dropVariableType?: IType;
+    dropStep?: IProcess;
     dropStopStep?: string | null;
-    focusStep?: Step;
-    focusStepParameter?: Parameter;
+
+    dropComplete: () => void;
+
+    focusStep?: IStep;
+    focusStepParameter?: IParameter;
     focusStepReturnPath?: string | null;
     revalidate: () => void;
 }
@@ -43,15 +47,15 @@ interface State {
 }
 
 export interface StepConnectorDragInfo {
-    step: Step;
+    step: IStep;
     input: boolean;
     returnPath: string | null;
 }
 
 export interface ParamConnectorDragInfo {
-    field: DataField;
+    field: IParameter | IVariable;
     input: boolean;
-    step?: Step;
+    step?: IStep;
 }
 
 export interface Coord {
@@ -71,12 +75,12 @@ type DragInfo = {
     type: DragType.Step;
     x: number;
     y: number;
-    step: Step;
+    step: IStep;
 } | {
     type: DragType.Variable;
     x: number;
     y: number;
-    variable: Variable;
+    variable: IVariable;
 } | {
     type: DragType.StepConnector;
     x: number;
@@ -94,9 +98,12 @@ type DragInfo = {
 }
 
 export class ProcessContent extends React.PureComponent<Props, State> {
+    static contextType = WorkspaceDispatchContext;
+    context!: React.ContextType<typeof WorkspaceDispatchContext>;
+
     private canvas: LinkCanvas | null = null;
-    private readonly stepDisplays = new Map<Step, StepDisplay>();
-    private readonly variableDisplays = new Map<Variable, VariableDisplay>();
+    private readonly stepDisplays = new Map<IStep, StepDisplay>();
+    private readonly variableDisplays = new Map<IVariable, VariableDisplay>();
 
     constructor(props: Props) {
         super(props);
@@ -173,8 +180,8 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                         focusStep={this.props.focusStep}
                         focusParameter={this.props.focusStepParameter}
                         focusReturnPath={this.props.focusStepReturnPath}
-                        removeStep={step => this.props.removeStep(step)}
 
+                        // TODO: these operations shouldn't be passed up out of the StepsDisplay, it should handle them internally
                         startDragHeader={(step, x, y) => this.stepDragStart(step, x, y)}
 
                         startDragInputPath={(step, x, y) => this.stepLinkDragStart(step, x, y, true, null)}
@@ -190,7 +197,6 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     <VariablesDisplay
                         variables={this.props.variables}
                         refs={this.variableDisplays}
-                        removeVariable={variable => this.props.removeVariable(variable)}
                         initialValueChanged={(variable, val) => this.variableDefaultChanged(variable, val)}
 
                         startDragHeader={(variable, x, y) => this.varDragStart(variable, x, y)}
@@ -228,7 +234,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         }
     }
         
-    private variableDefaultChanged(variable: Variable, value: string | null) {
+    private variableDefaultChanged(variable: IVariable, value: string | null) {
         variable.initialValue = value === ''
             ? null
             : value;
@@ -236,15 +242,15 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         this.props.revalidate();
     }
 
-    private getStepDisplay(step: Step) {
+    private getStepDisplay(step: IStep) {
         return this.stepDisplays.get(step)!;
     }
 
-    private getVariableDisplay(variable: Variable) {
+    private getVariableDisplay(variable: IVariable) {
         return this.variableDisplays.get(variable)!;
     }
 
-    private stepDragStart(step: Step, startX: number, startY: number) {
+    private stepDragStart(step: IStep, startX: number, startY: number) {
         this.setState({
             dragging: {
                 type: DragType.Step,
@@ -255,7 +261,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         });
     }
 
-    private varDragStart(variable: Variable, startX: number, startY: number) {
+    private varDragStart(variable: IVariable, startX: number, startY: number) {
         this.setState({
             dragging: {
                 type: DragType.Variable,
@@ -293,12 +299,21 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                 if (connector.step !== undefined) {
                     const gridDropPos = this.screenToGrid(dragging);
 
-                    const newVar = this.props.addVariable(connector.field.type, gridDropPos.x, gridDropPos.y);
+                    const newVarName = determineVariableName(connector.field.typeName, this.props.variables)
+                    
+                    this.context({
+                        type: 'add variable',
+                        inProcessName: this.props.processName,
+                        typeName: connector.field.typeName,
+                        varName: newVarName,
+                        x: gridDropPos.x,
+                        y: gridDropPos.y,
+                    });
 
                     const dragInfo = connector;
                     
                     const dropInfo = {
-                        field: newVar,
+                        field: newVarName,
                         input: !connector.input,
                     };
                     
@@ -317,13 +332,38 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                 const gridDropPos = this.screenToGrid(dragging);
 
                 if (this.props.dropStep !== undefined) {
-                    this.props.addStep(this.props.dropStep!, gridDropPos.x, gridDropPos.y);
+                    this.context({
+                        type: 'add step',
+                        inProcessName: this.props.processName,
+                        stepProcessName: this.props.dropStep.name,
+                        x: gridDropPos.x,
+                        y: gridDropPos.y,
+                    });
+
+                    this.props.dropComplete();
                 }
                 else if (this.props.dropVariableType !== undefined) {
-                    this.props.addVariable(this.props.dropVariableType, gridDropPos.x, gridDropPos.y);
+                    this.context({
+                        type: 'add variable',
+                        inProcessName: this.props.processName,
+                        typeName: this.props.dropVariableType.name,
+                        varName: determineVariableName(this.props.dropVariableType.name, this.props.variables),
+                        x: gridDropPos.x,
+                        y: gridDropPos.y,
+                    });
+
+                    this.props.dropComplete();
                 }
                 else if (this.props.dropStopStep !== undefined) {
-                    this.props.addStopStep(this.props.dropStopStep, gridDropPos.x, gridDropPos.y);
+                    this.context({
+                        type: 'add stop step',
+                        inProcessName: this.props.processName,
+                        returnPath: this.props.dropStopStep,
+                        x: gridDropPos.x,
+                        y: gridDropPos.y,
+                    });
+
+                    this.props.dropComplete();
                 }
                 break;
         }
@@ -384,7 +424,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         };
     }
 
-    private dragItem(dx: number, dy: number, item: Positionable, display: React.Component) {
+    private dragItem(dx: number, dy: number, item: IPositionable, display: React.Component) {
         item.x += dx;
         item.y += dy;
         
@@ -392,14 +432,14 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         this.canvas!.drawLinks();
     }
 
-    private stopDraggingItem(item: Positionable) {
+    private stopDraggingItem(item: IPositionable) {
         item.x = alignToGrid(item.x);
         item.y = alignToGrid(item.y);
 
         this.canvas!.drawLinks();
     }
 
-    private stepLinkDragStart(step: Step, x: number, y: number, input: boolean, returnPath: string | null) {
+    private stepLinkDragStart(step: IStep, x: number, y: number, input: boolean, returnPath: string | null) {
         this.setState({
             dragging: {
                 type: DragType.StepConnector,
@@ -414,7 +454,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         });
     }
 
-    private stepLinkDragStop(step: Step, input: boolean, returnPath: string | null) {
+    private stepLinkDragStop(step: IStep, input: boolean, returnPath: string | null) {
         if (this.state.dragging === undefined) {
             return;
         }
@@ -434,7 +474,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             return;
         }
 
-        let fromStep: Step, toStep: Step;
+        let fromStep: IStep, toStep: IStep;
         if (input) {
             fromStep = dragInfo.stepConnector.step;
             toStep = step;
@@ -473,7 +513,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         this.canvas!.drawLinks();
     }
 
-    private fieldLinkDragStart(field: DataField, input: boolean, x: number, y: number, step?: Step) {
+    private fieldLinkDragStart(field: IParameter | IVariable, input: boolean, x: number, y: number, step?: IStep) {
         this.setState({
             dragging: {
                 type: DragType.ParamConnector,
@@ -488,7 +528,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         });
     }
 
-    private fieldLinkDragStop(field: DataField, input: boolean, step?: Step) {
+    private fieldLinkDragStop(field: IParameter | IVariable, input: boolean, step?: IStep) {
         if (this.state.dragging === undefined) {
             return;
         }
@@ -515,7 +555,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                 this.getStepDisplay(dragInfo.paramConnector.step).forceUpdate();
             }
             else {
-                this.getVariableDisplay(dragInfo.paramConnector.field as Variable).forceUpdate();
+                this.getVariableDisplay(dragInfo.paramConnector.field as IVariable).forceUpdate();
             }
 
             if (dropInfo.step !== undefined) {
@@ -523,7 +563,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                 this.getStepDisplay(dropInfo.step).forceUpdate();
             }
             else {
-                this.getVariableDisplay(dropInfo.field as Variable).forceUpdate();
+                this.getVariableDisplay(dropInfo.field as IVariable).forceUpdate();
             }
         }
 
@@ -555,18 +595,18 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             return this.linkStepsWithVariable(from, to);
         }
         
-        if (from.field instanceof Parameter) {
-            return this.linkStepToVariable(from.field as Parameter, to.field as Variable);
+        if (from.field instanceof IParameter) {
+            return this.linkStepToVariable(from.field as IParameter, to.field as IVariable);
         }
         
-        if (to.field instanceof Parameter) {
-            return this.linkStepToVariable(to.field as Parameter, from.field as Variable);
+        if (to.field instanceof IParameter) {
+            return this.linkStepToVariable(to.field as IParameter, from.field as IVariable);
         }
         
         return false; // not going to/from any parameter... ?
     }
 
-    private linkStepToVariable(parameter: Parameter, variable: Variable) {
+    private linkStepToVariable(parameter: IParameter, variable: IVariable) {
         if (parameter.link === variable) {
             return false; // they already link, do nothing
         }
@@ -586,12 +626,12 @@ export class ProcessContent extends React.PureComponent<Props, State> {
     private linkStepsWithVariable(from: ParamConnectorDragInfo, to: ParamConnectorDragInfo) {
         const fromPos = this.stepDisplays
             .get(from.step!)!
-            .getOutputConnector(from.field as Parameter)
+            .getOutputConnector(from.field as IParameter)
             .getBoundingClientRect();
 
         const toPos = this.stepDisplays
             .get(to.step!)!
-            .getInputConnector(to.field as Parameter)
+            .getInputConnector(to.field as IParameter)
             .getBoundingClientRect();
 
         const dropPos = this.screenToGrid({
@@ -601,7 +641,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
 
         const newVar = this.props.addVariable(to.field.type, dropPos.x, dropPos.y);
 
-        return this.linkStepToVariable(from.field as Parameter, newVar)
-            && this.linkStepToVariable(to.field as Parameter, newVar);
+        return this.linkStepToVariable(from.field as IParameter, newVar)
+            && this.linkStepToVariable(to.field as IParameter, newVar);
     }
 }

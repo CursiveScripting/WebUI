@@ -3,6 +3,7 @@ import { IProcess } from '../workspaceState/IProcess';
 import { StepType, IStepWithOutputs, IStep, IStepWithInputs } from '../workspaceState/IStep';
 import { IStopStep } from '../workspaceState/IStopStep';
 import { IProcessStep } from '../workspaceState/IProcessStep';
+import { IVariable } from '../workspaceState/IVariable';
 
 export function isUserProcess(process: IProcess): process is IUserProcess {
     return !process.isSystem;
@@ -36,4 +37,16 @@ export function determineStepId(otherSteps: IStep[]) {
     }
 
     return testId.toString();
+}
+
+export function determineVariableName(typeName: string, otherVars: IVariable[]) {
+    let testNum = 0;
+    let testName = `new ${typeName}`;
+
+    while (otherVars.find(v => v.name === testName) !== undefined) {
+        testNum ++;
+        testName = `new ${typeName} ${testNum}`;
+    }
+    
+    return testName;
 }

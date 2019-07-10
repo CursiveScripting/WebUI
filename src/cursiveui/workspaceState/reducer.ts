@@ -6,6 +6,7 @@ import { hasEditableSignature, isUserProcess, determineStepId } from '../service
 import { IVariable } from './IVariable';
 import { IProcessStep } from './IProcessStep';
 import { StepType } from './IStep';
+import { IStopStep } from './IStopStep';
 
 export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (state, action) => {
     const processes = state.processes.slice();
@@ -104,6 +105,43 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
             };
         }
 
+        case 'add stop step': {
+            const inProcessIndex = processes.findIndex(p => p.name === action.inProcessName);
+
+            if (inProcessIndex === -1) {
+                return state;
+            }
+
+            const inProcess = { ...processes[inProcessIndex] };
+            
+            if (!isUserProcess(inProcess)) {
+                return state;
+            }
+
+            if (action.returnPath === null && inProcess.returnPaths.length > 0) {
+                return state; // need to specify a path name
+            }
+            else if (action.returnPath !== null && inProcess.returnPaths.indexOf(action.returnPath) === -1) {
+                return state; // invalid path name, or shouldn't have specified a path name
+            }
+
+            inProcess.steps = [...inProcess.steps, <IStopStep>{
+                uniqueId: determineStepId(inProcess.steps),
+                returnPath: action.returnPath,
+                inputs: {},
+                stepType: StepType.Stop,
+                x: action.x,
+                y: action.y,
+            }];
+
+            processes[inProcessIndex] = inProcess;
+            
+            return {
+                ...state,
+                processes,
+            };
+        }
+
         case 'remove step': {
             const processIndex = processes.findIndex(p => p.name === action.processName);
 
@@ -113,13 +151,15 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
                 return state;
             }
             
-            const steps = process.steps.slice();
+            process.steps = process.steps.slice();
 
-            const index = steps.findIndex(step => step.uniqueId === action.stepId);
+            const stepIndex = process.steps.findIndex(step => step.uniqueId === action.stepId);
 
-            steps.splice(index, 1);
+            if (stepIndex === -1) {
+                return state;
+            }
 
-            process.steps = steps;
+            process.steps.splice(stepIndex, 1);
 
             processes[processIndex] = process;
 
