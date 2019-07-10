@@ -25,7 +25,7 @@ type LoadingState = {
 
 export const CursiveUI = (props: Props) => {
     const [workspace, dispatchWorkspace] = useReducer(workspaceReducer, {
-        types: {},
+        types: [],
         processes: [],
     });
 

@@ -1,14 +1,14 @@
 import * as React from 'react';
-import { Type } from '../../data';
 import './SignatureEditor.css';
 import { ValueInput } from '../ProcessContent/ValueInput';
 import { ReturnPathsEditor } from './ReturnPathsEditor';
 import { ParametersEditor } from './ParametersEditor';
 import { IParameter } from '../../workspaceState/IParameter';
+import { IType } from '../../workspaceState/IType';
 
-export interface ParamInfo {
+export interface IParamInfo {
     name: string;
-    type: Type;
+    type: IType;
     underlyingParameter?: IParameter;
 }
 
@@ -24,15 +24,15 @@ interface Props {
     returnPathsValid: boolean[];
     returnPathsChanged: (paths: string[]) => void;
 
-    inputs: ParamInfo[];
+    inputs: IParamInfo[];
     inputsValid: boolean[];
-    inputsChanged: (inputs: ParamInfo[]) => void;
+    inputsChanged: (inputs: IParamInfo[]) => void;
 
-    outputs: ParamInfo[];
+    outputs: IParamInfo[];
     outputsValid: boolean[];
-    outputsChanged: (outputs: ParamInfo[]) => void;
+    outputsChanged: (outputs: IParamInfo[]) => void;
 
-    dataTypes: Type[];
+    dataTypes: IType[];
 }
 
 export const SignatureEditor = (props: Props) => {

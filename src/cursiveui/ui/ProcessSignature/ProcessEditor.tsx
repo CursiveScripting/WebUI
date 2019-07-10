@@ -1,19 +1,19 @@
 import * as React from 'react';
-import { Type, Parameter } from '../../data';
 import './ProcessEditor.css';
-import { ParamInfo, SignatureEditor } from './SignatureEditor';
+import { IParamInfo, SignatureEditor } from './SignatureEditor';
 import { IProcess } from '../../workspaceState/IProcess';
 import { IUserProcess } from '../../workspaceState/IUserProcess';
-import { IParameter } from '../../workspaceState/IParameter';
 import { WorkspaceDispatchContext } from '../../workspaceState/actions';
 import { useMemo } from 'react';
 import { isProcessUsedAnywhere } from '../../services/ProcessFunctions';
+import { IType } from '../../workspaceState/IType';
+import { INamed } from '../../workspaceState/INamed';
 
 interface Props {
     process?: IUserProcess;
     className?: string;
     allProcesses: IProcess[];
-    allTypes: Type[];
+    allTypes: IType[];
     close: () => void;
 }
 
@@ -23,9 +23,9 @@ interface State {
     description: string;
     returnPaths: string[];
     returnPathValidity: boolean[];
-    inputs: ParamInfo[];
+    inputs: IParamInfo[];
     inputValidity: boolean[];
-    outputs: ParamInfo[];
+    outputs: IParamInfo[];
     outputValidity: boolean[];
     // TODO: folder
 }
@@ -36,6 +36,8 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
     
     constructor(props: Props) {
         super(props);
+
+        const getType = (name: string) => props.allTypes.find(t => t.name === name)!;
 
         this.state = props.process === undefined
             ? {
@@ -55,9 +57,9 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
                 description: props.process.description,
                 returnPaths: props.process.returnPaths,
                 returnPathValidity: props.process.returnPaths.map((path, index) => this.isReturnPathNameValid(index, props.process!.returnPaths)),
-                inputs: props.process.inputs.map(i => { return { type: i.type, name: i.name }; }),
+                inputs: props.process.inputs.map(i => { return { type: getType(i.typeName), name: i.name }; }),
                 inputValidity: props.process.inputs.map((param, index) => this.isParameterNameValid(index, props.process!.inputs)),
-                outputs: props.process.outputs.map(o => { return { type: o.type, name: o.name }; }),
+                outputs: props.process.outputs.map(o => { return { type: getType(o.typeName), name: o.name }; }),
                 outputValidity: props.process.outputs.map((param, index) => this.isParameterNameValid(index, props.process!.outputs)),
             };
     }
@@ -82,17 +84,22 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
             returnPathValidity: returnPaths.map((path, index) => this.isReturnPathNameValid(index, returnPaths)),
         });
 
-        const inputsChanged = (params: ParamInfo[]) => this.setState({
+        const inputsChanged = (params: IParamInfo[]) => this.setState({
             inputs: params,
             inputValidity: params.map((param, index) => this.isParameterNameValid(index, params)),
         });
 
-        const outputsChanged = (params: ParamInfo[]) => this.setState({
+        const outputsChanged = (params: IParamInfo[]) => this.setState({
             outputs: params,
             outputValidity: params.map((param, index) => this.isParameterNameValid(index, params)),
         });
 
-        const errors = this.getErrors();
+        const errors = useMemo(() => this.getErrors(), [
+            this.state.nameValid,
+            this.state.returnPathValidity,
+            this.state.inputValidity,
+            this.state.outputValidity,
+        ]);
 
         const canSave = errors.length === 0;
         const validationSummary = canSave
@@ -169,7 +176,7 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
                     : 'This name is already in use, give this process a different name.'
             );
         }
-
+        
         if (!this.state.returnPathValidity.reduce((prev, curr) => prev && curr, true)) {
             errors.push(
                 this.state.returnPaths.length === 1
@@ -197,63 +204,50 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
                 description: this.state.description,
                 inputs: this.state.inputs.map(i => { return {
                     name: i.name,
-                    type: i.type,
+                    typeName: i.type.name,
                 }}),
                 outputs: this.state.outputs.map(o => { return {
                     name: o.name,
-                    type: o.type,
+                    typeName: o.type.name,
                 }}),
                 returnPaths: this.state.returnPaths,
-                folder: null, // TODO handle these
+                folder: null, // TODO handle this
             });
         }
         else {
-            // TODO: implement this ... how to update in dispatch but also track parameters across moving and renaming?
-                
-            /*
-            let process: IUserProcess;
-            let oldProcessName: string | null;
+            const mapParam = (name: string, params: IParamInfo[]) => {
+                const matched = params.find(p => 
+                    p.underlyingParameter !== undefined
+                    && p.underlyingParameter.name === name
+                    && p.type.name === p.underlyingParameter.typeName // TODO: use is assignable to / from here
+                );
 
-            if (this.props.process === undefined) {
-                oldProcessName = null;
-                process = new UserProcess(this.state.name, [], [], [], [], false, this.state.description, null)
-            }
-            else {
-                oldProcessName = this.props.process.name;
-
-                process = this.props.process;
-                process.name = this.state.name;
-                process.description = this.state.description;
+                return matched === undefined
+                    ? undefined
+                    : matched.name;
             }
 
-            // remove all return paths, add all new ones
-            process.returnPaths.splice(0, process.returnPaths.length, ...this.state.returnPaths);
-            
-            this.saveParameters(this.state.inputs, process.inputs, true);
-            this.saveParameters(this.state.outputs, process.outputs, false);
-            */
+            this.context({
+                type: 'edit process',
+                oldName: this.props.process.name,
+                newName: this.state.name,
+                description: this.state.description,
+                folder: null, // TODO: handle this
+                inputs: this.state.inputs.map(i => { return {
+                    name: i.name,
+                    typeName: i.type.name,
+                }}),
+                outputs: this.state.outputs.map(o => { return {
+                    name: o.name,
+                    typeName: o.type.name,
+                }}),
+                mapInputs: i => mapParam(i, this.state.inputs),
+                mapOutputs: o => mapParam(o, this.state.outputs),
+                returnPaths: this.state.returnPaths,
+            });
         }
 
         this.props.close();
-    }
-
-    private saveParameters(source: ParamInfo[], destination: IParameter[], isInput: boolean) {
-        // empty the destination array
-        destination.splice(0, destination.length);
-
-        // add all new parameters back in, hooking up to existing parameter objects if their type hasn't changed
-        for (const paramInfo of source) {
-            let parameter: IParameter;
-
-            if (paramInfo.underlyingParameter === undefined || paramInfo.underlyingParameter.type !== paramInfo.type) {
-                parameter = new Parameter(paramInfo.name, paramInfo.type, isInput);
-            }
-            else {
-                parameter = paramInfo.underlyingParameter;
-                parameter.name = paramInfo.name;
-                parameter.type = paramInfo.type;
-            }
-        }
     }
 
     private isProcessNameValid(name: string, thisProcess: IUserProcess | undefined, allProcesses: IProcess[]) {
@@ -273,7 +267,7 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
             && pathName.length !== 1;
     }
 
-    private isParameterNameValid(paramIndex: number, parameters: ParamInfo[]) {
+    private isParameterNameValid(paramIndex: number, parameters: INamed[]) {
         // A parameter name with space on the end or that exactly matches another is invalid.
         const paramName = parameters[paramIndex].name;
         return paramName !== ''

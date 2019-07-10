@@ -1,15 +1,15 @@
 import * as React from 'react';
 import './ParameterEditor.css';
 import { ValueInput } from '../ProcessContent/ValueInput';
-import { Type } from '../../data';
+import { IType } from '../../workspaceState/IType';
 
 interface Props {
     name: string;
-    type: Type;
+    type: IType;
     isValid: boolean;
-    allTypes: Type[];
+    allTypes: IType[];
     renameParameter: (name: string) => void;
-    changeType: (type: Type) => void;
+    changeType: (type: IType) => void;
 }
 
 export const ParameterEditor: React.FunctionComponent<Props> = props => {

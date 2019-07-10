@@ -23,9 +23,10 @@ export function loadProcesses(workspace: IWorkspaceState, processData: Document 
 function loadProcessesFromElement(workspace: IWorkspaceState, processData: HTMLElement) {
     const processNodes = processData.getElementsByTagName('Process');
     const processesByName = createMap(workspace.processes, p => p.name);
-    
+    const typesByName = createMap(workspace.types, t => t.name);
+
     for (const processNode of processNodes) {
-        const process = loadProcessDefinition(workspace.types, processNode);
+        const process = loadProcessDefinition(typesByName, processNode);
         
         const existing = processesByName.get(process.name);
         if (existing !== undefined) {
@@ -56,7 +57,7 @@ function loadProcessesFromElement(workspace: IWorkspaceState, processData: HTMLE
     }
 }
 
-function loadProcessDefinition(typesByName: Record<string, IType>, processNode: Element): IUserProcess {
+function loadProcessDefinition(typesByName: Map<string, IType>, processNode: Element): IUserProcess {
     const name = processNode.getAttribute('name')!;
     const folder = processNode.hasAttribute('folder') ? processNode.getAttribute('folder') : null;
     const descNodes = processNode.getElementsByTagName('Description');
@@ -104,7 +105,7 @@ function loadProcessDefinition(typesByName: Record<string, IType>, processNode: 
 }
 
 function loadProcessParameters(
-    typesByName: Record<string, IType>,
+    typesByName: Map<string, IType>,
     paramNodes: HTMLCollectionOf<Element>,
     dataFields: IParameter[],
     paramTypeName: 'input' | 'output' | 'variable'
@@ -115,7 +116,7 @@ function loadProcessParameters(
         const paramName = node.getAttribute('name')!;
         const typeName = node.getAttribute('type')!;
 
-        if (!typesByName.hasOwnProperty(typeName)) {
+        if (!typesByName.has(typeName)) {
             throw new Error(`The ${paramName} ${paramTypeName} has an invalid type: ${typeName}. That type doesn't exist in this workspace.`);
         }
 

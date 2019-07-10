@@ -5,7 +5,7 @@ import { IType } from './IType';
 
 export type WorkspaceAction = {
     type: 'load';
-    types: Record<string, IType>;
+    types: IType[];
     processes: IProcess[];
 } | {
     type: 'add process';
@@ -15,6 +15,17 @@ export type WorkspaceAction = {
     returnPaths: string[];
     inputs: IParameter[];
     outputs: IParameter[];
+} | {
+    type: 'edit process';
+    oldName: string;
+    newName: string;
+    description: string;
+    folder: string | null;
+    returnPaths: string[];
+    inputs: IParameter[];
+    outputs: IParameter[];
+    mapInputs: (prev: string) => string | undefined;
+    mapOutputs: (prev: string) => string | undefined;
 } | {
     type: 'remove process';
     name: string;

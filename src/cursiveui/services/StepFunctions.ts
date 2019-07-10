@@ -2,6 +2,7 @@ import { StepType, IStepWithOutputs, IStep, IStepWithInputs } from '../workspace
 import { IStopStep } from '../workspaceState/IStopStep';
 import { IProcessStep } from '../workspaceState/IProcessStep';
 import { IVariable } from '../workspaceState/IVariable';
+import { IStartStep } from '../workspaceState/IStartStep';
 
 export function usesInputs(step: IStep): step is IStepWithInputs {
     return step.stepType !== StepType.Start;
@@ -9,6 +10,10 @@ export function usesInputs(step: IStep): step is IStepWithInputs {
 
 export function usesOutputs(step: IStep): step is IStepWithOutputs {
     return step.stepType !== StepType.Stop;
+}
+
+export function isStartStep(step: IStep): step is IStartStep {
+    return step.stepType === StepType.Start;
 }
 
 export function isStopStep(step: IStep): step is IStopStep {

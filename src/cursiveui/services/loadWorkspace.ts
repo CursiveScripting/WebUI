@@ -19,9 +19,9 @@ export function loadWorkspace(workspaceData: Document | string) {
 }
 
 function loadWorkspaceFromElement(workspaceData: HTMLElement): IWorkspaceState {
-    const processesByName = new Map<string, IProcess>();
-
+    const processesByName: Record<string, IProcess> = {};
     const typesByName: Record<string, IType> = {};
+
     const typeNodes = workspaceData.getElementsByTagName('Type');
     
     for (const typeNode of typeNodes) {
@@ -37,18 +37,18 @@ function loadWorkspaceFromElement(workspaceData: HTMLElement): IWorkspaceState {
     let procNodes = workspaceData.getElementsByTagName('SystemProcess');
     for (const procNode of procNodes) {
         const process = loadProcessDefinition(procNode, typesByName, true) as ISystemProcess;
-        processesByName.set(process.name, process);
+        processesByName[process.name] = process;
     }
 
     procNodes = workspaceData.getElementsByTagName('RequiredProcess');
     for (const procNode of procNodes) {
         const process = loadProcessDefinition(procNode, typesByName, false) as IUserProcess;
-        processesByName.set(process.name, process);
+        processesByName[process.name] = process;
     }
 
     return {
-        types: typesByName,
-        processes: Array.from(processesByName.values()),
+        types: Object.values(typesByName),
+        processes: Object.values(processesByName),
     };
 }
 

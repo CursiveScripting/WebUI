@@ -1,17 +1,17 @@
 import * as React from 'react';
 import './ParametersEditor.css';
-import { ParamInfo } from './SignatureEditor';
-import { Type } from '../../data';
+import { IParamInfo } from './SignatureEditor';
 import { ParameterEditor } from './ParameterEditor';
 import { SortableList } from './SortableList';
+import { IType } from '../../workspaceState/IType';
 
 interface Props {
     className?: string;
     input: boolean;
-    parameters: ParamInfo[];
+    parameters: IParamInfo[];
     parameterValidity: boolean[];
-    parametersChanged: (parameters: ParamInfo[]) => void;
-    dataTypes: Type[];
+    parametersChanged: (parameters: IParamInfo[]) => void;
+    dataTypes: IType[];
 }
 
 export const ParametersEditor: React.FunctionComponent<Props> = props => {
@@ -27,7 +27,7 @@ export const ParametersEditor: React.FunctionComponent<Props> = props => {
             : 'Outputs:';
     }
 
-    const editParam = (index: number, newName: string, newType: Type) => {
+    const editParam = (index: number, newName: string, newType: IType) => {
         const newParams = props.parameters.slice();
         const prevParam = newParams[index];
 

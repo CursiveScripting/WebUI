@@ -12,6 +12,8 @@ import { IStep } from '../workspaceState/IStep';
 import { IParameter } from '../workspaceState/IParameter';
 import { WorkspaceDispatchContext } from '../workspaceState/actions';
 import { IType } from '../workspaceState/IType';
+import { createMap } from '../services/DataFunctions';
+import { useMemo } from 'react';
 
 interface Props {
     workspace: IWorkspaceState;
@@ -70,6 +72,8 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
     }
 
     render() {
+        const typesByName = useMemo(() => createMap(this.props.workspace.types, t => t.name), [this.props.workspace.types])
+
         let classes = 'workspaceEditor';
         if (this.props.className !== undefined) {
             classes += ' ' + this.props.className;
@@ -174,7 +178,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
             <ProcessEditor
                 process={this.state.openProcess}
                 className="workspaceEditor__content"
-                allTypes={Array.from(this.props.workspace.types)}
+                allTypes={this.props.workspace.types}
                 allProcesses={this.props.workspace.processes}
                 close={() => this.closeSignatureEditor()}
             />
@@ -205,10 +209,11 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
     }
 
     private openProcess(process: IUserProcess) {
-        const processErrors = this.props.workspace.validationSummary.getErrorsForProcess(process);
+        // TODO: validation data needs stored somewhere (in the store? in a state here?) and accessed as needed
+        const processErrors: ValidationError[] = []; // this.props.workspace.validationSummary.getErrorsForProcess(process);
         let isValid = processErrors.length === 0;
 
-        let otherProcessesHaveErrors = this.props.workspace.validationSummary.numErrorProcesses > (isValid ? 0 : 1);
+        let otherProcessesHaveErrors = false; // this.props.workspace.validationSummary.numErrorProcesses > (isValid ? 0 : 1);
 
         this.setState({
             openProcess: process,
@@ -259,9 +264,12 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
     }
 
     private getProcessesWithErrors(workspace: IWorkspaceState) {
+        return [];
+        /*
         return workspace.validationSummary.errorProcessNames
             .map(n => workspace.userProcesses.get(n)!)
             .filter(p => p !== undefined);
+        */
     }
 
     private revalidateOpenProcess() {
@@ -269,11 +277,11 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
             return;
         }
         
-        let wasValid = this.props.workspace.validationSummary.getErrorsForProcess(this.state.openProcess).length === 0;
-        let processErrors = this.props.workspace.validateProcess(this.state.openProcess);
-        let isValid = processErrors.length === 0;
+        let wasValid = false;// this.props.workspace.validationSummary.getErrorsForProcess(this.state.openProcess).length === 0;
+        let processErrors: ValidationError[] = []; // this.props.workspace.validateProcess(this.state.openProcess);
+        let isValid = false; // processErrors.length === 0;
 
-        let otherProcessesHaveErrors = this.props.workspace.validationSummary.numErrorProcesses > (isValid ? 0 : 1);
+        let otherProcessesHaveErrors = false; // this.props.workspace.validationSummary.numErrorProcesses > (isValid ? 0 : 1);
 
         this.setState({
             processErrors: processErrors,
@@ -311,10 +319,12 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
             return;
         }
 
+        /*
         this.setState({
             focusStep: error.step,
             focusStepParameter: error.parameter === null ? undefined : error.parameter,
             focusStepReturnPath: error.returnPath,
         });
+        */
     }
 }
