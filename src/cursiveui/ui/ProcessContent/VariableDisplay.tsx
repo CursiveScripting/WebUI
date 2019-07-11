@@ -1,12 +1,15 @@
 import * as React from 'react';
-import { Variable } from '../../data';
 import { growToFitGrid } from './gridSize';
 import { ParameterConnector, ConnectorState } from './ParameterConnector';
 import './ProcessItem.css';
 import { ValueInput } from './ValueInput';
+import { IType } from '../../workspaceState/IType';
+import { IPositionable } from '../../workspaceState/IPositionable';
 
-interface Props {
-    variable: Variable;
+interface Props extends IPositionable {
+    name: string;
+    type: IType;
+    initialValue: string | null;
     initialValueChanged: (val: string | null) => void;
     headerMouseDown: (mouseX: number, mouseY: number) => void;
     connectorMouseDown: (input: boolean, x: number, y: number) => void;
@@ -41,7 +44,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
         this.state = {
             width: 0,
             height: 0,
-            initialValue: props.variable.initialValue,
+            initialValue: props.initialValue,
         };
     }
 
@@ -53,9 +56,9 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
     }
 
     componentWillReceiveProps(newProps: Props) {
-        if (newProps.variable.initialValue !== this.state.initialValue) {
-            const widthIncreased = newProps.variable.initialValue !== null
-                && (this.state.initialValue === null || newProps.variable.initialValue.length >= this.state.initialValue.length);
+        if (newProps.initialValue !== this.state.initialValue) {
+            const widthIncreased = newProps.initialValue !== null
+                && (this.state.initialValue === null || newProps.initialValue.length >= this.state.initialValue.length);
 
             this.setState({
                 width: widthIncreased
@@ -64,7 +67,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                 height: widthIncreased
                     ? growToFitGrid(this.root!.offsetHeight)
                     : 0,
-                initialValue: newProps.variable.initialValue,
+                initialValue: newProps.initialValue,
             });
         }
     }
@@ -80,35 +83,35 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
     
     render() {
         const style = {
-            left: this.props.variable.x,
-            top: this.props.variable.y,
+            left: this.props.x,
+            top: this.props.y,
             minWidth: this.state.width,
             minHeight: this.state.height,
         };
 
         let colorStyle = {
-            backgroundColor: this.props.variable.type.color,
+            backgroundColor: this.props.type.color,
         };
 
         const numOutputs = this.props.variable.links.filter(p => p.input).length;
         const numInputs = this.props.variable.links.length - numOutputs;
 
         let defaultInput;
-        if (this.props.variable.type.allowInput) {
-            const strVal = this.props.variable.initialValue === null ? '' : this.props.variable.initialValue;
+        if (this.props.type.allowInput) {
+            const strVal = this.props.initialValue === null ? '' : this.props.initialValue;
             const valChanged = (val: string) => this.props.initialValueChanged(val === '' ? null : val);
 
             defaultInput = <ValueInput
                 className="processItem__default"
                 value={strVal}
                 valueChanged={val => valChanged(val)}
-                isValid={this.props.variable.initialValue === null ? true : this.props.variable.type.isValid(this.props.variable.initialValue)}
+                isValid={this.props.initialValue === null ? true : this.props.type.isValid(this.props.initialValue)}
             />
         }
 
         const inputState = numInputs > 0
             ? ConnectorState.Connected
-            : this.props.variable.initialValue !== null
+            : this.props.initialValue !== null
                 ? ConnectorState.Fixed
                 : ConnectorState.Disconnected;
 
@@ -119,13 +122,13 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                     onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY)}
                     style={colorStyle}
                 >
-                    <div className="processItem__name">{this.props.variable.name}</div>
+                    <div className="processItem__name">{this.props.name}</div>
                     <div className="processItem__delete" onClick={() => this.props.deleteClicked!()} title="remove this variable" />
                 </div>
                 
                 <div className="processItem__parameters">
                     <ParameterConnector
-                        type={this.props.variable.type}
+                        type={this.props.type}
                         state={inputState}
                         input={true}
                         onMouseDown={e => this.props.connectorMouseDown(true, e.clientX, e.clientY)}
@@ -134,7 +137,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                     />
                     {defaultInput}
                     <ParameterConnector
-                        type={this.props.variable.type}
+                        type={this.props.type}
                         state={numOutputs === 0 ? ConnectorState.Disconnected : ConnectorState.Connected}
                         input={false}
                         onMouseDown={e => this.props.connectorMouseDown(false, e.clientX, e.clientY)}

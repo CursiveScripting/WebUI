@@ -411,5 +411,50 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
                 processes,
             };
         }
+
+        case 'link variable': {
+            const processIndex = processes.findIndex(p => p.name === action.inProcessName);
+
+            const process = { ...processes[processIndex] };
+
+            if (!isUserProcess(process)) {
+                return state;
+            }
+
+            process.steps = process.steps.map(step => {
+                if (step.uniqueId !== action.stepId || !isProcessStep(step)) {
+                    return step;
+                }
+
+                let inputs, outputs, modifyingParameters;
+
+                if (action.stepInputParam) {
+                    modifyingParameters = inputs = { ...step.inputs };
+                    outputs = step.outputs;
+                }
+                else {
+                    inputs = step.inputs;
+                    modifyingParameters = outputs = { ...step.outputs };
+                }
+
+                if (action.varName === undefined) {
+                    delete modifyingParameters[action.stepParamName];
+                }
+                else {
+                    modifyingParameters[action.stepParamName] = action.varName;
+                }
+
+                return {
+                    ...step,
+                    inputs,
+                    outputs,
+                }
+            });
+            
+            return {
+                ...state,
+                processes,
+            }
+        }
     }
 }

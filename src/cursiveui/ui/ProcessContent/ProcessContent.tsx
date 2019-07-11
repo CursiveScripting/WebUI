@@ -188,21 +188,23 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                         focusReturnPath={this.props.focusStepReturnPath}
 
                         /*
-                        TODO: still need to report these out
+                        TODO: still need to pass-out parameter dragging, because that hooks up to variables. (Or we put them in the same control.)
                         startDragParameter={}
-                        startDragPath={}
                         */
                     />
                     
                     <VariablesDisplay
                         variables={this.props.variables}
                         refs={this.variableDisplays}
+
+                        /*
                         initialValueChanged={(variable, val) => this.variableDefaultChanged(variable, val)}
 
                         startDragHeader={(variable, x, y) => this.varDragStart(variable, x, y)}
 
                         startDragConnector={(variable, input, x, y) => this.fieldLinkDragStart(variable, input, x, y, undefined)}
                         stopDragConnector={(variable, input) => this.fieldLinkDragStop(variable, input, undefined)}
+                        */
                     />
                 </ScrollWrapper>
             </ContentWrapper>
@@ -233,7 +235,8 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             this.getStepDisplay(this.props.focusStep).scrollIntoView();
         }
     }
-        
+    
+    /*
     private variableDefaultChanged(variable: IVariable, value: string | null) {
         variable.initialValue = value === ''
             ? null
@@ -241,6 +244,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
 
         this.props.revalidate();
     }
+    */
 
     private getStepDisplay(step: IStep) {
         return this.stepDisplays.get(step.uniqueId)!;
@@ -290,6 +294,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
 
                     const newVarName = determineVariableName(connector.field.typeName, this.props.variables)
                     
+                    // TODO: combine these into a single action, to allow undoing in a single step?
                     this.context({
                         type: 'add variable',
                         inProcessName: this.props.processName,
@@ -298,20 +303,15 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                         x: gridDropPos.x,
                         y: gridDropPos.y,
                     });
-
-                    const dragInfo = connector;
                     
-                    const dropInfo = {
-                        field: newVarName,
-                        input: !connector.input,
-                    };
-                    
-                    if (this.createLink(dragInfo, dropInfo)) {
-                        connector.step.setInvalid();
-                        this.getStepDisplay(connector.step).forceUpdate();
-                    }
-
-                    this.props.revalidate();
+                    this.context({
+                        type: 'link variable',
+                        inProcessName: this.props.processName,
+                        stepId: connector.step.uniqueId,
+                        stepInputParam: connector.input,
+                        stepParamName: connector.field.name,
+                        varName: newVarName,
+                    })
                 }
                 else {
                     this.canvas!.drawLinks();
@@ -428,6 +428,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         this.canvas!.drawLinks();
     }
 
+    /*
     private fieldLinkDragStart(field: IParameter | IVariable, input: boolean, x: number, y: number, step?: IStep) {
         this.setState({
             dragging: {
@@ -436,13 +437,14 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     field: field,
                     input: input,
                     step: step,
+                    type: field.typeName,
                 },
                 x,
                 y,
             }
         });
     }
-
+    
     private fieldLinkDragStop(field: IParameter | IVariable, input: boolean, step?: IStep) {
         if (this.state.dragging === undefined) {
             return;
@@ -559,4 +561,5 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         return this.linkStepToVariable(from.field as IParameter, newVar)
             && this.linkStepToVariable(to.field as IParameter, newVar);
     }
+*/
 }

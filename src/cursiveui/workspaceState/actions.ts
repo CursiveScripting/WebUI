@@ -74,6 +74,13 @@ export type WorkspaceAction = {
     fromStepId: string;
     toStepId?: string;
     pathName: string | null;
+} | {
+    type: 'link variable';
+    inProcessName: string;
+    varName?: string;
+    stepId: string;
+    stepParamName: string;
+    stepInputParam: boolean;
 }
 
 export const WorkspaceDispatchContext = createContext<Dispatch<WorkspaceAction>>(ignore => {});
