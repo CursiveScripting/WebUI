@@ -27,3 +27,12 @@ export function mapRecordKeys<TKey extends string | number | symbol, TValue>(
 
     return output;
 }
+
+export function isValueValid(value: string | null, expression: string | undefined) {
+    if (value === null || expression === undefined) {
+        return true;
+    }
+
+    const expr = new RegExp(expression);
+    return expr.test(value);
+}

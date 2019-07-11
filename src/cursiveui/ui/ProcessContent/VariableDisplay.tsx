@@ -5,16 +5,21 @@ import './ProcessItem.css';
 import { ValueInput } from './ValueInput';
 import { IType } from '../../workspaceState/IType';
 import { IPositionable } from '../../workspaceState/IPositionable';
+import { useMemo } from 'react';
+import { isValueValid } from '../../services/DataFunctions';
+import { WorkspaceDispatchContext } from '../../workspaceState/actions';
 
 interface Props extends IPositionable {
     name: string;
     type: IType;
     initialValue: string | null;
-    initialValueChanged: (val: string | null) => void;
+    inputConnected: boolean;
+    outputConnected: boolean;
+    canEdit: boolean;
+    inProcessName: string;
     headerMouseDown: (mouseX: number, mouseY: number) => void;
     connectorMouseDown: (input: boolean, x: number, y: number) => void;
     connectorMouseUp: (input: boolean) => void;
-    deleteClicked: () => void;
 }
 
 interface State {
@@ -24,6 +29,9 @@ interface State {
 }
 
 export class VariableDisplay extends React.PureComponent<Props, State> {
+    static contextType = WorkspaceDispatchContext;
+    context!: React.ContextType<typeof WorkspaceDispatchContext>;
+    
     private root: HTMLDivElement | undefined;
     private _inputConnector: HTMLDivElement | undefined;
     private _outputConnector: HTMLDivElement | undefined;
@@ -93,27 +101,37 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
             backgroundColor: this.props.type.color,
         };
 
-        const numOutputs = this.props.variable.links.filter(p => p.input).length;
-        const numInputs = this.props.variable.links.length - numOutputs;
-
         let defaultInput;
-        if (this.props.type.allowInput) {
+        if (this.props.canEdit) {
             const strVal = this.props.initialValue === null ? '' : this.props.initialValue;
-            const valChanged = (val: string) => this.props.initialValueChanged(val === '' ? null : val);
+            const valChanged = (val: string) => this.context({
+                type: 'set variable',
+                inProcessName: this.props.inProcessName,
+                varName: this.props.name,
+                initialValue: val === '' ? null : val,
+            });
+
+            const isValid = useMemo(() => isValueValid(this.props.initialValue, this.props.type.validationExpression), [this.props.initialValue, this.props.type])
 
             defaultInput = <ValueInput
                 className="processItem__default"
                 value={strVal}
                 valueChanged={val => valChanged(val)}
-                isValid={this.props.initialValue === null ? true : this.props.type.isValid(this.props.initialValue)}
+                isValid={isValid}
             />
         }
 
-        const inputState = numInputs > 0
+        const inputState = this.props.inputConnected
             ? ConnectorState.Connected
             : this.props.initialValue !== null
                 ? ConnectorState.Fixed
                 : ConnectorState.Disconnected;
+
+        const removeVar = () => this.context({
+            type: 'remove variable',
+            inProcessName: this.props.inProcessName,
+            varName: this.props.name,
+        });
 
         return (
             <div className="processItem processItem--var" style={style} ref={r => { if (r !== null) { this.root = r; }}}>
@@ -123,7 +141,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                     style={colorStyle}
                 >
                     <div className="processItem__name">{this.props.name}</div>
-                    <div className="processItem__delete" onClick={() => this.props.deleteClicked!()} title="remove this variable" />
+                    <div className="processItem__delete" onClick={removeVar} title="remove this variable" />
                 </div>
                 
                 <div className="processItem__parameters">
@@ -138,7 +156,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                     {defaultInput}
                     <ParameterConnector
                         type={this.props.type}
-                        state={numOutputs === 0 ? ConnectorState.Disconnected : ConnectorState.Connected}
+                        state={this.props.outputConnected ? ConnectorState.Disconnected : ConnectorState.Connected}
                         input={false}
                         onMouseDown={e => this.props.connectorMouseDown(false, e.clientX, e.clientY)}
                         onMouseUp={() => this.props.connectorMouseUp(false)}

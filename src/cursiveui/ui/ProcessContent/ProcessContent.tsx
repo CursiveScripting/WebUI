@@ -194,6 +194,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     />
                     
                     <VariablesDisplay
+                        processName={this.props.processName}
                         variables={this.props.variables}
                         refs={this.variableDisplays}
 

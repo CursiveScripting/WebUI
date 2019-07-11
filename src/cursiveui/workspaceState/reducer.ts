@@ -456,5 +456,31 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
                 processes,
             }
         }
+
+        case 'set variable': {
+            const processIndex = processes.findIndex(p => p.name === action.inProcessName);
+
+            const process = { ...processes[processIndex] };
+
+            if (!isUserProcess(process)) {
+                return state;
+            }
+            
+            const varIndex = process.variables.findIndex(v => v.name === action.varName);
+
+            if (varIndex === -1) {
+                return state;
+            }
+
+            process.variables[varIndex] = {
+                ...process.variables[varIndex],
+                initialValue: action.initialValue,
+            };
+
+            return {
+                ...state,
+                processes,
+            }
+        }
     }
 }

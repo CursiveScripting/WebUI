@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { VariableDisplay } from './VariableDisplay';
 import { IVariable } from '../../workspaceState/IVariable';
-import { IStep } from '../../workspaceState/IStep';
 
 interface Props {
+    processName: string;
     variables: IVariable[];
     refs: Map<string, VariableDisplay>;
     /*
@@ -19,24 +19,31 @@ interface Props {
 export const VariablesDisplay = (props: Props) => {
     props.refs.clear();
 
-    const variables = props.variables.map(variable => (
-        <VariableDisplay
-            ref={v => { if (v !== null) { props.refs.set(variable.name, v); } else { props.refs.delete(variable.name); }}}
-            name={variable.name}
-            initialValue={variable.initialValue}
-            type={variable.type}
-            x={variable.x}
-            y={variable.y}
-            key={variable.name}
-            /*
-            deleteClicked={() => props.removeVariable(variable)}
-            initialValueChanged={val => props.initialValueChanged(variable, val)}
-            headerMouseDown={(x, y) => props.startDragHeader(variable, x, y)}
-            connectorMouseDown={(input, x, y) => props.startDragConnector(variable, input, x, y)}
-            connectorMouseUp={input => props.stopDragConnector(variable, input)}
-            */
-        />
-    ));
+    const variables = props.variables.map(variable => {
+        const inputConnected = false; // TODO: determine this
+        const outputConnected = false; // TODO: determine this
+        const canEdit = true; // TODO: determine this based on type having a validationExpression or not
+        
+        return (
+            <VariableDisplay
+                ref={v => { if (v !== null) { props.refs.set(variable.name, v); } else { props.refs.delete(variable.name); }}}
+                name={variable.name}
+                initialValue={variable.initialValue}
+                type={variable.type}
+                x={variable.x}
+                y={variable.y}
+                canEdit={canEdit}
+                inputConnected={inputConnected}
+                outputConnected={outputConnected}
+                inProcessName={props.processName}
+                key={variable.name}
+                
+                headerMouseDown={(x, y) => props.startDragHeader(variable, x, y)}
+                connectorMouseDown={(input, x, y) => props.startDragConnector(variable, input, x, y)}
+                connectorMouseUp={input => props.stopDragConnector(variable, input)}
+            />
+        );
+    });
 
     return <>
         {variables}

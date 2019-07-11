@@ -81,6 +81,11 @@ export type WorkspaceAction = {
     stepId: string;
     stepParamName: string;
     stepInputParam: boolean;
+} | {
+    type: 'set variable';
+    inProcessName: string;
+    varName: string;
+    initialValue: string | null;
 }
 
 export const WorkspaceDispatchContext = createContext<Dispatch<WorkspaceAction>>(ignore => {});
