@@ -1,12 +1,11 @@
 import * as React from 'react';
-import { Coord, ParamConnectorDragInfo, StepConnectorDragInfo } from './ProcessContent';
+import { ICoord, ParamConnectorDragInfo, StepConnectorDragInfo } from './ProcessContent';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
 import { IVariable } from '../../workspaceState/IVariable';
 import { IType } from '../../workspaceState/IType';
 import { usesOutputs, usesInputs } from '../../services/StepFunctions';
-import { IStep } from '../../workspaceState/IStep';
-import { IFullStep } from './IFullStep';
+import { IStepDisplay } from './IStepDisplay';
 
 export type LinkDragInfo = {
     isParam: false;
@@ -25,7 +24,7 @@ interface Props {
     width: number;
     height: number;
 
-    steps: IFullStep[];
+    steps: IStepDisplay[];
     variables: IVariable[];
 
     stepDisplays: Map<string, StepDisplay>;
@@ -81,52 +80,49 @@ export class LinkCanvas extends React.Component<Props> {
         for (const step of this.props.steps) {
             const stepDisplay = this.props.stepDisplays.get(step.uniqueId)!;
             
-            if (usesInputs(step)) {    
-                for (const param of step.inputParams) {
-                    const varName = step.inputs[param.name];
-
-                    if (varName === undefined) {
-                        continue;
-                    }
-
-                    const endConnector = stepDisplay.getInputConnector(param.name)!;
-
-                    const variableDisplay = variableDisplays.get(varName)!;
-                    const beginConnector = variableDisplay.outputConnector;
-
-                    this.drawFieldLink(param.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
+            for (const param of step.inputs) {
+                if (param.linkedVariable === undefined) {
+                    continue;
                 }
+
+                const beginConnector = variableDisplays
+                    .get(param.linkedVariable)!
+                    .outputConnector;
+
+                const endConnector = stepDisplay.getInputConnector(param.name)!;
+
+                this.drawFieldLink(param.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
             }
 
-            if (usesOutputs(step)) {
-                for (const param of step.outputParams) {
-                    const varName = step.outputs[param.name];
-
-                    if (varName === undefined) {
-                        continue;
-                    }
-
-                    const beginConnector = stepDisplay.getOutputConnector(param.name)!;
-
-                    const variableDisplay = variableDisplays.get(varName)!;
-                    const endConnector = variableDisplay.inputConnector;
-
-                    this.drawFieldLink(param.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
+            for (const param of step.outputs) {
+                if (param.linkedVariable === undefined) {
+                    continue;
                 }
 
-                for (const pathName in step.returnPaths) {
-                    const toStepId = step.returnPaths[pathName];
-                    const toStepDisplay = stepDisplays.get(toStepId)!;
-                    
-                    const beginConnector = stepDisplay.getReturnConnector(pathName);
-                    const endConnector = toStepDisplay.entryConnector;
-                    
-                    if (beginConnector !== null && endConnector !== null) {
-                        const bounds = step.uniqueId === toStepId
-                            ? stepDisplay.bounds
-                            : undefined;
-                        this.drawProcessLink(root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect(), bounds);
-                    }
+                const beginConnector = stepDisplay.getOutputConnector(param.name)!;
+
+                const endConnector = variableDisplays
+                    .get(param.linkedVariable)!
+                    .inputConnector;
+
+                this.drawFieldLink(param.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
+            }
+
+            for (const [pathName, toStepId] of step.returnPaths) {
+                if (toStepId === null) {
+                    continue;
+                }
+
+                const toStepDisplay = stepDisplays.get(toStepId!)!;
+                
+                const beginConnector = stepDisplay.getReturnConnector(pathName);
+                const endConnector = toStepDisplay.entryConnector;
+                
+                if (beginConnector !== null && endConnector !== null) {
+                    const bounds = step.uniqueId === toStepId
+                        ? stepDisplay.bounds
+                        : undefined;
+                    this.drawProcessLink(root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect(), bounds);
                 }
             }
         }
@@ -256,7 +252,7 @@ export class LinkCanvas extends React.Component<Props> {
         this.drawCurve(startPos, endPos);
     }
 
-    private drawCurve(start: Coord, end: Coord) {
+    private drawCurve(start: ICoord, end: ICoord) {
         const cpOffset = Math.min(150, Math.abs(end.y - start.y));
 
         const mid1 = {
@@ -272,7 +268,7 @@ export class LinkCanvas extends React.Component<Props> {
         this.drawCurveWithControlPoints(start, mid1, mid2, end);
     }
 
-    private drawCurveWithControlPoints(start: Coord, mid1: Coord, mid2: Coord, end: Coord) {
+    private drawCurveWithControlPoints(start: ICoord, mid1: ICoord, mid2: ICoord, end: ICoord) {
         this.ctx.beginPath();
         this.ctx.moveTo(start.x, start.y);
         this.ctx.bezierCurveTo(mid1.x, mid1.y, mid2.x, mid2.y, end.x, end.y);

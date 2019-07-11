@@ -16,11 +16,11 @@ import { IType } from '../../workspaceState/IType';
 import { IParameter } from '../../workspaceState/IParameter';
 import { IPositionable } from '../../workspaceState/IPositionable';
 import { determineVariableName } from '../../services/StepFunctions';
-import { IFullStep } from './IFullStep';
+import { IStepDisplay, IStepDisplayParam } from './IStepDisplay';
 
 interface Props {
     processName: string;
-    steps: IFullStep[];
+    steps: IStepDisplay[];
     variables: IVariable[];
     typesByName: Map<string, IType>;
     
@@ -33,7 +33,7 @@ interface Props {
     dropComplete: () => void;
 
     focusStep?: IStep;
-    focusStepParameter?: IParameter;
+    focusStepParameter?: IStepDisplayParam;
     focusStepReturnPath?: string | null;
     revalidate: () => void;
 }
@@ -61,7 +61,7 @@ export interface ParamConnectorDragInfo {
     step?: IStep;
 }
 
-export interface Coord {
+export interface ICoord {
     x: number;
     y: number;
 }
@@ -406,7 +406,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         }
     }
 
-    private screenToGrid(screen: Coord): Coord {
+    private screenToGrid(screen: ICoord): ICoord {
         return {
             x: alignToGrid(screen.x - this.state.minScreenX),
             y: alignToGrid(screen.y - this.state.minScreenY),

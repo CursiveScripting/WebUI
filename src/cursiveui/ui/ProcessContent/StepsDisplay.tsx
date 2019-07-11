@@ -1,18 +1,18 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { StepDisplay } from './StepDisplay';
-import { IParameter } from '../../workspaceState/IParameter';
-import { IStep, StepType, IStepWithParams } from '../../workspaceState/IStep';
+import { IStep, StepType } from '../../workspaceState/IStep';
 import { WorkspaceDispatchContext } from '../../workspaceState/actions';
-import { getStepInputParameters, getStepOutputParameters, getStepReturnPaths } from '../../services/StepFunctions';
+import { IStepDisplay, IStepDisplayParam } from './IStepDisplay';
+import { ICoord } from './ProcessContent';
 
 interface Props {
-    steps: IStepWithParams[];
+    steps: IStepDisplay[];
     refs: Map<string, StepDisplay>;
 
     processName: string;
     focusStep?: IStep;
-    focusParameter?: IParameter;
+    focusParameter?: IStepDisplayParam;
     focusReturnPath?: string | null;
 }
 
@@ -36,7 +36,7 @@ type DragState = undefined | {
     type: 'parameter';
     step: IStep;
     input: boolean;
-    param: IParameter;
+    param: IStepDisplayParam;
     x: number;
     y: number;
 }
@@ -70,7 +70,7 @@ export const StepsDisplay = (props: Props) => {
         y,
     });
 
-    const startDragParameter = (step: IStep, param: IParameter, input: boolean, x: number, y: number) => {
+    const startDragParameter = (step: IStep, param: IStepDisplayParam, input: boolean, x: number, y: number) => {
         setDragging({
             type: 'parameter',
             step,
@@ -109,7 +109,7 @@ export const StepsDisplay = (props: Props) => {
         setDragging(undefined);
     }
 
-    const stopDragParameter = (step: IStep, param: IParameter, input: boolean) => {
+    const stopDragParameter = (step: IStep, param: IStepDisplayParam, input: boolean) => {
         if (dragging !== undefined && dragging.type === 'parameter') {
             // TODO: link both parameters with a variable
         }
@@ -122,26 +122,34 @@ export const StepsDisplay = (props: Props) => {
     const steps = props.steps.map(step => {
         const focusThisStep = step === props.focusStep;
         
-        const displayName = 'something'; // TODO: determine this
-        const description = ''; // TODO: determine this
         const isValid = true; // TODO: determine this
+
+        const stepPos: ICoord = dragging !== undefined
+            && dragging.type === 'header'
+            && dragging.step === step
+                ? dragging
+                : step;
+
+        const inputConnected = false; // TODO: determine this
 
         return (
 
         <StepDisplay
             ref={s => { if (s !== null) { props.refs.set(step.uniqueId, s); } else { props.refs.delete(step.uniqueId); }}}
             key={step.uniqueId}
-            displayName={displayName}
-            description={description}
-            inputs={step.inputParams}
-            outputs={step.outputParams}
-            returnPaths={step.returnPathNames}
+            name={step.name}
+            description={step.description}
+            inputs={step.inputs}
+            outputs={step.outputs}
+            returnPaths={step.returnPaths}
             isValid={isValid}
             stepType={step.stepType}
-            stepId={step.uniqueId}
-            x={step.x}
-            y={step.y}
+            uniqueId={step.uniqueId}
+            x={stepPos.x}
+            y={stepPos.y}
 
+            inProcessName={props.processName}
+            inputConnected={inputConnected}
             focused={focusThisStep}
             focusParameter={focusThisStep ? props.focusParameter : undefined}
             focusReturnPath={focusThisStep ? props.focusReturnPath : undefined}

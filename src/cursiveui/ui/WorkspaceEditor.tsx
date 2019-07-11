@@ -9,14 +9,11 @@ import { IWorkspaceState } from '../workspaceState/IWorkspaceState';
 import { IUserProcess } from '../workspaceState/IUserProcess';
 import { IProcess } from '../workspaceState/IProcess';
 import { IStep } from '../workspaceState/IStep';
-import { IParameter } from '../workspaceState/IParameter';
 import { WorkspaceDispatchContext } from '../workspaceState/actions';
 import { IType } from '../workspaceState/IType';
 import { createMap } from '../services/DataFunctions';
 import { useMemo } from 'react';
-import { isStartStep, isStopStep } from '../services/StepFunctions';
-import { IFullStep } from './ProcessContent/IFullStep';
-import { IProcessStep } from '../workspaceState/IProcessStep';
+import { populateStepDisplay, IStepDisplayParam } from './ProcessContent/IStepDisplay';
 
 interface Props {
     workspace: IWorkspaceState;
@@ -35,7 +32,7 @@ interface State {
     processesWithErrors: IUserProcess[];
     otherProcessesHaveErrors: boolean;
     focusStep?: IStep;
-    focusStepParameter?: IParameter;
+    focusStepParameter?: IStepDisplayParam;
     focusStepReturnPath?: string | null;
 }
 
@@ -123,44 +120,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         );
     }
 
-    private populateFullStep(
-        step: IStep,
-        inProcess: IProcess,
-        processesByName: Map<string, IProcess>,
-        typesByName: Map<string, IType>
-    ): IFullStep {
-        if (isStartStep(step)) {
-            return {
-                ...step,
-                name: 'Start',
-                inputParams: [],
-                outputParams: inProcess.inputs.map(p => { return { name: p.name, type: typesByName.get(p.typeName)! }}),
-                returnPathNames: [''],
-            }
-        }
-
-        if (isStopStep(step)) {
-            return {
-                ...step,
-                name: 'Stop',
-                inputParams: inProcess.outputs.map(p => { return { name: p.name, type: typesByName.get(p.typeName)! }}),
-                outputParams: [],
-                returnPathNames: [],
-            }
-        }
-
-        const process = processesByName.get((step as IProcessStep).processName)!;
-
-        return {
-            ...step,
-            name: process.name,
-            description: process.description,
-            inputParams: process.inputs.map(p => { return { name: p.name, type: typesByName.get(p.typeName)! }}),
-            outputParams: process.outputs.map(p => { return { name: p.name, type: typesByName.get(p.typeName)! }}),
-            returnPathNames: process.returnPaths,
-        };
-    }
-
     private renderProcessContent() {
         if (this.state.openProcess === undefined) {
             return undefined;
@@ -179,7 +138,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         );
 
         const steps = useMemo(
-            () => openProcess.steps.map(s => this.populateFullStep(s, openProcess, processesByName, typesByName)),
+            () => openProcess.steps.map(s => populateStepDisplay(s, openProcess, processesByName, typesByName)),
             [openProcess, openProcess.steps, processesByName, typesByName]
         );
 
