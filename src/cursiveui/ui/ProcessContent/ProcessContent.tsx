@@ -353,12 +353,15 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             return;
         }
 
+        const x = e.clientX;
+        const y = e.clientY;
+
         this.setState(prev => {
             return {
                 dragging: {
                     ...prev.dragging,
-                    x: e.clientX,
-                    y: e.clientY,
+                    x,
+                    y,
                 } as DragInfo,
             };
         });

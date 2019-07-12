@@ -10,8 +10,8 @@ import { IProcess } from '../workspaceState/IProcess';
 import { WorkspaceDispatchContext } from '../workspaceState/actions';
 import { IType } from '../workspaceState/IType';
 import { createMap } from '../services/DataFunctions';
-import { populateStepDisplay, IStepDisplayParam, IStepDisplay } from './ProcessContent/IStepDisplay';
-import { populateVariableDisplay, IVariableDisplay } from './ProcessContent/IVariableDisplay';
+import { IStepDisplayParam, IStepDisplay } from './ProcessContent/IStepDisplay';
+import { IVariableDisplay } from './ProcessContent/IVariableDisplay';
 
 interface Props {
     processes: IProcess[];
