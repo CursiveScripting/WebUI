@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { StepDisplay } from './StepDisplay';
 import { StepType } from '../../workspaceState/IStep';
 import { WorkspaceDispatchContext } from '../../workspaceState/actions';
@@ -53,6 +53,16 @@ export const ContentItems = (props: Props) => {
     const [dragging, setDragging] = useState<DragState>(undefined);
 
     const context = React.useContext(WorkspaceDispatchContext);
+
+    useEffect(() => {
+        if (props.focusStepId !== undefined) {
+            props.stepRefs.get(props.focusStepId)!.scrollIntoView();
+        }
+
+        if (props.focusVariableName !== undefined) {
+            props.varRefs.get(props.focusVariableName)!.scrollIntoView();   
+        }
+    }, [props.focusStepId, props.focusVariableName, props.stepRefs, props.varRefs])
 
     const steps = useMemo(() => {
         props.stepRefs.clear();

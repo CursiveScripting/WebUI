@@ -10,8 +10,7 @@ import { IProcess } from '../workspaceState/IProcess';
 import { WorkspaceDispatchContext } from '../workspaceState/actions';
 import { IType } from '../workspaceState/IType';
 import { createMap } from '../services/DataFunctions';
-import { IStepDisplayParam, IStepDisplay } from './ProcessContent/IStepDisplay';
-import { IVariableDisplay } from './ProcessContent/IVariableDisplay';
+import { IStepDisplayParam } from './ProcessContent/IStepDisplay';
 
 interface Props {
     processes: IProcess[];
@@ -33,10 +32,10 @@ interface State {
     processErrors: ValidationError[];
     processesWithErrors: IUserProcess[];
     otherProcessesHaveErrors: boolean;
-    focusStep?: IStepDisplay;
+    focusStepId?: string;
     focusStepParameter?: IStepDisplayParam;
     focusStepReturnPath?: string | null;
-    focusVariable?: IVariableDisplay;
+    focusVariableName?: string;
 }
 
 export class WorkspaceEditor extends React.PureComponent<Props, State> {
@@ -158,9 +157,10 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 dropComplete={() => this.dropCompleted()}
 
                 revalidate={() => this.revalidateOpenProcess()}
-                focusStep={this.state.focusStep}
+                focusStepId={this.state.focusStepId}
                 focusStepParameter={this.state.focusStepParameter}
                 focusStepReturnPath={this.state.focusStepReturnPath}
+                focusVariableName={this.state.focusVariableName}
             />
         );
     }
@@ -328,7 +328,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
     private focusOnError(error?: ValidationError) {
         if (error === undefined) {
             this.setState({
-                focusStep: undefined,
+                focusStepId: undefined,
                 focusStepParameter: undefined,
                 focusStepReturnPath: undefined,
             });

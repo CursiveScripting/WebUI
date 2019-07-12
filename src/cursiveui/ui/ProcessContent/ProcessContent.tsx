@@ -30,7 +30,7 @@ interface Props {
     dropStopStep?: string | null;
     dropComplete: () => void;
 
-    focusStep?: IStep;
+    focusStepId?: string;
     focusStepParameter?: IStepDisplayParam; // This will have to change type
     focusStepReturnPath?: string | null;
     focusVariableName?: string;
@@ -187,7 +187,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                         varRefs={this.variableDisplays}
                         stepRefs={this.stepDisplays}
 
-                        focusStepId={this.props.focusStep === undefined ? undefined : this.props.focusStep.uniqueId}
+                        focusStepId={this.props.focusStepId}
                         focusParameter={this.props.focusStepParameter}
                         focusReturnPath={this.props.focusStepReturnPath}
                         focusVariableName={this.props.focusVariableName}
@@ -231,16 +231,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             });
         }
     }
-
-    componentDidUpdate(prevProps: Props, prevState: State) {
-        if (prevProps.focusStep === undefined && this.props.focusStep !== undefined) {
-            this.stepDisplays.get(this.props.focusStep.uniqueId)!.scrollIntoView();
-        }
-        if (prevProps.focusVariableName === undefined && this.props.focusVariableName !== undefined) {
-            this.variableDisplays.get(this.props.focusVariableName)!.scrollIntoView();
-        }
-    }
-
+    
     private dragStop() {
         const dragging = this.state.dragging;
         if (dragging === undefined) {
