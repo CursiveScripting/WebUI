@@ -76,7 +76,8 @@ export const CursiveUI = (props: Props) => {
         <WorkspaceDispatchContext.Provider value={dispatchWorkspace}>
             <WorkspaceEditor
                 className={props.className}
-                workspace={workspace}
+                processes={workspace.processes}
+                types={workspace.types}
                 save={doSave}
             />
         </WorkspaceDispatchContext.Provider>

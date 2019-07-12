@@ -14,31 +14,33 @@ import { IProcess } from '../../workspaceState/IProcess';
 import { IType } from '../../workspaceState/IType';
 import { IParameter } from '../../workspaceState/IParameter';
 import { determineVariableName } from '../../services/StepFunctions';
-import { IStepDisplay, IStepDisplayParam } from './IStepDisplay';
-import { IVariableDisplay } from './IVariableDisplay';
+import { IStepDisplay, IStepDisplayParam, populateStepDisplay } from './IStepDisplay';
+import { IVariableDisplay, populateVariableDisplay } from './IVariableDisplay';
+import { IUserProcess } from '../../workspaceState/IUserProcess';
 
 interface Props {
-    processName: string;
-    steps: IStepDisplay[];
-    variables: IVariableDisplay[];
+    openProcess: IUserProcess;
     typesByName: Map<string, IType>;
-    
+    processesByName: Map<string, IProcess>;
+
     className?: string;
     
     dropVariableType?: IType;
     dropStep?: IProcess;
     dropStopStep?: string | null;
-
     dropComplete: () => void;
 
-    focusStep?: IStepDisplay;
-    focusStepParameter?: IStepDisplayParam;
+    focusStep?: IStep;
+    focusStepParameter?: IStepDisplayParam; // This will have to change type
     focusStepReturnPath?: string | null;
-    focusVariable?: IVariableDisplay;
+    focusVariableName?: string;
     revalidate: () => void;
 }
 
 interface State {
+    steps: IStepDisplay[];
+    variables: IVariableDisplay[];
+
     contentWidth: number;
     contentHeight: number;
     canvasWidth: number;
@@ -102,6 +104,8 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         super(props);
 
         this.state = {
+            steps: this.populateSteps(props),
+            variables: this.populateVariables(props),
             canvasWidth: 0,
             canvasHeight: 0,
             contentWidth: 0,
@@ -115,6 +119,14 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         this.updateContentSize();
     }
 
+    private populateSteps(props: Props) {
+        return props.openProcess.steps.map(s => populateStepDisplay(s, props.openProcess, props.processesByName, props.typesByName))
+    }
+
+    private populateVariables(props: Props) {
+        return props.openProcess.variables.map(v => populateVariableDisplay(v, props.openProcess, props.typesByName))
+    }
+    
     render() {
         const classes = this.props.className === undefined
             ? 'processContent'
@@ -152,8 +164,8 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     className="processContent__canvas"
                     width={this.state.canvasWidth}
                     height={this.state.canvasHeight}
-                    steps={this.props.steps}
-                    variables={this.props.variables}
+                    steps={this.state.steps}
+                    variables={this.state.variables}
                     stepDisplays={this.stepDisplays}
                     variableDisplays={this.variableDisplays}
                     dragging={dragging}
@@ -169,16 +181,16 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     onScroll={() => this.canvas!.drawLinks()}
                 >
                     <ContentItems
-                        processName={this.props.processName}
-                        steps={this.props.steps}
-                        variables={this.props.variables}
+                        processName={this.props.openProcess.name}
+                        steps={this.state.steps}
+                        variables={this.state.variables}
                         varRefs={this.variableDisplays}
                         stepRefs={this.stepDisplays}
 
-                        focusStep={this.props.focusStep}
+                        focusStepId={this.props.focusStep === undefined ? undefined : this.props.focusStep.uniqueId}
                         focusParameter={this.props.focusStepParameter}
                         focusReturnPath={this.props.focusStepReturnPath}
-                        focusVariable={this.props.focusVariable}
+                        focusVariableName={this.props.focusVariableName}
                     />
                 </ScrollWrapper>
             </ContentWrapper>
@@ -186,8 +198,24 @@ export class ProcessContent extends React.PureComponent<Props, State> {
     }
 
     componentWillReceiveProps(nextProps: Props) {
-        if (nextProps.steps.length !== this.props.steps.length
-            || nextProps.variables.length !== this.props.variables.length) {
+        if (nextProps.openProcess.steps !== this.props.openProcess.steps
+            || nextProps.processesByName !== this.props.processesByName
+            || nextProps.typesByName !== this.props.typesByName) {
+            this.setState({
+                steps: this.populateSteps(nextProps),
+            })
+        }
+
+        if (nextProps.openProcess.variables !== this.props.openProcess.variables
+            || nextProps.typesByName  !== this.props.typesByName) {
+            this.setState({
+                variables: this.populateVariables(nextProps),
+            })
+        }
+
+        if (nextProps.openProcess !== this.props.openProcess
+            || nextProps.openProcess.steps.length !== this.state.steps.length
+            || nextProps.openProcess.variables.length !== this.state.variables.length) {
             this.updateContentSize();
         }
 
@@ -208,8 +236,8 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         if (prevProps.focusStep === undefined && this.props.focusStep !== undefined) {
             this.stepDisplays.get(this.props.focusStep.uniqueId)!.scrollIntoView();
         }
-        if (prevProps.focusVariable === undefined && this.props.focusVariable !== undefined) {
-            this.variableDisplays.get(this.props.focusVariable.name)!.scrollIntoView();
+        if (prevProps.focusVariableName === undefined && this.props.focusVariableName !== undefined) {
+            this.variableDisplays.get(this.props.focusVariableName)!.scrollIntoView();
         }
     }
 
@@ -232,12 +260,12 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                 if (connector.step !== undefined) {
                     const gridDropPos = this.screenToGrid(dragging);
 
-                    const newVarName = determineVariableName(connector.field.typeName, this.props.variables)
+                    const newVarName = determineVariableName(connector.field.typeName, this.state.variables)
                     
                     // TODO: combine these into a single action, to allow undoing in a single step?
                     this.context({
                         type: 'add variable',
-                        inProcessName: this.props.processName,
+                        inProcessName: this.props.openProcess.name,
                         typeName: connector.field.typeName,
                         varName: newVarName,
                         x: gridDropPos.x,
@@ -246,7 +274,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     
                     this.context({
                         type: 'link variable',
-                        inProcessName: this.props.processName,
+                        inProcessName: this.props.openProcess.name,
                         stepId: connector.step.uniqueId,
                         stepInputParam: connector.input,
                         stepParamName: connector.field.name,
@@ -263,7 +291,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                 if (this.props.dropStep !== undefined) {
                     this.context({
                         type: 'add step',
-                        inProcessName: this.props.processName,
+                        inProcessName: this.props.openProcess.name,
                         stepProcessName: this.props.dropStep.name,
                         x: gridDropPos.x,
                         y: gridDropPos.y,
@@ -274,9 +302,9 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                 else if (this.props.dropVariableType !== undefined) {
                     this.context({
                         type: 'add variable',
-                        inProcessName: this.props.processName,
+                        inProcessName: this.props.openProcess.name,
                         typeName: this.props.dropVariableType.name,
-                        varName: determineVariableName(this.props.dropVariableType.name, this.props.variables),
+                        varName: determineVariableName(this.props.dropVariableType.name, this.state.variables),
                         x: gridDropPos.x,
                         y: gridDropPos.y,
                     });
@@ -286,7 +314,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                 else if (this.props.dropStopStep !== undefined) {
                     this.context({
                         type: 'add stop step',
-                        inProcessName: this.props.processName,
+                        inProcessName: this.props.openProcess.name,
                         returnPath: this.props.dropStopStep,
                         x: gridDropPos.x,
                         y: gridDropPos.y,

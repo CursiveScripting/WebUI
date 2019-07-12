@@ -5,24 +5,26 @@ import { ProcessSelector } from './sidebar/ProcessSelector';
 import { ProcessToolbar } from './toolbar/ProcessToolbar';
 import { ProcessEditor } from './ProcessSignature/ProcessEditor';
 import './WorkspaceEditor.css';
-import { IWorkspaceState } from '../workspaceState/IWorkspaceState';
 import { IUserProcess } from '../workspaceState/IUserProcess';
 import { IProcess } from '../workspaceState/IProcess';
 import { WorkspaceDispatchContext } from '../workspaceState/actions';
 import { IType } from '../workspaceState/IType';
 import { createMap } from '../services/DataFunctions';
-import { useMemo } from 'react';
 import { populateStepDisplay, IStepDisplayParam, IStepDisplay } from './ProcessContent/IStepDisplay';
 import { populateVariableDisplay, IVariableDisplay } from './ProcessContent/IVariableDisplay';
 
 interface Props {
-    workspace: IWorkspaceState;
+    processes: IProcess[];
+    types: IType[]
     initialProcess?: IUserProcess;
     className?: string;
     save: () => void;
 }
 
 interface State {
+    typesByName: Map<string, IType>;
+    processesByName: Map<string, IProcess>;
+
     openProcess?: IUserProcess;
     editingSignature: boolean;
     droppingDataType?: IType;
@@ -45,13 +47,16 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         super(props);
 
         this.state = {
+            typesByName: createMap(props.types, t => t.name),
+            processesByName: createMap(props.processes, p => p.name),
+
             openProcess: props.initialProcess === undefined
-                ? props.workspace.processes.find(p => !p.isSystem) as IUserProcess
+                ? props.processes.find(p => !p.isSystem) as IUserProcess
                 : props.initialProcess,
             editingSignature: false,
             otherProcessesHaveErrors: false,
             processErrors: [],
-            processesWithErrors: this.getProcessesWithErrors(props.workspace),
+            processesWithErrors: this.getProcessesWithErrors(props.processes),
         };
     }
     
@@ -61,13 +66,27 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         }
     }
 
+    componentWillReceiveProps(nextProps: Props) {
+        if (nextProps.types !== this.props.types) {
+            this.setState({
+                typesByName: createMap(nextProps.types, t => t.name),
+            });
+        }
+        
+        if (nextProps.processes !== this.props.processes) {
+            this.setState({
+                processesByName: createMap(nextProps.processes, p => p.name),
+            });
+        }
+    }
+
     componentDidUpdate(prevProps: Props, prevState: State) {
-        if (prevProps.workspace !== this.props.workspace) {
+        if (prevProps.processes !== this.props.processes) {
             if (this.state.openProcess === undefined) {
-                this.openProcess(this.props.workspace.processes.find(p => !p.isSystem) as IUserProcess);
+                this.openProcess(this.props.processes.find(p => !p.isSystem) as IUserProcess);
             }
-            else if (this.props.workspace.processes.indexOf(this.state.openProcess) === -1) {
-                this.openProcess(this.props.workspace.processes.find(p => p.name === this.state.openProcess!.name) as IUserProcess);
+            else if (this.props.processes.indexOf(this.state.openProcess) === -1) {
+                this.openProcess(this.props.processes.find(p => p.name === this.state.openProcess!.name) as IUserProcess);
             }
         }
     }
@@ -106,7 +125,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         return (
             <ProcessSelector
                 className="workspaceEditor__sidebar"
-                processes={this.props.workspace.processes}
+                processes={this.props.processes}
                 openProcess={this.state.openProcess}
                 selectedProcess={this.state.droppingProcess}
                 processOpened={process => this.openProcess(process)}
@@ -114,7 +133,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 processSelected={process => this.selectProcess(process)}
                 errorProcesses={this.state.processesWithErrors}
                 stopStepSelected={step => this.selectStopStep(step)}
-                dataTypes={this.props.workspace.types}
+                dataTypes={this.props.types}
                 dataTypeSelected={type => this.selectDataType(type)}
                 deselect={() => this.clearSelectedTools()}
             />
@@ -126,35 +145,12 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
             return undefined;
         }
 
-        const openProcess = this.state.openProcess;
-
-        const typesByName = useMemo(
-            () => createMap(this.props.workspace.types, t => t.name),
-            [this.props.workspace.types]
-        );
-
-        const processesByName = useMemo(
-            () => createMap(this.props.workspace.processes, p => p.name),
-            [this.props.workspace.processes]
-        );
-
-        const steps = useMemo(
-            () => openProcess.steps.map(s => populateStepDisplay(s, openProcess, processesByName, typesByName)),
-            [openProcess, processesByName, typesByName]
-        );
-
-        const variables = useMemo(
-            () => openProcess.variables.map(v => populateVariableDisplay(v, openProcess, typesByName)),
-            [openProcess, typesByName]
-        );
-
         return (
             <ProcessContent
                 className="workspaceEditor__content"
-                processName={openProcess.name}
-                steps={steps}
-                variables={variables}
-                typesByName={typesByName}
+                openProcess={this.state.openProcess}
+                processesByName={this.state.processesByName}
+                typesByName={this.state.typesByName}
 
                 dropVariableType={this.state.droppingDataType}
                 dropStep={this.state.droppingProcess}
@@ -198,8 +194,8 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
             <ProcessEditor
                 process={this.state.openProcess}
                 className="workspaceEditor__content"
-                allTypes={this.props.workspace.types}
-                allProcesses={this.props.workspace.processes}
+                allTypes={this.props.types}
+                allProcesses={this.props.processes}
                 close={() => this.closeSignatureEditor()}
             />
         );
@@ -223,7 +219,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
 
         if (this.state.openProcess === undefined) {
             this.setState({
-                openProcess: this.props.workspace.processes.find(p => !p.isSystem) as IUserProcess,
+                openProcess: this.props.processes.find(p => !p.isSystem) as IUserProcess,
             });
         }
     }
@@ -283,7 +279,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         });
     }
 
-    private getProcessesWithErrors(workspace: IWorkspaceState) {
+    private getProcessesWithErrors(processes: IProcess[]) {
         return [];
         /*
         return workspace.validationSummary.errorProcessNames

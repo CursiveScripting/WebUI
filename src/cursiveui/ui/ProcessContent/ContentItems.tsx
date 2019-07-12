@@ -15,8 +15,8 @@ interface Props {
     varRefs: Map<string, VariableDisplay>;
 
     processName: string;
-    focusVariable?: IVariableDisplay;
-    focusStep?: IStepDisplay;
+    focusVariableName?: string;
+    focusStepId?: string;
     focusParameter?: IStepDisplayParam;
     focusReturnPath?: string | null;
 }
@@ -133,7 +133,7 @@ export const ContentItems = (props: Props) => {
         }
 
         return props.steps.map(step => {
-            const focusThisStep = step === props.focusStep;
+            const focusThisStep = step.uniqueId === props.focusStepId;
             
             const isValid = true; // TODO: determine this
 
@@ -177,7 +177,7 @@ export const ContentItems = (props: Props) => {
                 />
             )
         }
-    )}, [context, props.processName, props.stepRefs, props.steps, props.focusStep, props.focusParameter, props.focusReturnPath, dragging]);
+    )}, [context, props.processName, props.stepRefs, props.steps, props.focusStepId, props.focusParameter, props.focusReturnPath, dragging]);
    
     const variables = useMemo(() => {
         props.varRefs.clear();
@@ -215,7 +215,7 @@ export const ContentItems = (props: Props) => {
         props.variables.map(variable => {
             const canEdit = true; // TODO: determine this based on type having a validationExpression or not
 
-            const focusThisVar = variable === props.focusVariable;
+            const focusThisVar = variable.name === props.focusVariableName;
             
             const varPos: ICoord = dragging !== undefined
                 && dragging.type === 'variable'
@@ -244,7 +244,7 @@ export const ContentItems = (props: Props) => {
                 />
             );
         })
-    }, [context, props.processName, props.varRefs, props.variables, props.focusVariable, dragging]);
+    }, [context, props.processName, props.varRefs, props.variables, props.focusVariableName, dragging]);
 
     return <>
         {steps}
