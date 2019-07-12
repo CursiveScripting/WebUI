@@ -130,14 +130,14 @@ function loadProcessDefinition(
             inputs: inputs,
             outputs: outputs,
             returnPaths,
-            steps: [<IStartStep>{
+            steps: [{
                 uniqueId: determineStepId([]),
                 stepType: StepType.Start,
                 x: gridSize * 2,
                 y: gridSize * 2,
                 outputs: {},
                 returnPaths: {},
-            }],
+            } as IStartStep],
             variables: [],
             isSystem: false,
             fixedSignature: true,

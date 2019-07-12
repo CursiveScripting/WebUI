@@ -3,7 +3,6 @@ import { IType } from '../../workspaceState/IType';
 import { IProcess } from '../../workspaceState/IProcess';
 import { isStartStep, isStopStep } from '../../services/StepFunctions';
 import { IProcessStep } from '../../workspaceState/IProcessStep';
-import { string } from 'prop-types';
 
 export interface IStepDisplayParam {
     name: string;

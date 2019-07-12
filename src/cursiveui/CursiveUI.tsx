@@ -52,7 +52,7 @@ export const CursiveUI = (props: Props) => {
                     message: err.message,
                 });
             })
-    }, []);
+    }, [props.loadWorkspace, props.loadProcesses]);
 
     if (loadingState.loading) {
         return <div>Loading...</div>

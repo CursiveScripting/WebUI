@@ -178,7 +178,7 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
                 return state; // invalid process
             }
 
-            inProcess.steps = [...inProcess.steps, <IProcessStep>{
+            inProcess.steps = [...inProcess.steps, {
                 uniqueId: determineStepId(inProcess.steps),
                 processName: action.stepProcessName,
                 inputs: {},
@@ -189,7 +189,7 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
                     : StepType.UserProcess,
                 x: action.x,
                 y: action.y,
-            }];
+            } as IProcessStep];
 
             processes[inProcessIndex] = inProcess;
             
@@ -219,14 +219,14 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
                 return state; // invalid path name, or shouldn't have specified a path name
             }
 
-            inProcess.steps = [...inProcess.steps, <IStopStep>{
+            inProcess.steps = [...inProcess.steps, {
                 uniqueId: determineStepId(inProcess.steps),
                 returnPath: action.returnPath,
                 inputs: {},
                 stepType: StepType.Stop,
                 x: action.x,
                 y: action.y,
-            }];
+            } as IStopStep];
 
             processes[inProcessIndex] = inProcess;
             
@@ -276,7 +276,7 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
                 return state;
             }
 
-            process.variables = [...process.variables, <IVariable>{
+            process.variables = [...process.variables, {
                 name: action.varName,
                 typeName: action.typeName,
                 fromLinks: [],
@@ -284,7 +284,7 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
                 initialValue: null,
                 x: action.x,
                 y: action.y,
-            }];
+            } as IVariable];
             
             processes[processIndex] = process;
 

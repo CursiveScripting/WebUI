@@ -1,10 +1,8 @@
 import { StepType, IStepWithOutputs, IStep, IStepWithInputs } from '../workspaceState/IStep';
 import { IStopStep } from '../workspaceState/IStopStep';
 import { IProcessStep } from '../workspaceState/IProcessStep';
-import { IVariable } from '../workspaceState/IVariable';
 import { IStartStep } from '../workspaceState/IStartStep';
-import { IUserProcess } from '../workspaceState/IUserProcess';
-import { IProcess } from '../workspaceState/IProcess';
+import { IVariableDisplay } from '../ui/ProcessContent/IVariableDisplay';
 
 export function usesInputs(step: IStep): step is IStepWithInputs {
     return step.stepType !== StepType.Start;
@@ -29,18 +27,22 @@ export function isProcessStep(step: IStep): step is IProcessStep {
 export function determineStepId(otherSteps: IStep[]) {
     let testId = 1;
 
-    while (otherSteps.find(s => s.uniqueId === testId.toString()) !== undefined) {
+    const matchId = (step: IStep) => step.uniqueId === testId.toString();
+
+    while (otherSteps.find(matchId) !== undefined) {
         testId ++;
     }
 
     return testId.toString();
 }
 
-export function determineVariableName(typeName: string, otherVars: IVariable[]) {
+export function determineVariableName(typeName: string, otherVars: IVariableDisplay[]) {
     let testNum = 0;
     let testName = `new ${typeName}`;
+    
+    const matchName = (variable: IVariableDisplay) => variable.name === testName;
 
-    while (otherVars.find(v => v.name === testName) !== undefined) {
+    while (otherVars.find(matchName) !== undefined) {
         testNum ++;
         testName = `new ${typeName} ${testNum}`;
     }

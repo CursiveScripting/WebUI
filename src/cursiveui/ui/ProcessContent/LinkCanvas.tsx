@@ -2,10 +2,9 @@ import * as React from 'react';
 import { ICoord, ParamConnectorDragInfo, StepConnectorDragInfo } from './ProcessContent';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
-import { IVariable } from '../../workspaceState/IVariable';
 import { IType } from '../../workspaceState/IType';
-import { usesOutputs, usesInputs } from '../../services/StepFunctions';
 import { IStepDisplay } from './IStepDisplay';
+import { IVariableDisplay } from './IVariableDisplay';
 
 export type LinkDragInfo = {
     isParam: false;
@@ -25,7 +24,7 @@ interface Props {
     height: number;
 
     steps: IStepDisplay[];
-    variables: IVariable[];
+    variables: IVariableDisplay[];
 
     stepDisplays: Map<string, StepDisplay>;
     variableDisplays: Map<string, VariableDisplay>;

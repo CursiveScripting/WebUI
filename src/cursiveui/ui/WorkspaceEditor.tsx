@@ -8,12 +8,12 @@ import './WorkspaceEditor.css';
 import { IWorkspaceState } from '../workspaceState/IWorkspaceState';
 import { IUserProcess } from '../workspaceState/IUserProcess';
 import { IProcess } from '../workspaceState/IProcess';
-import { IStep } from '../workspaceState/IStep';
 import { WorkspaceDispatchContext } from '../workspaceState/actions';
 import { IType } from '../workspaceState/IType';
 import { createMap } from '../services/DataFunctions';
 import { useMemo } from 'react';
-import { populateStepDisplay, IStepDisplayParam } from './ProcessContent/IStepDisplay';
+import { populateStepDisplay, IStepDisplayParam, IStepDisplay } from './ProcessContent/IStepDisplay';
+import { populateVariableDisplay, IVariableDisplay } from './ProcessContent/IVariableDisplay';
 
 interface Props {
     workspace: IWorkspaceState;
@@ -31,9 +31,10 @@ interface State {
     processErrors: ValidationError[];
     processesWithErrors: IUserProcess[];
     otherProcessesHaveErrors: boolean;
-    focusStep?: IStep;
+    focusStep?: IStepDisplay;
     focusStepParameter?: IStepDisplayParam;
     focusStepReturnPath?: string | null;
+    focusVariable?: IVariableDisplay;
 }
 
 export class WorkspaceEditor extends React.PureComponent<Props, State> {
@@ -139,7 +140,12 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
 
         const steps = useMemo(
             () => openProcess.steps.map(s => populateStepDisplay(s, openProcess, processesByName, typesByName)),
-            [openProcess, openProcess.steps, processesByName, typesByName]
+            [openProcess, processesByName, typesByName]
+        );
+
+        const variables = useMemo(
+            () => openProcess.variables.map(v => populateVariableDisplay(v, openProcess, typesByName)),
+            [openProcess, typesByName]
         );
 
         return (
@@ -147,7 +153,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 className="workspaceEditor__content"
                 processName={openProcess.name}
                 steps={steps}
-                variables={openProcess.variables}
+                variables={variables}
                 typesByName={typesByName}
 
                 dropVariableType={this.state.droppingDataType}
@@ -225,7 +231,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
     private openProcess(process: IUserProcess) {
         // TODO: validation data needs stored somewhere (in the store? in a state here?) and accessed as needed
         const processErrors: ValidationError[] = []; // this.props.workspace.validationSummary.getErrorsForProcess(process);
-        let isValid = processErrors.length === 0;
+        // let isValid = processErrors.length === 0;
 
         let otherProcessesHaveErrors = false; // this.props.workspace.validationSummary.numErrorProcesses > (isValid ? 0 : 1);
 

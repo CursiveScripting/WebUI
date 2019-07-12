@@ -214,7 +214,6 @@ function loadProcessSteps(
         if (childProcess === undefined) {
             throw new Error(`Step ${id} of the "${process.name}" process wraps an unknown process: ${name}.`
                 + ' That process doesn\'t exist in this workspace.');
-            continue;
         }
 
         const isUser = isUserProcess(childProcess);
@@ -267,11 +266,9 @@ function loadStepParameters(
 
         if (parameter === undefined) {
             throw new Error(`Step ${stepId} of the "${process.name}" process tries to map a non-existant ${parameterTypeName}: ${paramName}`);
-            continue;
         }
         if (destination === undefined) {
             throw new Error(`Step ${stepId} of the "${process.name}" process tries to map an ${parameterTypeName} to a non-existant variable: ${destinationName}`);
-            continue;
         }
 
         results[parameter.name] = destination.name;

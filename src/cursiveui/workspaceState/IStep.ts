@@ -1,5 +1,4 @@
 import { IPositionable } from './IPositionable';
-import { IParameter } from './IParameter';
 
 export enum StepType {
     Start,

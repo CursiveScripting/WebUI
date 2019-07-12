@@ -20,11 +20,11 @@ interface Props extends IStepDisplay {
     canDelete: boolean;
 
     headerMouseDown: (mouseX: number, mouseY: number) => void;
-    inputLinkMouseDown: (x: number, y: number) => void;
-    outputLinkMouseDown: (x: number, y: number, returnPath: string | null) => void;
+    inputLinkMouseDown: () => void;
+    outputLinkMouseDown: (returnPath: string | null) => void;
     inputLinkMouseUp: () => void;
     outputLinkMouseUp: (returnPath: string | null) => void;
-    parameterLinkMouseDown: (x: number, y: number, param: IStepDisplayParam, input: boolean) => void;
+    parameterLinkMouseDown: (param: IStepDisplayParam, input: boolean) => void;
     parameterLinkMouseUp: (param: IStepDisplayParam, input: boolean) => void;
 }
 
@@ -193,7 +193,7 @@ export class StepDisplay extends React.PureComponent<Props, StepDisplayState> {
         return (
             <div
                 className={conClasses}
-                onMouseDown={e => this.props.inputLinkMouseDown(e.clientX, e.clientY)}
+                onMouseDown={e => this.props.inputLinkMouseDown()}
                 onMouseUp={this.props.inputLinkMouseUp}
                 ref={c => this._entryConnector = c}
             />
@@ -227,7 +227,7 @@ export class StepDisplay extends React.PureComponent<Props, StepDisplayState> {
                 <div
                     key={pathName}
                     className={classes}
-                    onMouseDown={e => this.props.outputLinkMouseDown(e.clientX, e.clientY, actualPathName)}
+                    onMouseDown={e => this.props.outputLinkMouseDown(actualPathName)}
                     onMouseUp={() => this.props.outputLinkMouseUp(actualPathName)}
                     ref={c => { if (c !== null) { this._returnConnectors[pathName] = c; }}}
                 >
@@ -275,7 +275,7 @@ export class StepDisplay extends React.PureComponent<Props, StepDisplayState> {
                         type={param.type}
                         isValid={isValid}
                         focused={param === this.props.focusParameter}
-                        linkMouseDown={e => this.props.parameterLinkMouseDown(e.clientX, e.clientY, param, input)}
+                        linkMouseDown={e => this.props.parameterLinkMouseDown(param, input)}
                         linkMouseUp={() => this.props.parameterLinkMouseUp(param, input)}
                     />
                     );

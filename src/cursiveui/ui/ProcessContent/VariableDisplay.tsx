@@ -16,9 +16,10 @@ interface Props extends IPositionable {
     inputConnected: boolean;
     outputConnected: boolean;
     canEdit: boolean;
+    focused: boolean;
     inProcessName: string;
     headerMouseDown: (mouseX: number, mouseY: number) => void;
-    connectorMouseDown: (input: boolean, x: number, y: number) => void;
+    connectorMouseDown: (input: boolean) => void;
     connectorMouseUp: (input: boolean) => void;
 }
 
@@ -90,6 +91,12 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
     }
     
     render() {
+        let rootClasses = 'processItem processItem--var';
+
+        if (this.props.focused) {
+            rootClasses += ' processItem--focused';
+        }
+
         const style = {
             left: this.props.x,
             top: this.props.y,
@@ -111,7 +118,10 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                 initialValue: val === '' ? null : val,
             });
 
-            const isValid = useMemo(() => isValueValid(this.props.initialValue, this.props.type.validationExpression), [this.props.initialValue, this.props.type])
+            const isValid = useMemo(
+                () => isValueValid(this.props.initialValue, this.props.type.validationExpression),
+                [this.props.initialValue, this.props.type.validationExpression]
+            );
 
             defaultInput = <ValueInput
                 className="processItem__default"
@@ -134,7 +144,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
         });
 
         return (
-            <div className="processItem processItem--var" style={style} ref={r => { if (r !== null) { this.root = r; }}}>
+            <div className={rootClasses} style={style} ref={r => { if (r !== null) { this.root = r; }}}>
                 <div
                     className="processItem__header"
                     onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY)}
@@ -149,7 +159,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                         type={this.props.type}
                         state={inputState}
                         input={true}
-                        onMouseDown={e => this.props.connectorMouseDown(true, e.clientX, e.clientY)}
+                        onMouseDown={e => this.props.connectorMouseDown(true)}
                         onMouseUp={() => this.props.connectorMouseUp(true)}
                         ref={c => { if (c !== null) { this._inputConnector = c.connector; }}}
                     />
@@ -158,12 +168,16 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                         type={this.props.type}
                         state={this.props.outputConnected ? ConnectorState.Disconnected : ConnectorState.Connected}
                         input={false}
-                        onMouseDown={e => this.props.connectorMouseDown(false, e.clientX, e.clientY)}
+                        onMouseDown={e => this.props.connectorMouseDown(false)}
                         onMouseUp={() => this.props.connectorMouseUp(false)}
                         ref={c => { if (c !== null) { this._outputConnector = c.connector; }}}
                     />
                 </div>
             </div>
         );
+    }
+
+    public scrollIntoView() {
+        this.root!.scrollIntoView({ behavior: 'smooth' });
     }
 }
