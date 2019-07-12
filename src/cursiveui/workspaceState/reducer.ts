@@ -264,7 +264,9 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
         }
 
         case 'add variable': {
-            if (!state.types.hasOwnProperty(action.typeName)) {
+            const typeIndex = state.types.findIndex(t => t.name === action.typeName);
+            
+            if (typeIndex === -1) {
                 return state; // invalid type
             }
 

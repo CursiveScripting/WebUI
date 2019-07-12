@@ -5,7 +5,6 @@ import './ProcessItem.css';
 import { ValueInput } from './ValueInput';
 import { IType } from '../../workspaceState/IType';
 import { IPositionable } from '../../workspaceState/IPositionable';
-import { useMemo } from 'react';
 import { isValueValid } from '../../services/DataFunctions';
 import { WorkspaceDispatchContext } from '../../workspaceState/actions';
 
@@ -117,11 +116,12 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                 varName: this.props.name,
                 initialValue: val === '' ? null : val,
             });
-
-            const isValid = useMemo(
-                () => isValueValid(this.props.initialValue, this.props.type.validationExpression),
-                [this.props.initialValue, this.props.type.validationExpression]
-            );
+            
+            const isValid = isValueValid(this.props.initialValue, this.props.type.validationExpression);
+            // const isValid = useMemo(
+                // () => isValueValid(this.props.initialValue, this.props.type.validationExpression),
+                // [this.props.initialValue, this.props.type.validationExpression]
+            // );
 
             defaultInput = <ValueInput
                 className="processItem__default"

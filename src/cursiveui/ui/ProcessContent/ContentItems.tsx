@@ -212,7 +212,7 @@ export const ContentItems = (props: Props) => {
             setDragging(undefined);
         }
 
-        props.variables.map(variable => {
+        return props.variables.map(variable => {
             const canEdit = true; // TODO: determine this based on type having a validationExpression or not
 
             const focusThisVar = variable.name === props.focusVariableName;

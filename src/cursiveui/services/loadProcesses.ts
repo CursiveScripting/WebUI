@@ -71,13 +71,12 @@ function loadProcessDefinition(typesByName: Map<string, IType>, processNode: Ele
     paramNodes = processNode.getElementsByTagName('Output');
     loadProcessParameters(typesByName, paramNodes, outputs, 'output');
 
-    // TODO: why the heck are variables part of the process definition?
     const variables: IVariable[] = [];
     paramNodes = processNode.getElementsByTagName('Variable');
     loadProcessParameters(typesByName, paramNodes, variables, 'variable');
 
     const returnPaths: string[] = [];
-    const usedNames: {[key: string]: boolean} = {};
+    const usedNames = new Set<string>();
     paramNodes = processNode.getElementsByTagName('ReturnPath');
     for (const paramNode of paramNodes) {
         if (paramNode.parentElement !== processNode) {
@@ -85,7 +84,7 @@ function loadProcessDefinition(typesByName: Map<string, IType>, processNode: Ele
         }
 
         const returnPathName = paramNode.getAttribute('name')!;
-        if (returnPathName !== '' && !usedNames.hasOwnProperty(returnPathName)) { // TODO: was null, not ''
+        if (returnPathName !== '' && !usedNames.has(returnPathName)) { // TODO: was null, not ''
             returnPaths.push(returnPathName);
         }
     }

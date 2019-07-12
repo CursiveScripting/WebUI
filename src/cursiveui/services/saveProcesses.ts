@@ -100,7 +100,7 @@ function saveStep(step: IStep, parent: HTMLElement) {
         for (const pathName in step.returnPaths) {
             let pathElement: HTMLElement;
             
-            if (pathName !== '') { // TODO: was null, not empty
+            if (pathName !== '') {
                 pathElement = parent.ownerDocument!.createElement('NamedReturnPath');
                 pathElement.setAttribute('name', pathName);
             }
