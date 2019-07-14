@@ -43,8 +43,8 @@ export const ContentItems = (props: Props) => {
     const startDragStepHeader = (step: IStepDisplay, x: number, y: number, displayX: number, displayY: number) => props.setDragging({
         type: DragType.Step,
         step,
-        x,
-        y,
+        x: x - props.minScreenX,
+        y: y - props.minScreenY,
         xOffset: x - displayX - props.minScreenX,
         yOffset: y - displayY - props.minScreenY,
     });
@@ -52,16 +52,16 @@ export const ContentItems = (props: Props) => {
     const startDragInConnector = (step: IStepDisplay, x: number, y: number) => props.setDragging({
         type: DragType.StepInConnector,
         step,
-        x,
-        y,
+        x: x - props.minScreenX,
+        y: y - props.minScreenY,
     });
 
     const startDragReturnPath = (step: IStepDisplay, path: string | null, x: number, y: number) => props.setDragging({
         type: DragType.ReturnPath,
         step,
         returnPath: path,
-        x,
-        y,
+        x: x - props.minScreenX,
+        y: y - props.minScreenY,
     });
 
     const startDragParameter = (step: IStepDisplay, param: IStepDisplayParam, input: boolean, x: number, y: number) => props.setDragging({
@@ -69,8 +69,8 @@ export const ContentItems = (props: Props) => {
         step,
         param,
         input,
-        x,
-        y,
+        x: x - props.minScreenX,
+        y: y - props.minScreenY,
     });
 
     const stopDragParameter = (step: IStepDisplay, param: IStepDisplayParam, input: boolean) => {
@@ -124,8 +124,8 @@ export const ContentItems = (props: Props) => {
     const startDragVarHeader = (variable: IVariableDisplay, x: number, y: number, displayX: number, displayY: number) => props.setDragging({
         type: DragType.Variable,
         variable,
-        x,
-        y,
+        x: x - props.minScreenX,
+        y: y - props.minScreenY,
         xOffset: x - displayX - props.minScreenX,
         yOffset: y - displayY - props.minScreenY,
     });
@@ -134,8 +134,8 @@ export const ContentItems = (props: Props) => {
         type: DragType.VarParameter,
         variable,
         input,
-        x,
-        y,
+        x: x - props.minScreenX,
+        y: y - props.minScreenY,
     });
 
     const stopDragVarConnector = (variable: IVariableDisplay, input: boolean) => {
