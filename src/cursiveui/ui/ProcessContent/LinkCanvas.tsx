@@ -1,22 +1,10 @@
 import * as React from 'react';
-import { ICoord, ParamConnectorDragInfo, StepConnectorDragInfo } from './ProcessContent';
+import { ICoord, DragInfo, DragType } from './ProcessContent';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
 import { IType } from '../../workspaceState/IType';
 import { IStepDisplay } from './IStepDisplay';
 import { IVariableDisplay } from './IVariableDisplay';
-
-export type LinkDragInfo = {
-    isParam: false;
-    pathInfo: StepConnectorDragInfo;
-    x: number;
-    y: number;
-} | {
-    isParam: true;
-    paramInfo: ParamConnectorDragInfo;
-    x: number;
-    y: number;
-}
 
 interface Props {
     className?: string;
@@ -29,7 +17,7 @@ interface Props {
     stepDisplays: Map<string, StepDisplay>;
     variableDisplays: Map<string, VariableDisplay>;
 
-    dragging?: LinkDragInfo;
+    dragging?: DragInfo;
 }
 
 export class LinkCanvas extends React.Component<Props> {
@@ -127,52 +115,67 @@ export class LinkCanvas extends React.Component<Props> {
         }
 
         const dragging = this.props.dragging;
-        if (dragging !== undefined) {
-            const dragRect = {
-                left: dragging.x, right: dragging.x,
-                top: dragging.y, bottom: dragging.y,
-                width: 0, height: 0,
-            };
+        if (dragging === undefined) {
+            return;
+        }
 
-            if (dragging.isParam) {
-                const dragInfo = dragging.paramInfo;
-                let connector: HTMLDivElement;
-    
-                if (dragInfo.step !== undefined) {
-                    const stepDisplay = stepDisplays.get(dragInfo.step.uniqueId)!;
-                    connector = dragInfo.input
-                        ? stepDisplay.getInputConnector(dragInfo.field.name)!
-                        : stepDisplay.getOutputConnector(dragInfo.field.name)!;
-                }
-                else {
-                    const varDisplay = variableDisplays.get(dragInfo.field.name)!;
-                    connector = dragInfo.input
-                        ? varDisplay.inputConnector
-                        : varDisplay.outputConnector;
-                }
-    
-                if (dragInfo.input) {
-                    this.drawFieldLink(dragInfo.type, root, dragRect, connector.getBoundingClientRect());
-                }
-                else {
-                    this.drawFieldLink(dragInfo.type, root, connector.getBoundingClientRect(), dragRect);
-                }
+        const dragRect = {
+            left: dragging.x, right: dragging.x,
+            top: dragging.y, bottom: dragging.y,
+            width: 0, height: 0,
+        };
+
+        
+        if (dragging.type === DragType.StepParameter) {
+            const stepDisplay = stepDisplays.get(dragging.step.uniqueId)!;
+
+            let connector: HTMLDivElement;
+            let fromRect: ClientRect | DOMRect;
+            let toRect: ClientRect | DOMRect;
+
+            if (dragging.input) {
+                connector = stepDisplay.getInputConnector(dragging.param.name)!;
+                fromRect = dragRect;
+                toRect = connector.getBoundingClientRect();
             }
             else {
-                const dragInfo = dragging.pathInfo;
-                
-                if (dragInfo.input) {
-                    const beginConnector = stepDisplays.get(dragInfo.step.uniqueId)!.entryConnector;
-                    if (beginConnector !== null) {
-                        this.drawProcessLink(root, dragRect, beginConnector.getBoundingClientRect());
-                    }
-                }
-                else {
-                    const endConnector = stepDisplays.get(dragInfo.step.uniqueId)!.getReturnConnector(dragInfo.returnPath);
-                    if (endConnector !== null) {
-                        this.drawProcessLink(root, endConnector.getBoundingClientRect(), dragRect);
-                    }
-                }
+                connector = stepDisplay.getOutputConnector(dragging.param.name)!;
+                fromRect = connector.getBoundingClientRect();
+                toRect = dragRect;
+            }
+
+            this.drawFieldLink(dragging.param.type, root, fromRect, toRect);
+        }
+        else if (dragging.type === DragType.VarParameter) {
+            const varDisplay = variableDisplays.get(dragging.variable.name)!;
+
+            let connector: HTMLDivElement;
+            let fromRect: ClientRect | DOMRect;
+            let toRect: ClientRect | DOMRect;
+
+            if (dragging.input) {
+                connector = varDisplay.inputConnector;
+                fromRect = dragRect;
+                toRect = connector.getBoundingClientRect();
+            }
+            else {
+                connector = varDisplay.outputConnector;
+                fromRect = connector.getBoundingClientRect();
+                toRect = dragRect;
+            }
+
+            this.drawFieldLink(dragging.variable.type, root, fromRect, toRect);
+        }
+        else if (dragging.type === DragType.StepInConnector) {
+            const beginConnector = stepDisplays.get(dragging.step.uniqueId)!.entryConnector;
+            if (beginConnector !== null) {
+                this.drawProcessLink(root, dragRect, beginConnector.getBoundingClientRect());
+            }
+        }
+        else if (dragging.type === DragType.ReturnPath) {
+            const endConnector = stepDisplays.get(dragging.step.uniqueId)!.getReturnConnector(dragging.returnPath);
+            if (endConnector !== null) {
+                this.drawProcessLink(root, endConnector.getBoundingClientRect(), dragRect);
             }
         }
     }

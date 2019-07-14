@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { useState, useMemo, useEffect } from 'react';
+import { useEffect } from 'react';
 import { StepDisplay } from './StepDisplay';
 import { StepType } from '../../workspaceState/IStep';
 import { WorkspaceDispatchContext } from '../../workspaceState/actions';
 import { IStepDisplay, IStepDisplayParam } from './IStepDisplay';
-import { ICoord } from './ProcessContent';
+import { ICoord, DragInfo, DragType } from './ProcessContent';
 import { VariableDisplay } from './VariableDisplay';
 import { IVariableDisplay } from './IVariableDisplay';
 
@@ -14,6 +14,9 @@ interface Props {
     stepRefs: Map<string, StepDisplay>;
     varRefs: Map<string, VariableDisplay>;
 
+    dragging?: DragInfo;
+    setDragging: (dragging: DragInfo | undefined) => void;
+
     processName: string;
     focusVariableName?: string;
     focusStepId?: string;
@@ -21,37 +24,7 @@ interface Props {
     focusReturnPath?: string | null;
 }
 
-type DragState = undefined | {
-    type: 'step';
-    step: IStepDisplay;
-    x: number;
-    y: number;
-} | {
-    type: 'variable';
-    variable: IVariableDisplay;
-    x: number;
-    y: number;
-} | {
-    type: 'in';
-    step: IStepDisplay;
-} | {
-    type: 'return path';
-    step: IStepDisplay;
-    path: string | null;
-} | {
-    type: 'step param';
-    step: IStepDisplay;
-    input: boolean;
-    param: IStepDisplayParam;
-} | {
-    type: 'var param';
-    variable: IVariableDisplay;
-    input: boolean;
-}
-
 export const ContentItems = (props: Props) => {
-    const [dragging, setDragging] = useState<DragState>(undefined);
-
     const context = React.useContext(WorkspaceDispatchContext);
 
     useEffect(() => {
@@ -64,197 +37,197 @@ export const ContentItems = (props: Props) => {
         }
     }, [props.focusStepId, props.focusVariableName, props.stepRefs, props.varRefs])
 
-    const steps = useMemo(() => {
-        props.stepRefs.clear();
+    const startDragStepHeader = (step: IStepDisplay, x: number, y: number) => props.setDragging({
+        type: DragType.Step,
+        step,
+        x,
+        y,
+    });
 
-        const startDragHeader = (step: IStepDisplay, x: number, y: number) => setDragging({
-            type: 'step',
-            step,
-            x,
-            y,
-        });
+    const startDragInConnector = (step: IStepDisplay, x: number, y: number) => props.setDragging({
+        type: DragType.StepInConnector,
+        step,
+        x,
+        y,
+    });
 
-        const startDragInConnector = (step: IStepDisplay) => setDragging({
-            type: 'in',
-            step,
-        });
+    const startDragReturnPath = (step: IStepDisplay, path: string | null, x: number, y: number) => props.setDragging({
+        type: DragType.ReturnPath,
+        step,
+        returnPath: path,
+        x,
+        y,
+    });
 
-        const startDragReturnPath = (step: IStepDisplay, path: string | null) => setDragging({
-            type: 'return path',
-            step,
-            path,
-        });
+    const startDragParameter = (step: IStepDisplay, param: IStepDisplayParam, input: boolean, x: number, y: number) => props.setDragging({
+        type: DragType.StepParameter,
+        step,
+        param,
+        input,
+        x,
+        y,
+    });
 
-        const startDragParameter = (step: IStepDisplay, param: IStepDisplayParam, input: boolean) => {
-            setDragging({
-                type: 'step param',
-                step,
-                param,
-                input,
-            });
-        }
-
-        const stopDragInConnector = (step: IStepDisplay) => {
-            if (dragging !== undefined && dragging.type === 'return path') {
-                context({
-                    type: 'set return path',
-                    inProcessName: props.processName,
-                    fromStepId: step.uniqueId,
-                    pathName: dragging.path,
-                    toStepId: dragging.step.uniqueId,
-                });
+    const stopDragParameter = (step: IStepDisplay, param: IStepDisplayParam, input: boolean) => {
+        if (props.dragging !== undefined) {
+            if (props.dragging.type === DragType.StepParameter && props.dragging.input !== input) {
+                // TODO: link both parameters with a variable
             }
-
-            setDragging(undefined);
-        };
-
-        const stopDragReturnPath = (step: IStepDisplay, path: string | null) => {
-            if (dragging !== undefined && dragging.type === 'in') {
-                context({
-                    type: 'set return path',
-                    inProcessName: props.processName,
-                    fromStepId: dragging.step.uniqueId,
-                    pathName: path,
-                    toStepId: step.uniqueId,
-                });
-            }
-
-            setDragging(undefined);
-        }
-
-        const stopDragParameter = (step: IStepDisplay, param: IStepDisplayParam, input: boolean) => {
-            if (dragging !== undefined) {
-                if (dragging.type === 'step param' && dragging.input !== input) {
-                    // TODO: link both parameters with a variable
-                }
-                else if (dragging.type === 'var param' && dragging.input !== input) {
-                    context({
-                        type: 'link variable',
-                        inProcessName: props.processName,
-                        stepId: step.uniqueId,
-                        stepParamName: param.name,
-                        stepInputParam: input,
-                        varName: dragging.variable.name,
-                    });
-                }
-            }
-
-            setDragging(undefined);
-        }
-
-        return props.steps.map(step => {
-            const focusThisStep = step.uniqueId === props.focusStepId;
-            
-            const isValid = true; // TODO: determine this
-
-            const stepPos: ICoord = dragging !== undefined
-                && dragging.type === 'step'
-                && dragging.step === step
-                    ? dragging
-                    : step;
-
-            const inputConnected = false; // TODO: determine this
-
-            return (
-                <StepDisplay
-                    ref={s => { if (s !== null) { props.stepRefs.set(step.uniqueId, s); } else { props.stepRefs.delete(step.uniqueId); }}}
-                    key={step.uniqueId}
-                    name={step.name}
-                    description={step.description}
-                    inputs={step.inputs}
-                    outputs={step.outputs}
-                    returnPaths={step.returnPaths}
-                    isValid={isValid}
-                    stepType={step.stepType}
-                    uniqueId={step.uniqueId}
-                    x={stepPos.x}
-                    y={stepPos.y}
-
-                    inProcessName={props.processName}
-                    inputConnected={inputConnected}
-                    focused={focusThisStep}
-                    focusParameter={focusThisStep ? props.focusParameter : undefined}
-                    focusReturnPath={focusThisStep ? props.focusReturnPath : undefined}
-                    readonly={false}
-                    canDelete={step.stepType !== StepType.Start}
-                    headerMouseDown={(x, y) => startDragHeader(step, x, y)}
-                    inputLinkMouseDown={() => startDragInConnector(step)}
-                    inputLinkMouseUp={() => stopDragInConnector(step)}
-                    outputLinkMouseDown={returnPath => startDragReturnPath(step, returnPath)}
-                    outputLinkMouseUp={returnPath => stopDragReturnPath(step, returnPath)}
-                    parameterLinkMouseDown={(param, input) => startDragParameter(step, param, input)}
-                    parameterLinkMouseUp={(param, input) => stopDragParameter(step, param, input)}
-                />
-            )
-        }
-    )}, [context, props.processName, props.stepRefs, props.steps, props.focusStepId, props.focusParameter, props.focusReturnPath, dragging]);
-   
-    const variables = useMemo(() => {
-        props.varRefs.clear();
-
-        const startDragHeader = (variable: IVariableDisplay, x: number, y: number) => setDragging({
-            type: 'variable',
-            variable,
-            x,
-            y,
-        });
-
-        const startDragConnector = (variable: IVariableDisplay, input: boolean) => {
-            setDragging({
-                type: 'var param',
-                variable,
-                input,
-            });
-        }
-
-        const stopDragConnector = (variable: IVariableDisplay, input: boolean) => {
-            if (dragging !== undefined && dragging.type === 'step param' && dragging.input !== input) {
+            else if (props.dragging.type === DragType.VarParameter && props.dragging.input !== input) {
                 context({
                     type: 'link variable',
                     inProcessName: props.processName,
-                    stepId: dragging.step.uniqueId,
-                    stepParamName: dragging.param.name,
-                    stepInputParam: dragging.input,
-                    varName: variable.name,
+                    stepId: step.uniqueId,
+                    stepParamName: param.name,
+                    stepInputParam: input,
+                    varName: props.dragging.variable.name,
                 });
             }
-
-            setDragging(undefined);
         }
 
-        return props.variables.map(variable => {
-            const canEdit = true; // TODO: determine this based on type having a validationExpression or not
+        props.setDragging(undefined);
+    }
 
-            const focusThisVar = variable.name === props.focusVariableName;
-            
-            const varPos: ICoord = dragging !== undefined
-                && dragging.type === 'variable'
-                && dragging.variable === variable
-                    ? dragging
-                    : variable;
+    const stopDragInConnector = (step: IStepDisplay) => {
+        if (props.dragging !== undefined && props.dragging.type === DragType.ReturnPath) {
+            context({
+                type: 'set return path',
+                inProcessName: props.processName,
+                fromStepId: step.uniqueId,
+                pathName: props.dragging.returnPath,
+                toStepId: props.dragging.step.uniqueId,
+            });
+        }
 
-            return (
-                <VariableDisplay
-                    ref={v => { if (v !== null) { props.varRefs.set(variable.name, v); } else { props.varRefs.delete(variable.name); }}}
-                    name={variable.name}
-                    initialValue={variable.initialValue}
-                    type={variable.type}
-                    x={varPos.x}
-                    y={varPos.y}
-                    canEdit={canEdit}
-                    focused={focusThisVar}
-                    inputConnected={variable.inputConnected}
-                    outputConnected={variable.outputConnected}
-                    inProcessName={props.processName}
-                    key={variable.name}
-                    
-                    headerMouseDown={(x, y) => startDragHeader(variable, x, y)}
-                    connectorMouseDown={(input) => startDragConnector(variable, input)}
-                    connectorMouseUp={input => stopDragConnector(variable, input)}
-                />
-            );
-        })
-    }, [context, props.processName, props.varRefs, props.variables, props.focusVariableName, dragging]);
+        props.setDragging(undefined);
+    };
+
+    const stopDragReturnPath = (step: IStepDisplay, path: string | null) => {
+        if (props.dragging !== undefined && props.dragging.type === DragType.StepInConnector) {
+            context({
+                type: 'set return path',
+                inProcessName: props.processName,
+                fromStepId: props.dragging.step.uniqueId,
+                pathName: path,
+                toStepId: step.uniqueId,
+            });
+        }
+
+        props.setDragging(undefined);
+    };
+
+    const startDragVarHeader = (variable: IVariableDisplay, x: number, y: number) => props.setDragging({
+        type: DragType.Variable,
+        variable,
+        x,
+        y,
+    });
+
+    const startDragVarConnector = (variable: IVariableDisplay, input: boolean, x: number, y: number) => props.setDragging({
+        type: DragType.VarParameter,
+        variable,
+        input,
+        x,
+        y,
+    });
+
+    const stopDragVarConnector = (variable: IVariableDisplay, input: boolean) => {
+        if (props.dragging !== undefined && props.dragging.type === DragType.StepParameter && props.dragging.input !== input) {
+            context({
+                type: 'link variable',
+                inProcessName: props.processName,
+                stepId: props.dragging.step.uniqueId,
+                stepParamName: props.dragging.param.name,
+                stepInputParam: props.dragging.input,
+                varName: variable.name,
+            });
+        }
+
+        props.setDragging(undefined);
+    }
+
+    props.stepRefs.clear();
+
+    const steps = props.steps.map(step => {
+        const focusThisStep = step.uniqueId === props.focusStepId;
+        
+        const isValid = true; // TODO: determine this
+
+        const stepPos: ICoord = props.dragging !== undefined
+            && props.dragging.type === DragType.Step
+            && props.dragging.step === step
+                ? props.dragging
+                : step;
+
+        const inputConnected = false; // TODO: determine this
+
+        return (
+            <StepDisplay
+                ref={s => { if (s !== null) { props.stepRefs.set(step.uniqueId, s); } else { props.stepRefs.delete(step.uniqueId); }}}
+                key={step.uniqueId}
+                name={step.name}
+                description={step.description}
+                inputs={step.inputs}
+                outputs={step.outputs}
+                returnPaths={step.returnPaths}
+                isValid={isValid}
+                stepType={step.stepType}
+                uniqueId={step.uniqueId}
+                x={stepPos.x}
+                y={stepPos.y}
+
+                inProcessName={props.processName}
+                inputConnected={inputConnected}
+                focused={focusThisStep}
+                focusParameter={focusThisStep ? props.focusParameter : undefined}
+                focusReturnPath={focusThisStep ? props.focusReturnPath : undefined}
+                readonly={false}
+                canDelete={step.stepType !== StepType.Start}
+                headerMouseDown={(x, y) => startDragStepHeader(step, x, y)}
+                inputLinkMouseDown={(x, y) => startDragInConnector(step, x, y)}
+                inputLinkMouseUp={() => stopDragInConnector(step)}
+                outputLinkMouseDown={(returnPath, x, y) => startDragReturnPath(step, returnPath, x, y)}
+                outputLinkMouseUp={returnPath => stopDragReturnPath(step, returnPath)}
+                parameterLinkMouseDown={(param, input, x, y) => startDragParameter(step, param, input, x, y)}
+                parameterLinkMouseUp={(param, input) => stopDragParameter(step, param, input)}
+            />
+        )
+    });
+    
+    props.varRefs.clear();
+
+    const variables = props.variables.map(variable => {
+        const canEdit = true; // TODO: determine this based on type having a validationExpression or not
+
+        const focusThisVar = variable.name === props.focusVariableName;
+        
+        const varPos: ICoord = props.dragging !== undefined
+            && props.dragging.type === DragType.Variable
+            && props.dragging.variable === variable
+                ? props.dragging
+                : variable;
+
+        return (
+            <VariableDisplay
+                ref={v => { if (v !== null) { props.varRefs.set(variable.name, v); } else { props.varRefs.delete(variable.name); }}}
+                name={variable.name}
+                initialValue={variable.initialValue}
+                type={variable.type}
+                x={varPos.x}
+                y={varPos.y}
+                canEdit={canEdit}
+                focused={focusThisVar}
+                inputConnected={variable.inputConnected}
+                outputConnected={variable.outputConnected}
+                inProcessName={props.processName}
+                key={variable.name}
+                
+                headerMouseDown={(x, y) => startDragVarHeader(variable, x, y)}
+                connectorMouseDown={(input, x, y) => startDragVarConnector(variable, input, x, y)}
+                connectorMouseUp={input => stopDragVarConnector(variable, input)}
+            />
+        );
+    });
 
     return <>
         {steps}

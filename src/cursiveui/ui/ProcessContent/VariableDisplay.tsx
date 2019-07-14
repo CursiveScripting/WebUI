@@ -18,7 +18,7 @@ interface Props extends IPositionable {
     focused: boolean;
     inProcessName: string;
     headerMouseDown: (mouseX: number, mouseY: number) => void;
-    connectorMouseDown: (input: boolean) => void;
+    connectorMouseDown: (input: boolean, x: number, y: number) => void;
     connectorMouseUp: (input: boolean) => void;
 }
 
@@ -109,7 +109,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
 
         let defaultInput;
         if (this.props.canEdit) {
-            const strVal = this.props.initialValue === null ? '' : this.props.initialValue;
+            const strVal = this.state.initialValue === null ? '' : this.state.initialValue;
             const valChanged = (val: string) => this.context({
                 type: 'set variable',
                 inProcessName: this.props.inProcessName,
@@ -117,12 +117,13 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                 initialValue: val === '' ? null : val,
             });
             
-            const isValid = isValueValid(this.props.initialValue, this.props.type.validationExpression);
+            const isValid = isValueValid(this.state.initialValue, this.props.type.validationExpression);
             // const isValid = useMemo(
-                // () => isValueValid(this.props.initialValue, this.props.type.validationExpression),
-                // [this.props.initialValue, this.props.type.validationExpression]
+                // () => isValueValid(this.state.initialValue, this.props.type.validationExpression),
+                // [this.state.initialValue, this.props.type.validationExpression]
             // );
 
+            // TODO: only update context when done editing, not on every change.
             defaultInput = <ValueInput
                 className="processItem__default"
                 value={strVal}
@@ -159,7 +160,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                         type={this.props.type}
                         state={inputState}
                         input={true}
-                        onMouseDown={e => this.props.connectorMouseDown(true)}
+                        onMouseDown={e => this.props.connectorMouseDown(true, e.clientX, e.clientY)}
                         onMouseUp={() => this.props.connectorMouseUp(true)}
                         ref={c => { if (c !== null) { this._inputConnector = c.connector; }}}
                     />
@@ -168,7 +169,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                         type={this.props.type}
                         state={this.props.outputConnected ? ConnectorState.Disconnected : ConnectorState.Connected}
                         input={false}
-                        onMouseDown={e => this.props.connectorMouseDown(false)}
+                        onMouseDown={e => this.props.connectorMouseDown(false, e.clientX, e.clientY)}
                         onMouseUp={() => this.props.connectorMouseUp(false)}
                         ref={c => { if (c !== null) { this._outputConnector = c.connector; }}}
                     />

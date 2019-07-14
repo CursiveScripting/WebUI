@@ -20,15 +20,24 @@ interface Props {
     save: () => void;
 }
 
+export type DropInfo = {
+    type: 'variable';
+    typeName: string;
+} | {
+    type: 'step';
+    processName: string;
+} | {
+    type: 'stop';
+    returnPath: string | null;
+}
+
 interface State {
     typesByName: Map<string, IType>;
     processesByName: Map<string, IProcess>;
 
     openProcess?: IUserProcess;
     editingSignature: boolean;
-    droppingDataType?: IType;
-    droppingProcess?: IProcess;
-    droppingStopStep?: string | null;
+    dropping?: DropInfo;
     processErrors: ValidationError[];
     processesWithErrors: IUserProcess[];
     otherProcessesHaveErrors: boolean;
@@ -126,7 +135,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 className="workspaceEditor__sidebar"
                 processes={this.props.processes}
                 openProcess={this.state.openProcess}
-                selectedProcess={this.state.droppingProcess}
                 processOpened={process => this.openProcess(process)}
                 editDefinition={process => this.showEditProcess(process)}
                 processSelected={process => this.selectProcess(process)}
@@ -151,9 +159,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 processesByName={this.state.processesByName}
                 typesByName={this.state.typesByName}
 
-                dropVariableType={this.state.droppingDataType}
-                dropStep={this.state.droppingProcess}
-                dropStopStep={this.state.droppingStopStep}
+                dropping={this.state.dropping}
                 dropComplete={() => this.dropCompleted()}
 
                 revalidate={() => this.revalidateOpenProcess()}
@@ -238,35 +244,36 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         });
     }
 
-    private selectDataType(type: IType | undefined) {
+    private selectDataType(type: IType) {
         this.setState({
-            droppingDataType: type === this.state.droppingDataType ? undefined : type,
-            droppingProcess: undefined,
-            droppingStopStep: undefined,
+            dropping: {
+                type: 'variable',
+                typeName: type.name,
+            },
         });
     }
 
-    private selectProcess(process: IProcess | undefined) {
+    private selectProcess(process: IProcess) {
         this.setState({
-            droppingDataType: undefined,
-            droppingProcess: process === this.state.droppingProcess ? undefined : process,
-            droppingStopStep: undefined,
+            dropping: {
+                type: 'step',
+                processName: process.name,
+            },
         });
     }
 
     private selectStopStep(pathName: string | null) {
         this.setState({
-            droppingDataType: undefined,
-            droppingProcess: undefined,
-            droppingStopStep: this.state.droppingStopStep === pathName ? undefined : pathName,
+            dropping: {
+                type: 'stop',
+                returnPath: pathName,
+            },
         });
     }
 
     private clearSelectedTools() {
         this.setState({
-            droppingDataType: undefined,
-            droppingProcess: undefined,
-            droppingStopStep: undefined,
+            dropping: undefined,
         });
     }
 

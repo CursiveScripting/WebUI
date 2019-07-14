@@ -3,20 +3,18 @@ import { alignToGrid, growToFitGrid, gridSize } from './gridSize';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
 import './ProcessContent.css';
-import { LinkCanvas, LinkDragInfo } from './LinkCanvas';
+import { LinkCanvas } from './LinkCanvas';
 import { ScrollWrapper } from './ScrollWrapper';
 import { ContentItems } from './ContentItems';
 import { ContentWrapper } from './ContentWrapper';
 import { WorkspaceDispatchContext } from '../../workspaceState/actions';
-import { IStep } from '../../workspaceState/IStep';
-import { IVariable } from '../../workspaceState/IVariable';
 import { IProcess } from '../../workspaceState/IProcess';
 import { IType } from '../../workspaceState/IType';
-import { IParameter } from '../../workspaceState/IParameter';
 import { determineVariableName } from '../../services/StepFunctions';
 import { IStepDisplay, IStepDisplayParam, populateStepDisplay } from './IStepDisplay';
 import { IVariableDisplay, populateVariableDisplay } from './IVariableDisplay';
 import { IUserProcess } from '../../workspaceState/IUserProcess';
+import { DropInfo } from '../WorkspaceEditor';
 
 interface Props {
     openProcess: IUserProcess;
@@ -25,9 +23,7 @@ interface Props {
 
     className?: string;
     
-    dropVariableType?: IType;
-    dropStep?: IProcess;
-    dropStopStep?: string | null;
+    dropping?: DropInfo;
     dropComplete: () => void;
 
     focusStepId?: string;
@@ -50,47 +46,65 @@ interface State {
     minScreenY: number;
 }
 
-export interface StepConnectorDragInfo {
-    step: IStep;
-    input: boolean;
-    returnPath: string | null;
-}
-
-export interface ParamConnectorDragInfo {
-    field: IParameter | IVariable;
-    type: IType;
-    input: boolean;
-    step?: IStep;
-}
-
 export interface ICoord {
     x: number;
     y: number;
 }
 
-enum DragType {
+export enum DragType {
     Step,
     Variable,
-    StepConnector,
-    ParamConnector,
+    StepInConnector,
+    ReturnPath,
+    StepParameter,
+    VarParameter,
     DropNew,
 }
 
-type DragInfo = {
-    type: DragType.StepConnector;
+export type DragInfo = {
+    type: DragType.Step;
+    step: IStepDisplay;
     x: number;
     y: number;
-    stepConnector: StepConnectorDragInfo;
 } | {
-    type: DragType.ParamConnector;
+    type: DragType.Variable;
+    variable: IVariableDisplay;
     x: number;
     y: number;
-    paramConnector: ParamConnectorDragInfo;
+} | {
+    type: DragType.StepInConnector;
+    x: number;
+    y: number;
+    step: IStepDisplay;
+} | {
+    type: DragType.ReturnPath;
+    x: number;
+    y: number;
+    step: IStepDisplay;
+    returnPath: string | null;
+} | {
+    type: DragType.StepParameter;
+    x: number;
+    y: number;
+    step: IStepDisplay;
+    input: boolean;
+    param: IStepDisplayParam;
+} | {
+    type: DragType.VarParameter;
+    x: number;
+    y: number;
+    variable: IVariableDisplay;
+    input: boolean;
 } | {
     type: DragType.DropNew;
     x: number;
     y: number;
 }
+
+// this is a different sort of dragging really, isn't it?
+// need to combine the two. I guess every drag needs x & y, for the purpose of lines?
+
+// and then we don't want to resend into the ContentItems unless dragging a step or a variable, and we need x & y to change
 
 export class ProcessContent extends React.PureComponent<Props, State> {
     static contextType = WorkspaceDispatchContext;
@@ -132,24 +146,6 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             ? 'processContent'
             : `processContent ${this.props.className}`;
 
-        const dragging: LinkDragInfo | undefined = this.state.dragging === undefined
-            ? undefined
-            : this.state.dragging.type === DragType.StepConnector
-                ? {
-                    isParam: false,
-                    pathInfo: this.state.dragging.stepConnector,
-                    x: this.state.dragging.x,
-                    y: this.state.dragging.y,
-                }
-                : this.state.dragging.type === DragType.ParamConnector
-                    ? {
-                    isParam: true,
-                    paramInfo: this.state.dragging.paramConnector,
-                    x: this.state.dragging.x,
-                    y: this.state.dragging.y,
-                }
-                : undefined;
-
         return (
             <ContentWrapper
                 className={classes}
@@ -158,7 +154,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                 setScreenOffset={(x, y) => this.setState({ minScreenX: x, minScreenY: y })}
                 setDisplayExtent={(w, h) => this.setState({ canvasWidth: w, canvasHeight: h })}
                 onMouseMove={e => this.mouseMove(e)}
-                onMouseUp={e => this.dragStop()}
+                onMouseUp={e => this.stopDraggingOnNothing()}
             >
                 <LinkCanvas
                     className="processContent__canvas"
@@ -168,7 +164,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     variables={this.state.variables}
                     stepDisplays={this.stepDisplays}
                     variableDisplays={this.variableDisplays}
-                    dragging={dragging}
+                    dragging={this.state.dragging}
                     ref={c => this.canvas = c}
                 />
 
@@ -186,6 +182,9 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                         variables={this.state.variables}
                         varRefs={this.variableDisplays}
                         stepRefs={this.stepDisplays}
+
+                        dragging={this.state.dragging}
+                        setDragging={dragging => this.setState({dragging})}
 
                         focusStepId={this.props.focusStepId}
                         focusParameter={this.props.focusStepParameter}
@@ -219,9 +218,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             this.updateContentSize();
         }
 
-        if ((nextProps.dropStep !== undefined && this.props.dropStep === undefined)
-            || (nextProps.dropStopStep !== undefined && this.props.dropStopStep === undefined)
-            || (nextProps.dropVariableType !== undefined && this.props.dropVariableType === undefined)) {
+        if (nextProps.dropping !== undefined && this.props.dropping !== nextProps.dropping) {
             this.setState({
                 dragging: {
                     type: DragType.DropNew,
@@ -232,7 +229,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         }
     }
     
-    private dragStop() {
+    private stopDraggingOnNothing() {
         const dragging = this.state.dragging;
         if (dragging === undefined) {
             return;
@@ -243,70 +240,66 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         });
 
         switch (dragging.type) {
-            case DragType.StepConnector:
-                this.canvas!.drawLinks(); // stop drawing this link ... it will be abandoned
-                break;
-            case DragType.ParamConnector:
-                const connector = dragging.paramConnector;
-                if (connector.step !== undefined) {
-                    const gridDropPos = this.screenToGrid(dragging);
-
-                    const newVarName = determineVariableName(connector.field.typeName, this.state.variables)
-                    
-                    // TODO: combine these into a single action, to allow undoing in a single step?
-                    this.context({
-                        type: 'add variable',
-                        inProcessName: this.props.openProcess.name,
-                        typeName: connector.field.typeName,
-                        varName: newVarName,
-                        x: gridDropPos.x,
-                        y: gridDropPos.y,
-                    });
-                    
-                    this.context({
-                        type: 'link variable',
-                        inProcessName: this.props.openProcess.name,
-                        stepId: connector.step.uniqueId,
-                        stepInputParam: connector.input,
-                        stepParamName: connector.field.name,
-                        varName: newVarName,
-                    })
-                }
-                else {
-                    this.canvas!.drawLinks();
-                }
-                break;
-            case DragType.DropNew:
+            case DragType.StepParameter: {
                 const gridDropPos = this.screenToGrid(dragging);
 
-                if (this.props.dropStep !== undefined) {
+                const newVarName = determineVariableName(dragging.param.type.name, this.state.variables)
+                
+                // TODO: combine these into a single action, to allow undoing in a single step?
+                this.context({
+                    type: 'add variable',
+                    inProcessName: this.props.openProcess.name,
+                    typeName: dragging.param.type.name,
+                    varName: newVarName,
+                    x: gridDropPos.x,
+                    y: gridDropPos.y,
+                });
+                
+                this.context({
+                    type: 'link variable',
+                    inProcessName: this.props.openProcess.name,
+                    stepId: dragging.step.uniqueId,
+                    stepInputParam: dragging.input,
+                    stepParamName: dragging.param.name,
+                    varName: newVarName,
+                });
+                break;
+            }
+            case DragType.DropNew: {
+                if (this.props.dropping === undefined) {
+                    break;
+                }
+
+                const gridDropPos = this.screenToGrid(dragging);
+
+                if (this.props.dropping.type === 'step') {
                     this.context({
                         type: 'add step',
                         inProcessName: this.props.openProcess.name,
-                        stepProcessName: this.props.dropStep.name,
+                        stepProcessName: this.props.dropping.processName,
                         x: gridDropPos.x,
                         y: gridDropPos.y,
                     });
 
                     this.props.dropComplete();
                 }
-                else if (this.props.dropVariableType !== undefined) {
+                else if (this.props.dropping.type === 'variable') {
                     this.context({
                         type: 'add variable',
                         inProcessName: this.props.openProcess.name,
-                        typeName: this.props.dropVariableType.name,
-                        varName: determineVariableName(this.props.dropVariableType.name, this.state.variables),
+                        typeName: this.props.dropping.typeName,
+                        varName: determineVariableName(this.props.dropping.typeName, this.state.variables),
                         x: gridDropPos.x,
                         y: gridDropPos.y,
                     });
 
                     this.props.dropComplete();
                 }
-                else if (this.props.dropStopStep !== undefined) {
+                else if (this.props.dropping.type === 'stop') {
                     this.context({
                         type: 'add stop step',
                         inProcessName: this.props.openProcess.name,
-                        returnPath: this.props.dropStopStep,
+                        returnPath: this.props.dropping.returnPath,
                         x: gridDropPos.x,
                         y: gridDropPos.y,
                     });
@@ -314,6 +307,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     this.props.dropComplete();
                 }
                 break;
+            }
         }
     }
 
