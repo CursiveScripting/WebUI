@@ -17,7 +17,7 @@ interface Props extends IPositionable {
     canEdit: boolean;
     focused: boolean;
     inProcessName: string;
-    headerMouseDown: (mouseX: number, mouseY: number) => void;
+    headerMouseDown: (mouseX: number, mouseY: number, displayX: number, displayY: number) => void;
     connectorMouseDown: (input: boolean, x: number, y: number) => void;
     connectorMouseUp: (input: boolean) => void;
 }
@@ -148,7 +148,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
             <div className={rootClasses} style={style} ref={r => { if (r !== null) { this.root = r; }}}>
                 <div
                     className="processItem__header"
-                    onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY)}
+                    onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY, this.root!.offsetLeft, this.root!.offsetTop)}
                     style={colorStyle}
                 >
                     <div className="processItem__name">{this.props.name}</div>

@@ -14,6 +14,9 @@ interface Props {
     stepRefs: Map<string, StepDisplay>;
     varRefs: Map<string, VariableDisplay>;
 
+    minScreenX: number;
+    minScreenY: number;
+
     dragging?: DragInfo;
     setDragging: (dragging: DragInfo | undefined) => void;
 
@@ -37,11 +40,13 @@ export const ContentItems = (props: Props) => {
         }
     }, [props.focusStepId, props.focusVariableName, props.stepRefs, props.varRefs])
 
-    const startDragStepHeader = (step: IStepDisplay, x: number, y: number) => props.setDragging({
+    const startDragStepHeader = (step: IStepDisplay, x: number, y: number, displayX: number, displayY: number) => props.setDragging({
         type: DragType.Step,
         step,
         x,
         y,
+        xOffset: x - displayX - props.minScreenX,
+        yOffset: y - displayY - props.minScreenY,
     });
 
     const startDragInConnector = (step: IStepDisplay, x: number, y: number) => props.setDragging({
@@ -116,11 +121,13 @@ export const ContentItems = (props: Props) => {
         props.setDragging(undefined);
     };
 
-    const startDragVarHeader = (variable: IVariableDisplay, x: number, y: number) => props.setDragging({
+    const startDragVarHeader = (variable: IVariableDisplay, x: number, y: number, displayX: number, displayY: number) => props.setDragging({
         type: DragType.Variable,
         variable,
         x,
         y,
+        xOffset: x - displayX - props.minScreenX,
+        yOffset: y - displayY - props.minScreenY,
     });
 
     const startDragVarConnector = (variable: IVariableDisplay, input: boolean, x: number, y: number) => props.setDragging({
@@ -156,7 +163,10 @@ export const ContentItems = (props: Props) => {
         const stepPos: ICoord = props.dragging !== undefined
             && props.dragging.type === DragType.Step
             && props.dragging.step === step
-                ? props.dragging
+                ? {
+                    x: props.dragging.x - props.dragging.xOffset,
+                    y: props.dragging.y - props.dragging.yOffset,
+                }
                 : step;
 
         const inputConnected = false; // TODO: determine this
@@ -183,7 +193,7 @@ export const ContentItems = (props: Props) => {
                 focusReturnPath={focusThisStep ? props.focusReturnPath : undefined}
                 readonly={false}
                 canDelete={step.stepType !== StepType.Start}
-                headerMouseDown={(x, y) => startDragStepHeader(step, x, y)}
+                headerMouseDown={(x, y, displayX, displayY) => startDragStepHeader(step, x, y, displayX, displayY)}
                 inputLinkMouseDown={(x, y) => startDragInConnector(step, x, y)}
                 inputLinkMouseUp={() => stopDragInConnector(step)}
                 outputLinkMouseDown={(returnPath, x, y) => startDragReturnPath(step, returnPath, x, y)}
@@ -204,7 +214,10 @@ export const ContentItems = (props: Props) => {
         const varPos: ICoord = props.dragging !== undefined
             && props.dragging.type === DragType.Variable
             && props.dragging.variable === variable
-                ? props.dragging
+                ? {
+                    x: props.dragging.x - props.dragging.xOffset,
+                    y: props.dragging.y - props.dragging.yOffset,
+                }
                 : variable;
 
         return (
@@ -222,7 +235,7 @@ export const ContentItems = (props: Props) => {
                 inProcessName={props.processName}
                 key={variable.name}
                 
-                headerMouseDown={(x, y) => startDragVarHeader(variable, x, y)}
+                headerMouseDown={(x, y, displayX, displayY) => startDragVarHeader(variable, x, y, displayX, displayY)}
                 connectorMouseDown={(input, x, y) => startDragVarConnector(variable, input, x, y)}
                 connectorMouseUp={input => stopDragVarConnector(variable, input)}
             />

@@ -19,7 +19,7 @@ interface Props extends IStepDisplay {
     inputConnected: boolean;
     canDelete: boolean;
 
-    headerMouseDown: (mouseX: number, mouseY: number) => void;
+    headerMouseDown: (mouseX: number, mouseY: number, displayX: number, displayY: number) => void;
     inputLinkMouseDown: (x: number, y: number) => void;
     outputLinkMouseDown: (returnPath: string | null, x: number, y: number) => void;
     inputLinkMouseUp: () => void;
@@ -124,7 +124,7 @@ export class StepDisplay extends React.PureComponent<Props, StepDisplayState> {
                 <div
                     className="processItem__header"
                     title={this.props.description}
-                    onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY)}
+                    onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY, this.root!.offsetLeft, this.root!.offsetTop)}
                 >
                     <div className="processItem__icon" />
                     <div className="processItem__name">{this.props.name}</div>

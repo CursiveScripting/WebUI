@@ -66,11 +66,15 @@ export type DragInfo = {
     step: IStepDisplay;
     x: number;
     y: number;
+    xOffset: number;
+    yOffset: number;
 } | {
     type: DragType.Variable;
     variable: IVariableDisplay;
     x: number;
     y: number;
+    xOffset: number;
+    yOffset: number;
 } | {
     type: DragType.StepInConnector;
     x: number;
@@ -164,6 +168,8 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     variables={this.state.variables}
                     stepDisplays={this.stepDisplays}
                     variableDisplays={this.variableDisplays}
+                    minScreenX={this.state.minScreenX}
+                    minScreenY={this.state.minScreenY}
                     dragging={this.state.dragging}
                     ref={c => this.canvas = c}
                 />
@@ -182,6 +188,8 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                         variables={this.state.variables}
                         varRefs={this.variableDisplays}
                         stepRefs={this.stepDisplays}
+                        minScreenX={this.state.minScreenX}
+                        minScreenY={this.state.minScreenY}
 
                         dragging={this.state.dragging}
                         setDragging={dragging => this.setState({dragging})}
@@ -338,8 +346,8 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             return;
         }
 
-        const x = e.clientX;
-        const y = e.clientY;
+        const x = e.clientX - this.state.minScreenX;
+        const y = e.clientY - this.state.minScreenY;
 
         this.setState(prev => {
             return {

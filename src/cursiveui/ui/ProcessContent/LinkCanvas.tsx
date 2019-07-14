@@ -10,6 +10,8 @@ interface Props {
     className?: string;
     width: number;
     height: number;
+    minScreenX: number;
+    minScreenY: number;
 
     steps: IStepDisplay[];
     variables: IVariableDisplay[];
@@ -60,7 +62,6 @@ export class LinkCanvas extends React.Component<Props> {
     public drawLinks() {
         this.ctx.clearRect(0, 0, this.props.width, this.props.height);
         
-        const root = this.canvas.getBoundingClientRect();
         const stepDisplays = this.props.stepDisplays;
         const variableDisplays = this.props.variableDisplays;
         
@@ -78,7 +79,7 @@ export class LinkCanvas extends React.Component<Props> {
 
                 const endConnector = stepDisplay.getInputConnector(param.name)!;
 
-                this.drawFieldLink(param.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
+                this.drawFieldLink(param.type, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
             }
 
             for (const param of step.outputs) {
@@ -92,7 +93,7 @@ export class LinkCanvas extends React.Component<Props> {
                     .get(param.linkedVariable)!
                     .inputConnector;
 
-                this.drawFieldLink(param.type, root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
+                this.drawFieldLink(param.type, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
             }
 
             for (const [pathName, toStepId] of step.returnPaths) {
@@ -109,7 +110,7 @@ export class LinkCanvas extends React.Component<Props> {
                     const bounds = step.uniqueId === toStepId
                         ? stepDisplay.bounds
                         : undefined;
-                    this.drawProcessLink(root, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect(), bounds);
+                    this.drawProcessLink(beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect(), bounds);
                 }
             }
         }
@@ -118,13 +119,6 @@ export class LinkCanvas extends React.Component<Props> {
         if (dragging === undefined) {
             return;
         }
-
-        const dragRect = {
-            left: dragging.x, right: dragging.x,
-            top: dragging.y, bottom: dragging.y,
-            width: 0, height: 0,
-        };
-
         
         if (dragging.type === DragType.StepParameter) {
             const stepDisplay = stepDisplays.get(dragging.step.uniqueId)!;
@@ -135,16 +129,16 @@ export class LinkCanvas extends React.Component<Props> {
 
             if (dragging.input) {
                 connector = stepDisplay.getInputConnector(dragging.param.name)!;
-                fromRect = dragRect;
+                fromRect = this.createPointRect(dragging);
                 toRect = connector.getBoundingClientRect();
             }
             else {
                 connector = stepDisplay.getOutputConnector(dragging.param.name)!;
                 fromRect = connector.getBoundingClientRect();
-                toRect = dragRect;
+                toRect = this.createPointRect(dragging);
             }
 
-            this.drawFieldLink(dragging.param.type, root, fromRect, toRect);
+            this.drawFieldLink(dragging.param.type, fromRect, toRect);
         }
         else if (dragging.type === DragType.VarParameter) {
             const varDisplay = variableDisplays.get(dragging.variable.name)!;
@@ -155,45 +149,58 @@ export class LinkCanvas extends React.Component<Props> {
 
             if (dragging.input) {
                 connector = varDisplay.inputConnector;
-                fromRect = dragRect;
+                fromRect = this.createPointRect(dragging);
                 toRect = connector.getBoundingClientRect();
             }
             else {
                 connector = varDisplay.outputConnector;
                 fromRect = connector.getBoundingClientRect();
-                toRect = dragRect;
+                toRect = this.createPointRect(dragging);
             }
 
-            this.drawFieldLink(dragging.variable.type, root, fromRect, toRect);
+            this.drawFieldLink(dragging.variable.type, fromRect, toRect);
         }
         else if (dragging.type === DragType.StepInConnector) {
             const beginConnector = stepDisplays.get(dragging.step.uniqueId)!.entryConnector;
             if (beginConnector !== null) {
-                this.drawProcessLink(root, dragRect, beginConnector.getBoundingClientRect());
+                this.drawProcessLink(this.createPointRect(dragging), beginConnector.getBoundingClientRect());
             }
         }
         else if (dragging.type === DragType.ReturnPath) {
             const endConnector = stepDisplays.get(dragging.step.uniqueId)!.getReturnConnector(dragging.returnPath);
             if (endConnector !== null) {
-                this.drawProcessLink(root, endConnector.getBoundingClientRect(), dragRect);
+                this.drawProcessLink(endConnector.getBoundingClientRect(), this.createPointRect(dragging));
             }
         }
     }
     
+    private createPointRect(dragging: DragInfo) {
+        const x = dragging.x + this.props.minScreenX;
+        const y = dragging.y + this.props.minScreenY;
+
+        return {
+            left: x,
+            right: x,
+            top: y,
+            bottom: y,
+            width: 0,
+            height: 0,
+        };
+    }
+
     private drawProcessLink(
-        root: ClientRect | DOMRect,
         begin: ClientRect | DOMRect,
         end: ClientRect | DOMRect,
         fitBelow?: ClientRect | DOMRect,
     ) {
         const startPos = {
-            x: begin.right - root.left,
-            y: begin.top + begin.height / 2 - root.top,
+            x: begin.right,
+            y: begin.top + begin.height / 2,
         };
 
         const endPos = {
-            x: end.left - root.left,
-            y: end.top + end.height / 2 - root.top,
+            x: end.left,
+            y: end.top + end.height / 2,
         };
 
         this.ctx.lineWidth = 4;
@@ -235,18 +242,17 @@ export class LinkCanvas extends React.Component<Props> {
 
     private drawFieldLink(
         type: IType,
-        root: ClientRect | DOMRect,
         begin: ClientRect | DOMRect,
         end: ClientRect | DOMRect
     ) {
         const startPos = {
-            x: begin.right - root.left,
-            y: begin.top + begin.height / 2 - root.top,
+            x: begin.right,
+            y: begin.top + begin.height / 2,
         };
 
         const endPos = {
-            x: end.left - root.left,
-            y: end.top + end.height / 2 - root.top,
+            x: end.left,
+            y: end.top + end.height / 2,
         }
         
         this.ctx.lineWidth = 2;
@@ -272,8 +278,12 @@ export class LinkCanvas extends React.Component<Props> {
 
     private drawCurveWithControlPoints(start: ICoord, mid1: ICoord, mid2: ICoord, end: ICoord) {
         this.ctx.beginPath();
-        this.ctx.moveTo(start.x, start.y);
-        this.ctx.bezierCurveTo(mid1.x, mid1.y, mid2.x, mid2.y, end.x, end.y);
+        this.ctx.moveTo(start.x - this.props.minScreenX, start.y - this.props.minScreenY);
+        this.ctx.bezierCurveTo(
+            mid1.x - this.props.minScreenX, mid1.y - this.props.minScreenY,
+            mid2.x - this.props.minScreenX, mid2.y - this.props.minScreenY,
+            end.x - this.props.minScreenX, end.y - this.props.minScreenY
+        );
         this.ctx.stroke();
     }
 }
