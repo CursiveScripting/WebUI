@@ -43,8 +43,8 @@ export const ContentItems = (props: Props) => {
     const startDragStepHeader = (step: IStepDisplay, x: number, y: number, displayX: number, displayY: number) => props.setDragging({
         type: DragType.Step,
         step,
-        x: x - props.minScreenX,
-        y: y - props.minScreenY,
+        x: displayX,
+        y: displayY,
         xOffset: x - displayX - props.minScreenX,
         yOffset: y - displayY - props.minScreenY,
     });
@@ -124,8 +124,8 @@ export const ContentItems = (props: Props) => {
     const startDragVarHeader = (variable: IVariableDisplay, x: number, y: number, displayX: number, displayY: number) => props.setDragging({
         type: DragType.Variable,
         variable,
-        x: x - props.minScreenX,
-        y: y - props.minScreenY,
+        x: displayX,
+        y: displayY,
         xOffset: x - displayX - props.minScreenX,
         yOffset: y - displayY - props.minScreenY,
     });
@@ -163,10 +163,7 @@ export const ContentItems = (props: Props) => {
         const stepPos: ICoord = props.dragging !== undefined
             && props.dragging.type === DragType.Step
             && props.dragging.step === step
-                ? {
-                    x: props.dragging.x - props.dragging.xOffset,
-                    y: props.dragging.y - props.dragging.yOffset,
-                }
+                ? props.dragging
                 : step;
 
         const inputConnected = false; // TODO: determine this
@@ -214,10 +211,7 @@ export const ContentItems = (props: Props) => {
         const varPos: ICoord = props.dragging !== undefined
             && props.dragging.type === DragType.Variable
             && props.dragging.variable === variable
-                ? {
-                    x: props.dragging.x - props.dragging.xOffset,
-                    y: props.dragging.y - props.dragging.yOffset,
-                }
+                ? props.dragging
                 : variable;
 
         return (

@@ -346,8 +346,13 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             return;
         }
 
-        const x = e.clientX - this.state.minScreenX;
-        const y = e.clientY - this.state.minScreenY;
+        let x = e.clientX - this.state.minScreenX;
+        let y = e.clientY - this.state.minScreenY;
+
+        if (dragging.type === DragType.Step || dragging.type === DragType.Variable) {
+            x -= dragging.xOffset;
+            y -= dragging.yOffset;
+        }
 
         this.setState(prev => {
             return {
