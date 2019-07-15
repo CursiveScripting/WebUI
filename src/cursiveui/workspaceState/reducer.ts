@@ -329,15 +329,15 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
                 return state;
             }
             
-            process.steps = process.steps.slice();
-
             const stepIndex = process.steps.findIndex(step => step.uniqueId === action.stepId);
 
             if (stepIndex === -1) {
                 return state;
             }
 
-            process.steps[processIndex] = { ...process.steps[stepIndex], x: action.x, y: action.y };
+            process.steps = process.steps.slice();
+            process.steps[stepIndex] = { ...process.steps[stepIndex], x: action.x, y: action.y };
+            processes[processIndex] = process;
 
             return {
                 ...state,
@@ -362,6 +362,7 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
 
             process.variables = process.variables.slice();
             process.variables[varIndex] = { ...process.variables[varIndex], x: action.x, y: action.y };
+            processes[processIndex] = process;
 
             return {
                 ...state,

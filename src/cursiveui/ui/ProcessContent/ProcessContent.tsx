@@ -253,8 +253,8 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     type: 'move step',
                     inProcessName: this.props.openProcess.name,
                     stepId: dragging.step.uniqueId,
-                    x: alignToGrid(dragging.x - dragging.xOffset),
-                    y: alignToGrid(dragging.y - dragging.yOffset),
+                    x: alignToGrid(dragging.x),
+                    y: alignToGrid(dragging.y),
                 });
                 break;
             }
@@ -263,8 +263,8 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     type: 'move variable',
                     inProcessName: this.props.openProcess.name,
                     varName: dragging.variable.name,
-                    x: alignToGrid(dragging.x - dragging.xOffset),
-                    y: alignToGrid(dragging.y - dragging.yOffset),
+                    x: alignToGrid(dragging.x),
+                    y: alignToGrid(dragging.y),
                 });
                 break;
             }
