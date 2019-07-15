@@ -7,6 +7,7 @@ import { IStepDisplay, IStepDisplayParam } from './IStepDisplay';
 import { ICoord, DragInfo, DragType } from './ProcessContent';
 import { VariableDisplay } from './VariableDisplay';
 import { IVariableDisplay } from './IVariableDisplay';
+import { determineVariableName } from '../../services/StepFunctions';
 
 interface Props {
     steps: IStepDisplay[];
@@ -76,7 +77,36 @@ export const ContentItems = (props: Props) => {
     const stopDragParameter = (step: IStepDisplay, param: IStepDisplayParam, input: boolean) => {
         if (props.dragging !== undefined) {
             if (props.dragging.type === DragType.StepParameter && props.dragging.input !== input) {
-                // TODO: link both parameters with a variable
+                // link both parameters with a variable
+                const varType = props.dragging.param.type;
+                const varName = determineVariableName(varType.name, props.variables);
+
+                context({
+                    type: 'add variable',
+                    typeName: varType.name,
+                    inProcessName: props.processName,
+                    varName,
+                    x: props.dragging.x + step.x,
+                    y: props.dragging.y + step.y,
+                });
+
+                context({
+                    type: 'link variable',
+                    inProcessName: props.processName,
+                    stepId: step.uniqueId,
+                    stepParamName: param.name,
+                    stepInputParam: input,
+                    varName,
+                });
+
+                context({
+                    type: 'link variable',
+                    inProcessName: props.processName,
+                    stepId: props.dragging.step.uniqueId,
+                    stepParamName: props.dragging.param.name,
+                    stepInputParam: props.dragging.input,
+                    varName,
+                });
             }
             else if (props.dragging.type === DragType.VarParameter && props.dragging.input !== input) {
                 context({
@@ -98,9 +128,9 @@ export const ContentItems = (props: Props) => {
             context({
                 type: 'set return path',
                 inProcessName: props.processName,
-                fromStepId: step.uniqueId,
+                fromStepId: props.dragging.step.uniqueId,
                 pathName: props.dragging.returnPath,
-                toStepId: props.dragging.step.uniqueId,
+                toStepId: step.uniqueId,
             });
         }
 
@@ -112,9 +142,9 @@ export const ContentItems = (props: Props) => {
             context({
                 type: 'set return path',
                 inProcessName: props.processName,
-                fromStepId: props.dragging.step.uniqueId,
+                fromStepId: step.uniqueId,
                 pathName: path,
-                toStepId: step.uniqueId,
+                toStepId: props.dragging.step.uniqueId,
             });
         }
 
@@ -166,8 +196,6 @@ export const ContentItems = (props: Props) => {
                 ? props.dragging
                 : step;
 
-        const inputConnected = false; // TODO: determine this
-
         return (
             <StepDisplay
                 ref={s => { if (s !== null) { props.stepRefs.set(step.uniqueId, s); } else { props.stepRefs.delete(step.uniqueId); }}}
@@ -184,7 +212,7 @@ export const ContentItems = (props: Props) => {
                 y={stepPos.y}
 
                 inProcessName={props.processName}
-                inputConnected={inputConnected}
+                inputConnected={step.inputConnected}
                 focused={focusThisStep}
                 focusParameter={focusThisStep ? props.focusParameter : undefined}
                 focusReturnPath={focusThisStep ? props.focusReturnPath : undefined}

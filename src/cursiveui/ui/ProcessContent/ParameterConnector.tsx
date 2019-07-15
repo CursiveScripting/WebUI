@@ -22,12 +22,16 @@ export class ParameterConnector extends React.PureComponent<ParameterConnectorPr
     public get connector() { return this._connector!; }
 
     render() {
+        const mouseUp = this.props.onMouseUp === undefined
+            ? undefined
+            : (e: React.MouseEvent<HTMLDivElement>) => { e.stopPropagation(); this.props.onMouseUp!(e)};
+        
         return (
             <div
                 className={this.determineRootClasses()}
                 style={{'color': this.props.type.color}}
                 onMouseDown={this.props.onMouseDown}
-                onMouseUp={this.props.onMouseUp}
+                onMouseUp={mouseUp}
                 ref={c => { if (c !== null) { this._connector = c; }}}
             />
         );

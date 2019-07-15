@@ -2,10 +2,10 @@ import { Reducer} from 'react';
 import { WorkspaceAction } from './actions';
 import { IWorkspaceState } from './IWorkspaceState';
 import { IUserProcess } from './IUserProcess';
-import { determineStepId, usesOutputs, isStopStep, isStartStep, isProcessStep } from '../services/StepFunctions';
+import { determineStepId, usesOutputs, isStopStep, isStartStep, isProcessStep, usesInputs } from '../services/StepFunctions';
 import { IVariable } from './IVariable';
 import { IProcessStep } from './IProcessStep';
-import { StepType } from './IStep';
+import { StepType, IStepWithInputs, IStepWithOutputs } from './IStep';
 import { IStopStep } from './IStopStep';
 import { isUserProcess, hasEditableSignature } from '../services/ProcessFunctions';
 import { mapRecordKeys } from '../services/DataFunctions';
@@ -314,6 +314,8 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
             process.variables = process.variables.slice();
             process.variables.splice(varIndex, 1);
 
+            processes[processIndex] = process;
+            
             return {
                 ...state,
                 processes,
@@ -409,6 +411,8 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
                 fromStep.returnPaths[pathNameProperty] = action.toStepId;
             }
 
+            processes[processIndex] = process;
+
             return {
                 ...state,
                 processes,
@@ -425,19 +429,27 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
             }
 
             process.steps = process.steps.map(step => {
-                if (step.uniqueId !== action.stepId || !isProcessStep(step)) {
+                if (step.uniqueId !== action.stepId) {
                     return step;
                 }
 
-                let inputs, outputs, modifyingParameters;
+                const modifiedStep = { ...step };
+
+                let modifyingParameters;
 
                 if (action.stepInputParam) {
-                    modifyingParameters = inputs = { ...step.inputs };
-                    outputs = step.outputs;
+                    if (!usesInputs(step)) {
+                        return step;
+                    }
+
+                    (modifiedStep as IStepWithInputs).inputs = modifyingParameters = { ...step.inputs };
                 }
                 else {
-                    inputs = step.inputs;
-                    modifyingParameters = outputs = { ...step.outputs };
+                    if (!usesOutputs(step)) {
+                        return step;
+                    }
+                    
+                    (modifiedStep as IStepWithOutputs).outputs = modifyingParameters = { ...step.outputs };
                 }
 
                 if (action.varName === undefined) {
@@ -446,13 +458,11 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
                 else {
                     modifyingParameters[action.stepParamName] = action.varName;
                 }
-
-                return {
-                    ...step,
-                    inputs,
-                    outputs,
-                }
+                
+                return modifiedStep;
             });
+
+            processes[processIndex] = process;
             
             return {
                 ...state,
@@ -475,10 +485,15 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
                 return state;
             }
 
-            process.variables[varIndex] = {
+            const variables = [ ...process.variables ];
+
+            variables[varIndex] = {
                 ...process.variables[varIndex],
                 initialValue: action.initialValue,
             };
+
+            process.variables = variables;
+            processes[processIndex] = process;
 
             return {
                 ...state,

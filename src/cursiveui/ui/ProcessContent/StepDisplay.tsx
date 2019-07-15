@@ -16,7 +16,6 @@ interface Props extends IStepDisplay {
     focusReturnPath?: string | null;
     returnPathName?: string; // for stop steps only
     
-    inputConnected: boolean;
     canDelete: boolean;
 
     headerMouseDown: (mouseX: number, mouseY: number, displayX: number, displayY: number) => void;

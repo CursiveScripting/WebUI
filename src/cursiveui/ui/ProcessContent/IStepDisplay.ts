@@ -1,8 +1,10 @@
 import { IStep } from '../../workspaceState/IStep';
 import { IType } from '../../workspaceState/IType';
 import { IProcess } from '../../workspaceState/IProcess';
-import { isStartStep, isStopStep } from '../../services/StepFunctions';
+import { isStartStep, isStopStep, usesOutputs } from '../../services/StepFunctions';
 import { IProcessStep } from '../../workspaceState/IProcessStep';
+import { IUserProcess } from '../../workspaceState/IUserProcess';
+import { hasAnyValue } from '../../services/DataFunctions';
 
 export interface IStepDisplayParam {
     name: string;
@@ -16,6 +18,7 @@ export interface IStepDisplay extends IStep {
     
     inputs: IStepDisplayParam[];
     outputs: IStepDisplayParam[];
+    inputConnected: boolean;
     returnPaths: Map<string, string | null>;
 }
 
@@ -41,7 +44,7 @@ function constructReturnPaths(paths: string[], links: Record<string, string>) {
 
 export function populateStepDisplay(
     step: IStep,
-    inProcess: IProcess,
+    inProcess: IUserProcess,
     processesByName: Map<string, IProcess>,
     typesByName: Map<string, IType>
 ): IStepDisplay {
@@ -53,6 +56,7 @@ export function populateStepDisplay(
             x: step.x,
             y: step.y,
             name: 'Start',
+            inputConnected: false,
             inputs: [],
             outputs: inProcess.inputs.map(p => { return {
                 name: p.name,
@@ -63,6 +67,8 @@ export function populateStepDisplay(
         }
     }
 
+    const inputConnected = inProcess.steps.find(s => usesOutputs(s) && hasAnyValue(s.returnPaths, s.uniqueId)) !== undefined;
+
     if (isStopStep(step)) {
         return {
             uniqueId: step.uniqueId,
@@ -70,6 +76,7 @@ export function populateStepDisplay(
             x: step.x,
             y: step.y,
             name: 'Stop',
+            inputConnected,
             inputs: inProcess.outputs.map(p => { return {
                 name: p.name,
                 type: typesByName.get(p.typeName)!,
@@ -97,6 +104,7 @@ export function populateStepDisplay(
         x: step.x,
         y: step.y,
         name: process.name,
+        inputConnected,
         description: process.description,
         inputs: process.inputs.map(p => { return {
             name: p.name,

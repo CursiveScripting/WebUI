@@ -105,11 +105,6 @@ export type DragInfo = {
     y: number;
 }
 
-// this is a different sort of dragging really, isn't it?
-// need to combine the two. I guess every drag needs x & y, for the purpose of lines?
-
-// and then we don't want to resend into the ContentItems unless dragging a step or a variable, and we need x & y to change
-
 export class ProcessContent extends React.PureComponent<Props, State> {
     static contextType = WorkspaceDispatchContext;
     context!: React.ContextType<typeof WorkspaceDispatchContext>;
@@ -230,7 +225,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             this.setState({
                 dragging: {
                     type: DragType.DropNew,
-                    x: 0, // TODO: this this work with 0,0 coordinates?
+                    x: 0,
                     y: 0,
                 }
             });
