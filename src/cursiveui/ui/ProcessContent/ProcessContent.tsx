@@ -248,8 +248,31 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         });
 
         switch (dragging.type) {
+            case DragType.Step: {
+                this.context({
+                    type: 'move step',
+                    inProcessName: this.props.openProcess.name,
+                    stepId: dragging.step.uniqueId,
+                    x: alignToGrid(dragging.x - dragging.xOffset),
+                    y: alignToGrid(dragging.y - dragging.yOffset),
+                });
+                break;
+            }
+            case DragType.Variable: {
+                this.context({
+                    type: 'move variable',
+                    inProcessName: this.props.openProcess.name,
+                    varName: dragging.variable.name,
+                    x: alignToGrid(dragging.x - dragging.xOffset),
+                    y: alignToGrid(dragging.y - dragging.yOffset),
+                });
+                break;
+            }
             case DragType.StepParameter: {
-                const gridDropPos = this.screenToGrid(dragging);
+                const gridDropPos = {
+                    x: alignToGrid(dragging.x),
+                    y: alignToGrid(dragging.y),
+                };
 
                 const newVarName = determineVariableName(dragging.param.type.name, this.state.variables)
                 
@@ -278,7 +301,10 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     break;
                 }
 
-                const gridDropPos = this.screenToGrid(dragging);
+                const gridDropPos = {
+                    x: alignToGrid(dragging.x),
+                    y: alignToGrid(dragging.y),
+                };
 
                 if (this.props.dropping.type === 'step') {
                     this.context({
@@ -363,12 +389,5 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                 } as DragInfo,
             };
         });
-    }
-
-    private screenToGrid(screen: ICoord): ICoord {
-        return {
-            x: alignToGrid(screen.x - this.state.minScreenX),
-            y: alignToGrid(screen.y - this.state.minScreenY),
-        };
     }
 }
