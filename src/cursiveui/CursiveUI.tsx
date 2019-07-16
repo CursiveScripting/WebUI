@@ -1,9 +1,10 @@
-import React, { useReducer, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { WorkspaceEditor } from './ui/WorkspaceEditor';
 import { workspaceReducer } from './workspaceState/reducer';
 import { WorkspaceDispatchContext } from './workspaceState/actions';
 import { saveProcesses } from './services/saveProcesses';
 import { loadWorkspaceAndProcesses } from './services/loadWorkspaceAndProcesses';
+import { useUndoReducer } from './workspaceState/useUndoReducer';
 
 interface Props {
     className: string;
@@ -24,10 +25,10 @@ type LoadingState = {
 }
 
 export const CursiveUI = (props: Props) => {
-    const [workspace, dispatchWorkspace] = useReducer(workspaceReducer, {
+    const { state, dispatch, undo, redo } = useUndoReducer(workspaceReducer, {
         types: [],
         processes: [],
-    });
+    }, 100);
 
     const [loadingState, setLoadingState] = useState<LoadingState>({ loading: true });
 
@@ -35,7 +36,7 @@ export const CursiveUI = (props: Props) => {
     useEffect(() => {
         loadWorkspaceAndProcesses(props.loadWorkspace, props.loadProcesses)
             .then(result => {
-                dispatchWorkspace({
+                dispatch({
                     ...result,
                     type: 'load',
                 });
@@ -52,7 +53,7 @@ export const CursiveUI = (props: Props) => {
                     message: err.message,
                 });
             })
-    }, [props.loadWorkspace, props.loadProcesses]);
+    }, [props.loadWorkspace, props.loadProcesses, dispatch]);
 
     if (loadingState.loading) {
         return <div>Loading...</div>
@@ -68,16 +69,18 @@ export const CursiveUI = (props: Props) => {
     }
     
     const doSave = () => {
-        const xml = saveProcesses(workspace.processes);
+        const xml = saveProcesses(state.processes);
         props.saveProcesses(xml)
     };
 
     return (
-        <WorkspaceDispatchContext.Provider value={dispatchWorkspace}>
+        <WorkspaceDispatchContext.Provider value={dispatch}>
             <WorkspaceEditor
                 className={props.className}
-                processes={workspace.processes}
-                types={workspace.types}
+                processes={state.processes}
+                types={state.types}
+                undo={undo}
+                redo={redo}
                 save={doSave}
             />
         </WorkspaceDispatchContext.Provider>

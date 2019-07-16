@@ -18,6 +18,8 @@ interface Props {
     initialProcess?: IUserProcess;
     className?: string;
     save: () => void;
+    undo?: () => void;
+    redo?: () => void;
 }
 
 export type DropInfo = {
@@ -36,6 +38,7 @@ interface State {
     processesByName: Map<string, IProcess>;
 
     openProcess?: IUserProcess;
+
     editingSignature: boolean;
     dropping?: DropInfo;
     processErrors: ValidationError[];
