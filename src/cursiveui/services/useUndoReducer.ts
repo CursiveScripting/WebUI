@@ -45,12 +45,12 @@ interface IAction {
     type: string;
 }
 
-type Undo = {
+type UndoAction = {
     type: 'undo' | 'redo' | 'clearHistory';
 }
 
 function undoReducer<TState, TAction extends IAction>(reducer: Reducer<TState, TAction>, maxHistorySize?: number) {
-    return function(state: IUndoable<TState>, action: TAction | Undo) {
+    return function(state: IUndoable<TState>, action: TAction | UndoAction) {
         if (action.type === 'undo') {
             if (state.past.length === 0) {
                 return state;

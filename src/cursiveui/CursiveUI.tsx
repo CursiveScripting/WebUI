@@ -4,7 +4,7 @@ import { workspaceReducer } from './workspaceState/reducer';
 import { WorkspaceDispatchContext } from './workspaceState/actions';
 import { saveProcesses } from './services/saveProcesses';
 import { loadWorkspaceAndProcesses } from './services/loadWorkspaceAndProcesses';
-import { useUndoReducer } from './workspaceState/useUndoReducer';
+import { useUndoReducer } from './services/useUndoReducer';
 
 interface Props {
     className: string;
