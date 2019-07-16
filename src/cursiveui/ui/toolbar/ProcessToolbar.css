@@ -15,21 +15,37 @@
 }
 
 .tool__icon {
+    font-size: 2em;
     align-self: center;
 }
 
-.saveTool__icon {
+.tool--disabled {
+    color: #666;
+}
+
+.tool--disabled .tool__icon {
+    cursor: not-allowed;
+}
+
+.tool--save .tool__icon {
     cursor: pointer;
     position: relative;
     top: -0.7em;
 }
 
-.saveTool--invalid .saveTool__icon {
+.tool--invalid .tool__icon {
     color: #ff0000;
     cursor: not-allowed;
 }
 
-.saveTool__icon::before {
-    font-size: 2em;
+.tool--save .tool__icon::before {
     content: '\26BF';
+}
+
+.tool--undo .tool__icon::before {
+    content: '\21BA';
+}
+
+.tool--redo .tool__icon::before {
+    content: '\21BB';
 }

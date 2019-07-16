@@ -25,7 +25,7 @@ type LoadingState = {
 }
 
 export const CursiveUI = (props: Props) => {
-    const { state, dispatch, undo, redo } = useUndoReducer(workspaceReducer, {
+    const { state, dispatch, undo, redo, clearHistory } = useUndoReducer(workspaceReducer, {
         types: [],
         processes: [],
     }, 100);
@@ -45,6 +45,8 @@ export const CursiveUI = (props: Props) => {
                     loading: false,
                     error: false,
                 });
+
+                clearHistory();
             })
             .catch((err: Error) => {
                 setLoadingState({
@@ -53,7 +55,7 @@ export const CursiveUI = (props: Props) => {
                     message: err.message,
                 });
             })
-    }, [props.loadWorkspace, props.loadProcesses, dispatch]);
+    }, [props.loadWorkspace, props.loadProcesses, dispatch, clearHistory]);
 
     if (loadingState.loading) {
         return <div>Loading...</div>

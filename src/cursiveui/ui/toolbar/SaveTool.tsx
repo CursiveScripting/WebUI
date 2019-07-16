@@ -14,11 +14,11 @@ export class SaveTool extends React.PureComponent<SaveToolProps, {}> {
         let canEverSave = this.props.saveProcesses !== undefined;
 
         let promptText, title, click, validationSummary;
-        let saveClasses = 'tool saveTool';
+        let saveClasses = 'tool tool--save';
 
         if (this.props.validationErrors.length === 0) {
             if (this.props.otherProcessesHaveErrors) {
-                saveClasses += ' saveTool--otherInvalid';
+                saveClasses += ' tool--otherInvalid';
                 promptText = `Error(s) in other process(es)${canEverSave ? ', can\'t save' : ''}`;
                 title = 'You must correct all processes before saving';
             }
@@ -28,7 +28,7 @@ export class SaveTool extends React.PureComponent<SaveToolProps, {}> {
             }
         }
         else {
-            saveClasses += ' saveTool--invalid';
+            saveClasses += ' tool--invalid';
             promptText = `${this.props.validationErrors.length} error${(this.props.validationErrors.length === 1 ? '' : 's')} in this process`;
             if (canEverSave) {
                 promptText += ', can\'t save';
@@ -41,7 +41,7 @@ export class SaveTool extends React.PureComponent<SaveToolProps, {}> {
         return (
             <div className={saveClasses} onClick={click} title={title}>
                 <div className="tool__label">{promptText}</div>
-                <div className="tool__icon saveTool__icon" />
+                <div className="tool__icon" />
                 {validationSummary}
             </div>
         );

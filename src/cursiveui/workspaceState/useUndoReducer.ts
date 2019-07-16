@@ -20,12 +20,18 @@ export function useUndoReducer<TState, TAction extends IAction>(
         () => dispatch({ type: 'redo' }),
         [dispatch]
     );
+    
+    const clearHistory = useCallback(
+        () => dispatch({ type: 'clearHistory' }),
+        [dispatch]
+    );
 
     return {
         state: state.present,
         dispatch,
         undo: state.past.length === 0 ? undefined : undo,
         redo: state.future.length === 0 ? undefined : redo,
+        clearHistory,
     }
 }
 
@@ -40,7 +46,7 @@ interface IAction {
 }
 
 type Undo = {
-    type: 'undo' | 'redo';
+    type: 'undo' | 'redo' | 'clearHistory';
 }
 
 function undoReducer<TState, TAction extends IAction>(reducer: Reducer<TState, TAction>, maxHistorySize?: number) {
@@ -65,6 +71,13 @@ function undoReducer<TState, TAction extends IAction>(reducer: Reducer<TState, T
                 present: state.future[0],
                 past: [...state.past, state.present],
                 future: state.future.slice(1),
+            };
+        }
+        else if (action.type === 'clearHistory') {
+            return {
+                present: state.present,
+                past: [],
+                future: [],
             };
         }
         else {

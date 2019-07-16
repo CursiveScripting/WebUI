@@ -180,7 +180,9 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 validationErrors={this.state.processErrors}
                 otherProcessesHaveErrors={this.state.otherProcessesHaveErrors}
                 className="workspaceEditor__toolbar"
-                saveProcesses={() => this.props.save()}
+                saveProcesses={this.props.save}
+                undo={this.props.undo}
+                redo={this.props.redo}
                 focusError={error => this.focusOnError(error)}
             />
         );
