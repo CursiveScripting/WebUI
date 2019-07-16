@@ -17,6 +17,9 @@
 .tool__icon {
     font-size: 2em;
     align-self: center;
+    cursor: pointer;
+    position: relative;
+    top: -0.333em;
 }
 
 .tool--disabled {
@@ -25,12 +28,6 @@
 
 .tool--disabled .tool__icon {
     cursor: not-allowed;
-}
-
-.tool--save .tool__icon {
-    cursor: pointer;
-    position: relative;
-    top: -0.7em;
 }
 
 .tool--invalid .tool__icon {
