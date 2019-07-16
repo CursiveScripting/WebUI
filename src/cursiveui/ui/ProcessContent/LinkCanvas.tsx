@@ -23,7 +23,6 @@ interface Props {
 }
 
 export class LinkCanvas extends React.Component<Props> {
-    private canvas: HTMLCanvasElement = undefined as unknown as HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D = undefined as unknown as CanvasRenderingContext2D;
 
     shouldComponentUpdate(nextProps: Props) {
@@ -32,7 +31,10 @@ export class LinkCanvas extends React.Component<Props> {
             || nextProps.height !== this.props.height
             || nextProps.className !== this.props.className;
 
-        if (!rerender && nextProps.dragging !== this.props.dragging) {
+        // this is consistently a step behind, it looks like.
+        // Just adding an extra render would work, but wouldn't look fab. Hmm.
+        // Makes sense cos the step displays only get their positions when we render, but this (parent) renders first, so they're behind.
+        if (!rerender) {
             this.drawLinks();
         }
 
@@ -45,7 +47,6 @@ export class LinkCanvas extends React.Component<Props> {
                 return;
             }
 
-            this.canvas = c;
             this.ctx = c.getContext('2d')!;
         };
 
