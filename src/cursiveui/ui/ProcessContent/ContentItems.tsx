@@ -4,10 +4,11 @@ import { StepDisplay } from './StepDisplay';
 import { StepType } from '../../workspaceState/IStep';
 import { WorkspaceDispatchContext } from '../../workspaceState/actions';
 import { IStepDisplay, IStepDisplayParam } from './IStepDisplay';
-import { ICoord, DragInfo, DragType } from './ProcessContent';
+import { DragInfo, DragType } from './ProcessContent';
 import { VariableDisplay } from './VariableDisplay';
 import { IVariableDisplay } from './IVariableDisplay';
 import { determineVariableName } from '../../services/StepFunctions';
+import { ICoord } from '../../data/dimensions';
 
 interface Props {
     steps: IStepDisplay[];

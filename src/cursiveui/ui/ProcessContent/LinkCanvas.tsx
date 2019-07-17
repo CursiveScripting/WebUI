@@ -1,17 +1,16 @@
 import * as React from 'react';
-import { ICoord, DragInfo, DragType } from './ProcessContent';
+import { DragInfo, DragType } from './ProcessContent';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
 import { IType } from '../../workspaceState/IType';
 import { IStepDisplay } from './IStepDisplay';
 import { IVariableDisplay } from './IVariableDisplay';
+import { IRect, ICoord } from '../../data/dimensions';
 
 interface Props {
     className?: string;
     width: number;
     height: number;
-    minScreenX: number;
-    minScreenY: number;
 
     steps: IStepDisplay[];
     variables: IVariableDisplay[];
@@ -76,11 +75,11 @@ export class LinkCanvas extends React.Component<Props> {
 
                 const beginConnector = variableDisplays
                     .get(param.linkedVariable)!
-                    .outputConnector;
+                    .outputConnectorPos;
 
-                const endConnector = stepDisplay.getInputConnector(param.name)!;
+                const endConnector = stepDisplay.getInputConnectorPos(param.name)!;
 
-                this.drawFieldLink(param.type, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
+                this.drawParameterLink(param.type, beginConnector, endConnector);
             }
 
             for (const param of step.outputs) {
@@ -88,13 +87,13 @@ export class LinkCanvas extends React.Component<Props> {
                     continue;
                 }
 
-                const beginConnector = stepDisplay.getOutputConnector(param.name)!;
+                const beginConnector = stepDisplay.getOutputConnectorPos(param.name)!;
 
                 const endConnector = variableDisplays
                     .get(param.linkedVariable)!
-                    .inputConnector;
+                    .inputConnectorPos;
 
-                this.drawFieldLink(param.type, beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect());
+                this.drawParameterLink(param.type, beginConnector, endConnector);
             }
 
             for (const [pathName, toStepId] of step.returnPaths) {
@@ -104,14 +103,15 @@ export class LinkCanvas extends React.Component<Props> {
 
                 const toStepDisplay = stepDisplays.get(toStepId!)!;
                 
-                const beginConnector = stepDisplay.getReturnConnector(pathName);
-                const endConnector = toStepDisplay.entryConnector;
+                const beginConnector = stepDisplay.getReturnConnectorPos(pathName);
+                const endConnector = toStepDisplay.entryConnectorPos;
                 
                 if (beginConnector !== null && endConnector !== null) {
-                    const bounds = step.uniqueId === toStepId
+                    const fitAround = step.uniqueId === toStepId
                         ? stepDisplay.bounds
                         : undefined;
-                    this.drawProcessLink(beginConnector.getBoundingClientRect(), endConnector.getBoundingClientRect(), bounds);
+
+                    this.drawProcessLink(beginConnector, endConnector, fitAround);
                 }
             }
         }
@@ -124,86 +124,56 @@ export class LinkCanvas extends React.Component<Props> {
         if (dragging.type === DragType.StepParameter) {
             const stepDisplay = stepDisplays.get(dragging.step.uniqueId)!;
 
-            let connector: HTMLDivElement;
-            let fromRect: ClientRect | DOMRect;
-            let toRect: ClientRect | DOMRect;
+            let fromPos: ICoord;
+            let toPos: ICoord;
 
             if (dragging.input) {
-                connector = stepDisplay.getInputConnector(dragging.param.name)!;
-                fromRect = this.createPointRect(dragging);
-                toRect = connector.getBoundingClientRect();
+                fromPos = dragging;
+                toPos = stepDisplay.getInputConnectorPos(dragging.param.name);
             }
             else {
-                connector = stepDisplay.getOutputConnector(dragging.param.name)!;
-                fromRect = connector.getBoundingClientRect();
-                toRect = this.createPointRect(dragging);
+                fromPos = stepDisplay.getOutputConnectorPos(dragging.param.name);
+                toPos = dragging;
             }
 
-            this.drawFieldLink(dragging.param.type, fromRect, toRect);
+            this.drawParameterLink(dragging.param.type, fromPos, toPos);
         }
         else if (dragging.type === DragType.VarParameter) {
             const varDisplay = variableDisplays.get(dragging.variable.name)!;
 
-            let connector: HTMLDivElement;
-            let fromRect: ClientRect | DOMRect;
-            let toRect: ClientRect | DOMRect;
+            let fromPos: ICoord;
+            let toPos: ICoord;
 
             if (dragging.input) {
-                connector = varDisplay.inputConnector;
-                fromRect = this.createPointRect(dragging);
-                toRect = connector.getBoundingClientRect();
+                fromPos = dragging;
+                toPos = varDisplay.inputConnectorPos;
             }
             else {
-                connector = varDisplay.outputConnector;
-                fromRect = connector.getBoundingClientRect();
-                toRect = this.createPointRect(dragging);
+                fromPos = varDisplay.outputConnectorPos;
+                toPos = dragging;
             }
 
-            this.drawFieldLink(dragging.variable.type, fromRect, toRect);
+            this.drawParameterLink(dragging.variable.type, fromPos, toPos);
         }
         else if (dragging.type === DragType.StepInConnector) {
-            const beginConnector = stepDisplays.get(dragging.step.uniqueId)!.entryConnector;
+            const beginConnector = stepDisplays.get(dragging.step.uniqueId)!.entryConnectorPos;
             if (beginConnector !== null) {
-                this.drawProcessLink(this.createPointRect(dragging), beginConnector.getBoundingClientRect());
+                this.drawProcessLink(dragging, beginConnector);
             }
         }
         else if (dragging.type === DragType.ReturnPath) {
-            const endConnector = stepDisplays.get(dragging.step.uniqueId)!.getReturnConnector(dragging.returnPath);
+            const endConnector = stepDisplays.get(dragging.step.uniqueId)!.getReturnConnectorPos(dragging.returnPath);
             if (endConnector !== null) {
-                this.drawProcessLink(endConnector.getBoundingClientRect(), this.createPointRect(dragging));
+                this.drawProcessLink(endConnector, dragging);
             }
         }
     }
     
-    private createPointRect(dragging: DragInfo) {
-        const x = dragging.x + this.props.minScreenX;
-        const y = dragging.y + this.props.minScreenY;
-
-        return {
-            left: x,
-            right: x,
-            top: y,
-            bottom: y,
-            width: 0,
-            height: 0,
-        };
-    }
-
     private drawProcessLink(
-        begin: ClientRect | DOMRect,
-        end: ClientRect | DOMRect,
-        fitBelow?: ClientRect | DOMRect,
+        startPos: ICoord,
+        endPos: ICoord,
+        fitBelow?: IRect,
     ) {
-        const startPos = {
-            x: begin.right,
-            y: begin.top + begin.height / 2,
-        };
-
-        const endPos = {
-            x: end.left,
-            y: end.top + end.height / 2,
-        };
-
         this.ctx.lineWidth = 4;
         this.ctx.strokeStyle = '#000000';
 
@@ -213,7 +183,7 @@ export class LinkCanvas extends React.Component<Props> {
         else {
             const midPos = {
                 x: (startPos.x + endPos.x) / 2,
-                y: fitBelow.bottom,
+                y: fitBelow.y + fitBelow.height,
             }
 
             const cp1 = {
@@ -241,21 +211,11 @@ export class LinkCanvas extends React.Component<Props> {
         }
     }
 
-    private drawFieldLink(
+    private drawParameterLink(
         type: IType,
-        begin: ClientRect | DOMRect,
-        end: ClientRect | DOMRect
+        startPos: ICoord,
+        endPos: ICoord
     ) {
-        const startPos = {
-            x: begin.right,
-            y: begin.top + begin.height / 2,
-        };
-
-        const endPos = {
-            x: end.left,
-            y: end.top + end.height / 2,
-        }
-        
         this.ctx.lineWidth = 2;
         this.ctx.strokeStyle = type.color;
         this.drawCurve(startPos, endPos);
@@ -279,11 +239,11 @@ export class LinkCanvas extends React.Component<Props> {
 
     private drawCurveWithControlPoints(start: ICoord, mid1: ICoord, mid2: ICoord, end: ICoord) {
         this.ctx.beginPath();
-        this.ctx.moveTo(start.x - this.props.minScreenX, start.y - this.props.minScreenY);
+        this.ctx.moveTo(start.x, start.y);
         this.ctx.bezierCurveTo(
-            mid1.x - this.props.minScreenX, mid1.y - this.props.minScreenY,
-            mid2.x - this.props.minScreenX, mid2.y - this.props.minScreenY,
-            end.x - this.props.minScreenX, end.y - this.props.minScreenY
+            mid1.x, mid1.y,
+            mid2.x, mid2.y,
+            end.x, end.y
         );
         this.ctx.stroke();
     }

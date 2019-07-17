@@ -6,6 +6,8 @@ import { StepType } from '../../workspaceState/IStep';
 import { ConnectorState } from './ParameterConnector';
 import { WorkspaceDispatchContext } from '../../workspaceState/actions';
 import { IStepDisplay, IStepDisplayParam } from './IStepDisplay';
+import { ICoord } from '../../data/dimensions';
+import { getDescendentMidLeftPos, getDescendentMidRightPos } from '../../services/StepFunctions';
 
 interface Props extends IStepDisplay {
     inProcessName: string;
@@ -46,51 +48,62 @@ export class StepDisplay extends React.PureComponent<Props, StepDisplayState> {
         this.state = {};
     }
     
-    public get entryConnector() { return this._entryConnector!; }
-    public getReturnConnector(returnPathName: string | null) {
+    public get entryConnectorPos() {
+        return getDescendentMidLeftPos(this.props, this._entryConnector!);
+    }
+
+    public getReturnConnectorPos(returnPathName: string | null): ICoord {
         if (returnPathName === null) {
             returnPathName = '';
         }
 
-        return this._returnConnectors[returnPathName];
+        const element = this._returnConnectors[returnPathName];
+        return element === undefined
+            ? this.props
+            : getDescendentMidRightPos(this.props, element);
     }
 
-    public getInputConnector(paramName: string) {
+    public getInputConnectorPos(paramName: string): ICoord {
         if (this.props.inputs === undefined) {
-            return undefined;
+            return this.props;
         }
 
         const index = this.props.inputs.findIndex(p => p.name === paramName);
         if (index === -1) {
-            return undefined;
+            return this.props;
         }
 
-        return this._inputConnectors[index];
+        return getDescendentMidLeftPos(this.props, this._inputConnectors[index]);
     }
 
-    public getOutputConnector(paramName: string) {
+    public getOutputConnectorPos(paramName: string): ICoord {
         if (this.props.outputs === undefined) {
-            return undefined;
+            return this.props;
         }
 
         const index = this.props.outputs.findIndex(p => p.name === paramName);
         if (index === -1) {
-            return undefined;
+            return this.props;
         }
 
-        return this._outputConnectors[index];
+        return getDescendentMidRightPos(this.props, this._outputConnectors[index]);
     }
 
     public get maxX() {
-        return this.root!.offsetLeft + this.root!.offsetWidth;
+        return this.props.x + this.root!.offsetWidth;
     }
 
     public get maxY() {
-        return this.root!.offsetTop + this.root!.offsetHeight;
+        return this.props.y + this.root!.offsetHeight;
     }
 
     public get bounds() {
-        return this.root!.getBoundingClientRect();
+        return {
+            x: this.props.x,
+            y: this.props.y,
+            width: this.root!.offsetWidth,
+            height: this.root!.offsetHeight,
+        }
     }
 
     componentDidMount() {

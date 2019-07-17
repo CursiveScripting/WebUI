@@ -7,6 +7,8 @@ import { IType } from '../../workspaceState/IType';
 import { IPositionable } from '../../workspaceState/IPositionable';
 import { isValueValid } from '../../services/DataFunctions';
 import { WorkspaceDispatchContext } from '../../workspaceState/actions';
+import { ICoord } from '../../data/dimensions';
+import { getDescendentMidLeftPos } from '../../services/StepFunctions';
 
 interface Props extends IPositionable {
     name: string;
@@ -33,18 +35,24 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
     context!: React.ContextType<typeof WorkspaceDispatchContext>;
     
     private root: HTMLDivElement | undefined;
-    private _inputConnector: HTMLDivElement | undefined;
-    private _outputConnector: HTMLDivElement | undefined;
+    private inputConnector: HTMLDivElement | undefined;
+    private outputConnector: HTMLDivElement | undefined;
 
-    public get inputConnector() { return this._inputConnector!; }
-    public get outputConnector() { return this._outputConnector!; }
+
+    public get inputConnectorPos() {
+        return getDescendentMidLeftPos(this.props, this.inputConnector!);
+    }
+
+    public get outputConnectorPos() {
+        return getDescendentMidLeftPos(this.props, this.outputConnector!);
+    }
     
     public get maxX() {
-        return this.root!.offsetLeft + this.root!.offsetWidth;
+        return this.props.x + this.root!.offsetWidth;
     }
 
     public get maxY() {
-        return this.root!.offsetTop + this.root!.offsetHeight;
+        return this.props.y + this.root!.offsetHeight;
     }
 
     constructor(props: Props) {
@@ -162,7 +170,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                         input={true}
                         onMouseDown={e => this.props.connectorMouseDown(true, e.clientX, e.clientY)}
                         onMouseUp={() => this.props.connectorMouseUp(true)}
-                        ref={c => { if (c !== null) { this._inputConnector = c.connector; }}}
+                        ref={c => { if (c !== null) { this.inputConnector = c.connector; }}}
                     />
                     {defaultInput}
                     <ParameterConnector
@@ -171,7 +179,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                         input={false}
                         onMouseDown={e => this.props.connectorMouseDown(false, e.clientX, e.clientY)}
                         onMouseUp={() => this.props.connectorMouseUp(false)}
-                        ref={c => { if (c !== null) { this._outputConnector = c.connector; }}}
+                        ref={c => { if (c !== null) { this.outputConnector = c.connector; }}}
                     />
                 </div>
             </div>

@@ -3,6 +3,7 @@ import { IStopStep } from '../workspaceState/IStopStep';
 import { IProcessStep } from '../workspaceState/IProcessStep';
 import { IStartStep } from '../workspaceState/IStartStep';
 import { IVariableDisplay } from '../ui/ProcessContent/IVariableDisplay';
+import { ICoord } from '../data/dimensions';
 
 export function usesInputs(step: IStep): step is IStepWithInputs {
     return step.stepType !== StepType.Start;
@@ -48,4 +49,18 @@ export function determineVariableName(typeName: string, otherVars: IVariableDisp
     }
     
     return testName;
+}
+
+export function getDescendentMidLeftPos(root: ICoord, element: HTMLDivElement): ICoord {
+    return {
+        x: root.x + element.offsetLeft,
+        y: root.y + element.offsetTop + element.offsetHeight / 2,
+    };
+}
+
+export function getDescendentMidRightPos(root: ICoord, element: HTMLDivElement): ICoord {
+    return {
+        x: root.x + element.offsetLeft + element.offsetWidth,
+        y: root.y + element.offsetTop + element.offsetHeight / 2,
+    };
 }

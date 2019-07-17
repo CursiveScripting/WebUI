@@ -46,11 +46,6 @@ interface State {
     minScreenY: number;
 }
 
-export interface ICoord {
-    x: number;
-    y: number;
-}
-
 export enum DragType {
     Step,
     Variable,
@@ -163,8 +158,6 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     variables={this.state.variables}
                     stepDisplays={this.stepDisplays}
                     variableDisplays={this.variableDisplays}
-                    minScreenX={this.state.minScreenX}
-                    minScreenY={this.state.minScreenY}
                     dragging={this.state.dragging}
                     ref={c => this.canvas = c}
                 />
