@@ -25,19 +25,10 @@ export class LinkCanvas extends React.Component<Props> {
     private ctx: CanvasRenderingContext2D = undefined as unknown as CanvasRenderingContext2D;
 
     shouldComponentUpdate(nextProps: Props) {
-        // Don't re-render if only the lines should change, just redraw the links.
-        const rerender = nextProps.width !== this.props.width
+        // Don't re-render unless the canvas should change size
+        return nextProps.width !== this.props.width
             || nextProps.height !== this.props.height
             || nextProps.className !== this.props.className;
-
-        // this is consistently a step behind, it looks like.
-        // Just adding an extra render would work, but wouldn't look fab. Hmm.
-        // Makes sense cos the step displays only get their positions when we render, but this (parent) renders first, so they're behind.
-        if (!rerender) {
-            this.drawLinks();
-        }
-
-        return rerender;
     }
 
     render() {

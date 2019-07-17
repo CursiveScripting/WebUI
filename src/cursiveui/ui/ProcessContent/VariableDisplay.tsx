@@ -7,7 +7,6 @@ import { IType } from '../../workspaceState/IType';
 import { IPositionable } from '../../workspaceState/IPositionable';
 import { isValueValid } from '../../services/DataFunctions';
 import { WorkspaceDispatchContext } from '../../workspaceState/actions';
-import { ICoord } from '../../data/dimensions';
 import { getDescendentMidLeftPos } from '../../services/StepFunctions';
 
 interface Props extends IPositionable {

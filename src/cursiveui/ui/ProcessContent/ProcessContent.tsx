@@ -125,6 +125,11 @@ export class ProcessContent extends React.PureComponent<Props, State> {
 
     componentDidMount() {
         this.updateContentSize();
+        this.canvas!.drawLinks();
+    }
+
+    componentDidUpdate() {
+        this.canvas!.drawLinks();
     }
 
     private populateSteps(props: Props) {
