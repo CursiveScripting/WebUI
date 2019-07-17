@@ -274,8 +274,8 @@ export class StepDisplay extends React.PureComponent<Props, StepDisplayState> {
                     const isValid = true; // TODO: determine this
                     
                     const connectorState = param.linkedVariable === undefined
-                        ? ConnectorState.Connected
-                        : ConnectorState.Disconnected;
+                        ? ConnectorState.Disconnected
+                        : ConnectorState.Connected;
 
                     return (
                     <ParameterDisplay

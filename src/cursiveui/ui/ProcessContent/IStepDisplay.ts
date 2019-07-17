@@ -67,7 +67,7 @@ export function populateStepDisplay(
         }
     }
 
-    const inputConnected = inProcess.steps.find(s => usesOutputs(s) && hasAnyValue(s.returnPaths, s.uniqueId)) !== undefined;
+    const inputConnected = inProcess.steps.find(s => usesOutputs(s) && hasAnyValue(s.returnPaths, step.uniqueId)) !== undefined;
 
     if (isStopStep(step)) {
         return {
