@@ -190,7 +190,14 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                         minScreenY={this.state.minScreenY}
 
                         dragging={this.state.dragging}
-                        setDragging={dragging => this.setState({dragging})}
+                        setDragging={drag => this.setState({ dragging: drag === undefined
+                            ? undefined
+                            : {
+                                ...drag, // Without this we get a single frame using the wrong position
+                                x: drag.x + this.state.scrollX,
+                                y: drag.y + this.state.scrollY,
+                            }
+                        })}
 
                         focusStepId={this.props.focusStepId}
                         focusParameter={this.props.focusStepParameter}
@@ -376,6 +383,10 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         if (dragging.type === DragType.Step || dragging.type === DragType.Variable) {
             x -= dragging.xOffset;
             y -= dragging.yOffset;
+        }
+        else { // I'm not 100% clear why we don't ALWAYS add these, but this works.
+            x += this.state.scrollX;
+            y += this.state.scrollY;
         }
 
         this.setState(prev => {
