@@ -104,8 +104,17 @@ export function editProcess(state: IWorkspaceState, action: EditProcessAction) {
 
     processes[index] = newProcess;
 
+    const errors = { ...state.errors };
+
+    const processErrors = { ...errors[action.oldName] };
+    delete errors[action.oldName];
+
+    // TODO: update errors based on signature change
+    errors[action.newName] = processErrors;
+
     return {
         ...state,
         processes,
+        errors,
     };
 }

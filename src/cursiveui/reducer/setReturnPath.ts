@@ -52,6 +52,10 @@ export function setReturnPath(state: IWorkspaceState, action: SetReturnPathActio
     const processes = state.processes.slice();
     processes[processIndex] = process;
 
+    const errors = { ...state.errors };
+    const processErrors = [...errors[process.name]];
+    errors[process.name] = processErrors; // TODO: reconsider this process's errors
+    
     return {
         ...state,
         processes,

@@ -6,7 +6,7 @@ import { StepType } from '../../state/IStep';
 import { ConnectorState } from './ParameterConnector';
 import { WorkspaceDispatchContext } from '../../reducer';
 import { IStepDisplay, IStepDisplayParam } from './IStepDisplay';
-import { ICoord } from '../../data/dimensions';
+import { ICoord } from '../../state/dimensions';
 import { getDescendentMidLeftPos, getDescendentMidRightPos } from '../../services/StepFunctions';
 
 interface Props extends IStepDisplay {

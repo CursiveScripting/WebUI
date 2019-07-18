@@ -32,8 +32,12 @@ export function addProcess(state: IWorkspaceState, action: AddProcessAction) {
         fixedSignature: false,
     };
 
+    const errors = { ...state.errors };
+    errors[newProcess.name] = [];
+
     return {
         ...state,
         processes: [...state.processes, newProcess],
-    };
+        errors,
+    }
 }

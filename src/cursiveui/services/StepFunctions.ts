@@ -3,7 +3,7 @@ import { IStopStep } from '../state/IStopStep';
 import { IProcessStep } from '../state/IProcessStep';
 import { IStartStep } from '../state/IStartStep';
 import { IVariableDisplay } from '../ui/ProcessContent/IVariableDisplay';
-import { ICoord } from '../data/dimensions';
+import { ICoord } from '../state/dimensions';
 
 export function usesInputs(step: IStep): step is IStepWithInputs {
     return step.stepType !== StepType.Start;

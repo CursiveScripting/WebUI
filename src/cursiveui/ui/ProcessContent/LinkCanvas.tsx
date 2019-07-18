@@ -5,7 +5,7 @@ import { VariableDisplay } from './VariableDisplay';
 import { IType } from '../../state/IType';
 import { IStepDisplay } from './IStepDisplay';
 import { IVariableDisplay } from './IVariableDisplay';
-import { IRect, ICoord } from '../../data/dimensions';
+import { IRect, ICoord } from '../../state/dimensions';
 
 interface Props {
     className?: string;

@@ -56,9 +56,14 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableAction)
 
     const processes = state.processes.slice();
     processes[processIndex] = process;
+
+    const errors = { ...state.errors };
+    const processErrors = [...errors[process.name]];
+    errors[process.name] = processErrors; // TODO: add whatever errors a variable might have
     
     return {
         ...state,
         processes,
+        errors,
     }
 }

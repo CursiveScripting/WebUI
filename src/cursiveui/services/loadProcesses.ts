@@ -49,6 +49,7 @@ function loadProcessesFromElement(workspace: IWorkspaceState, processData: HTMLE
         if (!processesByName.has(process.name)) {
             processesByName.set(process.name, process);
             workspace.processes.push(process);
+            workspace.errors[process.name] = [];
         }
     }
 

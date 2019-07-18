@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { ValidationError } from '../../data/ValidationError';
 import './ValidationSummary.css';
+import { ValidationError } from '../../state/IValidationError';
 
 export interface SaveToolProps {
     validationErrors: ValidationError[];

@@ -45,8 +45,12 @@ export function addStopStep(state: IWorkspaceState, action: AddStopStepAction) {
     const processes = state.processes.slice();
     processes[inProcessIndex] = inProcess;
     
+    const errors = { ...state.errors };
+    errors[inProcess.name] = [...errors[inProcess.name]]; // TODO: add error for unconnected step
+
     return {
         ...state,
         processes,
+        errors,
     };
 }

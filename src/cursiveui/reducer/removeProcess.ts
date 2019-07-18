@@ -21,8 +21,13 @@ export function removeProcess(state: IWorkspaceState, action: RemoveProcessActio
          return state;
     }
 
+    const errors = { ...state.errors };
+    delete errors[process.name];
+    // TODO: add errors to any other processes which used this deleted one
+
     return {
         ...state,
         processes,
+        errors,
     };
 }

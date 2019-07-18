@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { ValidationError } from '../data/ValidationError';
 import { ProcessContent } from './ProcessContent/ProcessContent';
 import { ProcessSelector } from './sidebar/ProcessSelector';
 import { ProcessToolbar } from './toolbar/ProcessToolbar';
@@ -12,9 +11,11 @@ import { createMap } from '../services/DataFunctions';
 import { IStepDisplayParam } from './ProcessContent/IStepDisplay';
 import { WorkspaceDispatchContext } from '../reducer';
 import { IUndoRedoAction } from '../services/useUndoReducer';
+import { ValidationError } from '../state/IValidationError';
 
 interface Props {
     processes: IProcess[];
+    errors: Record<string, ValidationError[]>;
     types: IType[]
     initialProcess?: IUserProcess;
     className?: string;
@@ -58,16 +59,18 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
     constructor(props: Props) {
         super(props);
 
+        const initialProcess = props.initialProcess === undefined
+            ? props.processes.find(p => !p.isSystem) as IUserProcess
+            : props.initialProcess
+
         this.state = {
             typesByName: createMap(props.types, t => t.name),
             processesByName: createMap(props.processes, p => p.name),
 
-            openProcess: props.initialProcess === undefined
-                ? props.processes.find(p => !p.isSystem) as IUserProcess
-                : props.initialProcess,
+            openProcess: initialProcess,
             editingSignature: false,
             otherProcessesHaveErrors: false,
-            processErrors: [],
+            processErrors: props.errors[initialProcess.name],
             processesWithErrors: this.getProcessesWithErrors(props.processes),
         };
     }
@@ -89,6 +92,20 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
             this.setState({
                 processesByName: createMap(nextProps.processes, p => p.name),
             });
+        }
+
+        if (nextProps.errors !== this.props.errors) {
+            let processErrors = this.state.openProcess === undefined
+                ? []
+                : nextProps.errors[this.state.openProcess.name];
+
+            if (processErrors === undefined) {
+                processErrors = [];
+            }
+
+            this.setState({
+                processErrors,
+            })
         }
     }
 

@@ -9,6 +9,7 @@ import { StepType } from '../state/IStep';
 import { determineStepId } from './StepFunctions';
 import { gridSize } from '../ui/ProcessContent/gridSize';
 import { IStartStep } from '../state/IStartStep';
+import { ValidationError } from '../state/IValidationError';
 
 export function loadWorkspace(workspaceData: Document | string) {
     const rootElement = isString(workspaceData)
@@ -40,15 +41,19 @@ function loadWorkspaceFromElement(workspaceData: HTMLElement): IWorkspaceState {
         processesByName[process.name] = process;
     }
 
+    const errors: Record<string, ValidationError[]> = {};
+
     procNodes = workspaceData.getElementsByTagName('RequiredProcess');
     for (const procNode of procNodes) {
         const process = loadProcessDefinition(procNode, typesByName, false) as IUserProcess;
         processesByName[process.name] = process;
+        errors[process.name] = [];
     }
 
     return {
         types: Object.values(typesByName),
         processes: Object.values(processesByName),
+        errors,
     };
 }
 

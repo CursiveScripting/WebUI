@@ -8,7 +8,7 @@ import { DragInfo, DragType } from './ProcessContent';
 import { VariableDisplay } from './VariableDisplay';
 import { IVariableDisplay } from './IVariableDisplay';
 import { determineVariableName } from '../../services/StepFunctions';
-import { ICoord } from '../../data/dimensions';
+import { ICoord } from '../../state/dimensions';
 
 interface Props {
     steps: IStepDisplay[];

@@ -35,6 +35,10 @@ export function setVariable(state: IWorkspaceState, action: SetVariableAction) {
     const processes = state.processes.slice();
     processes[processIndex] = process;
 
+    const errors = { ...state.errors };
+    const processErrors = [...errors[process.name]];
+    errors[process.name] = processErrors; // TODO: reconsider this process's errors
+
     return {
         ...state,
         processes,
