@@ -12,6 +12,9 @@ interface Props {
     width: number;
     height: number;
 
+    scrollX: number;
+    scrollY: number;
+
     steps: IStepDisplay[];
     variables: IVariableDisplay[];
 
@@ -229,12 +232,15 @@ export class LinkCanvas extends React.Component<Props> {
     }
 
     private drawCurveWithControlPoints(start: ICoord, mid1: ICoord, mid2: ICoord, end: ICoord) {
+        const offsetX = -this.props.scrollX;
+        const offsetY = -this.props.scrollY;
+
         this.ctx.beginPath();
-        this.ctx.moveTo(start.x, start.y);
+        this.ctx.moveTo(start.x + offsetX, start.y + offsetY);
         this.ctx.bezierCurveTo(
-            mid1.x, mid1.y,
-            mid2.x, mid2.y,
-            end.x, end.y
+            mid1.x + offsetX, mid1.y + offsetY,
+            mid2.x + offsetX, mid2.y + offsetY,
+            end.x + offsetX, end.y + offsetY
         );
         this.ctx.stroke();
     }

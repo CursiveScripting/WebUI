@@ -44,6 +44,8 @@ interface State {
     dragging?: DragInfo;
     minScreenX: number;
     minScreenY: number;
+    scrollX: number;
+    scrollY: number;
 }
 
 export enum DragType {
@@ -120,6 +122,8 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             contentHeight: 0,
             minScreenX: 0,
             minScreenY: 0,
+            scrollX: 0,
+            scrollY: 0,
         };
     }
 
@@ -164,6 +168,8 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     stepDisplays={this.stepDisplays}
                     variableDisplays={this.variableDisplays}
                     dragging={this.state.dragging}
+                    scrollX={this.state.scrollX}
+                    scrollY={this.state.scrollY}
                     ref={c => this.canvas = c}
                 />
 
@@ -173,7 +179,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                     scrollRootClassName="processContent__scrollRoot"
                     width={Math.max(this.state.contentWidth, this.state.canvasWidth)}
                     height={Math.max(this.state.contentHeight, this.state.canvasHeight)}
-                    onScroll={() => this.canvas!.drawLinks()}
+                    onScroll={(x, y) => this.setState({ scrollX: x, scrollY: y })}
                 >
                     <ContentItems
                         processName={this.props.openProcess.name}
