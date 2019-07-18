@@ -175,7 +175,6 @@ export class ProcessContent extends React.PureComponent<Props, State> {
 
                 <ScrollWrapper
                     rootClassName="processContent__scrollWrapper"
-                    backgroundClassName="processContent__backgroundScroll" 
                     scrollRootClassName="processContent__scrollRoot"
                     width={Math.max(this.state.contentWidth, this.state.canvasWidth)}
                     height={Math.max(this.state.contentHeight, this.state.canvasHeight)}

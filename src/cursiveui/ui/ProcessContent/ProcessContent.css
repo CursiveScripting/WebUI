@@ -14,6 +14,9 @@
 
 .processContent__scrollWrapper {
     overflow: scroll;
+    position: relative;
+    background-image: url('grid.png');
+    background-attachment: local;
 }
 
 .processContent__canvas, .processContent__scrollWrapper {
@@ -22,16 +25,7 @@
     bottom: 0; right: 0;
 }
 
-.processContent__backgroundScroll {
-    background-image: url('grid.png');
-    z-index: 0;
-}
-
 .processContent__scrollRoot {
     z-index: 2;
-}
-
-.processContent__backgroundScroll, .processContent__scrollRoot {
     position: absolute;
-    top: 0; left: 0;
 }

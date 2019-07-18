@@ -2,7 +2,6 @@ import * as React from 'react';
 
 interface Props {
     rootClassName?: string;
-    backgroundClassName?: string;
     scrollRootClassName?: string;
     width: number;
     height: number;
@@ -20,7 +19,6 @@ export const ScrollWrapper: React.FunctionComponent<Props> = props => {
             className={props.rootClassName}
             onScroll={e => props.onScroll((e.target as HTMLDivElement).scrollLeft, (e.target as HTMLDivElement).scrollTop)}
         >
-            <div className={props.backgroundClassName} style={contentSizeStyle} />
             <div className={props.scrollRootClassName} style={contentSizeStyle}>
                 {props.children}
             </div>
