@@ -5,12 +5,12 @@ import { ProcessSelector } from './sidebar/ProcessSelector';
 import { ProcessToolbar } from './toolbar/ProcessToolbar';
 import { ProcessEditor } from './ProcessSignature/ProcessEditor';
 import './WorkspaceEditor.css';
-import { IUserProcess } from '../workspaceState/IUserProcess';
-import { IProcess } from '../workspaceState/IProcess';
-import { WorkspaceDispatchContext } from '../workspaceState/actions';
-import { IType } from '../workspaceState/IType';
+import { IUserProcess } from '../state/IUserProcess';
+import { IProcess } from '../state/IProcess';
+import { IType } from '../state/IType';
 import { createMap } from '../services/DataFunctions';
 import { IStepDisplayParam } from './ProcessContent/IStepDisplay';
+import { WorkspaceDispatchContext } from '../reducer';
 
 interface Props {
     processes: IProcess[];

@@ -2,9 +2,9 @@ import * as React from 'react';
 import { ToolboxItem, ToolboxItemType } from './ToolboxItem';
 import './ProcessSelector.css';
 import { ProcessFolder } from './ProcessFolder';
-import { IProcess } from '../../workspaceState/IProcess';
-import { IUserProcess } from '../../workspaceState/IUserProcess';
-import { IType } from '../../workspaceState/IType';
+import { IProcess } from '../../state/IProcess';
+import { IUserProcess } from '../../state/IUserProcess';
+import { IType } from '../../state/IType';
 import { isUserProcess } from '../../services/ProcessFunctions';
 
 interface Props {

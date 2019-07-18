@@ -3,8 +3,8 @@ import './SignatureEditor.css';
 import { ValueInput } from '../ProcessContent/ValueInput';
 import { ReturnPathsEditor } from './ReturnPathsEditor';
 import { ParametersEditor } from './ParametersEditor';
-import { IParameter } from '../../workspaceState/IParameter';
-import { IType } from '../../workspaceState/IType';
+import { IParameter } from '../../state/IParameter';
+import { IType } from '../../state/IType';
 
 export interface IParamInfo {
     name: string;

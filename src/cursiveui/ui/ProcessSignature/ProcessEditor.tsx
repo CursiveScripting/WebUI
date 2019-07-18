@@ -1,13 +1,13 @@
 import * as React from 'react';
 import './ProcessEditor.css';
 import { IParamInfo, SignatureEditor } from './SignatureEditor';
-import { IProcess } from '../../workspaceState/IProcess';
-import { IUserProcess } from '../../workspaceState/IUserProcess';
-import { WorkspaceDispatchContext } from '../../workspaceState/actions';
+import { IProcess } from '../../state/IProcess';
+import { IUserProcess } from '../../state/IUserProcess';
+import { WorkspaceDispatchContext } from '../../reducer';
 import { useMemo } from 'react';
 import { isProcessUsedAnywhere } from '../../services/ProcessFunctions';
-import { IType } from '../../workspaceState/IType';
-import { INamed } from '../../workspaceState/INamed';
+import { IType } from '../../state/IType';
+import { INamed } from '../../state/INamed';
 
 interface Props {
     process?: IUserProcess;

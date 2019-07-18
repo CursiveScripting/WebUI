@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { WorkspaceEditor } from './ui/WorkspaceEditor';
-import { workspaceReducer } from './workspaceState/reducer';
-import { WorkspaceDispatchContext } from './workspaceState/actions';
+import { workspaceReducer, WorkspaceDispatchContext } from './reducer';
 import { saveProcesses } from './services/saveProcesses';
 import { loadWorkspaceAndProcesses } from './services/loadWorkspaceAndProcesses';
 import { useUndoReducer } from './services/useUndoReducer';

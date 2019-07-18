@@ -7,13 +7,13 @@ import { LinkCanvas } from './LinkCanvas';
 import { ScrollWrapper } from './ScrollWrapper';
 import { ContentItems } from './ContentItems';
 import { ContentWrapper } from './ContentWrapper';
-import { WorkspaceDispatchContext } from '../../workspaceState/actions';
-import { IProcess } from '../../workspaceState/IProcess';
-import { IType } from '../../workspaceState/IType';
+import { WorkspaceDispatchContext } from '../../reducer';
+import { IProcess } from '../../state/IProcess';
+import { IType } from '../../state/IType';
 import { determineVariableName } from '../../services/StepFunctions';
 import { IStepDisplay, IStepDisplayParam, populateStepDisplay } from './IStepDisplay';
 import { IVariableDisplay, populateVariableDisplay } from './IVariableDisplay';
-import { IUserProcess } from '../../workspaceState/IUserProcess';
+import { IUserProcess } from '../../state/IUserProcess';
 import { DropInfo } from '../WorkspaceEditor';
 
 interface Props {

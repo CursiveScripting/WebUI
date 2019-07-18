@@ -1,5 +1,5 @@
-﻿import { IStep } from '../workspaceState/IStep';
-import { IParameter } from '../workspaceState/IParameter';
+﻿import { IStep } from '../state/IStep';
+import { IParameter } from '../state/IParameter';
 
 export class ValidationError {
     constructor(

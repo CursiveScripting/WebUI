@@ -2,7 +2,7 @@ import * as React from 'react';
 import { DragInfo, DragType } from './ProcessContent';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
-import { IType } from '../../workspaceState/IType';
+import { IType } from '../../state/IType';
 import { IStepDisplay } from './IStepDisplay';
 import { IVariableDisplay } from './IVariableDisplay';
 import { IRect, ICoord } from '../../data/dimensions';

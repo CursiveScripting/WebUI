@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { IType } from '../../workspaceState/IType';
+import { IType } from '../../state/IType';
 import './ParameterConnector.css';
 
 export enum ConnectorState {

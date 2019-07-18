@@ -1,7 +1,7 @@
 import * as React from 'react';
 import './ParameterEditor.css';
 import { ValueInput } from '../ProcessContent/ValueInput';
-import { IType } from '../../workspaceState/IType';
+import { IType } from '../../state/IType';
 
 interface Props {
     name: string;

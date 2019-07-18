@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ParameterConnector, ConnectorState } from './ParameterConnector';
 import './ParameterDisplay.css';
-import { IType } from '../../workspaceState/IType';
+import { IType } from '../../state/IType';
 
 interface ParameterDisplayProps {
     name: string;

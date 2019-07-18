@@ -3,7 +3,7 @@ import './ParametersEditor.css';
 import { IParamInfo } from './SignatureEditor';
 import { ParameterEditor } from './ParameterEditor';
 import { SortableList } from './SortableList';
-import { IType } from '../../workspaceState/IType';
+import { IType } from '../../state/IType';
 
 interface Props {
     className?: string;

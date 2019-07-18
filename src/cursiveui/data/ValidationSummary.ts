@@ -1,5 +1,5 @@
 ﻿import { ValidationError } from './ValidationError';
-import { IUserProcess } from '../workspaceState/IUserProcess';
+import { IUserProcess } from '../state/IUserProcess';
 
 export class ValidationSummary {
     private readonly errorsByProcess = new Map<string, ValidationError[]>();

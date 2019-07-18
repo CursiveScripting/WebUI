@@ -3,10 +3,10 @@ import { growToFitGrid } from './gridSize';
 import { ParameterConnector, ConnectorState } from './ParameterConnector';
 import './ProcessItem.css';
 import { ValueInput } from './ValueInput';
-import { IType } from '../../workspaceState/IType';
-import { IPositionable } from '../../workspaceState/IPositionable';
+import { IType } from '../../state/IType';
+import { IPositionable } from '../../state/IPositionable';
 import { isValueValid } from '../../services/DataFunctions';
-import { WorkspaceDispatchContext } from '../../workspaceState/actions';
+import { WorkspaceDispatchContext } from '../../reducer';
 import { getDescendentMidLeftPos } from '../../services/StepFunctions';
 
 interface Props extends IPositionable {

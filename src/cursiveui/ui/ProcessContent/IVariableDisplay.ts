@@ -1,6 +1,6 @@
-import { IType } from '../../workspaceState/IType';
-import { IUserProcess } from '../../workspaceState/IUserProcess';
-import { IVariable } from '../../workspaceState/IVariable';
+import { IType } from '../../state/IType';
+import { IUserProcess } from '../../state/IUserProcess';
+import { IVariable } from '../../state/IVariable';
 import { usesOutputs, usesInputs } from '../../services/StepFunctions';
 
 export interface IVariableDisplay {

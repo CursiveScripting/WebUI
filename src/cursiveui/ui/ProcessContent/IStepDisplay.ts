@@ -1,9 +1,9 @@
-import { IStep } from '../../workspaceState/IStep';
-import { IType } from '../../workspaceState/IType';
-import { IProcess } from '../../workspaceState/IProcess';
+import { IStep } from '../../state/IStep';
+import { IType } from '../../state/IType';
+import { IProcess } from '../../state/IProcess';
 import { isStartStep, isStopStep, usesOutputs } from '../../services/StepFunctions';
-import { IProcessStep } from '../../workspaceState/IProcessStep';
-import { IUserProcess } from '../../workspaceState/IUserProcess';
+import { IProcessStep } from '../../state/IProcessStep';
+import { IUserProcess } from '../../state/IUserProcess';
 import { hasAnyValue } from '../../services/DataFunctions';
 
 export interface IStepDisplayParam {

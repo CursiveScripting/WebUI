@@ -1,5 +1,5 @@
-import { IUserProcess } from '../workspaceState/IUserProcess';
-import { IProcess } from '../workspaceState/IProcess';
+import { IUserProcess } from '../state/IUserProcess';
+import { IProcess } from '../state/IProcess';
 import { isProcessStep } from './StepFunctions';
 
 export function isUserProcess(process: IProcess): process is IUserProcess {

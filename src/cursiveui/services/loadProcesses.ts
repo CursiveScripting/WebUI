@@ -1,15 +1,15 @@
-﻿import { IWorkspaceState } from '../workspaceState/IWorkspaceState';
+﻿import { IWorkspaceState } from '../state/IWorkspaceState';
 import { createMap, isString } from './DataFunctions';
 import { usesOutputs } from './StepFunctions';
-import { IUserProcess } from '../workspaceState/IUserProcess';
-import { IVariable } from '../workspaceState/IVariable';
-import { IStep, StepType } from '../workspaceState/IStep';
-import { IProcess } from '../workspaceState/IProcess';
-import { IParameter } from '../workspaceState/IParameter';
-import { IStartStep } from '../workspaceState/IStartStep';
-import { IStopStep } from '../workspaceState/IStopStep';
-import { IProcessStep } from '../workspaceState/IProcessStep';
-import { IType } from '../workspaceState/IType';
+import { IUserProcess } from '../state/IUserProcess';
+import { IVariable } from '../state/IVariable';
+import { IStep, StepType } from '../state/IStep';
+import { IProcess } from '../state/IProcess';
+import { IParameter } from '../state/IParameter';
+import { IStartStep } from '../state/IStartStep';
+import { IStopStep } from '../state/IStopStep';
+import { IProcessStep } from '../state/IProcessStep';
+import { IType } from '../state/IType';
 import { isUserProcess } from './ProcessFunctions';
 
 export function loadProcesses(workspace: IWorkspaceState, processData: Document | string) {

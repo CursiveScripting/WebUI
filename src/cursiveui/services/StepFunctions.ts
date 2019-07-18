@@ -1,7 +1,7 @@
-import { StepType, IStepWithOutputs, IStep, IStepWithInputs } from '../workspaceState/IStep';
-import { IStopStep } from '../workspaceState/IStopStep';
-import { IProcessStep } from '../workspaceState/IProcessStep';
-import { IStartStep } from '../workspaceState/IStartStep';
+import { StepType, IStepWithOutputs, IStep, IStepWithInputs } from '../state/IStep';
+import { IStopStep } from '../state/IStopStep';
+import { IProcessStep } from '../state/IProcessStep';
+import { IStartStep } from '../state/IStartStep';
 import { IVariableDisplay } from '../ui/ProcessContent/IVariableDisplay';
 import { ICoord } from '../data/dimensions';
 

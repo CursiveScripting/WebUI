@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useEffect } from 'react';
 import { StepDisplay } from './StepDisplay';
-import { StepType } from '../../workspaceState/IStep';
-import { WorkspaceDispatchContext } from '../../workspaceState/actions';
+import { StepType } from '../../state/IStep';
+import { WorkspaceDispatchContext } from '../../reducer';
 import { IStepDisplay, IStepDisplayParam } from './IStepDisplay';
 import { DragInfo, DragType } from './ProcessContent';
 import { VariableDisplay } from './VariableDisplay';

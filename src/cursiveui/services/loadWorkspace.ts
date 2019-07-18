@@ -1,14 +1,14 @@
-import { IWorkspaceState } from '../workspaceState/IWorkspaceState';
-import { IUserProcess } from '../workspaceState/IUserProcess';
-import { ISystemProcess } from '../workspaceState/ISystemProcess';
+import { IWorkspaceState } from '../state/IWorkspaceState';
+import { IUserProcess } from '../state/IUserProcess';
+import { ISystemProcess } from '../state/ISystemProcess';
 import { isString } from './DataFunctions';
-import { IProcess } from '../workspaceState/IProcess';
-import { IType } from '../workspaceState/IType';
-import { IParameter } from '../workspaceState/IParameter';
-import { StepType } from '../workspaceState/IStep';
+import { IProcess } from '../state/IProcess';
+import { IType } from '../state/IType';
+import { IParameter } from '../state/IParameter';
+import { StepType } from '../state/IStep';
 import { determineStepId } from './StepFunctions';
 import { gridSize } from '../ui/ProcessContent/gridSize';
-import { IStartStep } from '../workspaceState/IStartStep';
+import { IStartStep } from '../state/IStartStep';
 
 export function loadWorkspace(workspaceData: Document | string) {
     const rootElement = isString(workspaceData)
