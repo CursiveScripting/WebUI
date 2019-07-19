@@ -1,28 +1,50 @@
 import * as React from 'react';
+import { IUndoRedoAction } from '../../services/useUndoReducer';
 
 export interface UndoToolProps {
-    undo?: () => void;
-    redo?: () => void;
+    undo?: IUndoRedoAction;
+    redo?: IUndoRedoAction;
+}
+
+const ButtonTool = (props: {
+    action?: IUndoRedoAction
+    className: string;
+    actionType: 'Undo' | 'Redo';
+}) => {
+    let undoClasses: string;
+    let undoLabel: string;
+    let undoAction: undefined | (() => void);
+
+    if (props.action === undefined) {
+        undoClasses = 'tool tool--undo tool--disabled';
+        undoLabel = props.actionType;
+    }
+    else {
+        undoClasses = 'tool tool--undo';
+        undoLabel = `${props.actionType} ${props.action.name}`;
+        undoAction = props.action.perform;
+    }
+
+    return (
+        <div className={undoClasses} onClick={undoAction} title={props.action === undefined ? 'Nothing to {}' : undefined}>
+            <div className="tool__label">{undoLabel}</div>
+            <div className="tool__icon" />
+        </div>
+    )
 }
 
 export const UndoTool = (props: UndoToolProps) => {
-    const undoClasses = props.undo === undefined
-        ? 'tool tool--undo tool--disabled'
-        : 'tool tool--undo';
-
-    const redoClasses = props.redo === undefined
-        ? 'tool tool--redo tool--disabled'
-        : 'tool tool--redo';
-
     return <>
-        <div className={undoClasses} onClick={props.undo} title={props.undo === undefined ? 'Nothing to undo' : undefined}>
-            <div className="tool__label">Undo</div>
-            <div className="tool__icon" />
-        </div>
-
-        <div className={redoClasses} onClick={props.redo} title={props.redo === undefined ? 'Nothing to redo' : undefined}>
-            <div className="tool__label">Redo</div>
-            <div className="tool__icon" />
-        </div>
+        <ButtonTool
+            action={props.undo}
+            className="tool--undo"
+            actionType="Undo"
+        />
+        
+        <ButtonTool
+            action={props.redo}
+            className="tool--redo"
+            actionType="Redo"
+        />
     </>
 }

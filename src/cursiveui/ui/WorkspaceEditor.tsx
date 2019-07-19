@@ -11,6 +11,7 @@ import { IType } from '../state/IType';
 import { createMap } from '../services/DataFunctions';
 import { IStepDisplayParam } from './ProcessContent/IStepDisplay';
 import { WorkspaceDispatchContext } from '../reducer';
+import { IUndoRedoAction } from '../services/useUndoReducer';
 
 interface Props {
     processes: IProcess[];
@@ -18,8 +19,8 @@ interface Props {
     initialProcess?: IUserProcess;
     className?: string;
     save: () => void;
-    undo?: () => void;
-    redo?: () => void;
+    undo?: IUndoRedoAction;
+    redo?: IUndoRedoAction;
 }
 
 export type DropInfo = {

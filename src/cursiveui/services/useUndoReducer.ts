@@ -6,17 +6,20 @@ export function useUndoReducer<TState, TAction extends IAction>(
     maxHistorySize?: number,
 ) {
     const [state, dispatch] = useReducer(undoReducer(reducer, maxHistorySize), {
-        present: initialState,
+        present: {
+            state: initialState,
+            actionName: '',
+        },
         past: [],
         future: [],
     });
 
-    const undo = useCallback(
+    const undoAction = useCallback(
         () => dispatch({ type: 'undo' }),
         [dispatch]
     );
     
-    const redo = useCallback(
+    const redoAction = useCallback(
         () => dispatch({ type: 'redo' }),
         [dispatch]
     );
@@ -26,19 +29,43 @@ export function useUndoReducer<TState, TAction extends IAction>(
         [dispatch]
     );
 
+    const undo = state.past.length === 0
+        ? undefined
+        : {
+            perform: undoAction,
+            name: state.present.actionName,
+        } as IUndoRedoAction
+
+    const redo = state.future.length === 0
+        ? undefined
+        : {
+            perform: redoAction,
+            name: state.future[0].actionName,
+        } as IUndoRedoAction
+
     return {
-        state: state.present,
+        state: state.present.state,
         dispatch,
-        undo: state.past.length === 0 ? undefined : undo,
-        redo: state.future.length === 0 ? undefined : redo,
+        undo,
+        redo,
         clearHistory,
     }
 }
 
+export interface IUndoRedoAction {
+    name: string;
+    perform: () => void;
+}
+
 interface IUndoable<T> {
-    present: T;
-    past: Array<T>;
-    future: Array<T>;
+    present: IUndoState<T>;
+    past: Array<IUndoState<T>>;
+    future: Array<IUndoState<T>>;
+}
+
+interface IUndoState<T> {
+    state: T;
+    actionName: string;
 }
 
 interface IAction {
@@ -50,7 +77,7 @@ type UndoAction = {
 }
 
 function undoReducer<TState, TAction extends IAction>(reducer: Reducer<TState, TAction>, maxHistorySize?: number) {
-    return function(state: IUndoable<TState>, action: TAction | UndoAction) {
+    return function(state: IUndoable<TState>, action: TAction | UndoAction): IUndoable<TState> {
         if (action.type === 'undo') {
             if (state.past.length === 0) {
                 return state;
@@ -81,9 +108,9 @@ function undoReducer<TState, TAction extends IAction>(reducer: Reducer<TState, T
             };
         }
         else {
-            const newPresent = reducer(state.present, action as TAction);
+            const newPresent = reducer(state.present.state, action as TAction)
 
-            if (newPresent === state.present) {
+            if (newPresent === state.present.state) {
                 return state; // no change
             }
 
@@ -92,7 +119,10 @@ function undoReducer<TState, TAction extends IAction>(reducer: Reducer<TState, T
                 : state.past;
 
             return {
-                present: newPresent,
+                present: {
+                    state: newPresent,
+                    actionName: action.type,
+                },
                 past: [...pastToKeep, state.present],
                 future: [],
             }
