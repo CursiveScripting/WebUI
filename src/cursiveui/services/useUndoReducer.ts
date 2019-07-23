@@ -1,4 +1,4 @@
-import { Reducer, ReducerState, useReducer, useCallback } from 'react';
+import { Reducer, ReducerState, useReducer, useCallback, useMemo } from 'react';
 
 export function useUndoReducer<TState, TAction extends IAction>(
     reducer: Reducer<TState, TAction>,
@@ -14,34 +14,31 @@ export function useUndoReducer<TState, TAction extends IAction>(
         future: [],
     });
 
-    const undoAction = useCallback(
-        () => dispatch({ type: 'undo' }),
-        [dispatch]
-    );
-    
-    const redoAction = useCallback(
-        () => dispatch({ type: 'redo' }),
-        [dispatch]
-    );
-    
     const clearHistory = useCallback(
         () => dispatch({ type: 'clearHistory' }),
         [dispatch]
     );
 
-    const undo = state.past.length === 0
+    const emptyPast = state.past.length === 0
+    const undo = useMemo(() => emptyPast
         ? undefined
         : {
-            perform: undoAction,
+            perform: () => dispatch({ type: 'undo' }),
             name: state.present.actionName,
-        } as IUndoRedoAction
+        } as IUndoRedoAction,
+        [emptyPast, state.present, dispatch]
+    );
 
-    const redo = state.future.length === 0
+    const firstFuture = state.future.length === 0 ? undefined : state.future[0];
+
+    const redo = useMemo(() => firstFuture === undefined
         ? undefined
         : {
-            perform: redoAction,
-            name: state.future[0].actionName,
-        } as IUndoRedoAction
+            perform: () => dispatch({ type: 'redo' }),
+            name: firstFuture.actionName,
+        } as IUndoRedoAction,
+        [firstFuture, dispatch]
+    );
 
     return {
         state: state.present.state,
