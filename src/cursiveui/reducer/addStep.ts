@@ -34,14 +34,15 @@ export function addStep(state: IWorkspaceState, action: AddStepAction) {
     inProcess.steps = [...inProcess.steps, {
         uniqueId: determineStepId(inProcess.steps),
         process: stepProcess,
-        inputs: {},
-        outputs: {},
+        inputs: [],
+        outputs: [],
         returnPaths: {},
         stepType: stepProcess.isSystem
             ? StepType.SystemProcess
             : StepType.UserProcess,
         x: action.x,
         y: action.y,
+        inputConnected: false,
     } as IProcessStep];
 
     const processes = state.processes.slice();
