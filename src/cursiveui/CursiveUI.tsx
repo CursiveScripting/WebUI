@@ -27,7 +27,6 @@ export const CursiveUI = (props: Props) => {
     const { state, dispatch, undo, redo, clearHistory } = useUndoReducer(workspaceReducer, {
         types: [],
         processes: [],
-        errors: {},
     }, 100);
 
     const [loadingState, setLoadingState] = useState<LoadingState>({ loading: true });
@@ -80,7 +79,6 @@ export const CursiveUI = (props: Props) => {
             <WorkspaceEditor
                 className={props.className}
                 processes={state.processes}
-                errors={state.errors}
                 types={state.types}
                 undo={undo}
                 redo={redo}

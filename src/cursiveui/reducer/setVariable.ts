@@ -1,5 +1,6 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
+import { validate } from './validate';
 
 export type SetVariableAction = {
     type: 'set variable';
@@ -35,9 +36,7 @@ export function setVariable(state: IWorkspaceState, action: SetVariableAction) {
     const processes = state.processes.slice();
     processes[processIndex] = process;
 
-    const errors = { ...state.errors };
-    const processErrors = [...errors[process.name]];
-    errors[process.name] = processErrors; // TODO: reconsider this process's errors
+    process.errors = validate(process, processes);
 
     return {
         ...state,

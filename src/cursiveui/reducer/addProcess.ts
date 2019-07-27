@@ -1,6 +1,11 @@
 import { IParameter } from '../state/IParameter';
 import { IUserProcess } from '../state/IUserProcess';
 import { IWorkspaceState } from '../state/IWorkspaceState';
+import { validate } from './validate';
+import { StepType } from '../state/IStep';
+import { IStartStep } from '../state/IStartStep';
+import { gridSize } from '../ui/ProcessContent/gridSize';
+import { createEmptyStartStep } from '../services/StepFunctions';
 
 export type AddProcessAction = {
     type: 'add process';
@@ -19,6 +24,8 @@ export function addProcess(state: IWorkspaceState, action: AddProcessAction) {
         return state;
     }
 
+    const inputs = action.inputs.map(param => { return { ...param } });
+
     const newProcess: IUserProcess = {
         name: action.name,
         description: action.description,
@@ -26,18 +33,18 @@ export function addProcess(state: IWorkspaceState, action: AddProcessAction) {
         inputs: action.inputs,
         outputs: action.outputs,
         returnPaths: action.returnPaths,
-        steps: [],
+        steps: [createEmptyStartStep(inputs)],
         variables: [],
         isSystem: false,
         fixedSignature: false,
+        errors: [],
     };
 
-    const errors = { ...state.errors };
-    errors[newProcess.name] = [];
+    const processes = [...state.processes, newProcess];
+    newProcess.errors = validate(newProcess, processes);
 
     return {
         ...state,
-        processes: [...state.processes, newProcess],
-        errors,
+        processes,
     }
 }

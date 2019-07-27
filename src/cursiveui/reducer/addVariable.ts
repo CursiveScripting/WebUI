@@ -1,6 +1,7 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
 import { IVariable } from '../state/IVariable';
+import { validate } from './validate';
 
 export type AddVariableAction = {
     type: 'add variable';
@@ -12,9 +13,9 @@ export type AddVariableAction = {
 }
 
 export function addVariable(state: IWorkspaceState, action: AddVariableAction) {
-    const typeIndex = state.types.findIndex(t => t.name === action.typeName);
+    const type = state.types.find(t => t.name === action.typeName);
     
-    if (typeIndex === -1) {
+    if (type === undefined) {
         return state; // invalid type
     }
 
@@ -28,7 +29,7 @@ export function addVariable(state: IWorkspaceState, action: AddVariableAction) {
 
     process.variables = [...process.variables, {
         name: action.varName,
-        typeName: action.typeName,
+        type: type,
         fromLinks: [],
         toLinks: [],
         initialValue: null,
@@ -38,6 +39,8 @@ export function addVariable(state: IWorkspaceState, action: AddVariableAction) {
     
     const processes = state.processes.slice();
     processes[processIndex] = process;
+    
+    process.errors = validate(process, processes);
 
     return {
         ...state,

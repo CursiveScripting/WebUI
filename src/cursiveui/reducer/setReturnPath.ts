@@ -1,6 +1,7 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
-import { usesOutputs } from '../services/StepFunctions';
+import { usesOutputs, usesInputs } from '../services/StepFunctions';
+import { validate } from './validate';
 
 export type SetReturnPathAction = {
     type: 'set return path';
@@ -46,16 +47,19 @@ export function setReturnPath(state: IWorkspaceState, action: SetReturnPathActio
         delete fromStep.returnPaths[pathNameProperty];
     }
     else {
-        fromStep.returnPaths[pathNameProperty] = action.toStepId;
+        const toStep = process.steps.find(step => step.uniqueId === action.toStepId);
+        if (toStep === undefined || !usesInputs(toStep)) {
+            return state;
+        }
+
+        fromStep.returnPaths[pathNameProperty] = toStep;
     }
 
     const processes = state.processes.slice();
     processes[processIndex] = process;
 
-    const errors = { ...state.errors };
-    const processErrors = [...errors[process.name]];
-    errors[process.name] = processErrors; // TODO: reconsider this process's errors
-    
+    process.errors = validate(process, processes);
+
     return {
         ...state,
         processes,

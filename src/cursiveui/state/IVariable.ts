@@ -1,8 +1,9 @@
 ﻿import { IParameter } from './IParameter';
-import { IPositionable } from './IPositionable';
+import { IStepParameter } from './IStepParameter';
+import { ICoord } from './dimensions';
 
-export interface IVariable extends IPositionable, IParameter {
-    fromLinks: IParameter[];
-    toLinks: IParameter[];
+export interface IVariable extends ICoord, IParameter {
+    fromLinks: IStepParameter[];
+    toLinks: IStepParameter[];
     initialValue: string | null;
 }

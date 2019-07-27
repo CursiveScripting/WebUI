@@ -3,7 +3,9 @@ import { IUserProcess } from '../state/IUserProcess';
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { hasEditableSignature, isUserProcess } from '../services/ProcessFunctions';
 import { isProcessStep, isStartStep, isStopStep } from '../services/StepFunctions';
-import { mapRecordKeys } from '../services/DataFunctions';
+import { validate } from './validate';
+import { IStepWithInputs } from '../state/IStep';
+import { IStepParameter } from '../state/IStepParameter';
 
 export type EditProcessAction = {
     type: 'edit process';
@@ -14,8 +16,22 @@ export type EditProcessAction = {
     returnPaths: string[];
     inputs: IParameter[];
     outputs: IParameter[];
-    mapInputs: (prev: string) => string | undefined;
-    mapOutputs: (prev: string) => string | undefined;
+    inputOrderMap: Array<number | undefined>; // Used for mapping variable connections. Array index is for the new parameter,
+    outputOrderMap: Array<number | undefined>; // value is of the old parameter to get the variable connection from.
+}
+
+function mapParameters(oldParams: IStepParameter[], newSource: IParameter[], orderMap: Array<number | undefined>) {
+    return newSource.map((param, index) => {
+        const oldParamIndex = orderMap[index];
+
+        return {
+            name: param.name,
+            type: param.type,
+            connection: oldParamIndex === undefined
+                ? undefined
+                : oldParams[oldParamIndex].connection,
+        };
+    });
 }
 
 export function editProcess(state: IWorkspaceState, action: EditProcessAction) {
@@ -31,64 +47,28 @@ export function editProcess(state: IWorkspaceState, action: EditProcessAction) {
         return state;
     }
 
-    // Everything that references oldProcess should change to newProcess instead
-    const processes = state.processes.map(process => {
-        if (!isUserProcess(process)) {
-            return process;
-        }
-
-        let changed = false;
-        
-        const copyProcess = {
-            ...process,
-            steps: process.steps.map(step => {
-                if (!isProcessStep(step) || step.processName !== action.oldName) {
-                    return step;
-                }
-
-                changed = true;
-                
-                // Strip out any return paths that are no longer valid
-                const returnPaths: Record<string, string> = {};
-                for (const path in step.returnPaths) {
-                    if (action.returnPaths.indexOf(path) !== -1) {
-                        returnPaths[path] = step.returnPaths[path];
-                    }
-                }
-
-                return {
-                    ...step,
-                    processName: action.newName,
-                    inputs: mapRecordKeys(step.inputs, action.mapInputs),
-                    outputs: mapRecordKeys(step.outputs, action.mapOutputs),
-                    returnPaths,
-                }
-            }),
-        };
-
-        return changed
-            ? copyProcess
-            : process;
-    });
-
-    // Also update the i/o of process's own start and stop steps
-    const steps = oldProcess.steps.map(s => {
-        if (isStartStep(s)) {
+    // update the i/o of process's own start and stop steps
+    const steps = oldProcess.steps.map(step => {
+        if (isStartStep(step)) {
             return {
-                ...s,
-                outputs: mapRecordKeys(s.outputs, action.mapInputs),
+                ...step,
+                outputs: mapParameters(step.outputs, action.inputs, action.inputOrderMap),
             }
         }
+
+        // TODO: we'll also have to un-link any variables here
         
-        if (isStopStep(s)) {
+        if (isStopStep(step)) {
             // Stop steps with invalid return paths will be left, and will fail to validate
             return {
-                ...s,
-                outputs: mapRecordKeys(s.inputs, action.mapOutputs),
+                ...step,
+                outputs: mapParameters(step.inputs, action.outputs, action.outputOrderMap),
             }
         }
-        
-        return s;
+
+        // TODO: we'll also have to un-link any variables here
+
+        return step;
     })
 
     const newProcess: IUserProcess = {
@@ -102,19 +82,58 @@ export function editProcess(state: IWorkspaceState, action: EditProcessAction) {
         steps,
     };
 
-    processes[index] = newProcess;
+    // Everything that references oldProcess should change to newProcess instead
+    const processes = state.processes.map(process => {
+        if (process === oldProcess) {
+            return newProcess;
+        }
 
-    const errors = { ...state.errors };
+        if (!isUserProcess(process)) {
+            return process;
+        }
 
-    const processErrors = { ...errors[action.oldName] };
-    delete errors[action.oldName];
+        let changed = false;
+        
+        const copyProcess = {
+            ...process,
+            steps: process.steps.map(step => {
+                if (!isProcessStep(step) || step.process !== oldProcess) {
+                    return step;
+                }
 
-    // TODO: update errors based on signature change
-    errors[action.newName] = processErrors;
+                changed = true;
+                
+                // Strip out any return paths that are no longer valid
+                const returnPaths: Record<string, IStepWithInputs> = {};
+                for (const path in step.returnPaths) {
+                    if (action.returnPaths.indexOf(path) !== -1) {
+                        returnPaths[path] = step.returnPaths[path];
+                    }
+                }
+
+                return {
+                    ...step,
+                    processName: action.newName,
+                    inputs: mapParameters(step.inputs, action.inputs, action.inputOrderMap),
+                    outputs: mapParameters(step.outputs, action.outputs, action.outputOrderMap),
+                    returnPaths,
+                }
+            }),
+        };
+
+        return changed
+            ? copyProcess
+            : process;
+    });
+
+    for (const process of processes) {
+        if (isUserProcess(process)) {
+            process.errors = validate(process, processes)
+        }
+    }
 
     return {
         ...state,
         processes,
-        errors,
     };
 }

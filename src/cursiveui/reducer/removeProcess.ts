@@ -1,5 +1,7 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
-import { hasEditableSignature } from '../services/ProcessFunctions';
+import { hasEditableSignature, isUserProcess } from '../services/ProcessFunctions';
+import { validate } from './validate';
+import { isProcessStep } from '../services/StepFunctions';
 
 export type RemoveProcessAction = {
     type: 'remove process';
@@ -15,19 +17,20 @@ export function removeProcess(state: IWorkspaceState, action: RemoveProcessActio
 
     const processes = state.processes.slice();
 
-    const process = processes.splice(index, 1)[0];
+    const deleteProcess = processes.splice(index, 1)[0];
 
-    if (!hasEditableSignature(process)) {
+    if (!hasEditableSignature(deleteProcess)) {
          return state;
     }
 
-    const errors = { ...state.errors };
-    delete errors[process.name];
-    // TODO: add errors to any other processes which used this deleted one
+    for(const process of processes) {
+        if (isUserProcess(process) && process.steps.find(s => isProcessStep(s) && s.process === deleteProcess)) {
+            process.errors = validate(process, processes);
+        }
+    }
 
     return {
         ...state,
         processes,
-        errors,
     };
 }

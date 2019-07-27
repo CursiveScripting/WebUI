@@ -1,9 +1,9 @@
 ﻿import { IWorkspaceState } from '../state/IWorkspaceState';
 import { createMap, isString } from './DataFunctions';
-import { usesOutputs } from './StepFunctions';
+import { usesOutputs, usesInputs } from './StepFunctions';
 import { IUserProcess } from '../state/IUserProcess';
 import { IVariable } from '../state/IVariable';
-import { IStep, StepType } from '../state/IStep';
+import { IStep, StepType, IStepWithOutputs, IStepWithInputs } from '../state/IStep';
 import { IProcess } from '../state/IProcess';
 import { IParameter } from '../state/IParameter';
 import { IStartStep } from '../state/IStartStep';
@@ -11,6 +11,7 @@ import { IStopStep } from '../state/IStopStep';
 import { IProcessStep } from '../state/IProcessStep';
 import { IType } from '../state/IType';
 import { isUserProcess } from './ProcessFunctions';
+import { IStepParameter } from '../state/IStepParameter';
 
 export function loadProcesses(workspace: IWorkspaceState, processData: Document | string) {
     const rootElement = isString(processData)
@@ -49,7 +50,6 @@ function loadProcessesFromElement(workspace: IWorkspaceState, processData: HTMLE
         if (!processesByName.has(process.name)) {
             processesByName.set(process.name, process);
             workspace.processes.push(process);
-            workspace.errors[process.name] = [];
         }
     }
 
@@ -101,6 +101,7 @@ function loadProcessDefinition(typesByName: Map<string, IType>, processNode: Ele
         returnPaths,
         steps: [],
         variables,
+        errors: [],
     };
 }
 
@@ -115,8 +116,9 @@ function loadProcessParameters(
     for (const node of paramNodes) {
         const paramName = node.getAttribute('name')!;
         const typeName = node.getAttribute('type')!;
+        const type = typesByName.get(typeName);
 
-        if (!typesByName.has(typeName)) {
+        if (type === undefined) {
             throw new Error(`The ${paramName} ${paramTypeName} has an invalid type: ${typeName}. That type doesn't exist in this workspace.`);
         }
 
@@ -124,7 +126,7 @@ function loadProcessParameters(
         if (isVariable) {
             dataField = {
                 name: paramName,
-                typeName: typeName,
+                type,
                 fromLinks: [],
                 toLinks: [],
                 x: parseInt(node.getAttribute('x')!),
@@ -135,12 +137,17 @@ function loadProcessParameters(
         else {
             dataField = {
                 name: paramName,
-                typeName: typeName,   
+                type: type,
             }
         }
 
         dataFields.push(dataField);
     }
+}
+
+interface IIntermediateStep {
+    step: IStep;
+    returnPaths?: Record<string, string>;
 }
 
 function loadProcessSteps(
@@ -154,7 +161,7 @@ function loadProcessSteps(
         return;
     }
 
-    const stepsById = new Map<string, IStep>();
+    const stepsById = new Map<string, IIntermediateStep>();
 
     const startNodes = processNode.getElementsByTagName('Start');
     for (const stepNode of startNodes) {
@@ -164,12 +171,15 @@ function loadProcessSteps(
             uniqueId: id,
             stepType: StepType.Start,
             outputs: loadStepOutputs(id, process, process.inputs, stepNode),
-            returnPaths: loadReturnPaths(stepNode),
+            returnPaths: {},
             x: parseInt(stepNode.getAttribute('x')!),
             y: parseInt(stepNode.getAttribute('y')!),
         };
 
-        stepsById.set(id, step);
+        stepsById.set(id, {
+            step,
+            returnPaths: loadReturnPaths(stepNode),
+        });
     }
 
     const stopNodes = processNode.getElementsByTagName('Stop');
@@ -201,7 +211,9 @@ function loadProcessSteps(
             returnPath,
         };
         
-        stepsById.set(id, step);
+        stepsById.set(id, {
+            step,
+        });
     }
 
     const stepNodes = processNode.getElementsByTagName('Step');
@@ -221,20 +233,23 @@ function loadProcessSteps(
         const step: IProcessStep = {
             uniqueId: id,
             stepType: isUser ? StepType.UserProcess : StepType.SystemProcess,
-            processName: childProcess.name,
+            process: childProcess,
             inputs: loadStepInputs(id, process, childProcess.inputs, stepNode),
             outputs: loadStepOutputs(id, process, childProcess.outputs, stepNode),
-            returnPaths: loadReturnPaths(stepNode),
+            returnPaths: {},
             x: parseInt(stepNode.getAttribute('x')!),
             y: parseInt(stepNode.getAttribute('y')!),
         }
 
-        stepsById.set(id, step);
+        stepsById.set(id, {
+            step,
+            returnPaths: loadReturnPaths(stepNode),
+        });
     }
     
-    verifyReturnPaths(process.name, stepsById);
+    validateReturnPaths(process.name, stepsById);
     
-    process.steps = Array.from(stepsById.values());
+    process.steps = Array.from(stepsById.values()).map(s => s.step);
 }
 
 function loadStepInputs(stepId: string, process: IUserProcess, inputs: IParameter[], stepNode: Element) {
@@ -255,26 +270,36 @@ function loadStepParameters(
     linkAttributeName: string
 ) {
     const sourceNodes = stepNode.getElementsByTagName(parameterElementTagName);
-    const results: Record<string, string> = {};
-    
+    const sourceNodesByName: Record<string, Element> = {};
     for (const sourceNode of sourceNodes) {
         const paramName = sourceNode.getAttribute('name')!;
-        const destinationName = sourceNode.getAttribute(linkAttributeName)!;
-
-        const parameter = parameters.find(o => o.name === paramName);
-        const destination = process.variables.find(v => v.name === destinationName);
-
-        if (parameter === undefined) {
-            throw new Error(`Step ${stepId} of the "${process.name}" process tries to map a non-existant ${parameterTypeName}: ${paramName}`);
+        if (sourceNodesByName.hasOwnProperty(paramName)) {
+            throw new Error(`Step ${stepId} of the "${process.name}" process tries to map the one ${parameterTypeName} multiple times: ${paramName}`);
         }
-        if (destination === undefined) {
-            throw new Error(`Step ${stepId} of the "${process.name}" process tries to map an ${parameterTypeName} to a non-existant variable: ${destinationName}`);
-        }
-
-        results[parameter.name] = destination.name;
+        sourceNodesByName[paramName] = sourceNode;
     }
 
-    return results;
+    return parameters.map(p => {
+        const sourceNode = sourceNodesByName[p.name];
+        let variable: IVariable | undefined;
+
+        if (sourceNode !== undefined) {
+            const variableName = sourceNode.getAttribute(linkAttributeName);
+            
+            if (variableName !== null) {
+                const destination = process.variables.find(v => v.name === variableName);
+
+                if (destination === undefined) {
+                    throw new Error(`Step ${stepId} of the "${process.name}" process tries to map an ${parameterTypeName} to a non-existant variable: ${variableName}`);
+                }
+            }
+        }
+
+        return {
+            ...p,
+            connection: variable,
+        };
+    });
 }
 
 function loadReturnPaths(stepNode: Element) {
@@ -300,16 +325,38 @@ function loadReturnPaths(stepNode: Element) {
     return returnValue;
 }
 
-function verifyReturnPaths(processName: string, stepsById: Map<string, IStep>) {
-    for (const [, step] of stepsById) {
+function validateReturnPaths(
+    processName: string,
+    stepsById: Map<string, IIntermediateStep>
+) {
+    for (const [, intermediateStep] of stepsById) {
+        const step = intermediateStep.step;
         if (usesOutputs(step)) {
-            for (const path in step.returnPaths) {
-                const destinationStepId = step.returnPaths[path];
-
-                if (!stepsById.has(destinationStepId)) {
-                    throw new Error(`Step ${step.uniqueId} of process "${processName}" links a return path to an unknown step: ${destinationStepId}.`);
-                }
-            }
+            validateStepReturnPaths(step, intermediateStep.returnPaths, stepsById, processName);
         }
+    }
+}
+
+function validateStepReturnPaths(
+    step: IStepWithOutputs,
+    returnPaths: Record<string, string> | undefined,
+    stepsById: Map<string, IIntermediateStep>,
+    processName: string
+) {
+    if (returnPaths === undefined) {
+        return;
+    }
+
+    for (const path in returnPaths) {
+        const destinationStepId = returnPaths[path];
+        const destinationStep = stepsById.get(destinationStepId);
+
+        if (destinationStep === undefined) {
+            throw new Error(`Step ${step.uniqueId} of process "${processName}" links a return path to an unknown step: ${destinationStepId}.`);
+        }
+        if (!usesInputs(destinationStep.step)) {
+            throw new Error(`Step ${step.uniqueId} of process "${processName}" links a return path to an invalid step: ${destinationStepId}.`);
+        }
+        step.returnPaths[path] = destinationStep.step;
     }
 }

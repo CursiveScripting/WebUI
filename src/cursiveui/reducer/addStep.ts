@@ -3,6 +3,7 @@ import { isUserProcess } from '../services/ProcessFunctions';
 import { determineStepId } from '../services/StepFunctions';
 import { StepType } from '../state/IStep';
 import { IProcessStep } from '../state/IProcessStep';
+import { validate } from './validate';
 
 export type AddStepAction = {
     type: 'add step';
@@ -32,7 +33,7 @@ export function addStep(state: IWorkspaceState, action: AddStepAction) {
 
     inProcess.steps = [...inProcess.steps, {
         uniqueId: determineStepId(inProcess.steps),
-        processName: action.stepProcessName,
+        process: stepProcess,
         inputs: {},
         outputs: {},
         returnPaths: {},
@@ -45,13 +46,11 @@ export function addStep(state: IWorkspaceState, action: AddStepAction) {
 
     const processes = state.processes.slice();
     processes[inProcessIndex] = inProcess;
-    
-    const errors = { ...state.errors };
-    errors[inProcess.name] = [...errors[inProcess.name]]; // TODO: add error for unconnected step
+
+    inProcess.errors = validate(inProcess, processes);
 
     return {
         ...state,
         processes,
-        errors,
     };
 }

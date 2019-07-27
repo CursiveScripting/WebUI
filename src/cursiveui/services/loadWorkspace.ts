@@ -6,7 +6,7 @@ import { IProcess } from '../state/IProcess';
 import { IType } from '../state/IType';
 import { IParameter } from '../state/IParameter';
 import { StepType } from '../state/IStep';
-import { determineStepId } from './StepFunctions';
+import { determineStepId, createEmptyStartStep } from './StepFunctions';
 import { gridSize } from '../ui/ProcessContent/gridSize';
 import { IStartStep } from '../state/IStartStep';
 import { ValidationError } from '../state/IValidationError';
@@ -53,7 +53,6 @@ function loadWorkspaceFromElement(workspaceData: HTMLElement): IWorkspaceState {
     return {
         types: Object.values(typesByName),
         processes: Object.values(processesByName),
-        errors,
     };
 }
 
@@ -135,17 +134,11 @@ function loadProcessDefinition(
             inputs: inputs,
             outputs: outputs,
             returnPaths,
-            steps: [{
-                uniqueId: determineStepId([]),
-                stepType: StepType.Start,
-                x: gridSize * 2,
-                y: gridSize * 2,
-                outputs: {},
-                returnPaths: {},
-            } as IStartStep],
+            steps: [createEmptyStartStep(inputs)],
             variables: [],
             isSystem: false,
             fixedSignature: true,
+            errors: [],
         };
 }
 
@@ -177,7 +170,7 @@ function loadParameters(
 
         parameters.push({
             name: paramName,
-            typeName: paramTypeName   
+            type: typesByName[paramTypeName],
         });
     }
 }

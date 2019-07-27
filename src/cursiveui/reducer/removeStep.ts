@@ -1,5 +1,6 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
+import { validate } from './validate';
 
 export type RemoveStepAction = {
     type: 'remove step';
@@ -29,13 +30,10 @@ export function removeStep(state: IWorkspaceState, action: RemoveStepAction) {
     const processes = state.processes.slice();
     processes[processIndex] = process;
 
-    const errors = { ...state.errors };
-    const processErrors = [...errors[process.name]];
-    errors[process.name] = processErrors; // TODO: reconsider this process's errors
+    process.errors = validate(process, processes);
 
     return {
         ...state,
         processes,
-        errors,
     };
 }

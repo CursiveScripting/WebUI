@@ -1,4 +1,6 @@
-import { IPositionable } from './IPositionable';
+import { IVariable } from './IVariable';
+import { IStepParameter } from './IStepParameter';
+import { ICoord } from './dimensions';
 
 export enum StepType {
     Start,
@@ -7,16 +9,16 @@ export enum StepType {
     UserProcess,
 }
 
-export interface IStep extends IPositionable {
+export interface IStep extends ICoord {
     uniqueId: string;
     stepType: StepType;
 }
 
 export interface IStepWithInputs extends IStep {
-    inputs: Record<string, string>;
+    inputs: IStepParameter[];
 }
 
 export interface IStepWithOutputs extends IStep {
-    outputs: Record<string, string>;
-    returnPaths: Record<string, string>;
+    outputs: IStepParameter[];
+    returnPaths: Record<string, IStepWithInputs>;
 }

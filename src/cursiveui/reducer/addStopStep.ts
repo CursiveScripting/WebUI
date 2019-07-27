@@ -3,6 +3,7 @@ import { isUserProcess } from '../services/ProcessFunctions';
 import { determineStepId } from '../services/StepFunctions';
 import { StepType } from '../state/IStep';
 import { IStopStep } from '../state/IStopStep';
+import { validate } from './validate';
 
 export type AddStopStepAction = {
     type: 'add stop step';
@@ -45,12 +46,10 @@ export function addStopStep(state: IWorkspaceState, action: AddStopStepAction) {
     const processes = state.processes.slice();
     processes[inProcessIndex] = inProcess;
     
-    const errors = { ...state.errors };
-    errors[inProcess.name] = [...errors[inProcess.name]]; // TODO: add error for unconnected step
+    inProcess.errors = validate(inProcess, processes);
 
     return {
         ...state,
         processes,
-        errors,
     };
 }

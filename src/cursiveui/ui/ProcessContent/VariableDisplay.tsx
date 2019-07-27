@@ -4,12 +4,12 @@ import { ParameterConnector, ConnectorState } from './ParameterConnector';
 import './ProcessItem.css';
 import { ValueInput } from './ValueInput';
 import { IType } from '../../state/IType';
-import { IPositionable } from '../../state/IPositionable';
 import { isValueValid } from '../../services/DataFunctions';
 import { WorkspaceDispatchContext } from '../../reducer';
 import { getDescendentMidLeftPos } from '../../services/StepFunctions';
+import { ICoord } from '../../state/dimensions';
 
-interface Props extends IPositionable {
+interface Props extends ICoord {
     name: string;
     type: IType;
     initialValue: string | null;

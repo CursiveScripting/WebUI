@@ -1,5 +1,7 @@
-import { loadWorkspace } from "./loadWorkspace";
-import { loadProcesses } from "./loadProcesses";
+import { loadWorkspace } from './loadWorkspace';
+import { loadProcesses } from './loadProcesses';
+import { isUserProcess } from './ProcessFunctions';
+import { validate } from '../reducer/validate';
 
 export async function loadWorkspaceAndProcesses(getWorkspace: () => Promise<Document | string>, getProcesses?: () => Promise<Document | string | null>) {
     const workspaceData = await getWorkspace();
@@ -13,7 +15,11 @@ export async function loadWorkspaceAndProcesses(getWorkspace: () => Promise<Docu
         }
     }
     
-    // workspace.validateAll();
+    for (const process of workspace.processes) {
+        if (isUserProcess(process)) {
+            process.errors = validate(process, workspace.processes);
+        }
+    }
 
     return workspace;
 }

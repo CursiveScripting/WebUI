@@ -30,7 +30,6 @@ interface Props {
     focusStepParameter?: IStepDisplayParam; // This will have to change type
     focusStepReturnPath?: string | null;
     focusVariableName?: string;
-    revalidate: () => void;
 }
 
 interface State {

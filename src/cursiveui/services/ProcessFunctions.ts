@@ -14,7 +14,7 @@ export function isProcessUsedAnywhere(process: IUserProcess, allProcesses: IProc
     for (const otherProcess of allProcesses) {
         if (otherProcess !== process && isUserProcess(otherProcess)) {
             for (const step of otherProcess.steps) {
-                if (isProcessStep(step) && step.processName === process.name) {
+                if (isProcessStep(step) && step.process === process) {
                     return true;
                 }
             }

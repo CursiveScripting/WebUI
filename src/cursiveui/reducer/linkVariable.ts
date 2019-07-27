@@ -1,6 +1,8 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
 import { usesOutputs, usesInputs } from '../services/StepFunctions';
+import { validate } from './validate';
+import { IStepParameter } from '../state/IStepParameter';
 
 export type LinkVariableAction = {
     type: 'link variable';
@@ -20,6 +22,14 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableAction)
         return state;
     }
 
+    const variable = action.varName === undefined
+        ? undefined
+        : process.variables.find(v => v.name === action.varName);
+
+    if (action.varName !== undefined && variable === undefined) {
+        return state;
+    }
+
     process.steps = process.steps.map(step => {
         if (step.uniqueId !== action.stepId) {
             return step;
@@ -27,28 +37,27 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableAction)
 
         const modifiedStep = { ...step };
 
-        let modifyingParameters;
+        let modifyingParameters: IStepParameter[];
 
         if (action.stepInputParam) {
             if (!usesInputs(modifiedStep)) {
                 return step;
             }
 
-            modifiedStep.inputs = modifyingParameters = { ...modifiedStep.inputs };
+            modifiedStep.inputs = modifyingParameters = [ ...modifiedStep.inputs ];
         }
         else {
             if (!usesOutputs(modifiedStep)) {
                 return step;
             }
             
-            modifiedStep.outputs = modifyingParameters = { ...modifiedStep.outputs };
+            modifiedStep.outputs = modifyingParameters = [ ...modifiedStep.outputs ];
         }
 
-        if (action.varName === undefined) {
-            delete modifyingParameters[action.stepParamName];
-        }
-        else {
-            modifyingParameters[action.stepParamName] = action.varName;
+        var paramIndex = modifyingParameters.findIndex(p => p.name === action.stepParamName);
+        modifyingParameters[paramIndex] = {
+            ...modifyingParameters[paramIndex],
+            connection: variable,
         }
         
         return modifiedStep;
@@ -56,14 +65,11 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableAction)
 
     const processes = state.processes.slice();
     processes[processIndex] = process;
-
-    const errors = { ...state.errors };
-    const processErrors = [...errors[process.name]];
-    errors[process.name] = processErrors; // TODO: add whatever errors a variable might have
+    
+    process.errors = validate(process, processes);
     
     return {
         ...state,
         processes,
-        errors,
     }
 }

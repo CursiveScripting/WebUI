@@ -12,7 +12,6 @@ interface Props {
     openProcess?: IUserProcess;
     selectedProcess?: IProcess;
     className?: string;
-    errorProcesses: IUserProcess[];
     dataTypes: IType[];
 
     deselect: () => void;
@@ -165,7 +164,7 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
 
         if (isUserProcess(process)) {
             type = ToolboxItemType.UserProcess;
-            hasErrors = this.props.errorProcesses.indexOf(process) !== -1;
+            hasErrors = process.errors.length > 0;
             isOpen = process === this.props.openProcess;
 
             openProcess = process === this.props.openProcess

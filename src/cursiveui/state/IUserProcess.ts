@@ -1,6 +1,7 @@
 ﻿import { IProcess } from './IProcess';
 import { IStep } from './IStep';
 import { IVariable } from './IVariable';
+import { ValidationError } from './IValidationError';
 
 export interface IUserProcess extends IProcess {
     steps: IStep[];
@@ -10,4 +11,6 @@ export interface IUserProcess extends IProcess {
     fixedSignature: boolean;
 
     isSystem: false;
+    
+    errors: ValidationError[];
 }

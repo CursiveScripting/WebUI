@@ -12,10 +12,10 @@ import { IStepDisplayParam } from './ProcessContent/IStepDisplay';
 import { WorkspaceDispatchContext } from '../reducer';
 import { IUndoRedoAction } from '../services/useUndoReducer';
 import { ValidationError } from '../state/IValidationError';
+import { isUserProcess } from '../services/ProcessFunctions';
 
 interface Props {
     processes: IProcess[];
-    errors: Record<string, ValidationError[]>;
     types: IType[]
     initialProcess?: IUserProcess;
     className?: string;
@@ -43,9 +43,6 @@ interface State {
 
     editingSignature: boolean;
     dropping?: DropInfo;
-    processErrors: ValidationError[];
-    processesWithErrors: IUserProcess[];
-    otherProcessesHaveErrors: boolean;
     focusStepId?: string;
     focusStepParameter?: IStepDisplayParam;
     focusStepReturnPath?: string | null;
@@ -69,9 +66,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
 
             openProcess: initialProcess,
             editingSignature: false,
-            otherProcessesHaveErrors: false,
-            processErrors: props.errors[initialProcess.name],
-            processesWithErrors: this.getProcessesWithErrors(props.processes),
         };
     }
     
@@ -92,20 +86,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
             this.setState({
                 processesByName: createMap(nextProps.processes, p => p.name),
             });
-        }
-
-        if (nextProps.errors !== this.props.errors) {
-            let processErrors = this.state.openProcess === undefined
-                ? []
-                : nextProps.errors[this.state.openProcess.name];
-
-            if (processErrors === undefined) {
-                processErrors = [];
-            }
-
-            this.setState({
-                processErrors,
-            })
         }
     }
 
@@ -159,7 +139,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 processOpened={process => this.openProcess(process)}
                 editDefinition={process => this.showEditProcess(process)}
                 processSelected={process => this.selectProcess(process)}
-                errorProcesses={this.state.processesWithErrors}
                 stopStepSelected={step => this.selectStopStep(step)}
                 dataTypes={this.props.types}
                 dataTypeSelected={type => this.selectDataType(type)}
@@ -183,7 +162,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 dropping={this.state.dropping}
                 dropComplete={() => this.dropCompleted()}
 
-                revalidate={() => this.revalidateOpenProcess()}
                 focusStepId={this.state.focusStepId}
                 focusStepParameter={this.state.focusStepParameter}
                 focusStepReturnPath={this.state.focusStepReturnPath}
@@ -195,8 +173,8 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
     private renderProcessToolbar() {
         return (
             <ProcessToolbar
-                validationErrors={this.state.processErrors}
-                otherProcessesHaveErrors={this.state.otherProcessesHaveErrors}
+                validationErrors={this.state.openProcess === undefined ? [] : this.state.openProcess.errors}
+                otherProcessesHaveErrors={this.props.processes.find(p => p !== this.state.openProcess && isUserProcess(p) && p.errors.length > 0) !== null}
                 className="workspaceEditor__toolbar"
                 saveProcesses={this.props.save}
                 undo={this.props.undo}
@@ -254,16 +232,8 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
     }
 
     private openProcess(process: IUserProcess) {
-        // TODO: validation data needs stored somewhere (in the store? in a state here?) and accessed as needed
-        const processErrors: ValidationError[] = []; // this.props.workspace.validationSummary.getErrorsForProcess(process);
-        // let isValid = processErrors.length === 0;
-
-        let otherProcessesHaveErrors = false; // this.props.workspace.validationSummary.numErrorProcesses > (isValid ? 0 : 1);
-
         this.setState({
             openProcess: process,
-            processErrors: processErrors,
-            otherProcessesHaveErrors: otherProcessesHaveErrors,
         });
     }
 
@@ -302,56 +272,9 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
 
     private dropCompleted() {
         this.clearSelectedTools();
-        this.revalidateOpenProcess();
 
         this.setState({
             openProcess: this.state.openProcess,
-        });
-    }
-
-    private getProcessesWithErrors(processes: IProcess[]) {
-        return [];
-        /*
-        return workspace.validationSummary.errorProcessNames
-            .map(n => workspace.userProcesses.get(n)!)
-            .filter(p => p !== undefined);
-        */
-    }
-
-    private revalidateOpenProcess() {
-        if (this.state.openProcess === undefined) {
-            return;
-        }
-        
-        let wasValid = false;// this.props.workspace.validationSummary.getErrorsForProcess(this.state.openProcess).length === 0;
-        let processErrors: ValidationError[] = []; // this.props.workspace.validateProcess(this.state.openProcess);
-        let isValid = false; // processErrors.length === 0;
-
-        let otherProcessesHaveErrors = false; // this.props.workspace.validationSummary.numErrorProcesses > (isValid ? 0 : 1);
-
-        this.setState({
-            processErrors: processErrors,
-            otherProcessesHaveErrors: otherProcessesHaveErrors,
-        });
-
-        if (wasValid === isValid) {
-            return;
-        }
-        
-        // validity has changed, update the "invalid processes" list for the sidebar
-        this.setState(prevState => {
-            const processesWithErrors = prevState.processesWithErrors.slice();
-            if (prevState.openProcess !== undefined) {
-                if (isValid) {
-                    processesWithErrors.splice(processesWithErrors.indexOf(prevState.openProcess, 1));
-                }
-                else {
-                    processesWithErrors.push(prevState.openProcess);
-                }
-            }
-            return {
-                processesWithErrors: processesWithErrors,
-            };
         });
     }
 

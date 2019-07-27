@@ -4,6 +4,8 @@ import { IProcessStep } from '../state/IProcessStep';
 import { IStartStep } from '../state/IStartStep';
 import { IVariableDisplay } from '../ui/ProcessContent/IVariableDisplay';
 import { ICoord } from '../state/dimensions';
+import { IParameter } from '../state/IParameter';
+import { gridSize } from '../ui/ProcessContent/gridSize';
 
 export function usesInputs(step: IStep): step is IStepWithInputs {
     return step.stepType !== StepType.Start;
@@ -62,5 +64,16 @@ export function getDescendentMidRightPos(root: ICoord, element: HTMLDivElement):
     return {
         x: root.x + element.offsetLeft + element.offsetWidth,
         y: root.y + element.offsetTop + element.offsetHeight / 2,
+    };
+}
+
+export function createEmptyStartStep(inputs: IParameter[]): IStartStep {
+    return {
+        uniqueId: determineStepId([]),
+        stepType: StepType.Start,
+        x: gridSize * 2,
+        y: gridSize * 2,
+        outputs: inputs.map(i => { return { ...i }; }),
+        returnPaths: {},
     };
 }

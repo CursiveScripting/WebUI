@@ -2,10 +2,11 @@
 import { isStopStep, usesInputs, usesOutputs } from './StepFunctions';
 import { IUserProcess } from '../state/IUserProcess';
 import { IParameter } from '../state/IParameter';
-import { StepType, IStep } from '../state/IStep';
+import { StepType, IStep, IStepWithInputs } from '../state/IStep';
 import { IStopStep } from '../state/IStopStep';
 import { IProcessStep } from '../state/IProcessStep';
 import { isUserProcess } from './ProcessFunctions';
+import { IStepParameter } from '../state/IStepParameter';
 
 export function saveProcesses(processes: IProcess[]) {
     const saveDoc = document.implementation.createDocument(null, 'processes', null);
@@ -81,7 +82,7 @@ function saveStep(step: IStep, parent: HTMLElement) {
     }
     else {
         element = parent.ownerDocument!.createElement('Step');
-        element.setAttribute('process', (step as IProcessStep).processName);
+        element.setAttribute('process', (step as IProcessStep).process.name);
     }
     parent.appendChild(element);
 
@@ -108,14 +109,14 @@ function saveStep(step: IStep, parent: HTMLElement) {
                 pathElement = parent.ownerDocument!.createElement('ReturnPath');
             }
 
-            pathElement.setAttribute('targetStepID', step.returnPaths[pathName]);
+            pathElement.setAttribute('targetStepID', step.returnPaths[pathName].uniqueId);
             element.appendChild(pathElement);
         }
     }
 }
 
 function saveStepParameters(
-    parameters: Record<string, string>,
+    parameters: IStepParameter[],
     parent: Element,
     nodeName: string,
     variableAttributeName: string
@@ -124,9 +125,12 @@ function saveStepParameters(
         return;
     }
 
-    for (const parameterName in parameters) {
-        const variableName = parameters[parameterName];
-        saveStepParameter(parameterName, variableName, parent, nodeName, variableAttributeName);
+    for (const parameter of parameters) {
+        const varName = parameter.connection !== undefined
+            ? parameter.connection.name
+            : undefined;
+
+        saveStepParameter(parameter.name, varName, parent, nodeName, variableAttributeName);
     }
 }
 
@@ -149,7 +153,7 @@ function saveStepParameter(
 function saveProcessParameter(parameter: IParameter, parent: Element, nodeName: string) {
     let element = parent.ownerDocument!.createElement(nodeName);
     element.setAttribute('name', parameter.name);
-    element.setAttribute('type', parameter.typeName);
+    element.setAttribute('type', parameter.type.name);
     parent.appendChild(element);
     return element;
 }
