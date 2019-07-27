@@ -3,9 +3,10 @@ import { DragInfo, DragType } from './ProcessContent';
 import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
 import { IType } from '../../state/IType';
-import { IStepDisplay } from './IStepDisplay';
-import { IVariableDisplay } from './IVariableDisplay';
 import { IRect, ICoord } from '../../state/dimensions';
+import { IStep, IStepWithInputs } from '../../state/IStep';
+import { IVariable } from '../../state/IVariable';
+import { usesInputs, usesOutputs } from '../../services/StepFunctions';
 
 interface Props {
     className?: string;
@@ -15,8 +16,8 @@ interface Props {
     scrollX: number;
     scrollY: number;
 
-    steps: IStepDisplay[];
-    variables: IVariableDisplay[];
+    steps: IStep[];
+    variables: IVariable[];
 
     stepDisplays: Map<string, StepDisplay>;
     variableDisplays: Map<string, VariableDisplay>;
@@ -62,50 +63,56 @@ export class LinkCanvas extends React.Component<Props> {
         for (const step of this.props.steps) {
             const stepDisplay = this.props.stepDisplays.get(step.uniqueId)!;
             
-            for (const param of step.inputs) {
-                if (param.linkedVariable === undefined) {
-                    continue;
+            if (usesInputs(step)) {
+                for (const param of step.inputs) {
+                    if (param.connection === undefined) {
+                        continue;
+                    }
+
+                    const beginConnector = variableDisplays
+                        .get(param.connection.name)!
+                        .outputConnectorPos;
+
+                    const endConnector = stepDisplay.getInputConnectorPos(param.name)!;
+
+                    this.drawParameterLink(param.type, beginConnector, endConnector);
                 }
-
-                const beginConnector = variableDisplays
-                    .get(param.linkedVariable)!
-                    .outputConnectorPos;
-
-                const endConnector = stepDisplay.getInputConnectorPos(param.name)!;
-
-                this.drawParameterLink(param.type, beginConnector, endConnector);
             }
 
-            for (const param of step.outputs) {
-                if (param.linkedVariable === undefined) {
-                    continue;
+            if (usesOutputs(step)) {
+                for (const param of step.outputs) {
+                    if (param.connection === undefined) {
+                        continue;
+                    }
+
+                    const beginConnector = stepDisplay.getOutputConnectorPos(param.name)!;
+
+                    const endConnector = variableDisplays
+                        .get(param.connection.name)!
+                        .inputConnectorPos;
+
+                    this.drawParameterLink(param.type, beginConnector, endConnector);
                 }
 
-                const beginConnector = stepDisplay.getOutputConnectorPos(param.name)!;
+                for (const pathName in step.returnPaths) {
+                    const toStep: IStepWithInputs = step.returnPaths[pathName];
 
-                const endConnector = variableDisplays
-                    .get(param.linkedVariable)!
-                    .inputConnectorPos;
+                    if (toStep === undefined) {
+                        continue;
+                    }
 
-                this.drawParameterLink(param.type, beginConnector, endConnector);
-            }
+                    const toStepDisplay = stepDisplays.get(toStep.uniqueId!)!;
+                    
+                    const beginConnector = stepDisplay.getReturnConnectorPos(pathName);
+                    const endConnector = toStepDisplay.entryConnectorPos;
+                    
+                    if (beginConnector !== null && endConnector !== null) {
+                        const fitAround = (step as IStep) === (toStep as IStep)
+                            ? stepDisplay.bounds
+                            : undefined;
 
-            for (const [pathName, toStepId] of step.returnPaths) {
-                if (toStepId === null) {
-                    continue;
-                }
-
-                const toStepDisplay = stepDisplays.get(toStepId!)!;
-                
-                const beginConnector = stepDisplay.getReturnConnectorPos(pathName);
-                const endConnector = toStepDisplay.entryConnectorPos;
-                
-                if (beginConnector !== null && endConnector !== null) {
-                    const fitAround = step.uniqueId === toStepId
-                        ? stepDisplay.bounds
-                        : undefined;
-
-                    this.drawProcessLink(beginConnector, endConnector, fitAround);
+                        this.drawProcessLink(beginConnector, endConnector, fitAround);
+                    }
                 }
             }
         }

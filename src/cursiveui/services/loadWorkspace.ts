@@ -5,10 +5,7 @@ import { isString } from './DataFunctions';
 import { IProcess } from '../state/IProcess';
 import { IType } from '../state/IType';
 import { IParameter } from '../state/IParameter';
-import { StepType } from '../state/IStep';
-import { determineStepId, createEmptyStartStep } from './StepFunctions';
-import { gridSize } from '../ui/ProcessContent/gridSize';
-import { IStartStep } from '../state/IStartStep';
+import { createEmptyStartStep } from './StepFunctions';
 import { ValidationError } from '../state/IValidationError';
 
 export function loadWorkspace(workspaceData: Document | string) {

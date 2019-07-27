@@ -1,6 +1,6 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
-import { usesOutputs, usesInputs } from '../services/StepFunctions';
+import { usesOutputs, usesInputs, anyStepLinksTo } from '../services/StepFunctions';
 import { validate } from './validate';
 
 export type SetReturnPathAction = {
@@ -43,6 +43,8 @@ export function setReturnPath(state: IWorkspaceState, action: SetReturnPathActio
         ? ''
         : action.pathName;
 
+    const oldDestination = fromStep.returnPaths[pathNameProperty];
+    
     if (action.toStepId === undefined) {
         delete fromStep.returnPaths[pathNameProperty];
     }
@@ -53,8 +55,13 @@ export function setReturnPath(state: IWorkspaceState, action: SetReturnPathActio
         }
 
         fromStep.returnPaths[pathNameProperty] = toStep;
+        toStep.inputConnected = true;
     }
 
+    if (oldDestination !== undefined && !anyStepLinksTo(oldDestination, process.steps)) {
+        oldDestination.inputConnected = false;
+    }
+    
     const processes = state.processes.slice();
     processes[processIndex] = process;
 

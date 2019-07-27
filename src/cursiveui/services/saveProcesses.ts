@@ -2,7 +2,7 @@
 import { isStopStep, usesInputs, usesOutputs } from './StepFunctions';
 import { IUserProcess } from '../state/IUserProcess';
 import { IParameter } from '../state/IParameter';
-import { StepType, IStep, IStepWithInputs } from '../state/IStep';
+import { StepType, IStep } from '../state/IStep';
 import { IStopStep } from '../state/IStopStep';
 import { IProcessStep } from '../state/IProcessStep';
 import { isUserProcess } from './ProcessFunctions';

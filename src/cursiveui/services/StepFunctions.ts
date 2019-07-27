@@ -2,10 +2,11 @@ import { StepType, IStepWithOutputs, IStep, IStepWithInputs } from '../state/ISt
 import { IStopStep } from '../state/IStopStep';
 import { IProcessStep } from '../state/IProcessStep';
 import { IStartStep } from '../state/IStartStep';
-import { IVariableDisplay } from '../ui/ProcessContent/IVariableDisplay';
 import { ICoord } from '../state/dimensions';
 import { IParameter } from '../state/IParameter';
 import { gridSize } from '../ui/ProcessContent/gridSize';
+import { hasAnyValue } from './DataFunctions';
+import { IVariable } from '../state/IVariable';
 
 export function usesInputs(step: IStep): step is IStepWithInputs {
     return step.stepType !== StepType.Start;
@@ -39,11 +40,11 @@ export function determineStepId(otherSteps: IStep[]) {
     return testId.toString();
 }
 
-export function determineVariableName(typeName: string, otherVars: IVariableDisplay[]) {
+export function determineVariableName(typeName: string, otherVars: IVariable[]) {
     let testNum = 0;
     let testName = `new ${typeName}`;
     
-    const matchName = (variable: IVariableDisplay) => variable.name === testName;
+    const matchName = (variable: IVariable) => variable.name === testName;
 
     while (otherVars.find(matchName) !== undefined) {
         testNum ++;
@@ -76,4 +77,8 @@ export function createEmptyStartStep(inputs: IParameter[]): IStartStep {
         outputs: inputs.map(i => { return { ...i }; }),
         returnPaths: {},
     };
+}
+
+export function anyStepLinksTo(testStep: IStepWithInputs, allSteps: IStep[]) {
+    return allSteps.find(s => usesOutputs(s) && hasAnyValue(s.returnPaths, testStep)) !== undefined;
 }

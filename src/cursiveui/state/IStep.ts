@@ -1,4 +1,3 @@
-import { IVariable } from './IVariable';
 import { IStepParameter } from './IStepParameter';
 import { ICoord } from './dimensions';
 
@@ -16,6 +15,7 @@ export interface IStep extends ICoord {
 
 export interface IStepWithInputs extends IStep {
     inputs: IStepParameter[];
+    inputConnected: boolean;
 }
 
 export interface IStepWithOutputs extends IStep {

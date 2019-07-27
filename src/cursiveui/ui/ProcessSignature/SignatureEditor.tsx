@@ -6,9 +6,7 @@ import { ParametersEditor } from './ParametersEditor';
 import { IParameter } from '../../state/IParameter';
 import { IType } from '../../state/IType';
 
-export interface IParamInfo {
-    name: string;
-    type: IType;
+export interface IParamInfo extends IParameter {
     underlyingParameter?: IParameter;
 }
 

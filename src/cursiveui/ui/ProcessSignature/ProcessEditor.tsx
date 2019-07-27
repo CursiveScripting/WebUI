@@ -37,8 +37,6 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
     constructor(props: Props) {
         super(props);
 
-        const getType = (name: string) => props.allTypes.find(t => t.name === name)!;
-
         this.state = props.process === undefined
             ? {
                 name: '',
@@ -57,9 +55,9 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
                 description: props.process.description,
                 returnPaths: props.process.returnPaths,
                 returnPathValidity: props.process.returnPaths.map((path, index) => this.isReturnPathNameValid(index, props.process!.returnPaths)),
-                inputs: props.process.inputs.map(i => { return { type: getType(i.typeName), name: i.name }; }),
+                inputs: props.process.inputs.map(i => { return { type: i.type, name: i.name }; }),
                 inputValidity: props.process.inputs.map((param, index) => this.isParameterNameValid(index, props.process!.inputs)),
-                outputs: props.process.outputs.map(o => { return { type: getType(o.typeName), name: o.name }; }),
+                outputs: props.process.outputs.map(o => { return { type: o.type, name: o.name }; }),
                 outputValidity: props.process.outputs.map((param, index) => this.isParameterNameValid(index, props.process!.outputs)),
             };
     }
@@ -204,28 +202,24 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
                 description: this.state.description,
                 inputs: this.state.inputs.map(i => { return {
                     name: i.name,
-                    typeName: i.type.name,
+                    type: i.type,
                 }}),
                 outputs: this.state.outputs.map(o => { return {
                     name: o.name,
-                    typeName: o.type.name,
+                    type: o.type,
                 }}),
                 returnPaths: this.state.returnPaths,
                 folder: null, // TODO handle this
             });
         }
         else {
-            const mapParam = (name: string, params: IParamInfo[]) => {
-                const matched = params.find(p => 
-                    p.underlyingParameter !== undefined
-                    && p.underlyingParameter.name === name
-                    && p.type.name === p.underlyingParameter.typeName // TODO: use is assignable to / from here
-                );
+            const inputOrderMap = this.props.process === undefined
+                ? this.state.inputs.map(i => undefined)
+                : this.state.inputs.map(i => this.props.process!.inputs.findIndex(orig => orig === i.underlyingParameter));
 
-                return matched === undefined
-                    ? undefined
-                    : matched.name;
-            }
+            const outputOrderMap = this.props.process === undefined
+                ? this.state.outputs.map(i => undefined)
+                : this.state.outputs.map(o => this.props.process!.outputs.findIndex(orig => orig === o.underlyingParameter));
 
             this.context({
                 type: 'edit process',
@@ -235,14 +229,14 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
                 folder: null, // TODO: handle this
                 inputs: this.state.inputs.map(i => { return {
                     name: i.name,
-                    typeName: i.type.name,
+                    type: i.type,
                 }}),
                 outputs: this.state.outputs.map(o => { return {
                     name: o.name,
-                    typeName: o.type.name,
+                    type: o.type,
                 }}),
-                mapInputs: i => mapParam(i, this.state.inputs),
-                mapOutputs: o => mapParam(o, this.state.outputs),
+                inputOrderMap,
+                outputOrderMap,
                 returnPaths: this.state.returnPaths,
             });
         }

@@ -8,11 +8,11 @@ import { IUserProcess } from '../state/IUserProcess';
 import { IProcess } from '../state/IProcess';
 import { IType } from '../state/IType';
 import { createMap } from '../services/DataFunctions';
-import { IStepDisplayParam } from './ProcessContent/IStepDisplay';
 import { WorkspaceDispatchContext } from '../reducer';
 import { IUndoRedoAction } from '../services/useUndoReducer';
 import { ValidationError } from '../state/IValidationError';
 import { isUserProcess } from '../services/ProcessFunctions';
+import { IStepParameter } from '../state/IStepParameter';
 
 interface Props {
     processes: IProcess[];
@@ -44,7 +44,7 @@ interface State {
     editingSignature: boolean;
     dropping?: DropInfo;
     focusStepId?: string;
-    focusStepParameter?: IStepDisplayParam;
+    focusStepParameter?: IStepParameter;
     focusStepReturnPath?: string | null;
     focusVariableName?: string;
 }
@@ -155,7 +155,9 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         return (
             <ProcessContent
                 className="workspaceEditor__content"
-                openProcess={this.state.openProcess}
+                steps={this.state.openProcess.steps}
+                variables={this.state.openProcess.variables}
+                processName={this.state.openProcess.name}
                 processesByName={this.state.processesByName}
                 typesByName={this.state.typesByName}
 

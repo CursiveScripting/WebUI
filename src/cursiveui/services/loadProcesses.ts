@@ -3,7 +3,7 @@ import { createMap, isString } from './DataFunctions';
 import { usesOutputs, usesInputs } from './StepFunctions';
 import { IUserProcess } from '../state/IUserProcess';
 import { IVariable } from '../state/IVariable';
-import { IStep, StepType, IStepWithOutputs, IStepWithInputs } from '../state/IStep';
+import { IStep, StepType, IStepWithOutputs } from '../state/IStep';
 import { IProcess } from '../state/IProcess';
 import { IParameter } from '../state/IParameter';
 import { IStartStep } from '../state/IStartStep';
@@ -11,7 +11,6 @@ import { IStopStep } from '../state/IStopStep';
 import { IProcessStep } from '../state/IProcessStep';
 import { IType } from '../state/IType';
 import { isUserProcess } from './ProcessFunctions';
-import { IStepParameter } from '../state/IStepParameter';
 
 export function loadProcesses(workspace: IWorkspaceState, processData: Document | string) {
     const rootElement = isString(processData)
@@ -209,6 +208,7 @@ function loadProcessSteps(
             x: parseInt(stepNode.getAttribute('x')!),
             y: parseInt(stepNode.getAttribute('y')!),
             returnPath,
+            inputConnected: false,
         };
         
         stepsById.set(id, {
@@ -239,6 +239,7 @@ function loadProcessSteps(
             returnPaths: {},
             x: parseInt(stepNode.getAttribute('x')!),
             y: parseInt(stepNode.getAttribute('y')!),
+            inputConnected: false,
         }
 
         stepsById.set(id, {
@@ -358,5 +359,6 @@ function validateStepReturnPaths(
             throw new Error(`Step ${step.uniqueId} of process "${processName}" links a return path to an invalid step: ${destinationStepId}.`);
         }
         step.returnPaths[path] = destinationStep.step;
+        destinationStep.step.inputConnected = true;
     }
 }

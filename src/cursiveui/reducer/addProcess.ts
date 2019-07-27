@@ -2,9 +2,6 @@ import { IParameter } from '../state/IParameter';
 import { IUserProcess } from '../state/IUserProcess';
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { validate } from './validate';
-import { StepType } from '../state/IStep';
-import { IStartStep } from '../state/IStartStep';
-import { gridSize } from '../ui/ProcessContent/gridSize';
 import { createEmptyStartStep } from '../services/StepFunctions';
 
 export type AddProcessAction = {

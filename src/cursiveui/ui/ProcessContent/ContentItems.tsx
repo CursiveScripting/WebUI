@@ -1,18 +1,18 @@
 import * as React from 'react';
 import { useEffect } from 'react';
 import { StepDisplay } from './StepDisplay';
-import { StepType } from '../../state/IStep';
+import { StepType, IStep, IStepWithInputs } from '../../state/IStep';
 import { WorkspaceDispatchContext } from '../../reducer';
-import { IStepDisplay, IStepDisplayParam } from './IStepDisplay';
 import { DragInfo, DragType } from './ProcessContent';
 import { VariableDisplay } from './VariableDisplay';
-import { IVariableDisplay } from './IVariableDisplay';
-import { determineVariableName } from '../../services/StepFunctions';
+import { determineVariableName, isStartStep, isStopStep, isProcessStep, usesInputs, usesOutputs } from '../../services/StepFunctions';
 import { ICoord } from '../../state/dimensions';
+import { IVariable } from '../../state/IVariable';
+import { IStepParameter } from '../../state/IStepParameter';
 
 interface Props {
-    steps: IStepDisplay[];
-    variables: IVariableDisplay[];
+    steps: IStep[];
+    variables: IVariable[];
     stepRefs: Map<string, StepDisplay>;
     varRefs: Map<string, VariableDisplay>;
 
@@ -25,7 +25,7 @@ interface Props {
     processName: string;
     focusVariableName?: string;
     focusStepId?: string;
-    focusParameter?: IStepDisplayParam;
+    focusParameter?: IStepParameter;
     focusReturnPath?: string | null;
 }
 
@@ -42,7 +42,7 @@ export const ContentItems = (props: Props) => {
         }
     }, [props.focusStepId, props.focusVariableName, props.stepRefs, props.varRefs])
 
-    const startDragStepHeader = (step: IStepDisplay, x: number, y: number, displayX: number, displayY: number) => props.setDragging({
+    const startDragStepHeader = (step: IStep, x: number, y: number, displayX: number, displayY: number) => props.setDragging({
         type: DragType.Step,
         step,
         x: displayX,
@@ -51,14 +51,14 @@ export const ContentItems = (props: Props) => {
         yOffset: y - displayY - props.minScreenY,
     });
 
-    const startDragInConnector = (step: IStepDisplay, x: number, y: number) => props.setDragging({
+    const startDragInConnector = (step: IStep, x: number, y: number) => props.setDragging({
         type: DragType.StepInConnector,
         step,
         x: x - props.minScreenX,
         y: y - props.minScreenY,
     });
 
-    const startDragReturnPath = (step: IStepDisplay, path: string | null, x: number, y: number) => props.setDragging({
+    const startDragReturnPath = (step: IStep, path: string | null, x: number, y: number) => props.setDragging({
         type: DragType.ReturnPath,
         step,
         returnPath: path,
@@ -66,7 +66,7 @@ export const ContentItems = (props: Props) => {
         y: y - props.minScreenY,
     });
 
-    const startDragParameter = (step: IStepDisplay, param: IStepDisplayParam, input: boolean, x: number, y: number) => props.setDragging({
+    const startDragParameter = (step: IStep, param: IStepParameter, input: boolean, x: number, y: number) => props.setDragging({
         type: DragType.StepParameter,
         step,
         param,
@@ -75,7 +75,7 @@ export const ContentItems = (props: Props) => {
         y: y - props.minScreenY,
     });
 
-    const stopDragParameter = (step: IStepDisplay, param: IStepDisplayParam, input: boolean) => {
+    const stopDragParameter = (step: IStep, param: IStepParameter, input: boolean) => {
         if (props.dragging !== undefined) {
             if (props.dragging.type === DragType.StepParameter && props.dragging.input !== input) {
                 // link both parameters with a variable
@@ -124,7 +124,7 @@ export const ContentItems = (props: Props) => {
         props.setDragging(undefined);
     }
 
-    const stopDragInConnector = (step: IStepDisplay) => {
+    const stopDragInConnector = (step: IStep) => {
         if (props.dragging !== undefined && props.dragging.type === DragType.ReturnPath) {
             context({
                 type: 'set return path',
@@ -138,7 +138,7 @@ export const ContentItems = (props: Props) => {
         props.setDragging(undefined);
     };
 
-    const stopDragReturnPath = (step: IStepDisplay, path: string | null) => {
+    const stopDragReturnPath = (step: IStep, path: string | null) => {
         if (props.dragging !== undefined && props.dragging.type === DragType.StepInConnector) {
             context({
                 type: 'set return path',
@@ -152,7 +152,7 @@ export const ContentItems = (props: Props) => {
         props.setDragging(undefined);
     };
 
-    const startDragVarHeader = (variable: IVariableDisplay, x: number, y: number, displayX: number, displayY: number) => props.setDragging({
+    const startDragVarHeader = (variable: IVariable, x: number, y: number, displayX: number, displayY: number) => props.setDragging({
         type: DragType.Variable,
         variable,
         x: displayX,
@@ -161,7 +161,7 @@ export const ContentItems = (props: Props) => {
         yOffset: y - displayY - props.minScreenY,
     });
 
-    const startDragVarConnector = (variable: IVariableDisplay, input: boolean, x: number, y: number) => props.setDragging({
+    const startDragVarConnector = (variable: IVariable, input: boolean, x: number, y: number) => props.setDragging({
         type: DragType.VarParameter,
         variable,
         input,
@@ -169,7 +169,7 @@ export const ContentItems = (props: Props) => {
         y: y - props.minScreenY,
     });
 
-    const stopDragVarConnector = (variable: IVariableDisplay, input: boolean) => {
+    const stopDragVarConnector = (variable: IVariable, input: boolean) => {
         if (props.dragging !== undefined && props.dragging.type === DragType.StepParameter && props.dragging.input !== input) {
             context({
                 type: 'link variable',
@@ -197,15 +197,41 @@ export const ContentItems = (props: Props) => {
                 ? props.dragging
                 : step;
 
+        const [name, desc] = getNameAndDesc(step);
+
+        let inputs: IStepParameter[];
+        let outputs: IStepParameter[];
+
+        let inputConnected: boolean;
+        let returnPaths: Record<string, IStepWithInputs>;
+
+        if (usesInputs(step)) {
+            inputs = step.inputs;
+            inputConnected = step.inputConnected;
+        }
+        else {
+            inputs = [];
+            inputConnected = false;
+        }
+
+        if (usesOutputs(step)) {
+            outputs = step.outputs;
+            returnPaths = step.returnPaths;
+        }
+        else {
+            outputs = [];
+            returnPaths = {};
+        }
+
         return (
             <StepDisplay
                 ref={s => { if (s !== null) { props.stepRefs.set(step.uniqueId, s); } else { props.stepRefs.delete(step.uniqueId); }}}
                 key={step.uniqueId}
-                name={step.name}
-                description={step.description}
-                inputs={step.inputs}
-                outputs={step.outputs}
-                returnPaths={step.returnPaths}
+                name={name}
+                description={desc}
+                inputs={inputs}
+                outputs={outputs}
+                returnPaths={returnPaths}
                 isValid={isValid}
                 stepType={step.stepType}
                 uniqueId={step.uniqueId}
@@ -213,7 +239,7 @@ export const ContentItems = (props: Props) => {
                 y={stepPos.y}
 
                 inProcessName={props.processName}
-                inputConnected={step.inputConnected}
+                inputConnected={inputConnected}
                 focused={focusThisStep}
                 focusParameter={focusThisStep ? props.focusParameter : undefined}
                 focusReturnPath={focusThisStep ? props.focusReturnPath : undefined}
@@ -253,8 +279,8 @@ export const ContentItems = (props: Props) => {
                 y={varPos.y}
                 canEdit={canEdit}
                 focused={focusThisVar}
-                inputConnected={variable.inputConnected}
-                outputConnected={variable.outputConnected}
+                inputConnected={variable.fromLinks.length > 0}
+                outputConnected={variable.toLinks.length > 0}
                 inProcessName={props.processName}
                 key={variable.name}
                 
@@ -269,4 +295,18 @@ export const ContentItems = (props: Props) => {
         {steps}
         {variables}
     </>
+}
+
+function getNameAndDesc(step: IStep): [string, string | undefined] {
+    if (isStartStep(step)) {
+        return ['Start', undefined];
+    }
+    else if (isStopStep(step)) {
+        return ['Stop', undefined];
+    }
+    else if (isProcessStep(step)) {
+        return [step.process.name, step.process.description];
+    }
+
+    throw new Error(`Unrecognised step type: ${step.stepType}`);
 }
