@@ -11,23 +11,23 @@ const ButtonTool = (props: {
     className: string;
     actionType: 'Undo' | 'Redo';
 }) => {
-    let undoClasses: string;
-    let undoLabel: string;
-    let undoAction: undefined | (() => void);
+    let classes: string;
+    let label: string;
+    let action: undefined | (() => void);
 
     if (props.action === undefined) {
-        undoClasses = 'tool tool--undo tool--disabled';
-        undoLabel = props.actionType;
+        classes = 'tool tool--undo tool--disabled';
+        label = `Cannot ${props.actionType.toLowerCase()}`;
     }
     else {
-        undoClasses = 'tool tool--undo';
-        undoLabel = `${props.actionType} ${props.action.name}`;
-        undoAction = props.action.perform;
+        classes = 'tool tool--undo';
+        label = `${props.actionType} ${props.action.name}`;
+        action = props.action.perform;
     }
 
     return (
-        <div className={undoClasses} onClick={undoAction} title={props.action === undefined ? 'Nothing to {}' : undefined}>
-            <div className="tool__label">{undoLabel}</div>
+        <div className={classes} onClick={action}>
+            <div className="tool__label">{label}</div>
             <div className="tool__icon" />
         </div>
     )
