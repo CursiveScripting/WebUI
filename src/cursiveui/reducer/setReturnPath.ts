@@ -37,7 +37,7 @@ export function setReturnPath(state: IWorkspaceState, action: SetReturnPathActio
 
     process.steps[fromStepIndex] = fromStep;
 
-    fromStep.returnPaths = { ...fromStep.returnPaths };
+    fromStep.returnPaths = [ ...fromStep.returnPaths ];
 
     const returnPathIndex = fromStep.returnPaths.findIndex(p => p.name === action.pathName);
     const returnPath = { ...fromStep.returnPaths[returnPathIndex] };
