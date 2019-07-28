@@ -219,27 +219,26 @@ export class StepDisplay extends React.PureComponent<Props, State> {
 
         const connectors: JSX.Element[] = [];
 
-        for (const pathName in this.props.returnPaths) {
-            const connectedStep = this.props.returnPaths[pathName]
-
-            const actualPathName = pathName === '' ? null : pathName;
-            let classes = connectedStep === undefined
+        for (const path of this.props.returnPaths) {
+            let classes = path.connection === undefined
                 ? 'processItem__connector processItem__connector--out'
                 : 'processItem__connector processItem__connector--out processItem__connector--connected';
             
-            if (this.props.focused && this.props.focusReturnPath === pathName) {
+            if (this.props.focused && this.props.focusReturnPath === path.name) {
                 classes += ' processItem__connector--focused';
             }
 
+            const strName = path.name === null ? '' : path.name;
+
             connectors.push(
                 <div
-                    key={pathName}
+                    key={strName}
                     className={classes}
-                    onMouseDown={e => this.props.outputLinkMouseDown(actualPathName, e.clientX, e.clientY)}
-                    onMouseUp={() => this.props.outputLinkMouseUp(actualPathName)}
-                    ref={c => { if (c !== null) { this._returnConnectors[pathName] = c; }}}
+                    onMouseDown={e => this.props.outputLinkMouseDown(path.name, e.clientX, e.clientY)}
+                    onMouseUp={() => this.props.outputLinkMouseUp(path.name)}
+                    ref={c => { if (c !== null) { this._returnConnectors[strName] = c; }}}
                 >
-                    {pathName}
+                    {path.name}
                 </div>
             );
         };
