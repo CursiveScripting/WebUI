@@ -39,14 +39,14 @@ export function setReturnPath(state: IWorkspaceState, action: SetReturnPathActio
 
     fromStep.returnPaths = { ...fromStep.returnPaths };
 
-    const pathNameProperty = action.pathName === null
-        ? ''
-        : action.pathName;
-
-    const oldDestination = fromStep.returnPaths[pathNameProperty];
+    const returnPathIndex = fromStep.returnPaths.findIndex(p => p.name === action.pathName);
+    const returnPath = { ...fromStep.returnPaths[returnPathIndex] };
+    fromStep.returnPaths[returnPathIndex] = returnPath;
+    
+    const oldDestination = returnPath.connection;
     
     if (action.toStepId === undefined) {
-        delete fromStep.returnPaths[pathNameProperty];
+        returnPath.connection = undefined;
     }
     else {
         const toStep = process.steps.find(step => step.uniqueId === action.toStepId);
@@ -54,7 +54,7 @@ export function setReturnPath(state: IWorkspaceState, action: SetReturnPathActio
             return state;
         }
 
-        fromStep.returnPaths[pathNameProperty] = toStep;
+        returnPath.connection = toStep;
         toStep.inputConnected = true;
     }
 

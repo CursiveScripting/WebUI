@@ -36,7 +36,9 @@ export function addStep(state: IWorkspaceState, action: AddStepAction) {
         process: stepProcess,
         inputs: stepProcess.inputs.map(i => { return { name: i.name, type: i.type }}),
         outputs: stepProcess.outputs.map(o => { return { name: o.name, type: o.type }}),
-        returnPaths: {},
+        returnPaths: stepProcess.returnPaths.length === 0
+            ? [{ name: null }]
+            : stepProcess.returnPaths.map(p => { return { name: p }}),
         stepType: stepProcess.isSystem
             ? StepType.SystemProcess
             : StepType.UserProcess,

@@ -1,5 +1,6 @@
 import { IStepParameter } from './IStepParameter';
 import { ICoord } from './dimensions';
+import { IReturnPath } from './IReturnPath';
 
 export enum StepType {
     Start,
@@ -20,5 +21,5 @@ export interface IStepWithInputs extends IStep {
 
 export interface IStepWithOutputs extends IStep {
     outputs: IStepParameter[];
-    returnPaths: Record<string, IStepWithInputs>;
+    returnPaths: IReturnPath[];
 }

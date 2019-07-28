@@ -4,8 +4,8 @@ import { IWorkspaceState } from '../state/IWorkspaceState';
 import { hasEditableSignature, isUserProcess } from '../services/ProcessFunctions';
 import { isProcessStep, isStartStep, isStopStep } from '../services/StepFunctions';
 import { validate } from './validate';
-import { IStepWithInputs } from '../state/IStep';
 import { IStepParameter } from '../state/IStepParameter';
+import { IReturnPath } from '../state/IReturnPath';
 
 export type EditProcessAction = {
     type: 'edit process';
@@ -104,12 +104,15 @@ export function editProcess(state: IWorkspaceState, action: EditProcessAction) {
                 changed = true;
                 
                 // Strip out any return paths that are no longer valid
-                const returnPaths: Record<string, IStepWithInputs> = {};
-                for (const path in step.returnPaths) {
-                    if (action.returnPaths.indexOf(path) !== -1) {
-                        returnPaths[path] = step.returnPaths[path];
-                    }
-                }
+                const returnPaths: IReturnPath[] = action.returnPaths.map(name => {
+                    const existingPath = step.returnPaths.find(p => p.name === name);
+
+                    return existingPath !== undefined
+                        ? existingPath
+                        : { name };
+                });
+
+                // TODO: unset inputConnected on any step a removed return path connected to
 
                 return {
                     ...step,

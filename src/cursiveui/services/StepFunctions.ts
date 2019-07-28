@@ -5,7 +5,6 @@ import { IStartStep } from '../state/IStartStep';
 import { ICoord } from '../state/dimensions';
 import { IParameter } from '../state/IParameter';
 import { gridSize } from '../ui/ProcessContent/gridSize';
-import { hasAnyValue } from './DataFunctions';
 import { IVariable } from '../state/IVariable';
 
 export function usesInputs(step: IStep): step is IStepWithInputs {
@@ -75,10 +74,10 @@ export function createEmptyStartStep(inputs: IParameter[]): IStartStep {
         x: gridSize * 2,
         y: gridSize * 2,
         outputs: inputs.map(i => { return { ...i }; }),
-        returnPaths: {},
+        returnPaths: [{ name: null }],
     };
 }
 
 export function anyStepLinksTo(testStep: IStepWithInputs, allSteps: IStep[]) {
-    return allSteps.find(s => usesOutputs(s) && hasAnyValue(s.returnPaths, testStep)) !== undefined;
+    return allSteps.find(s => usesOutputs(s) && s.returnPaths.find(p => p.connection === testStep) !== undefined) !== undefined;
 }

@@ -31,11 +31,9 @@ export function removeStep(state: IWorkspaceState, action: RemoveStepAction) {
     process.steps.splice(stepIndex, 1);
 
     if (usesOutputs(removedStep)) {
-        for (const path in removedStep.returnPaths) {
-            const target = removedStep.returnPaths[path];
-            
-            if (!anyStepLinksTo(target, process.steps)) {
-                target.inputConnected = false;
+        for (const path of removedStep.returnPaths) {
+            if (path.connection !== undefined && !anyStepLinksTo(path.connection, process.steps)) {
+                path.connection.inputConnected = false;
             }
         }
     }

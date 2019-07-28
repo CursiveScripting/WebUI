@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useEffect } from 'react';
 import { StepDisplay } from './StepDisplay';
-import { StepType, IStep, IStepWithInputs } from '../../state/IStep';
+import { StepType, IStep } from '../../state/IStep';
 import { WorkspaceDispatchContext } from '../../reducer';
 import { DragInfo, DragType } from './ProcessContent';
 import { VariableDisplay } from './VariableDisplay';
@@ -9,6 +9,7 @@ import { determineVariableName, isStartStep, isStopStep, isProcessStep, usesInpu
 import { ICoord } from '../../state/dimensions';
 import { IVariable } from '../../state/IVariable';
 import { IStepParameter } from '../../state/IStepParameter';
+import { IReturnPath } from '../../state/IReturnPath';
 
 interface Props {
     steps: IStep[];
@@ -203,7 +204,7 @@ export const ContentItems = (props: Props) => {
         let outputs: IStepParameter[];
 
         let inputConnected: boolean;
-        let returnPaths: Record<string, IStepWithInputs>;
+        let returnPaths: IReturnPath[];
 
         if (usesInputs(step)) {
             inputs = step.inputs;
@@ -220,7 +221,7 @@ export const ContentItems = (props: Props) => {
         }
         else {
             outputs = [];
-            returnPaths = {};
+            returnPaths = [];
         }
 
         return (

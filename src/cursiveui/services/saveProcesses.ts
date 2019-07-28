@@ -98,18 +98,20 @@ function saveStep(step: IStep, parent: HTMLElement) {
     if (usesOutputs(step)) {
         saveStepParameters(step.outputs, element, 'Output', 'destination');
 
-        for (const pathName in step.returnPaths) {
+        for (const path of step.returnPaths) {
             let pathElement: HTMLElement;
             
-            if (pathName !== '') {
+            if (path.name !== null) {
                 pathElement = parent.ownerDocument!.createElement('NamedReturnPath');
-                pathElement.setAttribute('name', pathName);
+                pathElement.setAttribute('name', path.name);
             }
             else {
                 pathElement = parent.ownerDocument!.createElement('ReturnPath');
             }
 
-            pathElement.setAttribute('targetStepID', step.returnPaths[pathName].uniqueId);
+            if (path.connection !== undefined) {
+                pathElement.setAttribute('targetStepID', path.connection.uniqueId);
+            }
             element.appendChild(pathElement);
         }
     }

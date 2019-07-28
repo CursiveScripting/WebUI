@@ -144,9 +144,14 @@ function loadProcessParameters(
     }
 }
 
+interface IIntermediateReturnPath {
+    name: string | null;
+    connection?: string;
+}
+
 interface IIntermediateStep {
     step: IStep;
-    returnPaths?: Record<string, string>;
+    returnPaths?: IIntermediateReturnPath[];
 }
 
 function loadProcessSteps(
@@ -170,7 +175,7 @@ function loadProcessSteps(
             uniqueId: id,
             stepType: StepType.Start,
             outputs: loadStepOutputs(id, process, process.inputs, stepNode),
-            returnPaths: {},
+            returnPaths: [{ name: null }],
             x: parseInt(stepNode.getAttribute('x')!),
             y: parseInt(stepNode.getAttribute('y')!),
         };
@@ -236,7 +241,7 @@ function loadProcessSteps(
             process: childProcess,
             inputs: loadStepInputs(id, process, childProcess.inputs, stepNode),
             outputs: loadStepOutputs(id, process, childProcess.outputs, stepNode),
-            returnPaths: {},
+            returnPaths: process.returnPaths.map(p => { return { name: p }}),
             x: parseInt(stepNode.getAttribute('x')!),
             y: parseInt(stepNode.getAttribute('y')!),
             inputConnected: false,
@@ -305,12 +310,12 @@ function loadStepParameters(
 
 function loadReturnPaths(stepNode: Element) {
     let returnPathNodes = stepNode.getElementsByTagName('ReturnPath');
-    const returnValue: Record<string, string> = {};
+    const returnValue: IIntermediateReturnPath[] = [];
 
     for (const returnPathNode of returnPathNodes) {
         const targetStepID = returnPathNode.getAttribute('targetStepID')!;
 
-        returnValue[''] = targetStepID;
+        returnValue.push({ name: null, connection: targetStepID});
         return returnValue; // can only ever have one non-named return path
     }
 
@@ -320,7 +325,7 @@ function loadReturnPaths(stepNode: Element) {
         const name = returnPathNode.getAttribute('name')!;
         const targetStepID = returnPathNode.getAttribute('targetStepID')!;
 
-        returnValue[name] = targetStepID;
+        returnValue.push({ name, connection: targetStepID});
     }
 
     return returnValue;
@@ -332,7 +337,7 @@ function validateReturnPaths(
 ) {
     for (const [, intermediateStep] of stepsById) {
         const step = intermediateStep.step;
-        if (usesOutputs(step)) {
+        if (usesOutputs(step) && intermediateStep.returnPaths !== undefined) {
             validateStepReturnPaths(step, intermediateStep.returnPaths, stepsById, processName);
         }
     }
@@ -340,25 +345,27 @@ function validateReturnPaths(
 
 function validateStepReturnPaths(
     step: IStepWithOutputs,
-    returnPaths: Record<string, string> | undefined,
+    returnPaths: IIntermediateReturnPath[],
     stepsById: Map<string, IIntermediateStep>,
     processName: string
 ) {
-    if (returnPaths === undefined) {
-        return;
-    }
+    for (const path of returnPaths) {
+        let destinationStep: IIntermediateStep | undefined;
+        
+        if (path.connection !== undefined) {
+            destinationStep = stepsById.get(path.connection);
 
-    for (const path in returnPaths) {
-        const destinationStepId = returnPaths[path];
-        const destinationStep = stepsById.get(destinationStepId);
-
-        if (destinationStep === undefined) {
-            throw new Error(`Step ${step.uniqueId} of process "${processName}" links a return path to an unknown step: ${destinationStepId}.`);
+            if (destinationStep === undefined) {
+                throw new Error(`Step ${step.uniqueId} of process "${processName}" links a return path to an unknown step: ${path.connection}.`);
+            }
+            if (!usesInputs(destinationStep.step)) {
+                throw new Error(`Step ${step.uniqueId} of process "${processName}" links a return path to an invalid step: ${path.connection}.`);
+            }
+            step.returnPaths.push({ name: path.name, connection: destinationStep.step });
+            destinationStep.step.inputConnected = true;
         }
-        if (!usesInputs(destinationStep.step)) {
-            throw new Error(`Step ${step.uniqueId} of process "${processName}" links a return path to an invalid step: ${destinationStepId}.`);
+        else {
+            step.returnPaths.push({ name: path.name });
         }
-        step.returnPaths[path] = destinationStep.step;
-        destinationStep.step.inputConnected = true;
     }
 }

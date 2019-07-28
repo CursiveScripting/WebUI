@@ -4,7 +4,7 @@ import { StepDisplay } from './StepDisplay';
 import { VariableDisplay } from './VariableDisplay';
 import { IType } from '../../state/IType';
 import { IRect, ICoord } from '../../state/dimensions';
-import { IStep, IStepWithInputs } from '../../state/IStep';
+import { IStep } from '../../state/IStep';
 import { IVariable } from '../../state/IVariable';
 import { usesInputs, usesOutputs } from '../../services/StepFunctions';
 
@@ -94,16 +94,16 @@ export class LinkCanvas extends React.Component<Props> {
                     this.drawParameterLink(param.type, beginConnector, endConnector);
                 }
 
-                for (const pathName in step.returnPaths) {
-                    const toStep: IStepWithInputs = step.returnPaths[pathName];
-
+                for (const path of step.returnPaths) {
+                    const toStep = path.connection;
+                    
                     if (toStep === undefined) {
                         continue;
                     }
 
                     const toStepDisplay = stepDisplays.get(toStep.uniqueId!)!;
                     
-                    const beginConnector = stepDisplay.getReturnConnectorPos(pathName);
+                    const beginConnector = stepDisplay.getReturnConnectorPos(path.name);
                     const endConnector = toStepDisplay.entryConnectorPos;
                     
                     if (beginConnector !== null && endConnector !== null) {
