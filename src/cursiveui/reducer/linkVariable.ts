@@ -3,6 +3,7 @@ import { isUserProcess } from '../services/ProcessFunctions';
 import { usesOutputs, usesInputs } from '../services/StepFunctions';
 import { validate } from './validate';
 import { IStepParameter } from '../state/IStepParameter';
+import { IVariable } from '../state/IVariable';
 
 export type LinkVariableAction = {
     type: 'link variable';
@@ -22,9 +23,14 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableAction)
         return state;
     }
 
+    process.variables = process.variables.slice();
+
     const variable = action.varName === undefined
         ? undefined
         : process.variables.find(v => v.name === action.varName);
+
+    let oldParameter: IStepParameter | undefined;
+    let oldVariable: IVariable | undefined;
 
     if (action.varName !== undefined && variable === undefined) {
         return state;
@@ -55,13 +61,44 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableAction)
         }
 
         var paramIndex = modifyingParameters.findIndex(p => p.name === action.stepParamName);
+        oldParameter = modifyingParameters[paramIndex];
+
         modifyingParameters[paramIndex] = {
-            ...modifyingParameters[paramIndex],
+            ...oldParameter,
             connection: variable,
         }
         
         return modifiedStep;
     });
+
+    if (oldParameter === undefined) {
+        return state;
+    }
+    
+    if (variable !== undefined) {
+        const varIndex = process.variables.indexOf(variable);
+
+        process.variables[varIndex] = {
+            ...variable,
+            incomingLinks: !action.stepInputParam
+                ? [ ...variable.incomingLinks, oldParameter ]
+                : variable.incomingLinks,
+            outgoingLinks: action.stepInputParam
+                ? [ ...variable.outgoingLinks, oldParameter ]
+                : variable.outgoingLinks,
+        };
+    }
+
+    if (oldVariable !== undefined) {
+        const varIndex = process.variables.indexOf(oldVariable);
+        
+        process.variables[varIndex] = {
+            ...oldVariable,
+            incomingLinks: oldVariable.incomingLinks.filter(p => p !== oldParameter),
+            outgoingLinks: oldVariable.outgoingLinks.filter(p => p !== oldParameter),
+        };
+    }
+
 
     const processes = state.processes.slice();
     processes[processIndex] = process;

@@ -174,7 +174,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                     {defaultInput}
                     <ParameterConnector
                         type={this.props.type}
-                        state={this.props.outputConnected ? ConnectorState.Disconnected : ConnectorState.Connected}
+                        state={this.props.outputConnected ? ConnectorState.Connected : ConnectorState.Disconnected}
                         input={false}
                         onMouseDown={e => this.props.connectorMouseDown(false, e.clientX, e.clientY)}
                         onMouseUp={() => this.props.connectorMouseUp(false)}
