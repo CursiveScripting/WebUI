@@ -126,11 +126,10 @@ export class ProcessContent extends React.PureComponent<Props, State> {
 
     componentDidMount() {
         this.updateContentSize();
-        this.canvas!.drawLinks();
     }
 
     componentDidUpdate() {
-        this.canvas!.drawLinks();
+        this.canvas!.drawLinks(); // Call this here as if the canvas chooses not to render, shouldComponentUpdate is too early for the display references to have been updated.
     }
     
     render() {

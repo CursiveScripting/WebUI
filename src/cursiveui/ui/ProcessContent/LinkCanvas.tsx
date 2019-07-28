@@ -28,6 +28,10 @@ interface Props {
 export class LinkCanvas extends React.Component<Props> {
     private ctx: CanvasRenderingContext2D = undefined as unknown as CanvasRenderingContext2D;
 
+    componentDidMount() {
+        this.drawLinks();
+    }
+
     shouldComponentUpdate(nextProps: Props) {
         // Don't re-render unless the canvas should change size
         return nextProps.width !== this.props.width

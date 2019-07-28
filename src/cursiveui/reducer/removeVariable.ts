@@ -1,6 +1,7 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
 import { validate } from './validate';
+import { usesInputs, usesOutputs } from '../services/StepFunctions';
 
 export type RemoveVariableAction = {
     type: 'remove variable';
@@ -24,10 +25,59 @@ export function removeVariable(state: IWorkspaceState, action: RemoveVariableAct
     }
 
     process.variables = process.variables.slice();
-    process.variables.splice(varIndex, 1);
+    const removedVar = process.variables.splice(varIndex, 1)[0];
 
     const processes = state.processes.slice();
     processes[processIndex] = process;
+
+    process.steps = process.steps.map(sourceStep => {
+        const modifiedStep = { ...sourceStep };
+        let matched = false;
+
+        if (usesInputs(modifiedStep)) {
+            let inputMatched = false;
+            const inputs = modifiedStep.inputs.map(param => {
+                if (param.connection !== undefined && param.connection.name === removedVar.name) { // TODO: why does this fail if we match references?
+                    inputMatched = true;
+                    
+                    return {
+                        name: param.name,
+                        type: param.type,
+                    }
+                }
+                return param;
+            })
+
+            if (inputMatched) {
+                modifiedStep.inputs = inputs;
+                matched = true;
+            }
+        }
+
+        if (usesOutputs(modifiedStep)) {
+            let outputMatched = false;
+            const outputs = modifiedStep.outputs.map(param => {
+                if (param.connection !== undefined && param.connection.name === removedVar.name) { // TODO: why does this fail if we match references?
+                    outputMatched = true;
+
+                    return {
+                        name: param.name,
+                        type: param.type,
+                    }
+                }
+                return param;
+            })
+
+            if (outputMatched) {
+                modifiedStep.outputs = outputs;
+                matched = true;
+            }
+        }
+
+        return matched
+            ? modifiedStep
+            : sourceStep;
+    })
 
     process.errors = validate(process, processes);
 
