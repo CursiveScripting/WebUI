@@ -1,7 +1,8 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
 import { validate } from './validate';
-import { usesOutputs, anyStepLinksTo } from '../services/StepFunctions';
+import { usesOutputs, anyStepLinksTo, usesInputs } from '../services/StepFunctions';
+import { IStepParameter } from '../state/IStepParameter';
 
 export type RemoveStepAction = {
     type: 'remove step';
@@ -30,13 +31,32 @@ export function removeStep(state: IWorkspaceState, action: RemoveStepAction) {
 
     process.steps.splice(stepIndex, 1);
 
+    let inParameters = usesInputs(removedStep)
+        ? removedStep.inputs
+        : [];
+
+    let outParameters: IStepParameter[];
+
     if (usesOutputs(removedStep)) {
+        outParameters = removedStep.outputs;
+
         for (const path of removedStep.returnPaths) {
             if (path.connection !== undefined && !anyStepLinksTo(path.connection, process.steps)) {
                 path.connection.inputConnected = false;
             }
         }
     }
+    else {
+        outParameters = [];
+    }
+
+    process.variables = process.variables.map(variable => {
+        return {
+            ...variable,
+            fromLinks: variable.fromLinks.filter(link => outParameters.indexOf(link) === -1),
+            toLinks: variable.toLinks.filter(link => inParameters.indexOf(link) === -1),
+        }
+    });
 
     const processes = state.processes.slice();
     processes[processIndex] = process;
