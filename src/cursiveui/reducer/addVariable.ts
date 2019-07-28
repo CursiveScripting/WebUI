@@ -30,8 +30,8 @@ export function addVariable(state: IWorkspaceState, action: AddVariableAction) {
     process.variables = [...process.variables, {
         name: action.varName,
         type: type,
-        fromLinks: [],
-        toLinks: [],
+        incomingLinks: [],
+        outgoingLinks: [],
         initialValue: null,
         x: action.x,
         y: action.y,

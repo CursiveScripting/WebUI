@@ -53,8 +53,8 @@ export function removeStep(state: IWorkspaceState, action: RemoveStepAction) {
     process.variables = process.variables.map(variable => {
         return {
             ...variable,
-            fromLinks: variable.fromLinks.filter(link => outParameters.indexOf(link) === -1),
-            toLinks: variable.toLinks.filter(link => inParameters.indexOf(link) === -1),
+            incomingLinks: variable.incomingLinks.filter(link => outParameters.indexOf(link) === -1),
+            outgoingLinks: variable.outgoingLinks.filter(link => inParameters.indexOf(link) === -1),
         }
     });
 

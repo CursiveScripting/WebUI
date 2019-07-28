@@ -3,7 +3,7 @@ import { IStepParameter } from './IStepParameter';
 import { ICoord } from './dimensions';
 
 export interface IVariable extends ICoord, IParameter {
-    fromLinks: IStepParameter[];
-    toLinks: IStepParameter[];
+    incomingLinks: IStepParameter[];
+    outgoingLinks: IStepParameter[];
     initialValue: string | null;
 }

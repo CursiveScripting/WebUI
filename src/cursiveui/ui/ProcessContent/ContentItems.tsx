@@ -280,8 +280,8 @@ export const ContentItems = (props: Props) => {
                 y={varPos.y}
                 canEdit={canEdit}
                 focused={focusThisVar}
-                inputConnected={variable.fromLinks.length > 0}
-                outputConnected={variable.toLinks.length > 0}
+                inputConnected={variable.incomingLinks.length > 0}
+                outputConnected={variable.outgoingLinks.length > 0}
                 inProcessName={props.processName}
                 key={variable.name}
                 

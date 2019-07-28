@@ -126,8 +126,8 @@ function loadProcessParameters(
             dataField = {
                 name: paramName,
                 type,
-                fromLinks: [],
-                toLinks: [],
+                incomingLinks: [],
+                outgoingLinks: [],
                 x: parseInt(node.getAttribute('x')!),
                 y: parseInt(node.getAttribute('y')!),
                 initialValue: node.getAttribute('initialValue'),
