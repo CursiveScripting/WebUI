@@ -93,9 +93,13 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
         });
 
         const errors = useMemo(() => this.getErrors(), [
+            // eslint-disable-next-line 
             this.state.nameValid,
+            // eslint-disable-next-line 
             this.state.returnPathValidity,
+            // eslint-disable-next-line 
             this.state.inputValidity,
+            // eslint-disable-next-line 
             this.state.outputValidity,
         ]);
 
@@ -109,6 +113,7 @@ export class ProcessEditor extends React.PureComponent<Props, State> {
         const save = !canSave ? undefined : () => this.saveChanges();
         const cancel = () => this.props.close();
 
+        // eslint-disable-next-line
         const canDelete = useMemo(() => this.props.process !== undefined && !isProcessUsedAnywhere(this.props.process, this.props.allProcesses), [this.props.process, this.props.allProcesses])
         
         const deleteProcess = canDelete
