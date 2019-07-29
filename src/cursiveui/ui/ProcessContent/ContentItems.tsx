@@ -213,6 +213,12 @@ export const ContentItems = (props: Props) => {
             returnPaths = [];
         }
 
+        const returnPathName = isStopStep(step)
+            ? step.returnPath !== null
+                ? step.returnPath
+                : undefined
+            : undefined;
+
         return (
             <StepDisplay
                 ref={s => { if (s !== null) { props.stepRefs.set(step.uniqueId, s); } else { props.stepRefs.delete(step.uniqueId); }}}
@@ -227,6 +233,7 @@ export const ContentItems = (props: Props) => {
                 uniqueId={step.uniqueId}
                 x={stepPos.x}
                 y={stepPos.y}
+                returnPathName={returnPathName}
 
                 inProcessName={props.processName}
                 inputConnected={inputConnected}
