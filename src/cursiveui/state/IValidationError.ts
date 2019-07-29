@@ -1,13 +1,17 @@
+import { IStep } from './IStep';
+import { IVariable } from './IVariable';
+import { IStepParameter } from './IStepParameter';
+
 interface IValidationError {
     message: string;
 }
 
 interface IVariableValidationError extends IValidationError {
-    varName: string;
+    variable: IVariable;
 }
 
 interface IStepValidationError extends IValidationError {
-    stepId: string;
+    step: IStep;
 }
 
 interface IReturnPathValidationError extends IStepValidationError {
@@ -15,7 +19,7 @@ interface IReturnPathValidationError extends IStepValidationError {
 }
 
 interface IParameterValidationError extends IStepValidationError {
-    paramName: string;
+    parameter: IStepParameter;
     isInput: boolean;
 }
 
