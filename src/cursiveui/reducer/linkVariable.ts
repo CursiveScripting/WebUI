@@ -30,6 +30,7 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableAction)
         : process.variables.find(v => v.name === action.varName);
 
     let oldParameter: IStepParameter | undefined;
+    let newParameter: IStepParameter | undefined;
     let oldVariable: IVariable | undefined;
 
     if (action.varName !== undefined && variable === undefined) {
@@ -63,15 +64,17 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableAction)
         var paramIndex = modifyingParameters.findIndex(p => p.name === action.stepParamName);
         oldParameter = modifyingParameters[paramIndex];
 
-        modifyingParameters[paramIndex] = {
+        newParameter = {
             ...oldParameter,
             connection: variable,
-        }
+        };
+
+        modifyingParameters[paramIndex] = newParameter;
         
         return modifiedStep;
     });
 
-    if (oldParameter === undefined) {
+    if (oldParameter === undefined || newParameter === undefined) {
         return state;
     }
     
@@ -81,10 +84,10 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableAction)
         process.variables[varIndex] = {
             ...variable,
             incomingLinks: !action.stepInputParam
-                ? [ ...variable.incomingLinks, oldParameter ]
+                ? [ ...variable.incomingLinks, newParameter ]
                 : variable.incomingLinks,
             outgoingLinks: action.stepInputParam
-                ? [ ...variable.outgoingLinks, oldParameter ]
+                ? [ ...variable.outgoingLinks, newParameter ]
                 : variable.outgoingLinks,
         };
     }
