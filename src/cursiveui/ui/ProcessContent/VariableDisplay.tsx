@@ -159,7 +159,12 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                     style={colorStyle}
                 >
                     <div className="processItem__name">{this.props.name}</div>
-                    <div className="processItem__delete" onClick={removeVar} title="remove this variable" />
+                    <div
+                        className="processItem__delete"
+                        onClick={removeVar}
+                        title="remove this variable"
+                        onMouseDown={e => e.stopPropagation()}
+                    />
                 </div>
                 
                 <div className="processItem__parameters">

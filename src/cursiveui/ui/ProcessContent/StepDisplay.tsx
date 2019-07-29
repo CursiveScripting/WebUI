@@ -118,11 +118,16 @@ export class StepDisplay extends React.PureComponent<Props, State> {
         };
 
         const deleteStep = this.props.canDelete
-            ? <div className="processItem__delete" onClick={() => this.context({
-                type: 'remove step',
-                processName: this.props.inProcessName,
-                stepId: this.props.uniqueId,
-            })} title="remove this step" />
+            ? <div
+                className="processItem__delete"
+                onClick={() => this.context({
+                    type: 'remove step',
+                    processName: this.props.inProcessName,
+                    stepId: this.props.uniqueId,
+                })}
+                title="remove this step"
+                onMouseDown={e => e.stopPropagation()}
+            />
             : undefined
 
         return (
