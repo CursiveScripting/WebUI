@@ -5,8 +5,7 @@ import { validate } from './validate';
 import { IStepParameter } from '../state/IStepParameter';
 import { IVariable } from '../state/IVariable';
 
-export type LinkVariableAction = {
-    type: 'link variable';
+export type LinkVariableBase = {
     inProcessName: string;
     varName?: string;
     stepId: string;
@@ -14,7 +13,11 @@ export type LinkVariableAction = {
     stepInputParam: boolean;
 }
 
-export function linkVariable(state: IWorkspaceState, action: LinkVariableAction) {
+export type LinkVariableAction = {
+    type: 'link variable';
+} & LinkVariableBase
+
+export function linkVariable(state: IWorkspaceState, action: LinkVariableBase) {
     const processIndex = state.processes.findIndex(p => p.name === action.inProcessName);
 
     const process = { ...state.processes[processIndex] };

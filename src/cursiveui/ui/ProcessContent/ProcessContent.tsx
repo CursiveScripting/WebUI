@@ -247,30 +247,16 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                 break;
             }
             case DragType.StepParameter: {
-                const gridDropPos = {
-                    x: alignToGrid(dragging.x),
-                    y: alignToGrid(dragging.y),
-                };
-
-                const newVarName = determineVariableName(dragging.param.type.name, this.props.variables)
-                
-                // TODO: combine these into a single action, to allow undoing in a single step?
                 this.context({
-                    type: 'add variable',
+                    type: 'link new variable',
                     inProcessName: this.props.processName,
                     typeName: dragging.param.type.name,
-                    varName: newVarName,
-                    x: gridDropPos.x,
-                    y: gridDropPos.y,
-                });
-                
-                this.context({
-                    type: 'link variable',
-                    inProcessName: this.props.processName,
+                    varName: determineVariableName(dragging.param.type.name, this.props.variables),
+                    x: alignToGrid(dragging.x),
+                    y: alignToGrid(dragging.y),
                     stepId: dragging.step.uniqueId,
                     stepInputParam: dragging.input,
                     stepParamName: dragging.param.name,
-                    varName: newVarName,
                 });
                 break;
             }

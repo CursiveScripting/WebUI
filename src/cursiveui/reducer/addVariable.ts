@@ -3,8 +3,7 @@ import { isUserProcess } from '../services/ProcessFunctions';
 import { IVariable } from '../state/IVariable';
 import { validate } from './validate';
 
-export type AddVariableAction = {
-    type: 'add variable';
+export type AddVariableBase = {
     inProcessName: string;
     typeName: string;
     varName: string;
@@ -12,7 +11,11 @@ export type AddVariableAction = {
     y: number;
 }
 
-export function addVariable(state: IWorkspaceState, action: AddVariableAction) {
+export type AddVariableAction = {
+    type: 'add variable';
+} & AddVariableBase
+
+export function addVariable(state: IWorkspaceState, action: AddVariableBase) {
     const type = state.types.find(t => t.name === action.typeName);
     
     if (type === undefined) {

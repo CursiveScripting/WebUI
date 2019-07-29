@@ -14,6 +14,8 @@ import { moveVariable, MoveVariableAction } from './moveVariable';
 import { setReturnPath, SetReturnPathAction } from './setReturnPath';
 import { linkVariable, LinkVariableAction } from './linkVariable';
 import { setVariable, SetVariableAction } from './setVariable';
+import { linkNewVariable, LinkNewVariableAction } from './linkNewVariable';
+import { linkViaVariable, LinkViaVariableAction } from './linkViaVariable';
 
 export type WorkspaceAction = LoadAction
 | AddProcessAction
@@ -29,6 +31,8 @@ export type WorkspaceAction = LoadAction
 | SetReturnPathAction
 | LinkVariableAction
 | SetVariableAction
+| LinkNewVariableAction
+| LinkViaVariableAction
 
 
 export const WorkspaceDispatchContext = createContext<Dispatch<WorkspaceAction>>(ignore => {});
@@ -79,5 +83,11 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
 
         case 'set variable':
             return setVariable(state, action);
+
+        case 'link new variable':
+            return linkNewVariable(state, action);
+
+        case 'link via variable':
+            return linkViaVariable(state, action);
     }
 }

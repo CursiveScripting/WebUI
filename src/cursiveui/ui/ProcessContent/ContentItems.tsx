@@ -81,33 +81,22 @@ export const ContentItems = (props: Props) => {
             if (props.dragging.type === DragType.StepParameter && props.dragging.input !== input) {
                 // link both parameters with a variable
                 const varType = props.dragging.param.type;
-                const varName = determineVariableName(varType.name, props.variables);
 
                 context({
-                    type: 'add variable',
+                    type: 'link via variable',
                     typeName: varType.name,
                     inProcessName: props.processName,
-                    varName,
+                    varName: determineVariableName(varType.name, props.variables),
                     x: props.dragging.x + step.x,
                     y: props.dragging.y + step.y,
-                });
 
-                context({
-                    type: 'link variable',
-                    inProcessName: props.processName,
-                    stepId: step.uniqueId,
-                    stepParamName: param.name,
-                    stepInputParam: input,
-                    varName,
-                });
+                    fromStepId: step.uniqueId,
+                    fromStepParamName: param.name,
+                    fromStepInputParam: input,
 
-                context({
-                    type: 'link variable',
-                    inProcessName: props.processName,
-                    stepId: props.dragging.step.uniqueId,
-                    stepParamName: props.dragging.param.name,
-                    stepInputParam: props.dragging.input,
-                    varName,
+                    toStepId: props.dragging.step.uniqueId,
+                    toStepParamName: props.dragging.param.name,
+                    toStepInputParam: props.dragging.input,
                 });
             }
             else if (props.dragging.type === DragType.VarParameter && props.dragging.input !== input) {
