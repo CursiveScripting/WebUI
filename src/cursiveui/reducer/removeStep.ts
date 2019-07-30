@@ -31,6 +31,31 @@ export function removeStep(state: IWorkspaceState, action: RemoveStepAction) {
 
     process.steps.splice(stepIndex, 1);
 
+    if (usesInputs(removedStep)) {
+        process.steps = process.steps.map(unmodifiedStep => {
+            const modifiedStep = { ...unmodifiedStep };
+            let foundMatch = false;
+
+            if (usesOutputs(modifiedStep)) {
+                modifiedStep.returnPaths = modifiedStep.returnPaths.map(returnPath => {
+                    if (returnPath.connection === removedStep) {
+                        foundMatch = true;
+                        return {
+                            ...returnPath,
+                            connection: undefined,
+                        };
+                    }
+
+                    return returnPath;
+                });
+            }
+
+            return foundMatch
+                ? modifiedStep
+                : unmodifiedStep;
+        });
+    }
+
     let inParameters = usesInputs(removedStep)
         ? removedStep.inputs
         : [];
