@@ -12,14 +12,14 @@
 
 .tool__label {
     font-style: italic;
+    height: 1rem;
 }
 
 .tool__icon {
     font-size: 2em;
+    height: 2rem;
     align-self: center;
     cursor: pointer;
-    position: relative;
-    top: -0.333em;
 }
 
 .tool--disabled {
@@ -32,7 +32,12 @@
 
 .tool--invalid .tool__icon {
     color: #ff0000;
-    cursor: not-allowed;
+    cursor: default;
+}
+
+.tool__icon::before {
+    position: relative;
+    top: -0.125em;
 }
 
 .tool--save .tool__icon::before {

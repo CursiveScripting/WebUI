@@ -2,14 +2,14 @@
     z-index: 5;
     background-color: white;
     padding: 1em;
-    border-radius: 0.5em;
+    border-bottom-left-radius: 0.5em;
+    border-bottom-right-radius: 0.5em;
     border: solid grey 1px;
-    position: absolute;
-    top: 3em;
     display: none;
+    border-top-width: 0px;
 }
 
-.saveTool:hover .validationSummary, .saveTool:active .validationSummary {
+.tool--save:hover .validationSummary, .tool--save:active .validationSummary {
     display: block;
 }
 
@@ -24,4 +24,8 @@
 
 .validationSummary__item:not(:last-child) {
     padding-bottom: 0.5em;
+}
+
+.validationSummary__item:hover {
+    color: red;
 }
