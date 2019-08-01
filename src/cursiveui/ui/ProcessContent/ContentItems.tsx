@@ -10,10 +10,12 @@ import { ICoord } from '../../state/dimensions';
 import { IVariable } from '../../state/IVariable';
 import { IStepParameter } from '../../state/IStepParameter';
 import { IReturnPath } from '../../state/IReturnPath';
+import { IValidationError } from '../../state/IValidationError';
 
 interface Props {
     steps: IStep[];
     variables: IVariable[];
+    errors: IValidationError[];
     stepRefs: Map<string, StepDisplay>;
     varRefs: Map<string, VariableDisplay>;
 
@@ -24,24 +26,18 @@ interface Props {
     setDragging: (dragging: DragInfo | undefined) => void;
 
     processName: string;
-    focusVariableName?: string;
-    focusStepId?: string;
-    focusParameter?: IStepParameter;
-    focusReturnPath?: string | null;
+
+    focusError?: IValidationError;
 }
 
 export const ContentItems = (props: Props) => {
     const context = React.useContext(WorkspaceDispatchContext);
 
     useEffect(() => {
-        if (props.focusStepId !== undefined) {
-            props.stepRefs.get(props.focusStepId)!.scrollIntoView();
+        if (props.focusError !== undefined) {
+            props.stepRefs.get(props.focusError.step.uniqueId)!.scrollIntoView();
         }
-
-        if (props.focusVariableName !== undefined) {
-            props.varRefs.get(props.focusVariableName)!.scrollIntoView();   
-        }
-    }, [props.focusStepId, props.focusVariableName, props.stepRefs, props.varRefs])
+    }, [props.focusError, props.stepRefs, props.varRefs])
 
     const startDragStepHeader = (step: IStep, x: number, y: number, displayX: number, displayY: number) => props.setDragging({
         type: DragType.Step,
@@ -176,10 +172,17 @@ export const ContentItems = (props: Props) => {
 
     props.stepRefs.clear();
 
+    const focusStep = props.focusError === undefined
+        ? undefined
+        : props.focusError.step;
+
     const steps = props.steps.map(step => {
-        const focusThisStep = step.uniqueId === props.focusStepId;
+        const focusThisStep = step === focusStep;
+        if (focusThisStep) {
+
+        }
         
-        const isValid = true; // TODO: determine this
+        const isValid = !props.errors.find(e => e.step === step);
 
         const stepPos: ICoord = props.dragging !== undefined
             && props.dragging.type === DragType.Step
@@ -238,8 +241,8 @@ export const ContentItems = (props: Props) => {
                 inProcessName={props.processName}
                 inputConnected={inputConnected}
                 focused={focusThisStep}
-                focusParameter={focusThisStep ? props.focusParameter : undefined}
-                focusReturnPath={focusThisStep ? props.focusReturnPath : undefined}
+                focusParameter={focusThisStep ? props.focusError!.parameter : undefined}
+                focusReturnPath={focusThisStep ? props.focusError!.returnPath : undefined}
                 readonly={false}
                 canDelete={step.stepType !== StepType.Start}
                 headerMouseDown={(x, y, displayX, displayY) => startDragStepHeader(step, x, y, displayX, displayY)}
@@ -258,8 +261,6 @@ export const ContentItems = (props: Props) => {
     const variables = props.variables.map(variable => {
         const canEdit = true; // TODO: determine this based on type having a validationExpression or not
 
-        const focusThisVar = variable.name === props.focusVariableName;
-        
         const varPos: ICoord = props.dragging !== undefined
             && props.dragging.type === DragType.Variable
             && props.dragging.variable === variable
@@ -275,7 +276,6 @@ export const ContentItems = (props: Props) => {
                 x={varPos.x}
                 y={varPos.y}
                 canEdit={canEdit}
-                focused={focusThisVar}
                 inputConnected={variable.incomingLinks.length > 0}
                 outputConnected={variable.outgoingLinks.length > 0}
                 inProcessName={props.processName}

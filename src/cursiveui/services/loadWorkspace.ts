@@ -6,7 +6,7 @@ import { IProcess } from '../state/IProcess';
 import { IType } from '../state/IType';
 import { IParameter } from '../state/IParameter';
 import { createEmptyStartStep } from './StepFunctions';
-import { ValidationError } from '../state/IValidationError';
+import { IValidationError } from '../state/IValidationError';
 
 export function loadWorkspace(workspaceData: Document | string) {
     const rootElement = isString(workspaceData)
@@ -38,7 +38,7 @@ function loadWorkspaceFromElement(workspaceData: HTMLElement): IWorkspaceState {
         processesByName[process.name] = process;
     }
 
-    const errors: Record<string, ValidationError[]> = {};
+    const errors: Record<string, IValidationError[]> = {};
 
     procNodes = workspaceData.getElementsByTagName('RequiredProcess');
     for (const procNode of procNodes) {

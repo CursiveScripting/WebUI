@@ -15,12 +15,14 @@ import { DropInfo } from '../WorkspaceEditor';
 import { IStep } from '../../state/IStep';
 import { IVariable } from '../../state/IVariable';
 import { IStepParameter } from '../../state/IStepParameter';
+import { IValidationError } from '../../state/IValidationError';
 
 interface Props {
     processName: string;
     steps: IStep[];
     variables: IVariable[];
-    
+    errors: IValidationError[];
+
     typesByName: Map<string, IType>;
     processesByName: Map<string, IProcess>;
 
@@ -29,10 +31,7 @@ interface Props {
     dropping?: DropInfo;
     dropComplete: () => void;
 
-    focusStepId?: string;
-    focusStepParameter?: IStepParameter;
-    focusStepReturnPath?: string | null;
-    focusVariableName?: string;
+    focusError?: IValidationError;
 }
 
 interface State {
@@ -172,6 +171,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                         processName={this.props.processName}
                         steps={this.props.steps}
                         variables={this.props.variables}
+                        errors={this.props.errors}
                         varRefs={this.variableDisplays}
                         stepRefs={this.stepDisplays}
                         minScreenX={this.state.minScreenX}
@@ -187,10 +187,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
                             }
                         })}
 
-                        focusStepId={this.props.focusStepId}
-                        focusParameter={this.props.focusStepParameter}
-                        focusReturnPath={this.props.focusStepReturnPath}
-                        focusVariableName={this.props.focusVariableName}
+                        focusError={this.props.focusError}
                     />
                 </ScrollWrapper>
             </ContentWrapper>

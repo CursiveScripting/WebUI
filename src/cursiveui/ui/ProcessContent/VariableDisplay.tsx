@@ -16,7 +16,6 @@ interface Props extends ICoord {
     inputConnected: boolean;
     outputConnected: boolean;
     canEdit: boolean;
-    focused: boolean;
     inProcessName: string;
     headerMouseDown: (mouseX: number, mouseY: number, displayX: number, displayY: number) => void;
     connectorMouseDown: (input: boolean, x: number, y: number) => void;
@@ -97,12 +96,6 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
     }
     
     render() {
-        let rootClasses = 'processItem processItem--var';
-
-        if (this.props.focused) {
-            rootClasses += ' processItem--focused';
-        }
-
         const style = {
             left: this.props.x,
             top: this.props.y,
@@ -152,7 +145,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
         });
 
         return (
-            <div className={rootClasses} style={style} ref={r => { if (r !== null) { this.root = r; }}}>
+            <div className="processItem processItem--var" style={style} ref={r => { if (r !== null) { this.root = r; }}}>
                 <div
                     className="processItem__header"
                     onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY, this.root!.offsetLeft, this.root!.offsetTop)}

@@ -10,9 +10,8 @@ import { IType } from '../state/IType';
 import { createMap } from '../services/DataFunctions';
 import { WorkspaceDispatchContext } from '../reducer';
 import { IUndoRedoAction } from '../services/useUndoReducer';
-import { ValidationError, errorHasStep, errorHasReturnPath, errorHasParameter } from '../state/IValidationError';
+import { IValidationError } from '../state/IValidationError';
 import { isUserProcess } from '../services/ProcessFunctions';
-import { IStepParameter } from '../state/IStepParameter';
 
 interface Props {
     processes: IProcess[];
@@ -43,10 +42,7 @@ interface State {
 
     editingSignature: boolean;
     dropping?: DropInfo;
-    focusStepId?: string;
-    focusStepParameter?: IStepParameter;
-    focusStepReturnPath?: string | null;
-    focusVariableName?: string;
+    focusError?: IValidationError;
 }
 
 export class WorkspaceEditor extends React.PureComponent<Props, State> {
@@ -157,17 +153,14 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 className="workspaceEditor__content"
                 steps={this.state.openProcess.steps}
                 variables={this.state.openProcess.variables}
+                errors={this.state.openProcess.errors}
                 processName={this.state.openProcess.name}
                 processesByName={this.state.processesByName}
                 typesByName={this.state.typesByName}
 
                 dropping={this.state.dropping}
                 dropComplete={() => this.dropCompleted()}
-
-                focusStepId={this.state.focusStepId}
-                focusStepParameter={this.state.focusStepParameter}
-                focusStepReturnPath={this.state.focusStepReturnPath}
-                focusVariableName={this.state.focusVariableName}
+                focusError={this.state.focusError}
             />
         );
     }
@@ -181,7 +174,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 saveProcesses={this.props.save}
                 undo={this.props.undo}
                 redo={this.props.redo}
-                focusError={error => this.focusOnError(error)}
+                focusError={error => this.setState({ focusError: error })}
             />
         );
     }
@@ -277,23 +270,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
 
         this.setState({
             openProcess: this.state.openProcess,
-        });
-    }
-
-    private focusOnError(error?: ValidationError) {
-        if (error === undefined) {
-            this.setState({
-                focusStepId: undefined,
-                focusStepParameter: undefined,
-                focusStepReturnPath: undefined,
-            });
-            return;
-        }
-
-        this.setState({
-            focusStepId: errorHasStep(error) ? error.step.uniqueId : undefined,
-            focusStepParameter: errorHasParameter(error) ? error.parameter : undefined,
-            focusStepReturnPath: errorHasReturnPath(error) ? error.returnPath : undefined,
         });
     }
 }

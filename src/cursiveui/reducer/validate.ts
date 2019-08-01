@@ -1,13 +1,13 @@
 import { IUserProcess } from '../state/IUserProcess';
 import { IProcess } from '../state/IProcess';
-import { ValidationError } from '../state/IValidationError';
+import { IValidationError } from '../state/IValidationError';
 import { usesInputs, usesOutputs } from '../services/StepFunctions';
 import { IStep, StepType, IStepWithOutputs } from '../state/IStep';
 import { IVariable } from '../state/IVariable';
 import { IStartStep } from '../state/IStartStep';
 
 export function validate(process: IUserProcess, allProcesses: IProcess[]) {
-    const errors: ValidationError[] = [];
+    const errors: IValidationError[] = [];
 
     for (const step of process.steps) {
         if (usesInputs(step)) {
@@ -23,7 +23,6 @@ export function validate(process: IUserProcess, allProcesses: IProcess[]) {
                     errors.push({
                         step: step,
                         parameter: input,
-                        isInput: true,
                         message: 'Input not connected',
                     });
                 }
@@ -53,7 +52,7 @@ export function validate(process: IUserProcess, allProcesses: IProcess[]) {
     return errors;
 }
 
-function checkUnassignedVariableUse(currentStep: IStepWithOutputs, visitedSteps: IStep[], unassignedVariables: IVariable[], errors: ValidationError[]) {
+function checkUnassignedVariableUse(currentStep: IStepWithOutputs, visitedSteps: IStep[], unassignedVariables: IVariable[], errors: IValidationError[]) {
     visitedSteps.push(currentStep);
 
     unassignedVariables = unassignedVariables.slice();
@@ -89,7 +88,6 @@ function checkUnassignedVariableUse(currentStep: IStepWithOutputs, visitedSteps:
                     errors.push({
                         step: nextStep,
                         parameter: input,
-                        isInput: true,
                         message: `Variable is used before it is assigned: ${input.connection.name}`,
                     });
                     return false; // once an uninitialized variable is used, stop down this branch

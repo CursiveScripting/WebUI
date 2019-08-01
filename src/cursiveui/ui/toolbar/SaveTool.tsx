@@ -1,12 +1,12 @@
 import * as React from 'react';
 import './ValidationSummary.css';
-import { ValidationError } from '../../state/IValidationError';
+import { IValidationError } from '../../state/IValidationError';
 
 export interface SaveToolProps {
-    validationErrors: ValidationError[];
+    validationErrors: IValidationError[];
     otherProcessesHaveErrors: boolean;
     saveProcesses?: () => void;
-    focusError: (error: ValidationError | undefined) => void;
+    focusError: (error: IValidationError | undefined) => void;
 }
 
 export class SaveTool extends React.PureComponent<SaveToolProps, {}> {
@@ -55,7 +55,7 @@ export class SaveTool extends React.PureComponent<SaveToolProps, {}> {
         );
     }
 
-    private renderValidationError(error: ValidationError, index: number) {
+    private renderValidationError(error: IValidationError, index: number) {
         const focusError = () => this.props.focusError(error);
         const clearFocus = () => this.props.focusError(undefined);
 
