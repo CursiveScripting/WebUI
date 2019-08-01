@@ -1,13 +1,8 @@
 import { IStep } from './IStep';
-import { IVariable } from './IVariable';
 import { IStepParameter } from './IStepParameter';
 
 interface IValidationError {
     message: string;
-}
-
-interface IVariableValidationError extends IValidationError {
-    variable: IVariable;
 }
 
 interface IStepValidationError extends IValidationError {
@@ -23,7 +18,18 @@ interface IParameterValidationError extends IStepValidationError {
     isInput: boolean;
 }
 
-export type ValidationError = IVariableValidationError
-| IStepValidationError
+export type ValidationError = IStepValidationError
 | IReturnPathValidationError
 | IParameterValidationError
+
+export function errorHasStep(error: ValidationError) : error is IStepValidationError {
+    return (error as any).step !== undefined;
+}
+
+export function errorHasParameter(error: ValidationError) : error is IParameterValidationError {
+    return (error as any).parameter !== undefined;
+}
+
+export function errorHasReturnPath(error: ValidationError) : error is IReturnPathValidationError {
+    return (error as any).step !== undefined;
+}

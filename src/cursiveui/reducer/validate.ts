@@ -42,15 +42,6 @@ export function validate(process: IUserProcess, allProcesses: IProcess[]) {
             }
         }
     }
-    
-    for (const variable of process.variables) {
-        if (variable.outgoingLinks.length > 0 && variable.incomingLinks.length === 0 && variable.initialValue === null) {
-            errors.push({
-                variable,
-                message: 'Variable is used without being initialised',
-            });
-        }
-    }
 
     const startStep = process.steps.find(s => s.stepType === StepType.Start);
 

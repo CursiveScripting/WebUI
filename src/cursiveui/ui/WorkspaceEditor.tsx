@@ -10,7 +10,7 @@ import { IType } from '../state/IType';
 import { createMap } from '../services/DataFunctions';
 import { WorkspaceDispatchContext } from '../reducer';
 import { IUndoRedoAction } from '../services/useUndoReducer';
-import { ValidationError } from '../state/IValidationError';
+import { ValidationError, errorHasStep, errorHasReturnPath, errorHasParameter } from '../state/IValidationError';
 import { isUserProcess } from '../services/ProcessFunctions';
 import { IStepParameter } from '../state/IStepParameter';
 
@@ -290,12 +290,10 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
             return;
         }
 
-        /*
         this.setState({
-            focusStep: error.step,
-            focusStepParameter: error.parameter === null ? undefined : error.parameter,
-            focusStepReturnPath: error.returnPath,
+            focusStepId: errorHasStep(error) ? error.step.uniqueId : undefined,
+            focusStepParameter: errorHasParameter(error) ? error.parameter : undefined,
+            focusStepReturnPath: errorHasReturnPath(error) ? error.returnPath : undefined,
         });
-        */
     }
 }
