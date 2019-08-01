@@ -83,8 +83,8 @@ export const ContentItems = (props: Props) => {
                     typeName: varType.name,
                     inProcessName: props.processName,
                     varName: determineVariableName(varType.name, props.variables),
-                    x: props.dragging.x + step.x,
-                    y: props.dragging.y + step.y,
+                    x: (props.dragging.step.x + step.x) / 2,
+                    y: (props.dragging.step.y + step.y) / 2,
 
                     fromStepId: step.uniqueId,
                     fromStepParamName: param.name,
