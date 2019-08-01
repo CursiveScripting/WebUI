@@ -7,6 +7,7 @@ interface Props {
     value: string;
     isValid: boolean;
     valueChanged: (value: string) => void;
+    doneEditing?: () => void;
 }
 
 export const ValueInput: React.FunctionComponent<Props> = props => {
@@ -21,11 +22,15 @@ export const ValueInput: React.FunctionComponent<Props> = props => {
         classes += ' ' + props.className;
     }
 
-    const valueChanged = (e: React.ChangeEvent<HTMLInputElement>) => props.valueChanged(e.target.value);
+    const onChange = (e: React.ChangeEvent<HTMLInputElement>) => props.valueChanged(e.target.value);
+    const onBlur = props.doneEditing === undefined
+        ? undefined
+        : () => props.doneEditing!();
 
     return <ContentEditable
         className={classes}
         html={props.value}
-        onChange={valueChanged}
+        onChange={onChange}
+        onBlur={onBlur}
     />
 }

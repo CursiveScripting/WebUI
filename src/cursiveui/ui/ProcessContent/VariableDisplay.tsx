@@ -36,7 +36,6 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
     private inputConnector: HTMLDivElement | undefined;
     private outputConnector: HTMLDivElement | undefined;
 
-
     public get inputConnectorPos() {
         return getDescendentMidLeftPos(this.props, this.inputConnector!);
     }
@@ -70,7 +69,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
     }
 
     componentWillReceiveProps(newProps: Props) {
-        if (newProps.initialValue !== this.state.initialValue) {
+        if (newProps.initialValue !== this.props.initialValue && newProps.initialValue !== this.state.initialValue) {
             const widthIncreased = newProps.initialValue !== null
                 && (this.state.initialValue === null || newProps.initialValue.length >= this.state.initialValue.length);
 
@@ -110,11 +109,15 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
         let defaultInput;
         if (this.props.canEdit) {
             const strVal = this.state.initialValue === null ? '' : this.state.initialValue;
-            const valChanged = (val: string) => this.context({
+
+            const valueChanged = (val: string) => this.setState({ initialValue: val });
+            const doneEditing = () => this.context({
                 type: 'set variable',
                 inProcessName: this.props.inProcessName,
                 varName: this.props.name,
-                initialValue: val === '' ? null : val,
+                initialValue: this.state.initialValue === ''
+                    ? null
+                    : this.state.initialValue,
             });
             
             const isValid = isValueValid(this.state.initialValue, this.props.type.validationExpression);
@@ -123,11 +126,11 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                 // [this.state.initialValue, this.props.type.validationExpression]
             // );
 
-            // TODO: only update context when done editing, not on every change.
             defaultInput = <ValueInput
                 className="processItem__default"
                 value={strVal}
-                valueChanged={val => valChanged(val)}
+                valueChanged={valueChanged}
+                doneEditing={doneEditing}
                 isValid={isValid}
             />
         }
