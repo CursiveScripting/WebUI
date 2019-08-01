@@ -111,14 +111,29 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
             const strVal = this.state.initialValue === null ? '' : this.state.initialValue;
 
             const valueChanged = (val: string) => this.setState({ initialValue: val });
-            const doneEditing = () => this.context({
-                type: 'set variable',
-                inProcessName: this.props.inProcessName,
-                varName: this.props.name,
-                initialValue: this.state.initialValue === ''
-                    ? null
-                    : this.state.initialValue,
-            });
+
+            const doneEditing = () => {
+                let val = this.state.initialValue;
+
+                if (val !== null) {
+                    val = val
+                        .replace(/<div>/g, '\n')
+                        .replace(/<\/?div>/g, '')
+                        .replace(/<br ?\/?>/g, '\n')
+                        .trim();
+                        
+                    if (val.length === 0) {
+                        val = null;
+                    }
+                }
+                
+                this.context({
+                    type: 'set variable',
+                    inProcessName: this.props.inProcessName,
+                    varName: this.props.name,
+                    initialValue: val,
+                });
+            };
             
             const isValid = isValueValid(this.state.initialValue, this.props.type.validationExpression);
             // const isValid = useMemo(
