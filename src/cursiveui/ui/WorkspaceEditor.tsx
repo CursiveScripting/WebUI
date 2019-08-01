@@ -176,7 +176,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         return (
             <ProcessToolbar
                 validationErrors={this.state.openProcess === undefined ? [] : this.state.openProcess.errors}
-                otherProcessesHaveErrors={this.props.processes.find(p => p !== this.state.openProcess && isUserProcess(p) && p.errors.length > 0) !== null}
+                otherProcessesHaveErrors={this.props.processes.find(p => p !== this.state.openProcess && isUserProcess(p) && p.errors.length > 0) !== undefined}
                 className="workspaceEditor__toolbar"
                 saveProcesses={this.props.save}
                 undo={this.props.undo}
