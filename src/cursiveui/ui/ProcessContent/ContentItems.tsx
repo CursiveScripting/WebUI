@@ -259,7 +259,7 @@ export const ContentItems = (props: Props) => {
     props.varRefs.clear();
 
     const variables = props.variables.map(variable => {
-        const canEdit = true; // TODO: determine this based on type having a validationExpression or not
+        const canEdit = variable.type.validationExpression !== undefined;
 
         const varPos: ICoord = props.dragging !== undefined
             && props.dragging.type === DragType.Variable
