@@ -132,20 +132,18 @@ function saveStepParameters(
             ? parameter.connection.name
             : undefined;
 
-        saveStepParameter(parameter.name, varName, parent, nodeName, variableAttributeName);
+        saveStepParameter(parameter, varName, parent, nodeName, variableAttributeName);
     }
 }
 
 function saveStepParameter(
-    parameterName: string,
+    parameter: IParameter,
     variableName: string | undefined,
     parent: Element,
     nodeName: string,
     variableAttributeName: string
 ) {
-    let element = parent.ownerDocument!.createElement(nodeName);
-    element.setAttribute('name', parameterName);
-    parent.appendChild(element);
+    const element = saveProcessParameter(parameter, parent, nodeName);
 
     if (variableName !== undefined) {
         element.setAttribute(variableAttributeName, variableName);
