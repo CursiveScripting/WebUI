@@ -175,7 +175,7 @@ function loadProcessSteps(
             uniqueId: id,
             stepType: StepType.Start,
             outputs: loadStepOutputs(id, process, process.inputs, stepNode),
-            returnPaths: [{ name: null }],
+            returnPaths: [],
             x: parseInt(stepNode.getAttribute('x')!),
             y: parseInt(stepNode.getAttribute('y')!),
         };
@@ -241,7 +241,7 @@ function loadProcessSteps(
             process: childProcess,
             inputs: loadStepInputs(id, process, childProcess.inputs, stepNode),
             outputs: loadStepOutputs(id, process, childProcess.outputs, stepNode),
-            returnPaths: process.returnPaths.map(p => { return { name: p }}),
+            returnPaths: [],
             x: parseInt(stepNode.getAttribute('x')!),
             y: parseInt(stepNode.getAttribute('y')!),
             inputConnected: false,
@@ -293,30 +293,36 @@ function loadStepParameters(
             const variableName = sourceNode.getAttribute(linkAttributeName);
             
             if (variableName !== null) {
-                const destination = process.variables.find(v => v.name === variableName);
-
-                if (destination === undefined) {
+                variable = process.variables.find(v => v.name === variableName);
+                
+                if (variable === undefined) {
                     throw new Error(`Step ${stepId} of the "${process.name}" process tries to map an ${parameterTypeName} to a non-existant variable: ${variableName}`);
                 }
             }
         }
 
-        return {
+        const link = {
             ...p,
             connection: variable,
         };
+
+        if (variable !== undefined) {
+            variable.incomingLinks.push(link);
+        }
+
+        return link;
     });
 }
 
 function loadReturnPaths(stepNode: Element) {
     let returnPathNodes = stepNode.getElementsByTagName('ReturnPath');
-    const returnValue: IIntermediateReturnPath[] = [];
+    const returnPaths: IIntermediateReturnPath[] = [];
 
     for (const returnPathNode of returnPathNodes) {
         const targetStepID = returnPathNode.getAttribute('targetStepID')!;
 
-        returnValue.push({ name: null, connection: targetStepID});
-        return returnValue; // can only ever have one non-named return path
+        returnPaths.push({ name: null, connection: targetStepID});
+        return returnPaths; // can only ever have one non-named return path
     }
 
     returnPathNodes = stepNode.getElementsByTagName('NamedReturnPath');
@@ -325,10 +331,10 @@ function loadReturnPaths(stepNode: Element) {
         const name = returnPathNode.getAttribute('name')!;
         const targetStepID = returnPathNode.getAttribute('targetStepID')!;
 
-        returnValue.push({ name, connection: targetStepID});
+        returnPaths.push({ name, connection: targetStepID});
     }
 
-    return returnValue;
+    return returnPaths;
 }
 
 function validateReturnPaths(

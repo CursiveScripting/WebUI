@@ -67,6 +67,10 @@ export class LinkCanvas extends React.Component<Props> {
         for (const step of this.props.steps) {
             const stepDisplay = this.props.stepDisplays.get(step.uniqueId)!;
             
+            if (stepDisplay === undefined) {
+                continue;
+            }
+
             if (usesInputs(step)) {
                 for (const param of step.inputs) {
                     if (param.connection === undefined) {
@@ -105,8 +109,8 @@ export class LinkCanvas extends React.Component<Props> {
                         continue;
                     }
 
-                    const toStepDisplay = stepDisplays.get(toStep.uniqueId!)!;
-                    
+                    const toStepDisplay = stepDisplays.get(toStep.uniqueId)!;
+
                     const beginConnector = stepDisplay.getReturnConnectorPos(path.name);
                     const endConnector = toStepDisplay.entryConnectorPos;
                     
