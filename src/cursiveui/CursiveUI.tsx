@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Error } from './ui/Error';
 import { WorkspaceEditor } from './ui/WorkspaceEditor';
 import { workspaceReducer, WorkspaceDispatchContext } from './reducer';
 import { saveProcesses } from './services/saveProcesses';
@@ -61,12 +62,7 @@ export const CursiveUI = (props: Props) => {
     }
     
     if (loadingState.error) {
-        return (
-            <div>
-                <h1>Error</h1>
-                <p>{loadingState.message}</p>
-            </div>
-        )
+        return <Error message={loadingState.message} />
     }
     
     const doSave = () => {
