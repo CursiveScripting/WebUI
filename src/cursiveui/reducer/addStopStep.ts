@@ -37,7 +37,7 @@ export function addStopStep(state: IWorkspaceState, action: AddStopStepAction) {
     inProcess.steps = [...inProcess.steps, {
         uniqueId: determineStepId(inProcess.steps),
         returnPath: action.returnPath,
-        inputs: [],
+        inputs: inProcess.outputs.map(o => { return { ...o }; }),
         stepType: StepType.Stop,
         x: action.x,
         y: action.y,
