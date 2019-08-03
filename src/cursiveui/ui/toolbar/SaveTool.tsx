@@ -49,7 +49,7 @@ export class SaveTool extends React.PureComponent<SaveToolProps, {}> {
 
     private renderValidationSummary() {
         return (
-            <div className="validationSummary" title="Click to show affected step">
+            <div className="validationSummary" title="">
                 {this.props.validationErrors.map((error, index) => this.renderValidationError(error, index))}
             </div>
         );
