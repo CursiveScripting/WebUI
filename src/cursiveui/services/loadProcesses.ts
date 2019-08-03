@@ -259,11 +259,11 @@ function loadProcessSteps(
 }
 
 function loadStepInputs(stepId: string, process: IUserProcess, inputs: IParameter[], stepNode: Element) {
-    return loadStepParameters(stepId, process, inputs, stepNode, 'input', 'Input', 'source');
+    return loadStepParameters(stepId, process, inputs, stepNode, true);
 }
 
 function loadStepOutputs(stepId: string, process: IUserProcess, outputs: IParameter[], stepNode: Element) {
-    return loadStepParameters(stepId, process, outputs, stepNode, 'output', 'Output', 'destination');
+    return loadStepParameters(stepId, process, outputs, stepNode, false);
 }
 
 function loadStepParameters(
@@ -271,19 +271,22 @@ function loadStepParameters(
     process: IUserProcess,
     parameters: IParameter[],
     stepNode: Element,
-    parameterTypeName: string,
-    parameterElementTagName: string,
-    linkAttributeName: string
+    isInputParam: boolean
 ) {
-    const sourceNodes = stepNode.getElementsByTagName(parameterElementTagName);
+    const sourceNodes = stepNode.getElementsByTagName(isInputParam ? 'Input' : 'Output');
     const sourceNodesByName: Record<string, Element> = {};
     for (const sourceNode of sourceNodes) {
         const paramName = sourceNode.getAttribute('name')!;
+
         if (sourceNodesByName.hasOwnProperty(paramName)) {
+            const parameterTypeName = isInputParam ? 'input' : 'output';
             throw new Error(`Step ${stepId} of the "${process.name}" process tries to map the one ${parameterTypeName} multiple times: ${paramName}`);
         }
+
         sourceNodesByName[paramName] = sourceNode;
     }
+    
+    const linkAttributeName = isInputParam ? 'source' : 'destination';
 
     return parameters.map(p => {
         const sourceNode = sourceNodesByName[p.name];
@@ -296,6 +299,7 @@ function loadStepParameters(
                 variable = process.variables.find(v => v.name === variableName);
                 
                 if (variable === undefined) {
+                    const parameterTypeName = isInputParam ? 'input' : 'output';
                     throw new Error(`Step ${stepId} of the "${process.name}" process tries to map an ${parameterTypeName} to a non-existant variable: ${variableName}`);
                 }
             }
@@ -307,7 +311,12 @@ function loadStepParameters(
         };
 
         if (variable !== undefined) {
-            variable.incomingLinks.push(link);
+            if (isInputParam) {
+                variable.outgoingLinks.push(link);
+            }
+            else {
+                variable.incomingLinks.push(link);
+            }
         }
 
         return link;
