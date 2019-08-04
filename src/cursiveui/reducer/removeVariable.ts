@@ -37,7 +37,7 @@ export function removeVariable(state: IWorkspaceState, action: RemoveVariableAct
         if (usesInputs(modifiedStep)) {
             let inputMatched = false;
             const inputs = modifiedStep.inputs.map(param => {
-                if (param.connection !== undefined && param.connection.name === removedVar.name) { // TODO: why does this fail if we match references?
+                if (param.connection !== undefined && param.connection.name === removedVar.name) { // TODO: why does this fail if we match by reference?
                     inputMatched = true;
                     
                     return {

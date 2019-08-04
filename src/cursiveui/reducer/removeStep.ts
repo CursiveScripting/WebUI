@@ -38,7 +38,7 @@ export function removeStep(state: IWorkspaceState, action: RemoveStepAction) {
 
             if (usesOutputs(modifiedStep)) {
                 modifiedStep.returnPaths = modifiedStep.returnPaths.map(returnPath => {
-                    if (returnPath.connection === removedStep) {
+                    if (returnPath.connection !== undefined && returnPath.connection.uniqueId === removedStep.uniqueId) { // TODO: why does this fail if we match by reference?
                         foundMatch = true;
                         return {
                             ...returnPath,
