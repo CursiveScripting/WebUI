@@ -54,6 +54,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
 
     constructor(props: Props) {
         super(props);
+
         this.state = {
             width: 0,
             height: 0,
@@ -86,7 +87,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
     }
 
     componentDidUpdate() {
-        if (this.state.width === 0) {
+        if (this.state.width < this.root!.offsetWidth) {
             this.setState({
                 width: growToFitGrid(this.root!.offsetWidth),
                 height: growToFitGrid(this.root!.offsetHeight),
