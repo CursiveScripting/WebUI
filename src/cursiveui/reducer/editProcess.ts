@@ -208,9 +208,23 @@ function deleteAndRecreateStep(
 
     recreateIncomingReturnPaths(oldProcess, step, inProcess, actions);
 
-    relinkStepInputs(newProcess, step, inProcess, actions, inputOrderMap);
+    relinkStepParameters(
+        newProcess.inputs,
+        true,
+        step,
+        inProcess,
+        actions,
+        inputOrderMap
+    );
 
-    relinkStepOutputs(newProcess, step, inProcess, actions, outputOrderMap);
+    relinkStepParameters(
+        newProcess.outputs,
+        false,
+        step,
+        inProcess,
+        actions,
+        outputOrderMap
+    );
 }
 
 function recreateOutgoingReturnPaths(
@@ -264,40 +278,6 @@ function recreateIncomingReturnPaths(
             }));
         }
     }
-}
-
-function relinkStepInputs(
-    newProcess: IUserProcess,
-    recreateStep: IProcessStep,
-    inProcess: IUserProcess,
-    actions: ((s: IWorkspaceState) => IWorkspaceState)[],
-    paramOrderMap: Array<number | undefined>
-) {
-    relinkStepParameters(
-        newProcess.inputs,
-        true,
-        recreateStep,
-        inProcess,
-        actions,
-        paramOrderMap
-    );
-}
-
-function relinkStepOutputs(
-    newProcess: IUserProcess,
-    recreateStep: IProcessStep,
-    inProcess: IUserProcess,
-    actions: ((s: IWorkspaceState) => IWorkspaceState)[],
-    paramOrderMap: Array<number | undefined>
-) {
-    relinkStepParameters(
-        newProcess.outputs,
-        false,
-        recreateStep,
-        inProcess,
-        actions,
-        paramOrderMap
-    );
 }
 
 function relinkStepParameters(
