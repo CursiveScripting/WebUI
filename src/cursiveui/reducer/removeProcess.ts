@@ -1,6 +1,6 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { hasEditableSignature, isUserProcess } from '../services/ProcessFunctions';
-import { validate } from './validate';
+import { removeStep } from './removeStep';
 import { isProcessStep } from '../services/StepFunctions';
 
 export type RemoveProcessAction = {
@@ -23,15 +23,32 @@ export function removeProcess(state: IWorkspaceState, action: RemoveProcessActio
          return state;
     }
 
-    for(const process of processes) {
-        if (isUserProcess(process) && process.steps.find(s => isProcessStep(s) && s.process === deleteProcess)) {
-            // TODO: trigger remove step action on every step that uses the deleted process!
-            process.errors = validate(process, processes);
+    let newState = {
+        ...state,
+        processes,
+    }
+
+    // Remove all steps in other processes that reference the removed process.
+    // Do this in two steps, to avoid updating the process list as we loop through it.
+
+    const stepsToRemove = [];
+
+    for (const process of processes) {
+        if (isUserProcess(process)) {
+            for (const step of process.steps) {
+                if (isProcessStep(step) && step.process === deleteProcess) {
+                    stepsToRemove.push({
+                        processName: process.name,
+                        stepId: step.uniqueId,
+                    })
+                }
+            }
         }
     }
 
-    return {
-        ...state,
-        processes,
-    };
+    for (const stepToRemove of stepsToRemove) {
+        newState = removeStep(newState, stepToRemove);
+    }
+
+    return newState;
 }

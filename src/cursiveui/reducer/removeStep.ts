@@ -4,13 +4,16 @@ import { validate } from './validate';
 import { usesOutputs, anyStepLinksTo, usesInputs } from '../services/StepFunctions';
 import { IStepParameter } from '../state/IStepParameter';
 
-export type RemoveStepAction = {
-    type: 'remove step';
+type RemoveStepBase = {
     processName: string;
     stepId: string;
 }
 
-export function removeStep(state: IWorkspaceState, action: RemoveStepAction) {
+export type RemoveStepAction = {
+    type: 'remove step';
+} & RemoveStepBase
+
+export function removeStep(state: IWorkspaceState, action: RemoveStepBase) {
     const processIndex = state.processes.findIndex(p => p.name === action.processName);
 
     const process = { ...state.processes[processIndex] };
