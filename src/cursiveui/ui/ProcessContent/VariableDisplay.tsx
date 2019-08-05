@@ -186,6 +186,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                         input={true}
                         onMouseDown={e => this.props.connectorMouseDown(true, e.clientX, e.clientY)}
                         onMouseUp={() => this.props.connectorMouseUp(true)}
+                        onDoubleClick={() => this.unlink(true)}
                         ref={c => { if (c !== null) { this.inputConnector = c.connector; }}}
                     />
                     {defaultInput}
@@ -195,6 +196,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                         input={false}
                         onMouseDown={e => this.props.connectorMouseDown(false, e.clientX, e.clientY)}
                         onMouseUp={() => this.props.connectorMouseUp(false)}
+                        onDoubleClick={() => this.unlink(false)}
                         ref={c => { if (c !== null) { this.outputConnector = c.connector; }}}
                     />
                 </div>
@@ -204,5 +206,14 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
 
     public scrollIntoView() {
         this.root!.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    private unlink(input: boolean) {
+        this.context({
+            type: 'unlink variable',
+            inProcessName: this.props.inProcessName,
+            varName: this.props.name,
+            varInput: input,
+        });
     }
 }
