@@ -2,10 +2,14 @@ import { IParameter } from '../state/IParameter';
 import { IUserProcess } from '../state/IUserProcess';
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { hasEditableSignature, isUserProcess } from '../services/ProcessFunctions';
-import { isProcessStep, isStartStep, isStopStep } from '../services/StepFunctions';
-import { validate } from './validate';
+import { isProcessStep, isStartStep, isStopStep, usesOutputs } from '../services/StepFunctions';
+import { validateNamedProcesses, withValidationDisabled } from './validate';
+import { removeStep } from './removeStep';
+import { addStep } from './addStep';
+import { setReturnPath } from './setReturnPath';
+import { IProcessStep } from '../state/IProcessStep';
+import { linkVariable } from './linkVariable';
 import { IStepParameter } from '../state/IStepParameter';
-import { IReturnPath } from '../state/IReturnPath';
 
 export type EditProcessAction = {
     type: 'edit process';
@@ -17,59 +21,63 @@ export type EditProcessAction = {
     inputs: IParameter[];
     outputs: IParameter[];
     inputOrderMap: Array<number | undefined>; // Used for mapping variable connections. Array index is for the new parameter,
-    outputOrderMap: Array<number | undefined>; // value is of the old parameter to get the variable connection from.
-}
-
-function mapParameters(oldParams: IStepParameter[], newSource: IParameter[], orderMap: Array<number | undefined>) {
-    return newSource.map((param, index) => {
-        const oldParamIndex = orderMap[index];
-
-        return {
-            name: param.name,
-            type: param.type,
-            connection: oldParamIndex === undefined
-                ? undefined
-                : oldParams[oldParamIndex].connection,
-        };
-    });
+    outputOrderMap: Array<number | undefined>; // value is index of the old parameter it corresponds to.
 }
 
 export function editProcess(state: IWorkspaceState, action: EditProcessAction) {
-    const index = state.processes.findIndex(p => p.name === action.oldName);
+    const processIndex = state.processes.findIndex(p => p.name === action.oldName);
 
-    if (index === -1) {
+    if (processIndex === -1) {
         return state;
     }
 
-    const oldProcess = state.processes[index];
+    const oldProcess = state.processes[processIndex];
 
     if (!hasEditableSignature(oldProcess)) {
         return state;
     }
 
+    const modifiedProcessNames = [ action.newName ];
+
+    let startStopUnlinkActions: ((s: IWorkspaceState) => IWorkspaceState)[] = [];
+    let startStopRelinkActions: ((s: IWorkspaceState) => IWorkspaceState)[] = [];
+
     // update the i/o of process's own start and stop steps
-    const steps = oldProcess.steps.map(step => {
+    for (const step of oldProcess.steps) {
         if (isStartStep(step)) {
-            return {
-                ...step,
-                outputs: mapParameters(step.outputs, action.inputs, action.inputOrderMap),
-            }
+            relinkStartStopParameters(
+                startStopUnlinkActions,
+                startStopRelinkActions,
+                step.outputs,
+                action.inputs,
+                step.uniqueId,
+                action.oldName,
+                action.newName,
+                true,
+                action.inputOrderMap
+            );
         }
 
-        // TODO: we'll also have to un-link any variables here
-        
         if (isStopStep(step)) {
-            // Stop steps with invalid return paths will be left, and will fail to validate
-            return {
-                ...step,
-                outputs: mapParameters(step.inputs, action.outputs, action.outputOrderMap),
-            }
+            relinkStartStopParameters(
+                startStopUnlinkActions,
+                startStopRelinkActions,
+                step.inputs,
+                action.outputs,
+                step.uniqueId,
+                action.oldName,
+                action.newName,
+                false,
+                action.outputOrderMap
+            );
         }
+    }
 
-        // TODO: we'll also have to un-link any variables here
-
-        return step;
-    })
+    withValidationDisabled(() => {
+        for (const action of startStopUnlinkActions) {
+            state = action(state);
+        }
+    });
 
     const newProcess: IUserProcess = {
         ...oldProcess,
@@ -79,66 +87,253 @@ export function editProcess(state: IWorkspaceState, action: EditProcessAction) {
         inputs: action.inputs,
         outputs: action.outputs,
         returnPaths: action.returnPaths,
-        steps,
+        steps: oldProcess.steps.slice(),
     };
 
-    // Everything that references oldProcess should change to newProcess instead
-    const processes = state.processes.map(process => {
-        if (process === oldProcess) {
-            return newProcess;
-        }
+    const processes = state.processes.slice();
+    processes[processIndex] = newProcess;
 
-        if (!isUserProcess(process)) {
-            return process;
-        }
-
-        let changed = false;
-        
-        const copyProcess = {
-            ...process,
-            steps: process.steps.map(step => {
-                if (!isProcessStep(step) || step.process !== oldProcess) {
-                    return step;
-                }
-
-                changed = true;
-                
-                // Strip out any return paths that are no longer valid
-                const returnPaths: IReturnPath[] = action.returnPaths.map(name => {
-                    const existingPath = step.returnPaths.find(p => p.name === name);
-
-                    return existingPath !== undefined
-                        ? existingPath
-                        : { name };
-                });
-
-                // TODO: unset inputConnected on any step a removed return path connected to
-
-                // TODO: actually just use the 'set return path' action?
-
-                return {
-                    ...step,
-                    processName: action.newName,
-                    inputs: mapParameters(step.inputs, action.inputs, action.inputOrderMap),
-                    outputs: mapParameters(step.outputs, action.outputs, action.outputOrderMap),
-                    returnPaths,
-                }
-            }),
-        };
-
-        return changed
-            ? copyProcess
-            : process;
-    });
-
-    for (const process of processes) {
-        if (isUserProcess(process)) {
-            process.errors = validate(process, processes)
-        }
-    }
-
-    return {
+    state = {
         ...state,
         processes,
     };
+
+    withValidationDisabled(() => {
+        for (const action of startStopRelinkActions) {
+            state = action(state);
+        }
+    });
+
+    const followupActions: ((s: IWorkspaceState) => IWorkspaceState)[] = [];
+
+    // Find all steps that used this process. Queue up their deletion, recreation, and re-connection.
+    for (const process of state.processes) {
+        if (process === newProcess || !isUserProcess(process)) {
+            continue;
+        }
+
+        let anyStepMatched = false;
+
+        for (const step of process.steps) {
+            if (!isProcessStep(step) || step.process !== oldProcess) {
+                continue;
+            }
+
+            anyStepMatched = true;
+
+            deleteAndRecreateStep(process, step, newProcess, oldProcess, followupActions, action.inputOrderMap, action.outputOrderMap);
+        }
+
+        if (anyStepMatched) {
+            modifiedProcessNames.push(process.name);
+        }
+    }
+
+    withValidationDisabled(() => {
+        for (const action of followupActions) {
+            state = action(state);
+        }
+    });
+
+    validateNamedProcesses(modifiedProcessNames, state.processes);
+
+    return state;
+}
+
+function relinkStartStopParameters(
+    unlinkActions: ((s: IWorkspaceState) => IWorkspaceState)[],
+    relinkActions: ((s: IWorkspaceState) => IWorkspaceState)[],
+    oldParameters: IStepParameter[],
+    newParameters: IParameter[],
+    stepId: string,
+    oldName: string,
+    newName: string,
+    isProcessInput: boolean,
+    orderMap: Array<number | undefined>
+) {
+    for (let oldIndex = 0; oldIndex < oldParameters.length; oldIndex++) {
+        const param = oldParameters[oldIndex];
+
+        if (param.connection === undefined) {
+            continue;
+        }
+
+        unlinkActions.push(state => linkVariable(state, {
+            inProcessName: oldName,
+            stepId,
+            stepParamName: param.name,
+            stepInputParam: !isProcessInput,
+            varName: undefined,
+        }));
+
+        const newIndex = orderMap.indexOf(oldIndex);
+
+        if (newIndex !== -1) {
+            const newParamName = newParameters[newIndex].name;
+            const varName = param.connection.name;
+
+            relinkActions.push(state => linkVariable(state, {
+                inProcessName: newName,
+                stepId,
+                stepParamName: newParamName,
+                stepInputParam: !isProcessInput,
+                varName,
+            }));
+        }
+    }
+}
+
+function deleteAndRecreateStep(
+    inProcess: IUserProcess,
+    step: IProcessStep,
+    newProcess: IUserProcess,
+    oldProcess: IUserProcess,
+    actions: ((s: IWorkspaceState) => IWorkspaceState)[],
+    inputOrderMap: Array<number | undefined>,
+    outputOrderMap: Array<number | undefined>
+) {
+    actions.push(state => removeStep(state, {
+        processName: inProcess.name,
+        stepId: step.uniqueId,
+    }));
+
+    actions.push(state => addStep(state, {
+        inProcessName: inProcess.name,
+        stepProcessName: step.process.name,
+        x: step.x,
+        y: step.y,
+    }));
+
+    recreateOutgoingReturnPaths(newProcess, step, inProcess, actions);
+
+    recreateIncomingReturnPaths(oldProcess, step, inProcess, actions);
+
+    relinkStepInputs(newProcess, step, inProcess, actions, inputOrderMap);
+
+    relinkStepOutputs(newProcess, step, inProcess, actions, outputOrderMap);
+}
+
+function recreateOutgoingReturnPaths(
+    newProcess: IUserProcess,
+    recreateStep: IProcessStep,
+    inProcess: IUserProcess,
+    actions: ((s: IWorkspaceState) => IWorkspaceState)[]
+) {
+    const pathNamesToCheck = newProcess.returnPaths.length === 0
+        ? [null]
+        : newProcess.returnPaths;
+
+    for (const pathName of pathNamesToCheck) {
+        const existingPath = recreateStep.returnPaths.find(path => path.name === pathName);
+
+        if (existingPath === undefined || existingPath.connection === undefined) {
+            continue;
+        }
+
+        actions.push(state => setReturnPath(state, {
+            inProcessName: inProcess.name,
+            fromStepId: recreateStep.uniqueId,
+            toStepId: existingPath.connection!.uniqueId,
+            pathName: pathName,
+        }));
+    }
+}
+
+function recreateIncomingReturnPaths(
+    oldProcess: IUserProcess,
+    recreateStep: IProcessStep,
+    inProcess: IUserProcess,
+    actions: ((s: IWorkspaceState) => IWorkspaceState)[]
+) {
+    for (const fromStep of inProcess.steps) {
+        if (fromStep === recreateStep || !usesOutputs(fromStep)
+            || (isProcessStep(fromStep) && fromStep.process === oldProcess)) {
+            continue;
+        }
+
+        for (const returnPath of fromStep.returnPaths) {
+            if (returnPath.connection !== recreateStep) {
+                continue;
+            }
+
+            actions.push(state => setReturnPath(state, {
+                inProcessName: inProcess.name,
+                fromStepId: fromStep.uniqueId,
+                toStepId: recreateStep.uniqueId,
+                pathName: returnPath.name,
+            }));
+        }
+    }
+}
+
+function relinkStepInputs(
+    newProcess: IUserProcess,
+    recreateStep: IProcessStep,
+    inProcess: IUserProcess,
+    actions: ((s: IWorkspaceState) => IWorkspaceState)[],
+    paramOrderMap: Array<number | undefined>
+) {
+    relinkStepParameters(
+        newProcess.inputs,
+        true,
+        recreateStep,
+        inProcess,
+        actions,
+        paramOrderMap
+    );
+}
+
+function relinkStepOutputs(
+    newProcess: IUserProcess,
+    recreateStep: IProcessStep,
+    inProcess: IUserProcess,
+    actions: ((s: IWorkspaceState) => IWorkspaceState)[],
+    paramOrderMap: Array<number | undefined>
+) {
+    relinkStepParameters(
+        newProcess.outputs,
+        false,
+        recreateStep,
+        inProcess,
+        actions,
+        paramOrderMap
+    );
+}
+
+function relinkStepParameters(
+    newProcessParameters: IParameter[],
+    isInput: boolean,
+    recreateStep: IProcessStep,
+    inProcess: IUserProcess,
+    actions: ((s: IWorkspaceState) => IWorkspaceState)[],
+    paramOrderMap: Array<number | undefined>
+) {
+    const oldStepParameters = isInput
+        ? recreateStep.inputs
+        : recreateStep.outputs;
+
+    for (let index = 0; index< newProcessParameters.length; index++) {
+        const param = newProcessParameters[index];
+        const oldParamIndex = paramOrderMap[index];
+
+        if (oldParamIndex === undefined) {
+            continue;
+        }
+
+        const existingParam = oldStepParameters[oldParamIndex];
+
+        if (existingParam.connection === undefined) {
+            continue;
+        }
+
+        const varName = existingParam.connection.name;
+
+        actions.push(state => linkVariable(state, {
+            inProcessName: inProcess.name,
+            stepId: recreateStep.uniqueId,
+            stepParamName: param.name,
+            stepInputParam: isInput,
+            varName,
+        }));
+    }
 }

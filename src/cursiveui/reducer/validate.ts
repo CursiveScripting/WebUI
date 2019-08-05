@@ -5,8 +5,23 @@ import { usesInputs, usesOutputs } from '../services/StepFunctions';
 import { IStep, StepType, IStepWithOutputs } from '../state/IStep';
 import { IVariable } from '../state/IVariable';
 import { IStartStep } from '../state/IStartStep';
+import { isUserProcess } from '../services/ProcessFunctions';
+
+let validationDisabled = false;
+
+export function withValidationDisabled(action: () => void) {
+    validationDisabled = true;
+
+    action();
+
+    validationDisabled = false;
+}
 
 export function validate(process: IUserProcess, allProcesses: IProcess[]) {
+    if (validationDisabled) {
+        return [];
+    }
+
     const errors: IValidationError[] = [];
 
     for (const step of process.steps) {
@@ -101,4 +116,14 @@ function checkUnassignedVariableUse(currentStep: IStepWithOutputs, visitedSteps:
     }
 
     return allValid;
+}
+
+export function validateNamedProcesses(processNames: string[], allProcesses: IProcess[]) {
+    for (const name of processNames) {
+        const process = allProcesses.find(p => p.name === name);
+
+        if (process !== undefined && isUserProcess(process)) {
+            process.errors = validate(process, allProcesses);
+        }
+    }
 }

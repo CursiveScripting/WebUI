@@ -3,15 +3,18 @@ import { isUserProcess } from '../services/ProcessFunctions';
 import { usesOutputs, usesInputs, anyStepLinksTo } from '../services/StepFunctions';
 import { validate } from './validate';
 
-export type SetReturnPathAction = {
-    type: 'set return path';
+type SetReturnPathBase = {
     inProcessName: string;
     fromStepId: string;
     toStepId?: string;
     pathName: string | null;
 }
 
-export function setReturnPath(state: IWorkspaceState, action: SetReturnPathAction) {
+export type SetReturnPathAction = {
+    type: 'set return path';
+} & SetReturnPathBase;
+
+export function setReturnPath(state: IWorkspaceState, action: SetReturnPathBase) {
     const processIndex = state.processes.findIndex(p => p.name === action.inProcessName);
 
     const process = { ...state.processes[processIndex] };

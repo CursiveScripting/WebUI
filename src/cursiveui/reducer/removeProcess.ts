@@ -2,6 +2,7 @@ import { IWorkspaceState } from '../state/IWorkspaceState';
 import { hasEditableSignature, isUserProcess } from '../services/ProcessFunctions';
 import { removeStep } from './removeStep';
 import { isProcessStep } from '../services/StepFunctions';
+import { validateNamedProcesses, withValidationDisabled } from './validate';
 
 export type RemoveProcessAction = {
     type: 'remove process';
@@ -23,7 +24,7 @@ export function removeProcess(state: IWorkspaceState, action: RemoveProcessActio
          return state;
     }
 
-    let newState = {
+    state = {
         ...state,
         processes,
     }
@@ -31,24 +32,37 @@ export function removeProcess(state: IWorkspaceState, action: RemoveProcessActio
     // Remove all steps in other processes that reference the removed process.
     // Do this in two steps, to avoid updating the process list as we loop through it.
 
-    const stepsToRemove = [];
+    const modifiedProcessNames: string[] = [];
+    const actions: ((s: IWorkspaceState) => IWorkspaceState)[] = [];
 
     for (const process of processes) {
-        if (isUserProcess(process)) {
+        if (isUserProcess(process)) {        
+            let anyStepMatched = false;
+
             for (const step of process.steps) {
                 if (isProcessStep(step) && step.process === deleteProcess) {
-                    stepsToRemove.push({
+                    anyStepMatched = true;
+
+                    actions.push(state => removeStep(state, {
                         processName: process.name,
                         stepId: step.uniqueId,
-                    })
+                    }));
                 }
+            }
+
+            if (anyStepMatched) {
+                modifiedProcessNames.push(process.name);
             }
         }
     }
 
-    for (const stepToRemove of stepsToRemove) {
-        newState = removeStep(newState, stepToRemove);
-    }
+    withValidationDisabled(() => {
+        for (const action of actions) {
+            state = action(state);
+        }
+    });
 
-    return newState;
+    validateNamedProcesses(modifiedProcessNames, state.processes);
+
+    return state;
 }

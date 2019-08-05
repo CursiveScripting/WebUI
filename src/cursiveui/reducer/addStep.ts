@@ -5,15 +5,18 @@ import { StepType } from '../state/IStep';
 import { IProcessStep } from '../state/IProcessStep';
 import { validate } from './validate';
 
-export type AddStepAction = {
-    type: 'add step';
+type AddStepBase = {
     inProcessName: string;
     stepProcessName: string;
     x: number;
     y: number;
 }
 
-export function addStep(state: IWorkspaceState, action: AddStepAction) {
+export type AddStepAction = {
+    type: 'add step';
+} & AddStepBase
+
+export function addStep(state: IWorkspaceState, action: AddStepBase) {
     const inProcessIndex = state.processes.findIndex(p => p.name === action.inProcessName);
 
     if (inProcessIndex === -1) {
