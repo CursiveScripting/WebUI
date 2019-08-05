@@ -15,6 +15,7 @@ interface ParameterConnectorProps {
     className?: string;
     onMouseDown?: (e: React.MouseEvent<HTMLDivElement>) => void;
     onMouseUp?: (e: React.MouseEvent<HTMLDivElement>) => void;
+    onDoubleClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 export class ParameterConnector extends React.PureComponent<ParameterConnectorProps, {}> {
@@ -26,12 +27,17 @@ export class ParameterConnector extends React.PureComponent<ParameterConnectorPr
             ? undefined
             : (e: React.MouseEvent<HTMLDivElement>) => { e.stopPropagation(); this.props.onMouseUp!(e)};
         
+        const doubleClick = this.props.onDoubleClick === undefined
+            ? undefined
+            : (e: React.MouseEvent<HTMLDivElement>) => { e.stopPropagation(); this.props.onDoubleClick!(e)};
+
         return (
             <div
                 className={this.determineRootClasses()}
                 style={{'color': this.props.type.color}}
                 onMouseDown={this.props.onMouseDown}
                 onMouseUp={mouseUp}
+                onDoubleClick={doubleClick}
                 ref={c => { if (c !== null) { this._connector = c; }}}
             />
         );

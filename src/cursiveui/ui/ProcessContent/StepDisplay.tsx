@@ -289,6 +289,7 @@ export class StepDisplay extends React.PureComponent<Props, State> {
                         focused={param === this.props.focusParameter}
                         linkMouseDown={e => this.props.parameterLinkMouseDown(param, input, e.clientX, e.clientY)}
                         linkMouseUp={() => this.props.parameterLinkMouseUp(param, input)}
+                        linkDoubleClick={() => this.parameterDoubleClick(param, input)}
                     />
                     );
                 })}
@@ -300,5 +301,16 @@ export class StepDisplay extends React.PureComponent<Props, State> {
         this.setState({
             width: growToFitGrid(this.root!.offsetWidth),
         });
+    }
+
+    private parameterDoubleClick(param: IStepParameter, input: boolean) {
+        this.context({
+            type: 'link variable',
+            inProcessName: this.props.inProcessName,
+            stepId: this.props.uniqueId,
+            stepInputParam: input,
+            stepParamName: param.name,
+            varName: undefined,
+        })
     }
 }

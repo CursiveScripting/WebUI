@@ -12,6 +12,7 @@ interface ParameterDisplayProps {
     focused: boolean;
     linkMouseDown?: (e: React.MouseEvent<HTMLDivElement>) => void;
     linkMouseUp?: (e: React.MouseEvent<HTMLDivElement>) => void;
+    linkDoubleClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
     defaultChanged?: () => void;
 }
 
@@ -29,6 +30,7 @@ export class ParameterDisplay extends React.PureComponent<ParameterDisplayProps,
                     state={this.props.connectorState}
                     onMouseDown={this.props.linkMouseDown}
                     onMouseUp={this.props.linkMouseUp}
+                    onDoubleClick={this.props.linkDoubleClick}
                     ref={c => { if (c !== null) { this._connector = c.connector; }}}
                 />
                 <div
