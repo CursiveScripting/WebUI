@@ -29,6 +29,9 @@ export function unlinkVariable(state: IWorkspaceState, action: UnlinkVariableAct
         ...oldVariable,
     }
 
+    process.variables = process.variables.slice();
+    process.variables[varIndex] = newVariable;
+
     if (action.varInput) {
         newVariable.incomingLinks = [];
     }
