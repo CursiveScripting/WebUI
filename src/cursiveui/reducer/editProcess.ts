@@ -114,6 +114,8 @@ export function editProcess(state: IWorkspaceState, action: EditProcessAction) {
 
                 // TODO: unset inputConnected on any step a removed return path connected to
 
+                // TODO: actually just use the 'set return path' action?
+
                 return {
                     ...step,
                     processName: action.newName,

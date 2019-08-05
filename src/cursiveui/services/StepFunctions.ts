@@ -6,6 +6,7 @@ import { ICoord } from '../state/dimensions';
 import { IParameter } from '../state/IParameter';
 import { gridSize } from '../ui/ProcessContent/gridSize';
 import { IVariable } from '../state/IVariable';
+import { IStepParameter } from '../state/IStepParameter';
 
 export function usesInputs(step: IStep): step is IStepWithInputs {
     return step.stepType !== StepType.Start;
@@ -80,4 +81,57 @@ export function createEmptyStartStep(inputs: IParameter[]): IStartStep {
 
 export function anyStepLinksTo(testStep: IStepWithInputs, allSteps: IStep[]) {
     return allSteps.find(s => usesOutputs(s) && s.returnPaths.find(p => p.connection === testStep) !== undefined) !== undefined;
+}
+
+export function mapParameters(
+    parameters: IStepParameter[],
+    match: (param: IStepParameter) => boolean,
+    modify: (param: IStepParameter) => IStepParameter
+) {
+    let anyChanged = false;
+
+    const modifiedParameters = parameters.map(param => {
+        if (match(param)) {
+            anyChanged = true;    
+            return modify(param);
+        }
+
+        return param;
+    });
+
+    return anyChanged
+        ? modifiedParameters
+        : parameters;
+}
+
+export function mapStepParameters(
+    step: IStep,
+    matchParam: (param: IStepParameter) => boolean,
+    modifyInput: (param: IStepParameter) => IStepParameter,
+    modifyOutput: (param: IStepParameter) => IStepParameter = modifyInput
+) {
+    const modifiedStep = { ...step };
+    let anyChange = false;
+
+    if (usesInputs(modifiedStep)) {
+        const inputs = mapParameters(modifiedStep.inputs, matchParam, modifyInput);
+
+        if (inputs !== modifiedStep.inputs) {
+            modifiedStep.inputs = inputs;
+            anyChange = true;
+        }
+    }
+
+    if (usesOutputs(modifiedStep)) {
+        const outputs = mapParameters(modifiedStep.outputs, matchParam, modifyOutput);
+        
+        if (outputs !== modifiedStep.outputs) {
+            modifiedStep.outputs = outputs;
+            anyChange = true;
+        }
+    }
+
+    return anyChange
+        ? modifiedStep
+        : step;
 }

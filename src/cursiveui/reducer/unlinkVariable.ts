@@ -1,6 +1,6 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
-import { usesOutputs, usesInputs } from '../services/StepFunctions';
+import { mapStepParameters } from '../services/StepFunctions';
 import { validate } from './validate';
 
 export type UnlinkVariableAction = {
@@ -38,82 +38,34 @@ export function unlinkVariable(state: IWorkspaceState, action: UnlinkVariableAct
 
     if (action.varInput) {
         process.steps = process.steps.map(step => {
-            let anyChanged = false;
-            const modifiedStep = {
-                ...step,
-            };
-
-            if (usesInputs(modifiedStep)) {
-                modifiedStep.inputs = modifiedStep.inputs.map(step => {
-                    if (step.connection === oldVariable) {
-                        anyChanged = true;
-                        return {
-                            ...step,
-                            connection: newVariable,
-                        };
-                    }
-
-                    return step;
-                })
-            }
-
-            if (usesOutputs(modifiedStep)) {
-                modifiedStep.outputs = modifiedStep.outputs.map(step => {
-                    if (step.connection === oldVariable) {
-                        anyChanged = true;
-                        return {
-                            ...step,
-                            connection: undefined,
-                        };
-                    }
-
-                    return step;
-                })
-            }
-
-            return anyChanged
-                ? modifiedStep
-                : step;
+            return mapStepParameters(
+                step,
+                param => param.connection !== undefined && param.connection.name === oldVariable.name, // TODO: try reference matching instead of name
+                param => { return {
+                    ...param,
+                    connection: newVariable
+                }},
+                param => { return {
+                    ...param,
+                    connection: undefined
+                }}
+            );
         });
     }
     else {
         process.steps = process.steps.map(step => {
-            let anyChanged = false;
-            const modifiedStep = {
-                ...step,
-            };
-
-            if (usesInputs(modifiedStep)) {
-                modifiedStep.inputs = modifiedStep.inputs.map(step => {
-                    if (step.connection === oldVariable) {
-                        anyChanged = true;
-                        return {
-                            ...step,
-                            connection: undefined,
-                        };
-                    }
-
-                    return step;
-                })
-            }
-
-            if (usesOutputs(modifiedStep)) {
-                modifiedStep.outputs = modifiedStep.outputs.map(step => {
-                    if (step.connection === oldVariable) {
-                        anyChanged = true;
-                        return {
-                            ...step,
-                            connection: newVariable,
-                        };
-                    }
-
-                    return step;
-                })
-            }
-            
-            return anyChanged
-                ? modifiedStep
-                : step;
+            return mapStepParameters(
+                step,
+                param => param.connection !== undefined && param.connection.name === oldVariable.name, // TODO: try reference matching instead of name
+                param => { return {
+                    ...param,
+                    connection: undefined
+                }},
+                param => { return {
+                    ...param,
+                    connection: newVariable
+                }}
+            );
         });
     }
 

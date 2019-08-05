@@ -25,6 +25,7 @@ export function removeProcess(state: IWorkspaceState, action: RemoveProcessActio
 
     for(const process of processes) {
         if (isUserProcess(process) && process.steps.find(s => isProcessStep(s) && s.process === deleteProcess)) {
+            // TODO: trigger remove step action on every step that uses the deleted process!
             process.errors = validate(process, processes);
         }
     }
