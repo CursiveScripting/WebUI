@@ -141,13 +141,25 @@ function mapStepParameters(
         : step;
 }
 
-export function mapAllStepParameters(
+export function replaceVariableReferences(
     process: IUserProcess,
-    matchParam: (param: IStepParameter) => boolean,
-    modifyInput: (param: IStepParameter) => IStepParameter,
-    modifyOutput: (param: IStepParameter) => IStepParameter = modifyInput
+    matchVariable: IVariable,
+    stepInputReplacement: IVariable | undefined,
+    stepOutputReplacement: IVariable | undefined = stepInputReplacement,
 ): IUserProcess {
     const paramMap = new Map<IStepParameter, IStepParameter>();
+
+    const matchParam = (param: IStepParameter) => param.connection === matchVariable;
+
+    const modifyInput = (param: IStepParameter) => { return {
+        ...param,
+        connection: stepInputReplacement,
+    }};
+
+    const modifyOutput = (param: IStepParameter) => { return {
+        ...param,
+        connection: stepOutputReplacement,
+    }};
 
     const steps = process.steps.map(step => mapStepParameters(step, matchParam, modifyInput, modifyOutput, paramMap));
 

@@ -1,7 +1,7 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
 import { validate } from './validate';
-import { mapAllStepParameters } from '../services/StepFunctions';
+import { replaceVariableReferences } from '../services/StepFunctions';
 import { IUserProcess } from '../state/IUserProcess';
 
 export type RemoveVariableAction = {
@@ -28,14 +28,7 @@ export function removeVariable(state: IWorkspaceState, action: RemoveVariableAct
     process.variables = process.variables.slice();
     const removedVar = process.variables.splice(varIndex, 1)[0];
 
-    process = mapAllStepParameters(
-        process,
-        param => param.connection === removedVar,
-        param => { return {
-            ...param,
-            connection: undefined
-        }}
-    );
+    process = replaceVariableReferences(process, removedVar, undefined);
 
     const processes = state.processes.slice();
     processes[processIndex] = process;

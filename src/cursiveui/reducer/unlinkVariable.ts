@@ -1,6 +1,6 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
-import { mapAllStepParameters } from '../services/StepFunctions';
+import { replaceVariableReferences } from '../services/StepFunctions';
 import { validate } from './validate';
 import { IUserProcess } from '../state/IUserProcess';
 
@@ -40,34 +40,9 @@ export function unlinkVariable(state: IWorkspaceState, action: UnlinkVariableAct
         newVariable.outgoingLinks = [];
     }
 
-    if (action.varInput) {
-        process = mapAllStepParameters(
-            process,
-            param => param.connection === oldVariable,
-            param => { return {
-                ...param,
-                connection: newVariable
-            }},
-            param => { return {
-                ...param,
-                connection: undefined
-            }}
-        );
-    }
-    else {
-        process = mapAllStepParameters(
-            process,
-            param => param.connection === oldVariable,
-            param => { return {
-                ...param,
-                connection: undefined
-            }},
-            param => { return {
-                ...param,
-                connection: newVariable
-            }}
-        );
-    }
+    process = action.varInput
+        ? replaceVariableReferences(process, oldVariable, newVariable, undefined)
+        : replaceVariableReferences(process, oldVariable, undefined, newVariable);
 
     const processes = state.processes.slice();
     processes[processIndex] = process;
