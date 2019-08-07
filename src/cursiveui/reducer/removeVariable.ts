@@ -1,7 +1,8 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
 import { validate } from './validate';
-import { mapStepParameters } from '../services/StepFunctions';
+import { mapAllStepParameters } from '../services/StepFunctions';
+import { IUserProcess } from '../state/IUserProcess';
 
 export type RemoveVariableAction = {
     type: 'remove variable';
@@ -12,7 +13,7 @@ export type RemoveVariableAction = {
 export function removeVariable(state: IWorkspaceState, action: RemoveVariableAction) {
     const processIndex = state.processes.findIndex(p => p.name === action.inProcessName);
 
-    const process = { ...state.processes[processIndex] };
+    let process = { ...state.processes[processIndex] } as IUserProcess;
 
     if (!isUserProcess(process)) {
         return state;
@@ -27,19 +28,17 @@ export function removeVariable(state: IWorkspaceState, action: RemoveVariableAct
     process.variables = process.variables.slice();
     const removedVar = process.variables.splice(varIndex, 1)[0];
 
+    process = mapAllStepParameters(
+        process,
+        param => param.connection === removedVar,
+        param => { return {
+            ...param,
+            connection: undefined
+        }}
+    );
+
     const processes = state.processes.slice();
     processes[processIndex] = process;
-
-    process.steps = process.steps.map(step => {
-        return mapStepParameters(
-            step,
-            param => param.connection !== undefined && param.connection.name === removedVar.name, // TODO: why does this fail if we match by reference?
-            param => { return {
-                ...param,
-                connection: undefined
-            }}
-        );
-    });
 
     process.errors = validate(process, processes);
 
