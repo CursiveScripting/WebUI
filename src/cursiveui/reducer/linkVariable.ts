@@ -90,7 +90,7 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableBase) {
 
         process.variables[newVarIndex] = replacementNewVariable;
 
-        process = replaceVariableReferences(process, newVariable, replacementNewVariable);
+        process = replaceVariableReferences(process, newVariable, replacementNewVariable, replacementNewVariable);
     }
 
     if (oldVariable !== undefined) {
@@ -104,7 +104,7 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableBase) {
 
         process.variables[oldVarIndex] = replacementOldVariable;
         
-        process = replaceVariableReferences(process, oldVariable, replacementOldVariable);
+        process = replaceVariableReferences(process, oldVariable, replacementOldVariable, replacementOldVariable);
     }
 
     const processes = state.processes.slice();

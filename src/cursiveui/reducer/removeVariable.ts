@@ -28,7 +28,7 @@ export function removeVariable(state: IWorkspaceState, action: RemoveVariableAct
     process.variables = process.variables.slice();
     const removedVar = process.variables.splice(varIndex, 1)[0];
 
-    process = replaceVariableReferences(process, removedVar, undefined);
+    process = replaceVariableReferences(process, removedVar, undefined, undefined);
 
     const processes = state.processes.slice();
     processes[processIndex] = process;

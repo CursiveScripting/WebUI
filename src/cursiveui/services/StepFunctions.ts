@@ -145,7 +145,7 @@ export function replaceVariableReferences(
     process: IUserProcess,
     matchVariable: IVariable,
     stepInputReplacement: IVariable | undefined,
-    stepOutputReplacement: IVariable | undefined = stepInputReplacement,
+    stepOutputReplacement: IVariable | undefined
 ): IUserProcess {
     const paramMap = new Map<IStepParameter, IStepParameter>();
 
