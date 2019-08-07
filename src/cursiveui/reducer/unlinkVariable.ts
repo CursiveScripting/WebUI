@@ -34,9 +34,17 @@ export function unlinkVariable(state: IWorkspaceState, action: UnlinkVariableAct
     process.variables[varIndex] = newVariable;
 
     if (action.varInput) {
+        if (oldVariable.incomingLinks.length === 0) {
+            return state; // no change
+        }
+
         newVariable.incomingLinks = [];
     }
     else {
+        if (oldVariable.outgoingLinks.length === 0) {
+            return state; // no change
+        }
+
         newVariable.outgoingLinks = [];
     }
 

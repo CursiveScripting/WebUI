@@ -65,6 +65,10 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableBase) {
     const oldParameter = modifyingParameters[paramIndex];
     const oldVariable = oldParameter.connection;
 
+    if (oldVariable === newVariable) {
+        return state; // no change
+    }
+
     const newParameter = {
         ...oldParameter,
         connection: newVariable,
