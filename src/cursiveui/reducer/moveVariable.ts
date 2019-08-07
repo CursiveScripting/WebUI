@@ -1,5 +1,6 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
+import { replaceVariableReferences } from '../services/StepFunctions';
 
 export type MoveVariableAction = {
     type: 'move variable';
@@ -12,7 +13,7 @@ export type MoveVariableAction = {
 export function moveVariable(state: IWorkspaceState, action: MoveVariableAction) {
     const processIndex = state.processes.findIndex(p => p.name === action.inProcessName);
 
-    const process = { ...state.processes[processIndex] };
+    let process = { ...state.processes[processIndex] };
 
     if (!isUserProcess(process)) {
         return state;
@@ -24,8 +25,13 @@ export function moveVariable(state: IWorkspaceState, action: MoveVariableAction)
         return state;
     }
 
+    const oldVariable = process.variables[varIndex];
+    const newVariable = { ...oldVariable, x: action.x, y: action.y };
+
     process.variables = process.variables.slice();
-    process.variables[varIndex] = { ...process.variables[varIndex], x: action.x, y: action.y };
+    process.variables[varIndex] = newVariable;
+
+    process = replaceVariableReferences(process, oldVariable, newVariable, newVariable);
 
     const processes = state.processes.slice();
     processes[processIndex] = process;
