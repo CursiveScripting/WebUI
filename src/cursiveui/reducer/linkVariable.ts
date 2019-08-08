@@ -86,10 +86,10 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableBase) {
             ...newVariable,
             incomingLinks: !action.stepInputParam
                 ? [ ...newVariable.incomingLinks, newParameter ]
-                : newVariable.incomingLinks,
+                : newVariable.incomingLinks.slice(),
             outgoingLinks: action.stepInputParam
                 ? [ ...newVariable.outgoingLinks, newParameter ]
-                : newVariable.outgoingLinks,
+                : newVariable.outgoingLinks.slice(),
         }
 
         process.variables[newVarIndex] = replacementNewVariable;

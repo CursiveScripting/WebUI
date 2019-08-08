@@ -112,7 +112,7 @@ function mapStepParameters(
     step: IStep,
     matchParam: (param: IStepParameter) => boolean,
     modifyInput: (param: IStepParameter) => IStepParameter,
-    modifyOutput: (param: IStepParameter) => IStepParameter = modifyInput,
+    modifyOutput: (param: IStepParameter) => IStepParameter,
     paramMap: Map<IStepParameter, IStepParameter>
 ) {
     const modifiedStep = { ...step };
