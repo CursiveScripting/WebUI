@@ -5,7 +5,9 @@ export function useUndoReducer<TState, TAction extends IAction>(
     initialState: ReducerState<Reducer<TState, TAction>>,
     maxHistorySize?: number,
 ) {
-    const [state, dispatch] = useReducer(undoReducer(reducer, maxHistorySize), {
+    const undoableReducer = useMemo(() => undoReducer(reducer, maxHistorySize), [reducer, maxHistorySize]);
+
+    const [state, dispatch] = useReducer(undoableReducer, {
         present: {
             state: initialState,
             actionName: '',
