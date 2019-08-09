@@ -1,6 +1,6 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
-import { usesOutputs, usesInputs, anyStepLinksTo } from '../services/StepFunctions';
+import { usesOutputs, usesInputs, anyStepLinksTo, replaceStep } from '../services/StepFunctions';
 import { validate } from './validate';
 
 type SetReturnPathBase = {
@@ -23,28 +23,28 @@ export function setReturnPath(state: IWorkspaceState, action: SetReturnPathBase)
         return state;
     }
 
-    process.steps = process.steps.slice();
+    const oldFromStep = process.steps.find(step => step.uniqueId === action.fromStepId);
 
-    const fromStepIndex = process.steps.findIndex(step => step.uniqueId === action.fromStepId);
-
-    if (fromStepIndex === -1
+    if (oldFromStep === undefined || !usesOutputs(oldFromStep)) {
+        return state;
+    }
+    
+    if (oldFromStep === undefined
         || (action.toStepId !== undefined && process.steps.findIndex(step => step.uniqueId === action.toStepId) === -1)) {
         return state;
     }
 
-    const fromStep = { ...process.steps[fromStepIndex] };
+    const newFromStep = {
+        ...oldFromStep,
+    };
+    
+    process.steps = replaceStep(process.steps, oldFromStep, newFromStep);
 
-    if (!usesOutputs(fromStep)) {
-        return state;
-    }
+    newFromStep.returnPaths = newFromStep.returnPaths.slice();
 
-    process.steps[fromStepIndex] = fromStep;
-
-    fromStep.returnPaths = [ ...fromStep.returnPaths ];
-
-    const returnPathIndex = fromStep.returnPaths.findIndex(p => p.name === action.pathName);
-    const returnPath = { ...fromStep.returnPaths[returnPathIndex] };
-    fromStep.returnPaths[returnPathIndex] = returnPath;
+    const returnPathIndex = newFromStep.returnPaths.findIndex(p => p.name === action.pathName);
+    const returnPath = { ...newFromStep.returnPaths[returnPathIndex] };
+    newFromStep.returnPaths[returnPathIndex] = returnPath;
     
     const oldDestination = returnPath.connection;
     

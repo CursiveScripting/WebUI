@@ -161,11 +161,20 @@ export function replaceVariableReferences(
         connection: stepOutputReplacement,
     }};
 
-    const steps = process.steps.map(step => mapStepParameters(step, matchParam, modifyInput, modifyOutput, paramMap));
+    // If steps have been recreated due to their parameters changing, ensure return path references are also updated.
+    let steps = process.steps.map(step => mapStepParameters(step, matchParam, modifyInput, modifyOutput, paramMap));
+
+    for (let i = 0; i<steps.length; i++) {
+        const oldStep = process.steps[i];
+        const newStep = steps[i];
+
+        if (newStep !== oldStep) {
+            steps = replaceStep(steps, oldStep, newStep);
+        }
+    }
 
     // Because variables store references to step parameters, if the parameters are updated, the variables' references also need to be updated.
     // Unless we update all the parameters again, we can't update the variables themselves, as the parameters would be referencing old versions again.
-
     const variables = process.variables.map(variable => {
         variable.incomingLinks = variable.incomingLinks.map(param => {
             const match = paramMap.get(param);
@@ -191,4 +200,34 @@ export function replaceVariableReferences(
         steps,
         variables,
     };
+}
+
+export function replaceStep(
+    processSteps: IStep[],
+    oldStep: IStep,
+    newStep: IStep
+): IStep[] {
+    if (!usesInputs(newStep)) {
+        return processSteps.map(step => step === oldStep
+                ? newStep
+                : step
+        )
+    }
+    
+    return processSteps.map(step => {
+        if (step === oldStep) {
+            step = newStep;
+        }
+
+        if (usesOutputs(step)) {
+            // no need to redefine steps or parameters here, as this change won't affect rendering
+            for (const path of step.returnPaths) {
+                if (path.connection === oldStep) {
+                    path.connection = newStep;
+                }
+            }
+        }
+
+        return step;
+    });
 }

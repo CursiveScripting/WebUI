@@ -1,6 +1,6 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
-import { usesOutputs, usesInputs, replaceVariableReferences } from '../services/StepFunctions';
+import { usesOutputs, usesInputs, replaceVariableReferences, replaceStep } from '../services/StepFunctions';
 import { validate } from './validate';
 import { IStepParameter } from '../state/IStepParameter';
 import { IUserProcess } from '../state/IUserProcess';
@@ -36,13 +36,17 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableBase) {
         return state;
     }
 
-    const stepIndex = process.steps.findIndex(step => step.uniqueId === action.stepId);
+    const oldStep = process.steps.find(step => step.uniqueId === action.stepId);
+
+    if (oldStep === undefined) {
+        return state;
+    }
 
     const newStep = {
-        ...process.steps[stepIndex],
+        ...oldStep,
     };
 
-    process.steps = [ ...process.steps ];
+    process.steps = replaceStep(process.steps, oldStep, newStep);
 
     let modifyingParameters: IStepParameter[];
 
@@ -75,9 +79,6 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableBase) {
     };
 
     modifyingParameters[paramIndex] = newParameter;
-
-    process.steps[stepIndex] = newStep;
-    
 
     if (newVariable !== undefined) {
         const newVarIndex = process.variables.indexOf(newVariable);

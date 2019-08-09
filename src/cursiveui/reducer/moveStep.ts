@@ -1,5 +1,6 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
+import { replaceStep } from '../services/StepFunctions';
 
 export type MoveStepAction = {
     type: 'move step';
@@ -18,14 +19,19 @@ export function moveStep(state: IWorkspaceState, action: MoveStepAction) {
         return state;
     }
     
-    const stepIndex = process.steps.findIndex(step => step.uniqueId === action.stepId);
+    const oldStep = process.steps.find(step => step.uniqueId === action.stepId);
 
-    if (stepIndex === -1) {
+    if (oldStep === undefined) {
         return state;
     }
 
-    process.steps = process.steps.slice();
-    process.steps[stepIndex] = { ...process.steps[stepIndex], x: action.x, y: action.y };
+    const newStep = {
+        ...oldStep,
+        x: action.x,
+        y: action.y,
+    };
+
+    process.steps = replaceStep(process.steps, oldStep, newStep);
 
     const processes = state.processes.slice();
     processes[processIndex] = process;
