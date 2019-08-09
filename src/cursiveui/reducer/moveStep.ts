@@ -25,6 +25,10 @@ export function moveStep(state: IWorkspaceState, action: MoveStepAction) {
         return state;
     }
 
+    if (oldStep.x === action.x && oldStep.y === action.y) {
+        return state;
+    }
+
     const newStep = {
         ...oldStep,
         x: action.x,

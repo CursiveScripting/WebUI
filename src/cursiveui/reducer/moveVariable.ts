@@ -26,6 +26,11 @@ export function moveVariable(state: IWorkspaceState, action: MoveVariableAction)
     }
 
     const oldVariable = process.variables[varIndex];
+
+    if (oldVariable.x === action.x && oldVariable.y === action.y) {
+        return state;
+    }
+
     const newVariable = { ...oldVariable, x: action.x, y: action.y };
 
     process.variables = process.variables.slice();
