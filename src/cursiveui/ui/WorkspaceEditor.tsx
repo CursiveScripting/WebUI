@@ -7,7 +7,6 @@ import './WorkspaceEditor.css';
 import { IUserProcess } from '../state/IUserProcess';
 import { IProcess } from '../state/IProcess';
 import { IType } from '../state/IType';
-import { createMap } from '../services/DataFunctions';
 import { WorkspaceDispatchContext } from '../reducer';
 import { IUndoRedoAction } from '../services/useUndoReducer';
 import { IValidationError } from '../state/IValidationError';
@@ -35,9 +34,6 @@ export type DropInfo = {
 }
 
 interface State {
-    typesByName: Map<string, IType>;
-    processesByName: Map<string, IProcess>;
-
     openProcess?: IUserProcess;
 
     editingSignature: boolean;
@@ -57,9 +53,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
             : props.initialProcess
 
         this.state = {
-            typesByName: createMap(props.types, t => t.name),
-            processesByName: createMap(props.processes, p => p.name),
-
             openProcess: initialProcess,
             editingSignature: false,
         };
@@ -68,20 +61,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
     componentWillMount() {
         if (this.state.openProcess !== undefined) {
             this.openProcess(this.state.openProcess);
-        }
-    }
-
-    componentWillReceiveProps(nextProps: Props) {
-        if (nextProps.types !== this.props.types) {
-            this.setState({
-                typesByName: createMap(nextProps.types, t => t.name),
-            });
-        }
-        
-        if (nextProps.processes !== this.props.processes) {
-            this.setState({
-                processesByName: createMap(nextProps.processes, p => p.name),
-            });
         }
     }
 
@@ -155,8 +134,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 variables={this.state.openProcess.variables}
                 errors={this.state.openProcess.errors}
                 processName={this.state.openProcess.name}
-                processesByName={this.state.processesByName}
-                typesByName={this.state.typesByName}
 
                 dropping={this.state.dropping}
                 dropComplete={() => this.dropCompleted()}

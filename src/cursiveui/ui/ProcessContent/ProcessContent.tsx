@@ -8,8 +8,6 @@ import { ScrollWrapper } from './ScrollWrapper';
 import { ContentItems } from './ContentItems';
 import { ContentWrapper } from './ContentWrapper';
 import { WorkspaceDispatchContext } from '../../reducer';
-import { IProcess } from '../../state/IProcess';
-import { IType } from '../../state/IType';
 import { determineVariableName } from '../../services/StepFunctions';
 import { DropInfo } from '../WorkspaceEditor';
 import { IStep } from '../../state/IStep';
@@ -22,9 +20,6 @@ interface Props {
     steps: IStep[];
     variables: IVariable[];
     errors: IValidationError[];
-
-    typesByName: Map<string, IType>;
-    processesByName: Map<string, IProcess>;
 
     className?: string;
     
