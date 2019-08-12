@@ -2,7 +2,22 @@
 	<Type name="number" color="#0cf" validation="^[0-9]+$" />
 	<Type name="text" color="#c0f" validation=".*" />
 	<Type name="deck" color="#f00" />
-	<Type name="card" color="#cc0" />
+
+    <LookupType name="card" color="#cc0">
+        <Option>king</Option>
+        <Option>queen</Option>
+        <Option>jack</Option>
+        <Option>10</Option>
+        <Option>9</Option>
+        <Option>8</Option>
+        <Option>7</Option>
+        <Option>6</Option>
+        <Option>5</Option>
+        <Option>4</Option>
+        <Option>3</Option>
+        <Option>2</Option>
+        <Option>ace</Option>
+    </LookupType>
 	
 	<RequiredProcess name="prepareDeck">
 		<Description>Organise deck of cards for use</Description>

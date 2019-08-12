@@ -9,7 +9,7 @@ import { IParameter } from '../state/IParameter';
 import { IStartStep } from '../state/IStartStep';
 import { IStopStep } from '../state/IStopStep';
 import { IProcessStep } from '../state/IProcessStep';
-import { IType } from '../state/IType';
+import { DataType } from '../state/IType';
 import { isUserProcess } from './ProcessFunctions';
 
 export function loadProcesses(workspace: IWorkspaceState, processData: Document | string) {
@@ -57,7 +57,7 @@ function loadProcessesFromElement(workspace: IWorkspaceState, processData: HTMLE
     }
 }
 
-function loadProcessDefinition(typesByName: Map<string, IType>, processNode: Element): IUserProcess {
+function loadProcessDefinition(typesByName: Map<string, DataType>, processNode: Element): IUserProcess {
     const name = processNode.getAttribute('name')!;
     const folder = processNode.hasAttribute('folder') ? processNode.getAttribute('folder') : null;
     const descNodes = processNode.getElementsByTagName('Description');
@@ -105,7 +105,7 @@ function loadProcessDefinition(typesByName: Map<string, IType>, processNode: Ele
 }
 
 function loadProcessParameters(
-    typesByName: Map<string, IType>,
+    typesByName: Map<string, DataType>,
     paramNodes: HTMLCollectionOf<Element>,
     dataFields: IParameter[],
     paramTypeName: 'input' | 'output' | 'variable'

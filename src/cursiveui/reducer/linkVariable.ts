@@ -1,11 +1,11 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
+import { isTypeAssignable } from '../services/TypeFunctions';
 import { usesOutputs, usesInputs, replaceVariableReferences, replaceStep } from '../services/StepFunctions';
 import { validate } from './validate';
 import { IStepParameter } from '../state/IStepParameter';
 import { IUserProcess } from '../state/IUserProcess';
 import { IType } from '../state/IType';
-import { isTypeAssignable } from '../services/DataFunctions';
 
 export type LinkVariableBase = {
     inProcessName: string;

@@ -1,7 +1,16 @@
-export interface IType {
+interface ITypeBase {
     name: string;
     color: string;
-    extendsType?: IType;
-    validationExpression?: string;
     guidance?: string;
 }
+
+export interface IType extends ITypeBase {
+    extendsType?: IType;
+    validationExpression?: string;
+}
+
+export interface ILookupType extends ITypeBase {
+    options: string[];
+}
+
+export type DataType = IType | ILookupType;

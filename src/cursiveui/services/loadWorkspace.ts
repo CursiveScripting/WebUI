@@ -3,9 +3,10 @@ import { IUserProcess } from '../state/IUserProcess';
 import { ISystemProcess } from '../state/ISystemProcess';
 import { isString } from './DataFunctions';
 import { IProcess } from '../state/IProcess';
-import { IType } from '../state/IType';
+import { DataType, IType, ILookupType } from '../state/IType';
 import { IParameter } from '../state/IParameter';
 import { createEmptyStartStep } from './StepFunctions';
+import { usesOptions } from './TypeFunctions';
 
 export function loadWorkspace(workspaceData: Document | string) {
     const rootElement = isString(workspaceData)
@@ -42,12 +43,29 @@ type ITypeWithExtendsName = IType & {
 }
 
 function loadTypes(workspaceData: HTMLElement) {
-    const typesByName = new Map<string, ITypeWithExtendsName>();
+    const typesByName = new Map<string, DataType>();
+    const typesThatExtend: ITypeWithExtendsName[] = [];
 
-    const typeNodes = workspaceData.getElementsByTagName('Type');
+    let typeNodes = workspaceData.getElementsByTagName('Type');
     
     for (const typeNode of typeNodes) {
-        const type = loadType(typeNode, typesByName);
+        const type = loadType(typeNode);
+        
+        if (typesByName.has(type.name)) {
+            throw new Error(`There are two types in the workspace with the same name: ${type.name}. Type names must be unique.`);
+        }
+
+        typesByName.set(type.name, type);
+
+        if (!usesOptions(type) && type.extendsTypeName !== undefined) {
+            // TODO: if type extends, add it to typesThatExtend   
+            typesThatExtend.push(type);
+        }
+    }
+
+    typeNodes = workspaceData.getElementsByTagName('LookupType');
+    for (const typeNode of typeNodes) {
+        const type = loadLookupType(typeNode);
         
         if (typesByName.has(type.name)) {
             throw new Error(`There are two types in the workspace with the same name: ${type.name}. Type names must be unique.`);
@@ -57,45 +75,66 @@ function loadTypes(workspaceData: HTMLElement) {
     }
 
     // Now that all types are loaded, properly hook up extendsType property
-    for (const [name, type] of typesByName) {
-        if (type.extendsTypeName !== undefined) {
-            const extendsType = typesByName.get(type.extendsTypeName);
-
-            if (extendsType === undefined) {
-                throw new Error(`Type ${name} extends a type which has not been defined: ${type.extendsTypeName}.`);
-            }
-
-            type.extendsType = extendsType;
+    for (const type of typesThatExtend) {
+        if (type.extendsTypeName === undefined) {
+            continue;
         }
+
+        const extendsType = typesByName.get(type.extendsTypeName);
+
+        if (extendsType === undefined) {
+            throw new Error(`Type ${type.name} extends a type which has not been defined: ${type.extendsTypeName}.`);
+        }
+
+        type.extendsType = extendsType;
 
         delete type.extendsTypeName;
     }
 
-    return typesByName as Map<string, IType>;
+    return typesByName;
 }
 
-function loadType(typeNode: Element, typesByName: Map<string, ITypeWithExtendsName>): ITypeWithExtendsName {
+function loadType(typeNode: Element): ITypeWithExtendsName {
     const name = typeNode.getAttribute('name')!;
     const color = typeNode.getAttribute('color')!;
-    
+    const guidance = typeNode.getAttribute('guidance');
+
+    let type: ITypeWithExtendsName = {
+        name,
+        color,
+        guidance: guidance === null ? undefined : guidance,
+    };
+
     const validationExpression = typeNode.getAttribute('validation');
+    if (validationExpression !== null) {
+        type.validationExpression = validationExpression;
+    }
 
-    let extendsTypeName = typeNode.getAttribute('extends');
+    const extendsTypeName = typeNode.getAttribute('extends');
+    if (extendsTypeName !== null) {
+        type.extendsTypeName = extendsTypeName;
+    }
 
+    return type;
+}
+
+function loadLookupType(typeNode: Element): ILookupType {
+    const name = typeNode.getAttribute('name')!;
+    const color = typeNode.getAttribute('color')!;
     const guidance = typeNode.getAttribute('guidance');
 
     return {
         name,
         color,
-        extendsTypeName: extendsTypeName === null ? undefined : extendsTypeName,
         guidance: guidance === null ? undefined : guidance,
-        validationExpression: validationExpression === null ? undefined : validationExpression,
+        options: Array.from(typeNode.getElementsByTagName('Option'))
+            .map(option => (option as HTMLElement).innerHTML),
     };
 }
 
 function loadProcessDefinition(
     procNode: Element,
-    typesByName: Map<string, IType>,
+    typesByName: Map<string, DataType>,
     isSystemProcess: boolean
 ): ISystemProcess | IUserProcess {
     const processName = procNode.getAttribute('name') as string;
@@ -156,7 +195,7 @@ function loadProcessDefinition(
 
 function loadParameters(
     processName: string,
-    typesByName: Map<string, IType>,
+    typesByName: Map<string, DataType>,
     paramNodes: HTMLCollectionOf<Element>,
     parameters: IParameter[],
     inputOrOutput: 'input' | 'output',

@@ -1,5 +1,3 @@
-import { IType } from '../state/IType';
-
 export function createMap<TElement>(elements: TElement[], getKey: (el: TElement) => string) {
     const map = new Map<string, TElement>();
 
@@ -21,18 +19,4 @@ export function isValueValid(value: string | null, expression: string | undefine
 
     const expr = new RegExp(expression);
     return expr.test(value);
-}
-
-export function isTypeAssignable(source: IType, dest: IType) {
-    let test: IType | undefined = source;
-
-    do {
-        if (test === dest) {
-            return true;
-        }
-
-        test = test.extendsType;
-    } while (test !== undefined)
-
-    return false;
 }

@@ -1,7 +1,7 @@
 import { IProcess } from './IProcess';
-import { IType } from './IType';
+import { DataType } from './IType';
 
 export interface IWorkspaceState {
-    types: IType[];
+    types: DataType[];
     processes: IProcess[];
 }

@@ -199,6 +199,10 @@
     flex-shrink: 1;
 }
 
+select.processItem__default {
+    background-color: transparent;
+}
+
 @keyframes throbError {
     from {
         color: #f00;

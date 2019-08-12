@@ -1,6 +1,6 @@
-import { IType } from "./IType";
+import { DataType } from './IType';
 
 export interface IParameter {
     name: string;
-    type: IType;
+    type: DataType;
 }

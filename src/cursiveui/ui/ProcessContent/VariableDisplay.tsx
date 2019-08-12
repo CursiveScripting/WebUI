@@ -3,19 +3,19 @@ import { growToFitGrid } from './gridSize';
 import { ParameterConnector, ConnectorState } from './ParameterConnector';
 import './ProcessItem.css';
 import { ValueInput } from './ValueInput';
-import { IType } from '../../state/IType';
+import { DataType } from '../../state/IType';
 import { isValueValid } from '../../services/DataFunctions';
 import { WorkspaceDispatchContext } from '../../reducer';
 import { getDescendentMidLeftPos } from '../../services/StepFunctions';
 import { ICoord } from '../../state/dimensions';
+import { usesOptions } from '../../services/TypeFunctions';
 
 interface Props extends ICoord {
     name: string;
-    type: IType;
+    type: DataType;
     initialValue: string | null;
     inputConnected: boolean;
     outputConnected: boolean;
-    canEdit: boolean;
     inProcessName: string;
     headerMouseDown: (mouseX: number, mouseY: number, displayX: number, displayY: number) => void;
     connectorMouseDown: (input: boolean, x: number, y: number) => void;
@@ -107,49 +107,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
             backgroundColor: this.props.type.color,
         };
 
-        let defaultInput;
-        if (this.props.canEdit) {
-            const strVal = this.state.initialValue === null ? '' : this.state.initialValue;
-
-            const valueChanged = (val: string) => this.setState({ initialValue: val });
-
-            const doneEditing = () => {
-                let val = this.state.initialValue;
-
-                if (val !== null) {
-                    val = val
-                        .replace(/<div>/g, '\n')
-                        .replace(/<\/?div>/g, '')
-                        .replace(/<br ?\/?>/g, '\n')
-                        .trim();
-                        
-                    if (val.length === 0) {
-                        val = null;
-                    }
-                }
-                
-                this.context({
-                    type: 'set variable',
-                    inProcessName: this.props.inProcessName,
-                    varName: this.props.name,
-                    initialValue: val,
-                });
-            };
-            
-            const isValid = isValueValid(this.state.initialValue, this.props.type.validationExpression);
-            // const isValid = useMemo(
-                // () => isValueValid(this.state.initialValue, this.props.type.validationExpression),
-                // [this.state.initialValue, this.props.type.validationExpression]
-            // );
-
-            defaultInput = <ValueInput
-                className="processItem__default"
-                value={strVal}
-                valueChanged={valueChanged}
-                doneEditing={doneEditing}
-                isValid={isValid}
-            />
-        }
+        const defaultInput = this.renderDefault();
 
         const inputState = this.props.inputConnected
             ? ConnectorState.Connected
@@ -203,6 +161,75 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                 </div>
             </div>
         );
+    }
+
+    private renderDefault() {
+        if (usesOptions(this.props.type)) {
+            const valueChanged = (val: string | null) => {
+                if (val === '') {
+                    val = null;
+                }
+
+                this.setState({ initialValue: val });
+
+                this.context({
+                    type: 'set variable',
+                    inProcessName: this.props.inProcessName,
+                    varName: this.props.name,
+                    initialValue: val,
+                });
+            };
+
+            const strVal = this.state.initialValue === null ? '' : this.state.initialValue;
+
+            return <select
+                className="processItem__default"
+                value={strVal}
+                onChange={e => valueChanged(e.target.value)}
+            >
+                <option value="">(no default)</option>
+                {this.props.type.options.map((o, i) => <option value={o} key={i}>{o}</option>)}
+            </select>
+
+        }
+        else if (this.props.type.validationExpression !== undefined) {
+            const strVal = this.state.initialValue === null ? '' : this.state.initialValue;
+
+            const valueChanged = (val: string) => this.setState({ initialValue: val });
+
+            const doneEditing = () => {
+                let val = this.state.initialValue;
+
+                if (val !== null) {
+                    val = val
+                        .replace(/<div>/g, '\n')
+                        .replace(/<\/?div>/g, '')
+                        .replace(/<br ?\/?>/g, '\n')
+                        .trim();
+                        
+                    if (val.length === 0) {
+                        val = null;
+                    }
+                }
+                
+                this.context({
+                    type: 'set variable',
+                    inProcessName: this.props.inProcessName,
+                    varName: this.props.name,
+                    initialValue: val,
+                });
+            };
+            
+            const isValid = isValueValid(this.state.initialValue, this.props.type.validationExpression);
+
+            return <ValueInput
+                className="processItem__default"
+                value={strVal}
+                valueChanged={valueChanged}
+                doneEditing={doneEditing}
+                isValid={isValid}
+            />
+        }
     }
 
     public scrollIntoView() {

@@ -259,8 +259,6 @@ export const ContentItems = (props: Props) => {
     props.varRefs.clear();
 
     const variables = props.variables.map(variable => {
-        const canEdit = variable.type.validationExpression !== undefined;
-
         const varPos: ICoord = props.dragging !== undefined
             && props.dragging.type === DragType.Variable
             && props.dragging.variable === variable
@@ -275,7 +273,6 @@ export const ContentItems = (props: Props) => {
                 type={variable.type}
                 x={varPos.x}
                 y={varPos.y}
-                canEdit={canEdit}
                 inputConnected={variable.incomingLinks.length > 0}
                 outputConnected={variable.outgoingLinks.length > 0}
                 inProcessName={props.processName}
