@@ -25,7 +25,15 @@ type LoadingState = {
 }
 
 export const CursiveUI = (props: Props) => {
-    const { state, dispatch, undo, redo, clearHistory } = useUndoReducer(workspaceReducer, {
+    const {
+        state,
+        dispatch,
+        undo,
+        redo,
+        clearHistory,
+        noteSaved,
+        hasUnsavedChanges
+    } = useUndoReducer(workspaceReducer, {
         types: [],
         processes: [],
     }, 100);
@@ -47,6 +55,7 @@ export const CursiveUI = (props: Props) => {
                 });
 
                 clearHistory();
+                noteSaved();
             })
             .catch((err: Error) => {
                 setLoadingState({
@@ -55,7 +64,7 @@ export const CursiveUI = (props: Props) => {
                     message: err.message,
                 });
             })
-    }, [props.loadWorkspace, props.loadProcesses, dispatch, clearHistory]);
+    }, [props.loadWorkspace, props.loadProcesses, dispatch, clearHistory, noteSaved]);
 
     if (loadingState.loading) {
         return <div>Loading...</div>
@@ -65,10 +74,12 @@ export const CursiveUI = (props: Props) => {
         return <Error message={loadingState.message} />
     }
     
-    const doSave = () => {
+    const doSave = hasUnsavedChanges
+        ? async () => {
         const xml = saveProcesses(state.processes);
-        props.saveProcesses(xml)
-    };
+        await props.saveProcesses(xml)
+        noteSaved();
+    } : undefined;
 
     return (
         <WorkspaceDispatchContext.Provider value={dispatch}>

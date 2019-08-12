@@ -19,10 +19,14 @@ export class SaveTool extends React.PureComponent<SaveToolProps, {}> {
         if (this.props.validationErrors.length === 0) {
             if (this.props.otherProcessesHaveErrors) {
                 saveClasses += ' tool--otherInvalid';
-                promptText = `Error(s) in other process(es)${canEverSave ? ', can\'t save' : ''}`;
+                promptText = 'Error(s) in other process(es), can\'t save';
                 title = 'You must correct all processes before saving';
             }
-            else if (canEverSave) {
+            else if (this.props.saveProcesses === undefined) {
+                promptText = 'All changes saved';
+                saveClasses += ' tool--disabled';
+            }
+            else {
                 promptText = 'Click to save:';
                 click = this.props.saveProcesses;
             }

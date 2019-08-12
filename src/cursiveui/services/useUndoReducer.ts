@@ -14,10 +14,16 @@ export function useUndoReducer<TState, TAction extends IAction>(
         },
         past: [],
         future: [],
+        lastSaved: initialState,
     });
 
     const clearHistory = useCallback(
         () => dispatch({ type: 'clearHistory' }),
+        [dispatch]
+    );
+
+    const noteSaved = useCallback(
+        () => dispatch({ type: 'saved' }),
         [dispatch]
     );
 
@@ -48,7 +54,9 @@ export function useUndoReducer<TState, TAction extends IAction>(
         undo,
         redo,
         clearHistory,
-    }
+        noteSaved,
+        hasUnsavedChanges: state.lastSaved !== state.present.state,
+    };
 }
 
 export interface IUndoRedoAction {
@@ -60,6 +68,7 @@ interface IUndoable<T> {
     present: IUndoState<T>;
     past: Array<IUndoState<T>>;
     future: Array<IUndoState<T>>;
+    lastSaved?: T;
 }
 
 interface IUndoState<T> {
@@ -72,7 +81,7 @@ interface IAction {
 }
 
 type UndoAction = {
-    type: 'undo' | 'redo' | 'clearHistory';
+    type: 'undo' | 'redo' | 'clearHistory' | 'saved';
 }
 
 function undoReducer<TState, TAction extends IAction>(reducer: Reducer<TState, TAction>, maxHistorySize?: number) {
@@ -83,6 +92,7 @@ function undoReducer<TState, TAction extends IAction>(reducer: Reducer<TState, T
             }
 
             return {
+                ...state,
                 present: state.past[state.past.length - 1],
                 past: state.past.slice(0, state.past.length - 1),
                 future: [state.present, ...state.future],
@@ -94,6 +104,7 @@ function undoReducer<TState, TAction extends IAction>(reducer: Reducer<TState, T
             }
 
             return {
+                ...state,
                 present: state.future[0],
                 past: [...state.past, state.present],
                 future: state.future.slice(1),
@@ -101,9 +112,15 @@ function undoReducer<TState, TAction extends IAction>(reducer: Reducer<TState, T
         }
         else if (action.type === 'clearHistory') {
             return {
-                present: state.present,
+                ...state,
                 past: [],
                 future: [],
+            };
+        }
+        else if (action.type === 'saved') {
+            return {
+                ...state,
+                lastSaved: state.present.state,
             };
         }
         else {
@@ -118,6 +135,7 @@ function undoReducer<TState, TAction extends IAction>(reducer: Reducer<TState, T
                 : state.past;
 
             return {
+                ...state,
                 present: {
                     state: newPresent,
                     actionName: action.type,

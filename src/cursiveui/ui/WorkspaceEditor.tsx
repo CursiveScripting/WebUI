@@ -17,7 +17,7 @@ interface Props {
     types: IType[]
     initialProcess?: IUserProcess;
     className?: string;
-    save: () => void;
+    save?: () => void;
     undo?: IUndoRedoAction;
     redo?: IUndoRedoAction;
 }
