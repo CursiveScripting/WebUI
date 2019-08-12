@@ -17,6 +17,7 @@ import { setVariable, SetVariableAction } from './setVariable';
 import { linkNewVariable, LinkNewVariableAction } from './linkNewVariable';
 import { linkViaVariable, LinkViaVariableAction } from './linkViaVariable';
 import { UnlinkVariableAction, unlinkVariable } from './unlinkVariable';
+import { RenameVariableAction, renameVariable } from './renameVariable';
 
 export type WorkspaceAction = LoadAction
 | AddProcessAction
@@ -29,6 +30,7 @@ export type WorkspaceAction = LoadAction
 | RemoveVariableAction
 | MoveStepAction
 | MoveVariableAction
+| RenameVariableAction
 | SetReturnPathAction
 | LinkVariableAction
 | UnlinkVariableAction
@@ -76,6 +78,9 @@ export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (stat
 
         case 'move variable':
             return moveVariable(state, action);
+        
+        case 'rename variable':
+            return renameVariable(state, action);
 
         case 'set return path':
             return setReturnPath(state, action);

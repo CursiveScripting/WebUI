@@ -168,6 +168,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                 <div
                     className="processItem__header"
                     onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY, this.root!.offsetLeft, this.root!.offsetTop)}
+                    onDoubleClick={() => this.rename()}
                     style={colorStyle}
                 >
                     <div className="processItem__name">{this.props.name}</div>
@@ -214,6 +215,20 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
             inProcessName: this.props.inProcessName,
             varName: this.props.name,
             varInput: input,
+        });
+    }
+
+    private rename() {
+        const newName = prompt('Enter a new name for this variable', this.props.name);
+        if (newName === null) {
+            return;
+        }
+
+        this.context({
+            type: 'rename variable',
+            inProcessName: this.props.inProcessName,
+            oldName: this.props.name,
+            newName: newName.trim(),
         });
     }
 }
