@@ -18,6 +18,7 @@ interface Props {
     initialProcess?: IUserProcess;
     className?: string;
     save?: () => void;
+    close?: () => void;
     undo?: IUndoRedoAction;
     redo?: IUndoRedoAction;
 }
@@ -149,6 +150,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 otherProcessesHaveErrors={this.props.processes.find(p => p !== this.state.openProcess && isUserProcess(p) && p.errors.length > 0) !== undefined}
                 className="workspaceEditor__toolbar"
                 saveProcesses={this.props.save}
+                close={this.props.close}
                 undo={this.props.undo}
                 redo={this.props.redo}
                 focusError={error => this.setState({ focusError: error })}

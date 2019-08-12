@@ -1,16 +1,5 @@
 .validationSummary {
-    z-index: 5;
-    background-color: white;
     padding: 1em;
-    border-bottom-left-radius: 0.5em;
-    border-bottom-right-radius: 0.5em;
-    border: solid grey 1px;
-    display: none;
-    border-top-width: 0px;
-}
-
-.tool--save:hover .validationSummary, .tool--save:active .validationSummary {
-    display: block;
 }
 
 .validationSummary__item {

@@ -21,6 +21,7 @@ const App = () => (
         loadWorkspace={loadWorkspace}
         loadProcesses={loadProcesses}
         saveProcesses={saveProcesses}
+        close={() => alert('closed')}
     />
 );
 

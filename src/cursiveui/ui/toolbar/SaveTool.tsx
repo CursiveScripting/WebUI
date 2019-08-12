@@ -1,6 +1,7 @@
 import * as React from 'react';
 import './ValidationSummary.css';
 import { IValidationError } from '../../state/IValidationError';
+import { Tool, ToolState } from './Tool';
 
 export interface SaveToolProps {
     validationErrors: IValidationError[];
@@ -9,71 +10,54 @@ export interface SaveToolProps {
     focusError: (error: IValidationError | undefined) => void;
 }
 
-export class SaveTool extends React.PureComponent<SaveToolProps, {}> {
-    render() {
-        let canEverSave = this.props.saveProcesses !== undefined;
+export const SaveTool: React.FunctionComponent<SaveToolProps> = props => {
+    let state, prompt, validationSummary;
 
-        let promptText, title, click, validationSummary;
-        let saveClasses = 'tool tool--save';
-
-        if (this.props.validationErrors.length === 0) {
-            if (this.props.otherProcessesHaveErrors) {
-                saveClasses += ' tool--otherInvalid';
-                promptText = 'Error(s) in other process(es), can\'t save';
-                title = 'You must correct all processes before saving';
-            }
-            else if (this.props.saveProcesses === undefined) {
-                promptText = 'All changes saved';
-                saveClasses += ' tool--disabled';
-            }
-            else {
-                promptText = 'Click to save:';
-                click = this.props.saveProcesses;
-            }
+    if (props.validationErrors.length === 0) {
+        if (props.otherProcessesHaveErrors) {
+            state = ToolState.Error;
+            prompt = 'Error(s) in other process(es), can\'t save';
+        }
+        else if (props.saveProcesses === undefined) {
+            state = ToolState.Disabled;
+            prompt = 'All changes saved';
         }
         else {
-            saveClasses += ' tool--invalid';
-            promptText = `${this.props.validationErrors.length} error${(this.props.validationErrors.length === 1 ? '' : 's')} in this process`;
-            if (canEverSave) {
-                promptText += ', can\'t save';
-                title = 'You must correct all errors before saving';
-            }
-
-            validationSummary = this.renderValidationSummary();
+            state = ToolState.Normal;
+            prompt = 'Click to save:';
         }
+    }
+    else {
+        state = ToolState.Error;
+        prompt = `${props.validationErrors.length} error${(props.validationErrors.length === 1 ? '' : 's')} in this process`;
 
-        return (
-            <div className={saveClasses} onClick={click} title={title}>
-                <div className="tool__label">{promptText}</div>
-                <div className="tool__icon" />
-                {validationSummary}
-            </div>
-        );
+        validationSummary = props.validationErrors.map((error, index) => renderValidationError(error, index, props.focusError));
     }
 
-    private renderValidationSummary() {
-        return (
-            <div className="validationSummary" title="">
-                {this.props.validationErrors.map((error, index) => this.renderValidationError(error, index))}
-            </div>
-        );
-    }
+    return <Tool
+        className="tool--save"
+        state={state}
+        prompt={prompt}
+        onClick={props.saveProcesses}
+    >
+        {validationSummary}
+    </Tool>
+}
 
-    private renderValidationError(error: IValidationError, index: number) {
-        const focusError = () => this.props.focusError(error);
-        const clearFocus = () => this.props.focusError(undefined);
+function renderValidationError(error: IValidationError, index: number, setFocus: (focus: IValidationError | undefined) => void) {
+    const focusError = () => setFocus(error);
+    const clearFocus = () => setFocus(undefined);
 
-        return (
-            <div
-                className="validationSummary__item"
-                key={index}
-                onFocus={focusError}
-                onMouseOver={focusError}
-                onBlur={clearFocus}
-                onMouseOut={clearFocus}
-            >
-                {error.message}
-            </div>
-        );
-    }
+    return (
+        <div
+            className="validationSummary__item"
+            key={index}
+            onFocus={focusError}
+            onMouseOver={focusError}
+            onBlur={clearFocus}
+            onMouseOut={clearFocus}
+        >
+            {error.message}
+        </div>
+    );
 }
