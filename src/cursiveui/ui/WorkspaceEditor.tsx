@@ -11,6 +11,7 @@ import { WorkspaceDispatchContext } from '../reducer';
 import { IUndoRedoAction } from '../services/useUndoReducer';
 import { IValidationError } from '../state/IValidationError';
 import { isUserProcess } from '../services/ProcessFunctions';
+import { ICustomTool } from '..';
 
 interface Props {
     processes: IProcess[];
@@ -18,7 +19,7 @@ interface Props {
     initialProcess?: IUserProcess;
     className?: string;
     save?: () => void;
-    close?: () => void;
+    customTools?: ICustomTool[];
     undo?: IUndoRedoAction;
     redo?: IUndoRedoAction;
 }
@@ -150,7 +151,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 otherProcessesHaveErrors={this.props.processes.find(p => p !== this.state.openProcess && isUserProcess(p) && p.errors.length > 0) !== undefined}
                 className="workspaceEditor__toolbar"
                 saveProcesses={this.props.save}
-                close={this.props.close}
+                customTools={this.props.customTools}
                 undo={this.props.undo}
                 redo={this.props.redo}
                 focusError={error => this.setState({ focusError: error })}

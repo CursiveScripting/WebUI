@@ -1,6 +1,6 @@
 import * as React from 'react';
 import './App.css';
-import { CursiveUI } from './cursiveui/CursiveUI';
+import CursiveUI, { ICustomTool } from './cursiveui';
 
 async function loadWorkspace() {
     const response = await fetch('workspace.xml');
@@ -15,13 +15,20 @@ async function saveProcesses(processXml: string) {
     sessionStorage.setItem('saved', processXml);
 }
 
+const customTools: ICustomTool[] = [{
+    prompt: 'Close editor',
+    icon: 'tool--close',
+    unsavedConfirmation: 'Discard all unsaved changes?',
+    action: () => alert('Editor closed'),
+}];
+
 const App = () => (
     <CursiveUI
         className="fullScreen"
         loadWorkspace={loadWorkspace}
         loadProcesses={loadProcesses}
         saveProcesses={saveProcesses}
-        close={() => alert('closed')}
+        customTools={customTools}
     />
 );
 

@@ -3,10 +3,11 @@ import { SaveTool, SaveToolProps } from './SaveTool';
 import { UndoToolProps, UndoTool } from './UndoTool';
 import './ProcessToolbar.css';
 import { Tool, ToolState } from './Tool';
+import { ICustomTool } from '../..';
 
 interface ProcessToolbarProps extends SaveToolProps, UndoToolProps {
     className?: string;
-    close?: () => void;
+    customTools?: ICustomTool[];
 }
 
 export const ProcessToolbar = (props: ProcessToolbarProps) => {
@@ -15,14 +16,23 @@ export const ProcessToolbar = (props: ProcessToolbarProps) => {
         classes += ' ' + props.className;
     }
 
-    const close = props.close === undefined
+    const customTools = React.useMemo(() => props.customTools === undefined
         ? undefined
-        : <Tool
-            className="tool--close"
-            prompt="Close editor"
-            onClick={props.close}
-            state={ToolState.Normal}
-        />
+        : props.customTools.map((tool, index) => {
+            const action = tool.unsavedConfirmation !== undefined && props.saveProcesses !== undefined
+                ? () => { if (window.confirm(tool.unsavedConfirmation!)) tool.action(); }
+                : tool.action;
+
+            return <Tool
+                key={index}
+                className={tool.icon}
+                prompt={tool.prompt}
+                onClick={action}
+                state={ToolState.Normal}
+            />
+        }),
+        [props.customTools, props.saveProcesses]
+    );
 
     return (
         <div className={classes}>
@@ -33,7 +43,7 @@ export const ProcessToolbar = (props: ProcessToolbarProps) => {
                 focusError={props.focusError}
             />
 
-            {close}
+            {customTools}
 
             <UndoTool
                 undo={props.undo}

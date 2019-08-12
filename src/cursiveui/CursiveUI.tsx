@@ -1,17 +1,18 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Error } from './ui/Error';
 import { WorkspaceEditor } from './ui/WorkspaceEditor';
 import { workspaceReducer, WorkspaceDispatchContext } from './reducer';
 import { saveProcesses } from './services/saveProcesses';
 import { loadWorkspaceAndProcesses } from './services/loadWorkspaceAndProcesses';
 import { useUndoReducer } from './services/useUndoReducer';
+import { ICustomTool } from '.';
 
 interface Props {
     className: string;
     loadWorkspace: () => Promise<Document | string>;
     loadProcesses: undefined | (() => Promise<string | null>);
     saveProcesses: (processXml: string) => Promise<void>;
-    close?: () => void;
+    customTools?: ICustomTool[];
 }
 
 type LoadingState = {
@@ -67,14 +68,6 @@ export const CursiveUI = (props: Props) => {
             })
     }, [props.loadWorkspace, props.loadProcesses, dispatch, clearHistory, noteSaved]);
 
-    const close = useMemo(() => props.close === undefined
-        ? undefined
-        : hasUnsavedChanges
-            ? () => { if (window.confirm('Discard all unsaved changes?')) props.close!(); }
-            : props.close
-        , [hasUnsavedChanges, props.close]
-    );
-
     if (loadingState.loading) {
         return <div>Loading...</div>
     }
@@ -99,7 +92,7 @@ export const CursiveUI = (props: Props) => {
                 undo={undo}
                 redo={redo}
                 save={doSave}
-                close={close}
+                customTools={props.customTools}
             />
         </WorkspaceDispatchContext.Provider>
     )
