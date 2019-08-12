@@ -6,6 +6,8 @@ import { saveProcesses } from './services/saveProcesses';
 import { loadWorkspaceAndProcesses } from './services/loadWorkspaceAndProcesses';
 import { useUndoReducer } from './services/useUndoReducer';
 import { ICustomTool } from '.';
+import { IDebugConfiguration } from './debug/IDebugConfiguration';
+import { IDebugState } from './debug/IDebugState';
 
 interface Props {
     className: string;
@@ -13,6 +15,7 @@ interface Props {
     loadProcesses: undefined | (() => Promise<string | null>);
     saveProcesses: (processXml: string) => Promise<void>;
     customTools?: ICustomTool[];
+    debug?: IDebugConfiguration;
 }
 
 type LoadingState = {
@@ -39,6 +42,8 @@ export const CursiveUI = (props: Props) => {
         types: [],
         processes: [],
     }, 100);
+
+    const [debugState, setDebugState] = useState<IDebugState | undefined>();
 
     const [loadingState, setLoadingState] = useState<LoadingState>({ loading: true });
 
@@ -82,6 +87,11 @@ export const CursiveUI = (props: Props) => {
         await props.saveProcesses(xml)
         noteSaved();
     } : undefined;
+
+    if (debugState !== undefined) {
+        // TODO: render debugger instead of editor?
+        // TODO: Only allow debugging if changes have been saved ... so need a way of detecting if we have outstanding changes!
+    }
 
     return (
         <WorkspaceDispatchContext.Provider value={dispatch}>
