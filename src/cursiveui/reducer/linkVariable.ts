@@ -4,6 +4,8 @@ import { usesOutputs, usesInputs, replaceVariableReferences, replaceStep } from 
 import { validate } from './validate';
 import { IStepParameter } from '../state/IStepParameter';
 import { IUserProcess } from '../state/IUserProcess';
+import { IType } from '../state/IType';
+import { isTypeAssignable } from '../services/DataFunctions';
 
 export type LinkVariableBase = {
     inProcessName: string;
@@ -66,11 +68,32 @@ export function linkVariable(state: IWorkspaceState, action: LinkVariableBase) {
     }
     
     var paramIndex = modifyingParameters.findIndex(p => p.name === action.stepParamName);
+    if (paramIndex === -1) {
+        return state;
+    }
+
     const oldParameter = modifyingParameters[paramIndex];
     const oldVariable = oldParameter.connection;
 
     if (oldVariable === newVariable) {
         return state; // no change
+    }
+
+    if (newVariable !== undefined) {
+        let sourceType: IType, destType: IType;
+
+        if (action.stepInputParam) {
+            sourceType = newVariable.type;
+            destType = oldParameter.type;
+        }
+        else {
+            sourceType = newVariable.type;
+            destType = oldParameter.type;
+        }
+
+        if (!isTypeAssignable(sourceType, destType)) {
+            return state;
+        }
     }
 
     const newParameter = {

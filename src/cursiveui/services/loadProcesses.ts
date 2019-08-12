@@ -274,22 +274,22 @@ function loadStepParameters(
     isInputParam: boolean
 ) {
     const sourceNodes = stepNode.getElementsByTagName(isInputParam ? 'Input' : 'Output');
-    const sourceNodesByName: Record<string, Element> = {};
+    const sourceNodesByName = new Map<string, Element>();
     for (const sourceNode of sourceNodes) {
         const paramName = sourceNode.getAttribute('name')!;
 
-        if (sourceNodesByName.hasOwnProperty(paramName)) {
+        if (sourceNodesByName.has(paramName)) {
             const parameterTypeName = isInputParam ? 'input' : 'output';
             throw new Error(`Step ${stepId} of the "${process.name}" process tries to map the one ${parameterTypeName} multiple times: ${paramName}`);
         }
 
-        sourceNodesByName[paramName] = sourceNode;
+        sourceNodesByName.set(paramName, sourceNode);
     }
     
     const linkAttributeName = isInputParam ? 'source' : 'destination';
 
     return parameters.map(p => {
-        const sourceNode = sourceNodesByName[p.name];
+        const sourceNode = sourceNodesByName.get(p.name);
         let variable: IVariable | undefined;
 
         if (sourceNode !== undefined) {

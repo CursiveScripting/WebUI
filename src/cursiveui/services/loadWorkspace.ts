@@ -6,7 +6,6 @@ import { IProcess } from '../state/IProcess';
 import { IType } from '../state/IType';
 import { IParameter } from '../state/IParameter';
 import { createEmptyStartStep } from './StepFunctions';
-import { IValidationError } from '../state/IValidationError';
 
 export function loadWorkspace(workspaceData: Document | string) {
     const rootElement = isString(workspaceData)
@@ -17,55 +16,71 @@ export function loadWorkspace(workspaceData: Document | string) {
 }
 
 function loadWorkspaceFromElement(workspaceData: HTMLElement): IWorkspaceState {
-    const processesByName: Record<string, IProcess> = {};
-    const typesByName: Record<string, IType> = {};
+    const typesByName = loadTypes(workspaceData);
+    const processesByName = new Map<string, IProcess>();
+
+    let procNodes = workspaceData.getElementsByTagName('SystemProcess');
+    for (const procNode of procNodes) {
+        const process = loadProcessDefinition(procNode, typesByName, true) as ISystemProcess;
+        processesByName.set(process.name, process);
+    }
+
+    procNodes = workspaceData.getElementsByTagName('RequiredProcess');
+    for (const procNode of procNodes) {
+        const process = loadProcessDefinition(procNode, typesByName, false) as IUserProcess;
+        processesByName.set(process.name, process);
+    }
+
+    return {
+        types: Array.from(typesByName.values()),
+        processes: Array.from(processesByName.values()),
+    };
+}
+
+type ITypeWithExtendsName = IType & {
+    extendsTypeName?: string;
+}
+
+function loadTypes(workspaceData: HTMLElement) {
+    const typesByName = new Map<string, ITypeWithExtendsName>();
 
     const typeNodes = workspaceData.getElementsByTagName('Type');
     
     for (const typeNode of typeNodes) {
         const type = loadType(typeNode, typesByName);
         
-        if (typesByName.hasOwnProperty(type.name)) {
+        if (typesByName.has(type.name)) {
             throw new Error(`There are two types in the workspace with the same name: ${type.name}. Type names must be unique.`);
         }
 
-        typesByName[type.name] = type;
+        typesByName.set(type.name, type);
     }
 
-    let procNodes = workspaceData.getElementsByTagName('SystemProcess');
-    for (const procNode of procNodes) {
-        const process = loadProcessDefinition(procNode, typesByName, true) as ISystemProcess;
-        processesByName[process.name] = process;
+    // Now that all types are loaded, properly hook up extendsType property
+    for (const [name, type] of typesByName) {
+        if (type.extendsTypeName !== undefined) {
+            const extendsType = typesByName.get(type.extendsTypeName);
+
+            if (extendsType === undefined) {
+                throw new Error(`Type ${name} extends a type which has not been defined: ${type.extendsTypeName}.`);
+            }
+
+            type.extendsType = extendsType;
+        }
+
+        delete type.extendsTypeName;
     }
 
-    const errors: Record<string, IValidationError[]> = {};
-
-    procNodes = workspaceData.getElementsByTagName('RequiredProcess');
-    for (const procNode of procNodes) {
-        const process = loadProcessDefinition(procNode, typesByName, false) as IUserProcess;
-        processesByName[process.name] = process;
-        errors[process.name] = [];
-    }
-
-    return {
-        types: Object.values(typesByName),
-        processes: Object.values(processesByName),
-    };
+    return typesByName as Map<string, IType>;
 }
 
-function loadType(typeNode: Element, typesByName: Record<string, IType>): IType {
+function loadType(typeNode: Element, typesByName: Map<string, ITypeWithExtendsName>): ITypeWithExtendsName {
     const name = typeNode.getAttribute('name')!;
     const color = typeNode.getAttribute('color')!;
     
     const validationExpression = typeNode.getAttribute('validation');
 
     let extendsTypeName = typeNode.getAttribute('extends');
-
-    if (extendsTypeName !== null) {
-        if (!typesByName.hasOwnProperty(extendsTypeName)) {
-            throw new Error(`Type ${name} extends a type which has not been defined: ${extendsTypeName}.`);
-        }
-    }
 
     const guidance = typeNode.getAttribute('guidance');
 
@@ -80,7 +95,7 @@ function loadType(typeNode: Element, typesByName: Record<string, IType>): IType 
 
 function loadProcessDefinition(
     procNode: Element,
-    typesByName: Record<string, IType>,
+    typesByName: Map<string, IType>,
     isSystemProcess: boolean
 ): ISystemProcess | IUserProcess {
     const processName = procNode.getAttribute('name') as string;
@@ -141,7 +156,7 @@ function loadProcessDefinition(
 
 function loadParameters(
     processName: string,
-    typesByName: Record<string, IType>,
+    typesByName: Map<string, IType>,
     paramNodes: HTMLCollectionOf<Element>,
     parameters: IParameter[],
     inputOrOutput: 'input' | 'output',
@@ -153,7 +168,9 @@ function loadParameters(
         const paramName = paramNode.getAttribute('name') as string;
         const paramTypeName = paramNode.getAttribute('type') as string;
         
-        if (!typesByName.hasOwnProperty(paramTypeName)) {
+        const type = typesByName.get(paramTypeName);
+
+        if (type === undefined) {
             throw new Error(`The '${processName}' ${procTypeName} process has an ${inputOrOutput} (${paramName})`
                 + ` with an unrecognised type: ${paramTypeName}.`);
         }    
@@ -167,7 +184,7 @@ function loadParameters(
 
         parameters.push({
             name: paramName,
-            type: typesByName[paramTypeName],
+            type,
         });
     }
 }

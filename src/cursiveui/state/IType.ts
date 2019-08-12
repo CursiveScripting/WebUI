@@ -1,7 +1,7 @@
 export interface IType {
     name: string;
     color: string;
-    extendsTypeName?: string;
+    extendsType?: IType;
     validationExpression?: string;
     guidance?: string;
 }
