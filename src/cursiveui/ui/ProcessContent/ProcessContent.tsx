@@ -24,7 +24,7 @@ interface Props {
     className?: string;
     
     dropping?: DropInfo;
-    dropComplete: () => void;
+    dropComplete?: () => void;
 
     focusError?: IValidationError;
 }
@@ -209,7 +209,7 @@ export class ProcessContent extends React.PureComponent<Props, State> {
     
     private stopDraggingOnNothing() {
         const dragging = this.state.dragging;
-        if (dragging === undefined) {
+        if (dragging === undefined || this.props.dropComplete === undefined) {
             return;
         }
 

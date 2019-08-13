@@ -5,9 +5,9 @@ import { workspaceReducer, WorkspaceDispatchContext } from './reducer';
 import { saveProcesses } from './services/saveProcesses';
 import { loadWorkspaceAndProcesses } from './services/loadWorkspaceAndProcesses';
 import { useUndoReducer } from './services/useUndoReducer';
-import { ICustomTool } from '.';
 import { IDebugConfiguration } from './debug/IDebugConfiguration';
 import { IDebugState } from './debug/IDebugState';
+import { ICustomTool } from './ICustomTool';
 
 interface Props {
     className: string;

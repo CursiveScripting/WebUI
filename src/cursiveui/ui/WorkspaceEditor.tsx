@@ -11,7 +11,7 @@ import { WorkspaceDispatchContext } from '../reducer';
 import { IUndoRedoAction } from '../services/useUndoReducer';
 import { IValidationError } from '../state/IValidationError';
 import { isUserProcess } from '../services/ProcessFunctions';
-import { ICustomTool } from '..';
+import { ICustomTool } from '../ICustomTool';
 
 interface Props {
     processes: IProcess[];

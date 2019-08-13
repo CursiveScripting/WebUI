@@ -1,0 +1,8 @@
+.stackFrame--selected {
+    background-color: lightgrey;
+    font-weight: bold;
+}
+
+.stackFrame__step {
+    display: none;
+}

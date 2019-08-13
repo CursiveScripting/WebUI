@@ -33,12 +33,16 @@
     grid-area: content;
 }
 
-.workspaceEditor__addNew {
+.workspaceEditor__addNew, 
+.workspaceEditor__title {
     grid-area: addnew;
     display: flex;
     justify-content: center;
     align-items: center;
     font-weight: bold;
+}
+
+.workspaceEditor__addNew {
     background-color: #ccc;
     margin: 0.5em 1.5em 0.5em 0.5em;
     border-radius: 1em;
