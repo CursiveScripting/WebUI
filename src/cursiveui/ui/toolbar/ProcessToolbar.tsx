@@ -3,7 +3,7 @@ import { SaveTool, SaveToolProps } from './SaveTool';
 import { UndoToolProps, UndoTool } from './UndoTool';
 import './ProcessToolbar.css';
 import { Tool, ToolState } from './Tool';
-import { ICustomTool } from '../..';
+import { ICustomTool } from '../../ICustomTool';
 
 interface ProcessToolbarProps extends SaveToolProps, UndoToolProps {
     className?: string;

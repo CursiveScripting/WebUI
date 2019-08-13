@@ -1,6 +1,7 @@
 import * as React from 'react';
 import './App.css';
-import CursiveUI, { ICustomTool } from './cursiveui';
+import CursiveUI from './cursiveui';
+import { ICustomTool } from './cursiveui/ICustomTool';
 
 async function loadWorkspace() {
     const response = await fetch('workspace.xml');
