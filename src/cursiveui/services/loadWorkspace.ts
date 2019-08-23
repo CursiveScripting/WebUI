@@ -1,19 +1,32 @@
+import ajv from 'ajv';
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { IUserProcess } from '../state/IUserProcess';
 import { ISystemProcess } from '../state/ISystemProcess';
-import { isString } from './DataFunctions';
 import { IProcess } from '../state/IProcess';
 import { DataType, IType, ILookupType } from '../state/IType';
 import { IParameter } from '../state/IParameter';
 import { createEmptyStartStep } from './StepFunctions';
 import { usesOptions } from './TypeFunctions';
+import workspaceSchema from '../../../Schema/workspace.json';
 
-export function loadWorkspace(workspaceData: Document | string) {
+export function loadWorkspace(workspaceData: string) {
+    var validator = new ajv();
+
+    let validate = validator.compile(workspaceSchema);
+
+    let valid = validate(workspaceData);
+
+    if (!valid) {
+        console.log(validator.errors);
+    }
+
+    /*
     const rootElement = isString(workspaceData)
         ? new DOMParser().parseFromString(workspaceData, 'application/xml').documentElement
         : workspaceData.firstChild as HTMLElement;
 
     return loadWorkspaceFromElement(rootElement);
+    */
 }
 
 function loadWorkspaceFromElement(workspaceData: HTMLElement): IWorkspaceState {
