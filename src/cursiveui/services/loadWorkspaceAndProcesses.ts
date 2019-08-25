@@ -1,17 +1,17 @@
-import { loadWorkspace } from './loadWorkspace';
-import { loadProcesses } from './loadProcesses';
+import { loadWorkspace, IWorkspaceData } from './loadWorkspace';
+import { loadProcesses, IUserProcessData } from './loadProcesses';
 import { isUserProcess } from './ProcessFunctions';
 import { validate } from '../reducer/validate';
 
-export async function loadWorkspaceAndProcesses(getWorkspace: () => Promise<Document | string>, getProcesses?: () => Promise<Document | string | null>) {
+export async function loadWorkspaceAndProcesses(getWorkspace: () => Promise<IWorkspaceData>, getProcesses?: () => Promise<IUserProcessData[] | null>) {
     const workspaceData = await getWorkspace();
 
     const workspace = loadWorkspace(workspaceData);
 
     if (getProcesses !== undefined) {
-        const processXml = await getProcesses();
-        if (processXml !== null) {
-            loadProcesses(workspace, processXml);
+        const processData = await getProcesses();
+        if (processData !== null) {
+            loadProcesses(workspace, processData);
         }
     }
     
