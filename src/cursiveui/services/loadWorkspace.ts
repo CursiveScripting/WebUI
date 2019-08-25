@@ -44,11 +44,13 @@ export interface IProcessData {
     returnPaths?: string[];
 }
 
-export function loadWorkspace(workspaceData: IWorkspaceData): IWorkspaceState {
-    const validationErrors = validateSchema(workspaceSchema, workspaceData);
+export function loadWorkspace(workspaceData: IWorkspaceData, checkSchema: boolean): IWorkspaceState {
+    if (checkSchema) {
+        const validationErrors = validateSchema(workspaceSchema, workspaceData);
 
-    if (validationErrors !== null) {
-        throw new Error(`Workspace is not valid: ${validationErrors}`);
+        if (validationErrors !== null) {
+            throw new Error(`Workspace is not valid: ${validationErrors}`);
+        }
     }
     
     const typesByName = loadTypes(workspaceData);

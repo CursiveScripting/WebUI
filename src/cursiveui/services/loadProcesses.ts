@@ -51,11 +51,13 @@ interface IProcessStepData extends IStepData {
     returnPaths?: Record<string, string>;
 }
 
-export function loadProcesses(workspace: IWorkspaceState, processData: IUserProcessData[]) {
-    const validationErrors = validateSchema(processSchema, processData);
+export function loadProcesses(workspace: IWorkspaceState, processData: IUserProcessData[], checkSchema: boolean) {
+    if (checkSchema) {
+        const validationErrors = validateSchema(processSchema, processData);
 
-    if (validationErrors !== null) {
-        throw new Error(`Processes are not valid: ${validationErrors}`);
+        if (validationErrors !== null) {
+            throw new Error(`Processes are not valid: ${validationErrors}`);
+        }
     }
     
     const processesByName = createMap(workspace.processes, p => p.name);
