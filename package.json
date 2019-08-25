@@ -12,7 +12,8 @@
     "react-contenteditable": "^3.2.6",
     "react-dom": "^16.8.6",
     "react-scripts": "3.0.1",
-    "typescript": "3.5.1"
+    "typescript": "3.5.1",
+    "cursive-schema": "git+https://github.com/CursiveScripting/Schema.git"
   },
   "scripts": {
     "start": "react-scripts start",

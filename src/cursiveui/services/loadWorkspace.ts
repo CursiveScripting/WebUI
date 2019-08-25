@@ -1,4 +1,4 @@
-import ajv from 'ajv';
+import workspaceSchema from 'cursive-schema/workspace.json';
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { IUserProcess } from '../state/IUserProcess';
 import { ISystemProcess } from '../state/ISystemProcess';
@@ -7,7 +7,7 @@ import { DataType, IType, ILookupType } from '../state/IType';
 import { IParameter } from '../state/IParameter';
 import { createEmptyStartStep } from './StepFunctions';
 import { usesOptions } from './TypeFunctions';
-import workspaceSchema from '../../../Schema/workspace.json';
+import { validateSchema } from './DataFunctions';
 
 export interface IWorkspaceData {
     types: Array<IFixedTypeData | ILookupTypeData>;
@@ -45,14 +45,10 @@ export interface IProcessData {
 }
 
 export function loadWorkspace(workspaceData: IWorkspaceData): IWorkspaceState {
-    const validator = new ajv();
+    const validationErrors = validateSchema(workspaceSchema, workspaceData);
 
-    const validateWorkspace = validator.compile(workspaceSchema);
-
-    const valid = validateWorkspace(workspaceData);
-
-    if (!valid) {
-        throw new Error(`Workspace is not valid: ${validator.errors}`);
+    if (validationErrors !== null) {
+        throw new Error(`Workspace is not valid: ${validationErrors}`);
     }
     
     const typesByName = loadTypes(workspaceData);

@@ -1,13 +1,12 @@
-﻿import { IWorkspaceState } from '../state/IWorkspaceState';
-import { createMap, isString } from './DataFunctions';
+﻿import processSchema from 'cursive-schema/processes.json';
+import { IWorkspaceState } from '../state/IWorkspaceState';
+import { createMap, validateSchema } from './DataFunctions';
 import { usesOutputs, usesInputs } from './StepFunctions';
 import { IUserProcess } from '../state/IUserProcess';
 import { IVariable } from '../state/IVariable';
 import { IStep, StepType, IStepWithOutputs } from '../state/IStep';
 import { IProcess } from '../state/IProcess';
 import { IParameter } from '../state/IParameter';
-import { IStartStep } from '../state/IStartStep';
-import { IStopStep } from '../state/IStopStep';
 import { IProcessStep } from '../state/IProcessStep';
 import { DataType } from '../state/IType';
 import { isUserProcess } from './ProcessFunctions';
@@ -53,6 +52,12 @@ interface IProcessStepData extends IStepData {
 }
 
 export function loadProcesses(workspace: IWorkspaceState, processData: IUserProcessData[]) {
+    const validationErrors = validateSchema(processSchema, processData);
+
+    if (validationErrors !== null) {
+        throw new Error(`Processes are not valid: ${validationErrors}`);
+    }
+    
     const processesByName = createMap(workspace.processes, p => p.name);
     const typesByName = createMap(workspace.types, t => t.name);
 
