@@ -6,12 +6,14 @@ import { saveProcesses } from './services/saveProcesses';
 import { loadWorkspaceAndProcesses } from './services/loadWorkspaceAndProcesses';
 import { useUndoReducer } from './services/useUndoReducer';
 import { ICustomTool } from './ICustomTool';
+import { IWorkspaceData } from './services/loadWorkspace';
+import { IUserProcessData } from './services/loadProcesses';
 
 interface Props {
     className: string;
-    loadWorkspace: () => Promise<Document | string>;
-    loadProcesses: undefined | (() => Promise<string | null>);
-    saveProcesses: (processXml: string) => Promise<void>;
+    loadWorkspace: () => Promise<IWorkspaceData>;
+    loadProcesses: undefined | (() => Promise<IUserProcessData[] | null>);
+    saveProcesses: (processJson: string) => Promise<void>;
     customTools?: ICustomTool[];
 }
 
@@ -78,8 +80,8 @@ export const CursiveUI = (props: Props) => {
 
     const doSave = hasUnsavedChanges
         ? async () => {
-        const xml = saveProcesses(state.processes);
-        await props.saveProcesses(xml)
+        const json = saveProcesses(state.processes);
+        await props.saveProcesses(json)
         noteSaved();
     } : undefined;
 

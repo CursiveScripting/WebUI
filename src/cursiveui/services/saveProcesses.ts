@@ -9,19 +9,18 @@ import { isUserProcess } from './ProcessFunctions';
 import { IStepParameter } from '../state/IStepParameter';
 
 export function saveProcesses(processes: IProcess[]) {
-    const saveDoc = document.implementation.createDocument(null, 'processes', null);
-    const rootNode = saveDoc.createElement('Processes');
+    const processData = [];
 
     for (const process of processes) {
         if (isUserProcess(process)) {
-            saveProcess(process, rootNode);
+            processData.push(saveProcess(process));
         }
     }
 
-    return rootNode.outerHTML;
+    return JSON.stringify(processes);
 }
 
-function saveProcess(process: IUserProcess, parent: HTMLElement) {
+function saveProcess(process: IUserProcess) {
     let element = parent.ownerDocument!.createElement('Process');
     parent.appendChild(element);
     element.setAttribute('name', process.name);

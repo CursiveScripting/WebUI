@@ -1,0 +1,286 @@
+{
+	"types": [
+		{
+			"name": "number",
+			"color": "#0cf",
+			"validation": "^[0-9]+$"
+		},
+		{
+			"name": "text",
+			"color": "#c0f",
+			"validation": ".*"
+		},
+		{
+			"name": "deck",
+			"color": "#f0c"
+		},
+		{
+			"name": "card",
+			"color": "#cc0",
+			"options": [
+				"king", "queen", "jack", "10", "9", "8", "7", "6", "5", "4", "3", "2", "ace"
+			]
+		}
+	],
+	"requiredProcesses": [
+		{
+			"name": "prepareDeck",
+			"description": "Organise deck of cards for use",
+			"inputs": [
+				{
+					"name": "cards",
+					"type": "deck"
+				}
+			],
+			"outputs": [
+				{
+					"name": "cards",
+					"type": "deck"
+				}
+			],
+			"returnPaths": ["success", "failure"]
+		}
+	],
+	"systemProcesses": [
+		{
+			"name": "print",
+			"description": "Display some text output",
+			"inputs": [
+				{
+					"name": "message",
+					"type": "text"
+				}
+			]
+		},
+		{
+			"name": "text equals",
+			"description": "Compare two text values",
+			"folder": "logic",
+			"inputs": [
+				{
+					"name": "text1",
+					"type": "text"
+				},
+				{
+					"name": "text2",
+					"type": "text"
+				}
+			],
+			"returnPaths": ["yes", "no"]
+		},
+		{
+			"name": "equals",
+			"description": "Compare two number values",
+			"folder": "logic",
+			"inputs": [
+				{
+					"name": "num1",
+					"type": "number"
+				},
+				{
+					"name": "num2",
+					"type": "number"
+				}
+			],
+			"returnPaths": ["yes", "no"]
+		},
+		{
+			"name": "less than",
+			"description": "Determine if one number is less than another",
+			"folder": "logic",
+			"inputs": [
+				{
+					"name": "num1",
+					"type": "number"
+				},
+				{
+					"name": "num2",
+					"type": "number"
+				}
+			],
+			"returnPaths": ["yes", "no"]
+		},
+		{
+			"name": "greater than",
+			"description": "Determine if one number is greater than another",
+			"folder": "logic",
+			"inputs": [
+				{
+					"name": "num1",
+					"type": "number"
+				},
+				{
+					"name": "num2",
+					"type": "number"
+				}
+			],
+			"returnPaths": ["yes", "no"]
+		},
+		{
+			"name": "shuffle",
+			"description": "Shuffle cards randomly",
+			"folder": "actions",
+			"inputs": [
+				{
+					"name": "cards",
+					"type": "deck"
+				}
+			],
+			"outputs": [
+				{
+					"name": "cards",
+					"type": "deck"
+				}
+			]
+		},
+		{
+			"name": "combine",
+			"description": "Combine two sets of cards",
+			"folder": "actions",
+			"inputs": [
+				{
+					"name": "cards1",
+					"type": "deck"
+				},
+				{
+					"name": "cards2",
+					"type": "deck"
+				}
+			],
+			"outputs": [
+				{
+					"name": "cards",
+					"type": "deck"
+				}
+			]
+		},
+		{
+			"name": "add",
+			"description": "Add a card to a deck",
+			"folder": "actions",
+			"inputs": [
+				{
+					"name": "cards",
+					"type": "deck"
+				},
+				{
+					"name": "card",
+					"type": "card"
+				}
+			],
+			"outputs": [
+				{
+					"name": "cards",
+					"type": "deck"
+				}
+			]
+		},
+		{
+			"name": "count",
+			"description": "Get the number of cards in a deck",
+			"folder": "info",
+			"inputs": [
+				{
+					"name": "cards",
+					"type": "deck"
+				}
+			],
+			"outputs": [
+				{
+					"name": "size",
+					"type": "number"
+				}
+			]
+		},
+		{
+			"name": "separate",
+			"description": "Separate a deck into two, putting cards of a particular type in their own deck",
+			"folder": "actions",
+			"inputs": [
+				{
+					"name": "cards",
+					"type": "deck"
+				},
+				{
+					"name": "type",
+					"type": "text"
+				}
+			],
+			"outputs": [
+				{
+					"name": "remainder",
+					"type": "deck"
+				},
+				{
+					"name": "separated",
+					"type": "deck"
+				}
+			]
+		},
+		{
+			"name": "contains",
+			"description": "Determine whether a deck contains a particular type of card",
+			"folder": "info",
+			"inputs": [
+				{
+					"name": "cards",
+					"type": "deck"
+				},
+				{
+					"name": "type",
+					"type": "text"
+				}
+			],
+			"returnPaths": ["yes", "no"]
+		},
+		{
+			"name": "split",
+			"description": "Split a deck of cards into a specified number of parts",
+			"folder": "actions",
+			"inputs": [
+				{
+					"name": "cards",
+					"type": "deck"
+				},
+				{
+					"name": "parts",
+					"type": "number"
+				}
+			],
+			"outputs": [
+				{
+					"name": "part1",
+					"type": "deck"
+				},
+				{
+					"name": "part2",
+					"type": "deck"
+				},
+				{
+					"name": "part3",
+					"type": "deck"
+				},
+				{
+					"name": "part4",
+					"type": "deck"
+				},
+				{
+					"name": "part5",
+					"type": "deck"
+				},
+				{
+					"name": "part6",
+					"type": "deck"
+				},
+				{
+					"name": "part7",
+					"type": "deck"
+				},
+				{
+					"name": "part8",
+					"type": "deck"
+				}
+			]
+		}
+	]
+}

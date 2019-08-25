@@ -12,7 +12,7 @@ import { validateSchema } from './DataFunctions';
 export interface IWorkspaceData {
     types: Array<IFixedTypeData | ILookupTypeData>;
     requiredProcesses: IProcessData[];
-    systemProceses: IProcessData[];
+    systemProcesses: IProcessData[];
 }
 
 interface ITypeData {
@@ -56,7 +56,7 @@ export function loadWorkspace(workspaceData: IWorkspaceData, checkSchema: boolea
     const typesByName = loadTypes(workspaceData);
     const processesByName = new Map<string, IProcess>();
 
-    for (const processData of workspaceData.systemProceses) {
+    for (const processData of workspaceData.systemProcesses) {
         const process = loadProcessDefinition(processData, typesByName, true);
         processesByName.set(process.name, process);
     }

@@ -4,16 +4,20 @@ import CursiveUI from './cursiveui';
 import { ICustomTool } from './cursiveui/ICustomTool';
 
 async function loadWorkspace() {
-    const response = await fetch('workspace.xml');
-    return await response.text();
+    const response = await fetch('workspace.json');
+    return await response.json();
 }
 
 async function loadProcesses() {
-    return sessionStorage.getItem('saved');
+    const saved = sessionStorage.getItem('saved');
+    
+    return saved === null
+        ? null
+        : JSON.parse(saved);
 }
 
-async function saveProcesses(processXml: string) {
-    sessionStorage.setItem('saved', processXml);
+async function saveProcesses(processJson: string) {
+    sessionStorage.setItem('saved', processJson);
 }
 
 const customTools: ICustomTool[] = [{
