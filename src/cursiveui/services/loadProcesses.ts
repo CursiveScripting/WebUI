@@ -10,7 +10,7 @@ import { IParameter } from '../state/IParameter';
 import { IProcessStep } from '../state/IProcessStep';
 import { DataType } from '../state/IType';
 import { isUserProcess } from './ProcessFunctions';
-import { IProcessData, IParameterData } from './loadWorkspace';
+import { IProcessData, IParameterData } from './serializedDataModels';
 
 export interface IUserProcessData extends IProcessData {
     variables?: IVariableData[];

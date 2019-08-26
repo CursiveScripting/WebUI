@@ -7,9 +7,10 @@ import { IStopStep } from '../state/IStopStep';
 import { IProcessStep } from '../state/IProcessStep';
 import { isUserProcess } from './ProcessFunctions';
 import { IStepParameter } from '../state/IStepParameter';
+import { IUserProcessData } from './loadProcesses';
 
 export function saveProcesses(processes: IProcess[]) {
-    const processData = [];
+    const processData: IUserProcessData[] = [];
 
     for (const process of processes) {
         if (isUserProcess(process)) {
@@ -20,50 +21,64 @@ export function saveProcesses(processes: IProcess[]) {
     return JSON.stringify(processes);
 }
 
-function saveProcess(process: IUserProcess) {
-    let element = parent.ownerDocument!.createElement('Process');
-    parent.appendChild(element);
-    element.setAttribute('name', process.name);
-    if (process.folder !== null) {
-        element.setAttribute('folder', process.folder);
-    }
+function saveProcess(process: IUserProcess): IUserProcessData {
+    return {
+        name: process.name,
 
-    if (process.description !== null && process.description !== '') {
-        let desc = parent.ownerDocument!.createElement('Description');
-        desc.innerHTML = process.description;
-        element.appendChild(desc);
-    }
+        description: process.description === ''
+            ? undefined
+            : process.description,
 
-    // write inputs, outputs, variables
-    for (let parameter of process.inputs) {
-        saveProcessParameter(parameter, element, 'Input');
-    }
-    for (let parameter of process.outputs) {
-        saveProcessParameter(parameter, element, 'Output');
-    }
-    for (let variable of process.variables) {
-        let varElement = saveProcessParameter(variable, element, 'Variable');
+        folder: process.folder === null
+            ? undefined
+            : process.folder,
 
-        if (variable.initialValue !== null) {
-            varElement.setAttribute('initialValue', variable.initialValue);
-        }
+        inputs: process.inputs.length === 0
+            ? undefined
+            : process.inputs.map(i => {
+                return {
+                    name: i.name,
+                    type: i.type.name,
+                };
+            }),
 
-        if (variable.x >= 0 && variable.y >= 0) {
-            varElement.setAttribute('x', variable.x.toString());
-            varElement.setAttribute('y', variable.y.toString());
-        }
-    }
-    for (let returnPath of process.returnPaths) {
-        saveProcessReturnPath(returnPath, element);
-    }
+        outputs: process.outputs.length === 0
+            ? undefined
+            : process.outputs.map(o => {
+                return {
+                    name: o.name,
+                    type: o.type.name,
+                };
+            }),
 
-    // write steps
-    const steps = parent.ownerDocument!.createElement('Steps');
-    element.appendChild(steps);
+        returnPaths: process.returnPaths.length === 0
+            ? undefined
+            : process.returnPaths.slice(),
 
-    for (const step of process.steps) {
-        saveStep(step, steps);
-    }
+        variables: process.variables.length === 0
+            ? undefined
+            : process.variables.map(v => {
+                return {
+                    name: v.name,
+                    type: v.type.name,
+                    x: v.x,
+                    y: v.y,
+                    initialValue: v.initialValue === null
+                        ? undefined
+                        : v.initialValue,
+                };
+            }),
+
+        /*
+        steps: process.steps.length === 0
+            ? undefined
+            : process.steps.map(step => {
+                return {
+
+                };
+            }),
+        */
+    };
 }
 
 function saveStep(step: IStep, parent: HTMLElement) {

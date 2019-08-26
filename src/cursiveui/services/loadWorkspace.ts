@@ -8,41 +8,7 @@ import { IParameter } from '../state/IParameter';
 import { createEmptyStartStep } from './StepFunctions';
 import { usesOptions } from './TypeFunctions';
 import { validateSchema } from './DataFunctions';
-
-export interface IWorkspaceData {
-    types: Array<IFixedTypeData | ILookupTypeData>;
-    requiredProcesses: IProcessData[];
-    systemProcesses: IProcessData[];
-}
-
-interface ITypeData {
-    name: string;
-    color: string;
-    guidance?: string;
-}
-
-interface IFixedTypeData extends ITypeData {
-    extends?: string;
-    validation?: string;
-}
-
-interface ILookupTypeData extends ITypeData {
-    options: string[];
-}
-
-export interface IParameterData {
-    name: string;
-    type: string;
-}
-
-export interface IProcessData {
-    name: string;
-    description?: string;
-    folder?: string;
-    inputs?: IParameterData[];
-    outputs?: IParameterData[];
-    returnPaths?: string[];
-}
+import { IWorkspaceData, IFixedTypeData, ILookupTypeData, IProcessData, IParameterData } from './serializedDataModels';
 
 export function loadWorkspace(workspaceData: IWorkspaceData, checkSchema: boolean): IWorkspaceState {
     if (checkSchema) {
