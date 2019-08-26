@@ -43,7 +43,7 @@ interface IPositionData {
     y: number;
 }
 
-interface IVariableData extends IParameterData, IPositionData {
+export interface IVariableData extends IParameterData, IPositionData {
     initialValue?: string;
 }
 
@@ -51,23 +51,23 @@ interface IStepData extends IPositionData {
     id: string;
 }
 
-interface IStartStepData extends IStepData {
+export interface IStartStepData extends IStepData {
     type: 'start';
-    outputs: Record<string, string>;
+    outputs?: Record<string, string>;
     returnPath?: string;
 }
 
-interface IStopStepData extends IStepData {
+export interface IStopStepData extends IStepData {
     type: 'stop';
     name?: string;
-    inputs: Record<string, string>;
+    inputs?: Record<string, string>;
 }
 
-interface IProcessStepData extends IStepData {
+export interface IProcessStepData extends IStepData {
     type: 'process';
     process: string;
-    inputs: Record<string, string>;
-    outputs: Record<string, string>;
+    inputs?: Record<string, string>;
+    outputs?: Record<string, string>;
     returnPath?: string;
     returnPaths?: Record<string, string>;
 }

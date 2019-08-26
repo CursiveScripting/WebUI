@@ -10,46 +10,7 @@ import { IParameter } from '../state/IParameter';
 import { IProcessStep } from '../state/IProcessStep';
 import { DataType } from '../state/IType';
 import { isUserProcess } from './ProcessFunctions';
-import { IProcessData, IParameterData } from './serializedDataModels';
-
-export interface IUserProcessData extends IProcessData {
-    variables?: IVariableData[];
-    steps?: Array<IStartStepData | IStopStepData | IProcessStepData>;
-}
-
-interface IPositionData {
-    x: number;
-    y: number;
-}
-
-interface IVariableData extends IParameterData, IPositionData {
-    initialValue?: string;
-}
-
-interface IStepData extends IPositionData {
-    id: string;
-}
-
-interface IStartStepData extends IStepData {
-    type: 'start';
-    outputs: Record<string, string>;
-    returnPath?: string;
-}
-
-interface IStopStepData extends IStepData {
-    type: 'stop';
-    name?: string;
-    inputs: Record<string, string>;
-}
-
-interface IProcessStepData extends IStepData {
-    type: 'process';
-    process: string;
-    inputs: Record<string, string>;
-    outputs: Record<string, string>;
-    returnPath?: string;
-    returnPaths?: Record<string, string>;
-}
+import { IParameterData, IUserProcessData, IProcessStepData, IStopStepData, IStartStepData, IVariableData } from './serializedDataModels';
 
 export function loadProcesses(workspace: IWorkspaceState, processData: IUserProcessData[], checkSchema: boolean) {
     if (checkSchema) {
@@ -296,10 +257,18 @@ function loadStartStep(process: IUserProcess, stepData: IStartStepData) {
 }
 
 function loadStepInputs(stepId: string, process: IUserProcess, inputs: IParameter[], stepData: IProcessStepData | IStopStepData) {
+    if (stepData.inputs === undefined) {
+        return [];
+    }
+
     return loadStepParameters(stepId, process, inputs, stepData.inputs, true);
 }
 
 function loadStepOutputs(stepId: string, process: IUserProcess, outputs: IParameter[], stepData: IProcessStepData | IStartStepData) {
+    if (stepData.outputs === undefined) {
+        return [];
+    }
+    
     return loadStepParameters(stepId, process, outputs, stepData.outputs, false);
 }
 

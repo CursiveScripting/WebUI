@@ -6,8 +6,7 @@ import { saveProcesses } from './services/saveProcesses';
 import { loadWorkspaceAndProcesses } from './services/loadWorkspaceAndProcesses';
 import { useUndoReducer } from './services/useUndoReducer';
 import { ICustomTool } from './ICustomTool';
-import { IUserProcessData } from './services/loadProcesses';
-import { IWorkspaceData } from './services/serializedDataModels';
+import { IWorkspaceData, IUserProcessData } from './services/serializedDataModels';
 
 interface Props {
     className: string;

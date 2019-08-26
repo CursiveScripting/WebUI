@@ -1,13 +1,10 @@
 ﻿import { IProcess } from '../state/IProcess';
-import { isStopStep, usesInputs, usesOutputs } from './StepFunctions';
+import { isStopStep, isStartStep, isProcessStep } from './StepFunctions';
 import { IUserProcess } from '../state/IUserProcess';
-import { IParameter } from '../state/IParameter';
-import { StepType, IStep } from '../state/IStep';
-import { IStopStep } from '../state/IStopStep';
-import { IProcessStep } from '../state/IProcessStep';
 import { isUserProcess } from './ProcessFunctions';
 import { IStepParameter } from '../state/IStepParameter';
-import { IUserProcessData } from './loadProcesses';
+import { IReturnPath } from '../state/IReturnPath';
+import { IUserProcessData } from './serializedDataModels';
 
 export function saveProcesses(processes: IProcess[]) {
     const processData: IUserProcessData[] = [];
@@ -69,111 +66,92 @@ function saveProcess(process: IUserProcess): IUserProcessData {
                 };
             }),
 
-        /*
         steps: process.steps.length === 0
             ? undefined
             : process.steps.map(step => {
-                return {
+                if (isStartStep(step)) {
+                    return {
+                        type: 'start',
+                        id: step.uniqueId,
+                        x: step.x,
+                        y: step.y,
+                        outputs: saveStepParameters(step.outputs),
+                        returnPath: saveSingleReturnPath(step.returnPaths),
+                    }
+                }
+                else if (isStopStep(step)) {
+                    return {
+                        type: 'stop',
+                        id: step.uniqueId,
+                        x: step.x,
+                        y: step.y,
+                        name: step.returnPath === null
+                            ? undefined
+                            : step.returnPath,
+                        inputs: saveStepParameters(step.inputs),
+                    }
+                }
+                else if (isProcessStep(step)) {
+                    return {
+                        type: 'process',
+                        id: step.uniqueId,
+                        x: step.x,
+                        y: step.y,
+                        process: step.process.name,
+                        inputs: saveStepParameters(step.inputs),
+                        outputs: saveStepParameters(step.outputs),
+                        returnPath: saveSingleReturnPath(step.returnPaths),
+                        returnPaths: saveMultipleReturnPaths(step.returnPaths),
+                    }
+                }
 
-                };
+                throw new Error(`Unexpected step type, cannot save: ${step}`);
             }),
-        */
     };
 }
 
-function saveStep(step: IStep, parent: HTMLElement) {
-    let element: HTMLElement;
-
-    if (step.stepType === StepType.Start) {
-        element = parent.ownerDocument!.createElement('Start');
+function saveSingleReturnPath(returnPaths: IReturnPath[]) {
+    if (returnPaths.length !== 1) {
+        return undefined;
     }
-    else if (isStopStep(step)) {
-        element = parent.ownerDocument!.createElement('Stop');
-        let returnPath = (step as IStopStep).returnPath;
-        if (returnPath !== null) {
-            element.setAttribute('name', returnPath);
+
+    const onlyPath = returnPaths[0];
+
+    if (onlyPath.connection === undefined || onlyPath.name !== null) {
+        return undefined;
+    }
+
+    return onlyPath.connection.uniqueId;
+}
+
+function saveMultipleReturnPaths(returnPaths: IReturnPath[]) {
+    if (returnPaths.length === 1 && returnPaths[0].name === null) {
+        return undefined;
+    }
+
+    const output: Record<string, string> = {};
+
+    for (const path of returnPaths) {
+        if (path.connection !== undefined && path.name !== null) {
+            output[path.name] = path.connection.uniqueId
         }
     }
-    else {
-        element = parent.ownerDocument!.createElement('Step');
-        element.setAttribute('process', (step as IProcessStep).process.name);
-    }
-    parent.appendChild(element);
 
-    element.setAttribute('ID', step.uniqueId.toString());
+    return output;
+}
 
-    element.setAttribute('x', step.x.toString());
-    element.setAttribute('y', step.y.toString());
-
-    if (usesInputs(step)) {
-        saveStepParameters(step.inputs, element, 'Input', 'source');
+function saveStepParameters(parameters: IStepParameter[]) {
+    if (parameters.length === 0) {
+        return undefined;
     }
 
-    if (usesOutputs(step)) {
-        saveStepParameters(step.outputs, element, 'Output', 'destination');
+    const output: Record<string, string> = {};
 
-        for (const path of step.returnPaths) {
-            let pathElement: HTMLElement;
-            
-            if (path.name !== null) {
-                pathElement = parent.ownerDocument!.createElement('NamedReturnPath');
-                pathElement.setAttribute('name', path.name);
-            }
-            else {
-                pathElement = parent.ownerDocument!.createElement('ReturnPath');
-            }
-
-            if (path.connection !== undefined) {
-                pathElement.setAttribute('targetStepID', path.connection.uniqueId);
-            }
-            element.appendChild(pathElement);
+    for (const param of parameters) {
+        if (param.connection !== undefined) {
+            output[param.name] = param.connection.name;
         }
     }
-}
 
-function saveStepParameters(
-    parameters: IStepParameter[],
-    parent: Element,
-    nodeName: string,
-    variableAttributeName: string
-) {
-    if (parameters === null) {
-        return;
-    }
-
-    for (const parameter of parameters) {
-        const varName = parameter.connection !== undefined
-            ? parameter.connection.name
-            : undefined;
-
-        saveStepParameter(parameter, varName, parent, nodeName, variableAttributeName);
-    }
-}
-
-function saveStepParameter(
-    parameter: IParameter,
-    variableName: string | undefined,
-    parent: Element,
-    nodeName: string,
-    variableAttributeName: string
-) {
-    const element = saveProcessParameter(parameter, parent, nodeName);
-
-    if (variableName !== undefined) {
-        element.setAttribute(variableAttributeName, variableName);
-    }
-}
-
-function saveProcessParameter(parameter: IParameter, parent: Element, nodeName: string) {
-    let element = parent.ownerDocument!.createElement(nodeName);
-    element.setAttribute('name', parameter.name);
-    element.setAttribute('type', parameter.type.name);
-    parent.appendChild(element);
-    return element;
-}
-
-function saveProcessReturnPath(returnPath: string, parent: Element) {
-    let element = parent.ownerDocument!.createElement('ReturnPath');
-    element.setAttribute('name', returnPath);
-    parent.appendChild(element);
+    return output;
 }

@@ -1,8 +1,8 @@
 import { loadWorkspace } from './loadWorkspace';
-import { loadProcesses, IUserProcessData } from './loadProcesses';
+import { loadProcesses } from './loadProcesses';
 import { isUserProcess } from './ProcessFunctions';
 import { validate } from '../reducer/validate';
-import { IWorkspaceData } from './serializedDataModels';
+import { IWorkspaceData, IUserProcessData } from './serializedDataModels';
 
 export async function loadWorkspaceAndProcesses(getWorkspace: () => Promise<IWorkspaceData>, getProcesses?: () => Promise<IUserProcessData[] | null>, checkSchemas: boolean = true) {
     const workspaceData = await getWorkspace();
