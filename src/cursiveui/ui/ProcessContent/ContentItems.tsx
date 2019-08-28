@@ -155,8 +155,8 @@ export const ContentItems = (props: Props) => {
         y: y - props.minScreenY,
     });
 
-    const stopDragVarConnector = (variable: IVariable, input: boolean) => {
-        if (props.dragging !== undefined && props.dragging.type === DragType.StepParameter && props.dragging.input !== input) {
+    const stopDragVarConnector = (variable: IVariable) => {
+        if (props.dragging !== undefined && props.dragging.type === DragType.StepParameter) {
             context({
                 type: 'link variable',
                 inProcessName: props.processName,
@@ -280,7 +280,7 @@ export const ContentItems = (props: Props) => {
                 
                 headerMouseDown={(x, y, displayX, displayY) => startDragVarHeader(variable, x, y, displayX, displayY)}
                 connectorMouseDown={(input, x, y) => startDragVarConnector(variable, input, x, y)}
-                connectorMouseUp={input => stopDragVarConnector(variable, input)}
+                connectorMouseUp={() => stopDragVarConnector(variable)}
             />
         );
     });

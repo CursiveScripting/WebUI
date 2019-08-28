@@ -19,7 +19,7 @@ interface Props extends ICoord {
     inProcessName: string;
     headerMouseDown: (mouseX: number, mouseY: number, displayX: number, displayY: number) => void;
     connectorMouseDown: (input: boolean, x: number, y: number) => void;
-    connectorMouseUp: (input: boolean) => void;
+    connectorMouseUp: () => void;
 }
 
 interface State {
@@ -122,7 +122,12 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
         });
 
         return (
-            <div className="processItem processItem--var" style={style} ref={r => { if (r !== null) { this.root = r; }}}>
+            <div
+                className="processItem processItem--var"
+                style={style}
+                ref={r => { if (r !== null) { this.root = r; }}}
+                onMouseUp={e => { e.stopPropagation(); this.props.connectorMouseUp(); }}
+            >
                 <div
                     className="processItem__header"
                     onMouseDown={e => this.props.headerMouseDown(e.clientX, e.clientY, this.root!.offsetLeft, this.root!.offsetTop)}
@@ -144,7 +149,6 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                         state={inputState}
                         input={true}
                         onMouseDown={e => this.props.connectorMouseDown(true, e.clientX, e.clientY)}
-                        onMouseUp={() => this.props.connectorMouseUp(true)}
                         onDoubleClick={() => this.unlink(true)}
                         ref={c => { if (c !== null) { this.inputConnector = c.connector; }}}
                     />
@@ -154,7 +158,6 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                         state={this.props.outputConnected ? ConnectorState.Connected : ConnectorState.Disconnected}
                         input={false}
                         onMouseDown={e => this.props.connectorMouseDown(false, e.clientX, e.clientY)}
-                        onMouseUp={() => this.props.connectorMouseUp(false)}
                         onDoubleClick={() => this.unlink(false)}
                         ref={c => { if (c !== null) { this.outputConnector = c.connector; }}}
                     />
