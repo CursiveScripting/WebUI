@@ -1,0 +1,19 @@
+.variableSelector {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    margin: 0.5em 0;
+    padding: 0.25em 0;
+}
+
+.variableSelector__swatch {
+    border-radius: 1em;
+    width: 1em;
+    height: 1em;
+    border: solid #ccc 1px;
+    margin-right: 0.5em;
+}
+
+.variableSelector:hover {
+    text-decoration: underline;
+}

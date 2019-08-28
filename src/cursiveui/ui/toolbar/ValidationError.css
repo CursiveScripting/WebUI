@@ -1,0 +1,13 @@
+.validationError {
+    cursor: pointer;
+    padding: 0.5em 0;
+}
+
+.validationError:not(:first-child) {
+    border-top: solid grey 1px;
+    
+}
+
+.validationError:hover {
+    text-decoration: underline;
+}

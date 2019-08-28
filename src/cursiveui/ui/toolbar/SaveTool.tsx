@@ -1,5 +1,5 @@
 import * as React from 'react';
-import './ValidationSummary.css';
+import './ValidationError.css';
 import { IValidationError } from '../../state/IValidationError';
 import { Tool, ToolState } from './Tool';
 
@@ -50,7 +50,7 @@ function renderValidationError(error: IValidationError, index: number, setFocus:
 
     return (
         <div
-            className="validationSummary__item"
+            className="validationError"
             key={index}
             onFocus={focusError}
             onMouseOver={focusError}

@@ -4,7 +4,6 @@ import './ProcessSelector.css';
 import { ProcessFolder } from './ProcessFolder';
 import { IProcess } from '../../state/IProcess';
 import { IUserProcess } from '../../state/IUserProcess';
-import { IType } from '../../state/IType';
 import { isUserProcess } from '../../services/ProcessFunctions';
 
 interface Props {
@@ -12,12 +11,10 @@ interface Props {
     openProcess?: IUserProcess;
     selectedProcess?: IProcess;
     className?: string;
-    dataTypes: IType[];
 
     deselect: () => void;
     processSelected: (process: IProcess) => void;
     stopStepSelected: (name: string | null) => void;
-    dataTypeSelected: (type: IType) => void;
     
     processOpened: (process: IUserProcess) => void;
     editDefinition: (process: IUserProcess) => void;
@@ -101,22 +98,10 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
             </ProcessFolder>);
         }
 
-        const dataTypeItems = [];
-        for (const type of this.props.dataTypes) {
-            dataTypeItems.push(this.renderDataType(type));
-        }
-
-        const dataTypeRoot = dataTypeItems.length === 0
-            ? undefined
-            : <ProcessFolder name="Variables">
-                {dataTypeItems}
-            </ProcessFolder>;
-
         return (
             <div className={classes}>
                 {stopSteps}
                 {rootProcesses}
-                {dataTypeRoot}
                 {folders}
             </div>
         );
@@ -135,21 +120,6 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
             subName={subName}
             type={ToolboxItemType.StopStep}
             key={index}
-            onMouseDown={select}
-            onMouseUp={deselect}
-        />
-    }
-
-    renderDataType(type: IType) {
-        const select = () => this.props.dataTypeSelected(type);
-        const deselect = () => this.props.deselect();
-
-        return <ToolboxItem
-            name={type.name}
-            description={type.guidance}
-            type={ToolboxItemType.Variable}
-            key={type.name}
-            colorOverride={type.color}
             onMouseDown={select}
             onMouseUp={deselect}
         />

@@ -6,7 +6,7 @@ import { ProcessEditor } from './ProcessSignature/ProcessEditor';
 import './WorkspaceEditor.css';
 import { IUserProcess } from '../state/IUserProcess';
 import { IProcess } from '../state/IProcess';
-import { IType } from '../state/IType';
+import { DataType } from '../state/IType';
 import { WorkspaceDispatchContext } from '../reducer';
 import { IUndoRedoAction } from '../services/useUndoReducer';
 import { IValidationError } from '../state/IValidationError';
@@ -15,7 +15,7 @@ import { ICustomTool } from '../ICustomTool';
 
 interface Props {
     processes: IProcess[];
-    types: IType[]
+    types: DataType[]
     initialProcess?: IUserProcess;
     className?: string;
     save?: () => void;
@@ -117,8 +117,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 editDefinition={process => this.showEditProcess(process)}
                 processSelected={process => this.selectProcess(process)}
                 stopStepSelected={step => this.selectStopStep(step)}
-                dataTypes={this.props.types}
-                dataTypeSelected={type => this.selectDataType(type)}
                 deselect={() => this.clearSelectedTools()}
             />
         );
@@ -136,7 +134,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 variables={this.state.openProcess.variables}
                 errors={this.state.openProcess.errors}
                 processName={this.state.openProcess.name}
-
                 dropping={this.state.dropping}
                 dropComplete={() => this.dropCompleted()}
                 focusError={this.state.focusError}
@@ -151,6 +148,8 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 otherProcessesHaveErrors={this.props.processes.find(p => p !== this.state.openProcess && isUserProcess(p) && p.errors.length > 0) !== undefined}
                 className="workspaceEditor__toolbar"
                 saveProcesses={this.props.save}
+                dataTypes={this.props.types}
+                startDrag={type => this.selectDataType(type)}
                 customTools={this.props.customTools}
                 undo={this.props.undo}
                 redo={this.props.redo}
@@ -212,7 +211,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
         });
     }
 
-    private selectDataType(type: IType) {
+    private selectDataType(type: DataType) {
         this.setState({
             dropping: {
                 type: 'variable',

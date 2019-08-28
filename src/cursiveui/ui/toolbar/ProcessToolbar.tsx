@@ -4,8 +4,9 @@ import { UndoToolProps, UndoTool } from './UndoTool';
 import './ProcessToolbar.css';
 import { Tool, ToolState } from './Tool';
 import { ICustomTool } from '../../ICustomTool';
+import { VariableTool, VariableToolProps } from './VariableTool';
 
-interface ProcessToolbarProps extends SaveToolProps, UndoToolProps {
+interface ProcessToolbarProps extends SaveToolProps, VariableToolProps, UndoToolProps {
     className?: string;
     customTools?: ICustomTool[];
 }
@@ -41,6 +42,11 @@ export const ProcessToolbar = (props: ProcessToolbarProps) => {
                 saveProcesses={props.saveProcesses}
                 otherProcessesHaveErrors={props.otherProcessesHaveErrors}
                 focusError={props.focusError}
+            />
+
+            <VariableTool
+                dataTypes={props.dataTypes}
+                startDrag={props.startDrag}
             />
 
             {customTools}
