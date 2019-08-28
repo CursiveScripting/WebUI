@@ -156,6 +156,8 @@ export const ContentItems = (props: Props) => {
     });
 
     const stopDragVarConnector = (variable: IVariable) => {
+        let dropped = false;
+
         if (props.dragging !== undefined && props.dragging.type === DragType.StepParameter) {
             context({
                 type: 'link variable',
@@ -165,9 +167,12 @@ export const ContentItems = (props: Props) => {
                 stepInputParam: props.dragging.input,
                 varName: variable.name,
             });
+
+            dropped = true;
         }
 
         props.setDragging(undefined);
+        return dropped;
     }
 
     props.stepRefs.clear();

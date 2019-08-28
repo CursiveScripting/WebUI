@@ -19,7 +19,7 @@ interface Props extends ICoord {
     inProcessName: string;
     headerMouseDown: (mouseX: number, mouseY: number, displayX: number, displayY: number) => void;
     connectorMouseDown: (input: boolean, x: number, y: number) => void;
-    connectorMouseUp: () => void;
+    connectorMouseUp: () => boolean;
 }
 
 interface State {
@@ -126,7 +126,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                 className="processItem processItem--var"
                 style={style}
                 ref={r => { if (r !== null) { this.root = r; }}}
-                onMouseUp={e => { e.stopPropagation(); this.props.connectorMouseUp(); }}
+                onMouseUp={e => { if (this.props.connectorMouseUp()) { e.stopPropagation(); }}}
             >
                 <div
                     className="processItem__header"
