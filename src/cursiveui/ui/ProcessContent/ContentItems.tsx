@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useContext } from 'react';
 import { StepDisplay } from './StepDisplay';
 import { StepType, IStep } from '../../state/IStep';
 import { WorkspaceDispatchContext } from '../../reducer';
@@ -31,7 +31,7 @@ interface Props {
 }
 
 export const ContentItems = (props: Props) => {
-    const context = React.useContext(WorkspaceDispatchContext);
+    const context = useContext(WorkspaceDispatchContext);
 
     useEffect(() => {
         if (props.focusError !== undefined) {

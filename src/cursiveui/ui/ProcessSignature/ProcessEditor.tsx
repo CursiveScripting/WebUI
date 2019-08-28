@@ -3,13 +3,14 @@ import './ProcessEditor.css';
 import { IParamInfo, SignatureEditor } from './SignatureEditor';
 import { IProcess } from '../../state/IProcess';
 import { IUserProcess } from '../../state/IUserProcess';
-import { WorkspaceDispatchContext } from '../../reducer';
-import { useMemo } from 'react';
+import { WorkspaceDispatchContext, WorkspaceAction } from '../../reducer';
+import { useMemo, useState, useContext } from 'react';
 import { isProcessUsedAnywhere } from '../../services/ProcessFunctions';
 import { IType } from '../../state/IType';
 import { INamed } from '../../state/INamed';
+import { IParameter } from '../../state/IParameter';
 
-interface Props {
+interface IProps {
     process?: IUserProcess;
     className?: string;
     allProcesses: IProcess[];
@@ -17,260 +18,275 @@ interface Props {
     close: () => void;
 }
 
-interface State {
-    name: string;
-    nameValid: boolean;
-    description: string;
-    returnPaths: string[];
-    returnPathValidity: boolean[];
-    inputs: IParamInfo[];
-    inputValidity: boolean[];
-    outputs: IParamInfo[];
-    outputValidity: boolean[];
-    // TODO: folder
+interface IValidity<T> {
+    value: string;
+    valid: boolean;
 }
 
-export class ProcessEditor extends React.PureComponent<Props, State> {
-    static contextType = WorkspaceDispatchContext;
-    context!: React.ContextType<typeof WorkspaceDispatchContext>;
-    
-    constructor(props: Props) {
-        super(props);
+interface IValiditySet<T> {
+    values: T[];
+    validity: boolean[]
+}
 
-        this.state = props.process === undefined
+export const ProcessEditor: React.FunctionComponent<IProps> = props => {
+    const context = useContext(WorkspaceDispatchContext);
+    
+    const [name, setName] = useState(
+        props.process === undefined
             ? {
-                name: '',
-                nameValid: false,
-                description: '',
-                returnPaths: [],
-                returnPathValidity: [],
-                inputs: [],
-                inputValidity: [],
-                outputs: [],
-                outputValidity: [],
+                value: '',
+                valid: false,
             }
             : {
-                name: props.process.name,
-                nameValid: this.isProcessNameValid(props.process.name, props.process, props.allProcesses),
-                description: props.process.description,
-                returnPaths: props.process.returnPaths,
-                returnPathValidity: props.process.returnPaths.map((path, index) => this.isReturnPathNameValid(index, props.process!.returnPaths)),
-                inputs: props.process.inputs.map(i => { return { type: i.type, name: i.name }; }),
-                inputValidity: props.process.inputs.map((param, index) => this.isParameterNameValid(index, props.process!.inputs)),
-                outputs: props.process.outputs.map(o => { return { type: o.type, name: o.name }; }),
-                outputValidity: props.process.outputs.map((param, index) => this.isParameterNameValid(index, props.process!.outputs)),
-            };
+                value: props.process.name,
+                valid: isProcessNameValid(props.process.name, props.process, props.allProcesses),
+            }
+    );
+
+    const [desc, setDesc] = useState(
+        props.process === undefined
+            ? ''
+            : props.process.description
+    );
+
+    const [returnPaths, setReturnPaths] = useState(
+        props.process === undefined
+            ? {
+                values: [],
+                validity: [],
+            }
+            : {
+                values: props.process.returnPaths.slice(),
+                validity: props.process.returnPaths.map((path, index) => isReturnPathNameValid(index, props.process!.returnPaths)),
+            }
+    );
+    
+    const [inputs, setInputs] = useState(
+        props.process === undefined
+            ? {
+                values: [],
+                validity: [],
+            }
+            : {
+                values: props.process.inputs.map(i => { return { type: i.type, name: i.name }; }),
+                validity: props.process.inputs.map((param, index) => isParameterNameValid(index, props.process!.inputs)),
+            }
+    );
+
+    const [outputs, setOutputs] = useState(
+        props.process === undefined
+            ? {
+                values: [],
+                validity: [],
+            }
+            : {
+                values: props.process.outputs.map(o => { return { type: o.type, name: o.name }; }),
+                validity: props.process.outputs.map((param, index) => isParameterNameValid(index, props.process!.outputs)),
+            }
+    );
+
+    let classes = 'processEditor';
+    if (props.className !== undefined) {
+        classes += ' ' + props.className;
     }
 
-    render() {
-        let classes = 'processEditor';
-        if (this.props.className !== undefined) {
-            classes += ' ' + this.props.className;
+    const nameChanged = (name: string) => setName({
+        value: name,
+        valid: isProcessNameValid(name, props.process, props.allProcesses),
+    });
+
+    const descChanged = (description: string) => setDesc(description);
+
+    const returnPathsChanged = (returnPaths: string[]) => setReturnPaths({
+        values: returnPaths,
+        validity: returnPaths.map((path, index) => isReturnPathNameValid(index, returnPaths)),
+    });
+
+    const inputsChanged = (params: IParamInfo[]) => setInputs({
+        values: params,
+        validity: params.map((param, index) => isParameterNameValid(index, params)),
+    });
+
+    const outputsChanged = (params: IParamInfo[]) => setOutputs({
+        values: params,
+        validity: params.map((param, index) => isParameterNameValid(index, params)),
+    });
+
+    const errors = useMemo(
+        () => getErrors(name, returnPaths, inputs, outputs),
+        [ name, returnPaths, inputs, outputs ]
+    );
+
+    const canSave = errors.length === 0;
+    const validationSummary = canSave
+        ? undefined
+        : <ul className="processEditor__errors">
+            {errors.map((msg, index) => <li className="processEditor__error" key={index}>{msg}</li>)}
+        </ul>
+
+    const save = !canSave
+        ? undefined
+        : () => {
+            saveChanges(props.process, name.value, desc, returnPaths.values, inputs.values, outputs.values, context);
+            props.close();
+        };
+    const cancel = () => props.close();
+
+    // eslint-disable-next-line
+    const canDelete = useMemo(() => props.process !== undefined && !isProcessUsedAnywhere(props.process, props.allProcesses), [props.process, props.allProcesses]);
+    
+    const deleteProcess = canDelete
+        ? () => {
+            context({
+                type: 'remove process',
+                name: props.process!.name,
+            });
+
+            props.close();
         }
+        : undefined
 
-        const nameChanged = (name: string) => this.setState({
-            name,
-            nameValid: this.isProcessNameValid(name, this.props.process, this.props.allProcesses),
-        });
+    const deleteButton = props.process === undefined
+        ? undefined
+        : canDelete
+            ? <input type="button" className="processEditor__button" value="Delete process" onClick={deleteProcess} />
+            : <input type="button" className="processEditor__button" value="Cannot delete" title="This process is used in other processes" disabled={true} />
 
-        const descChanged = (description: string) => this.setState({
-            description,
-        });
+    return (
+        <div className={classes}>
+            <SignatureEditor
+                dataTypes={props.allTypes}
 
-        const returnPathsChanged = (returnPaths: string[]) => this.setState({
-            returnPaths,
-            returnPathValidity: returnPaths.map((path, index) => this.isReturnPathNameValid(index, returnPaths)),
-        });
+                name={name.value}
+                nameValid={name.valid}
+                nameChanged={nameChanged}
 
-        const inputsChanged = (params: IParamInfo[]) => this.setState({
-            inputs: params,
-            inputValidity: params.map((param, index) => this.isParameterNameValid(index, params)),
-        });
+                description={desc}
+                descriptionChanged={descChanged}
 
-        const outputsChanged = (params: IParamInfo[]) => this.setState({
-            outputs: params,
-            outputValidity: params.map((param, index) => this.isParameterNameValid(index, params)),
-        });
+                returnPaths={returnPaths.values}
+                returnPathsValid={returnPaths.validity}
+                returnPathsChanged={returnPathsChanged}
 
-        const errors = useMemo(() => this.getErrors(), [
-            // eslint-disable-next-line 
-            this.state.nameValid,
-            // eslint-disable-next-line 
-            this.state.returnPathValidity,
-            // eslint-disable-next-line 
-            this.state.inputValidity,
-            // eslint-disable-next-line 
-            this.state.outputValidity,
-        ]);
+                inputs={inputs.values}
+                inputsValid={inputs.validity}
+                inputsChanged={inputsChanged}
 
-        const canSave = errors.length === 0;
-        const validationSummary = canSave
-            ? undefined
-            : <ul className="processEditor__errors">
-                {errors.map((msg, index) => <li className="processEditor__error" key={index}>{msg}</li>)}
-            </ul>
+                outputs={outputs.values}
+                outputsValid={outputs.validity}
+                outputsChanged={outputsChanged}
+            />
 
-        const save = !canSave ? undefined : () => this.saveChanges();
-        const cancel = () => this.props.close();
-
-        // eslint-disable-next-line
-        const canDelete = useMemo(() => this.props.process !== undefined && !isProcessUsedAnywhere(this.props.process, this.props.allProcesses), [this.props.process, this.props.allProcesses])
-        
-        const deleteProcess = canDelete
-            ? () => {
-                this.context({
-                    type: 'remove process',
-                    name: this.props.process!.name,
-                });
-
-                this.props.close();
-            }
-            : undefined
-
-        const deleteButton = this.props.process === undefined
-            ? undefined
-            : canDelete
-                ? <input type="button" className="processEditor__button" value="Delete process" onClick={deleteProcess} />
-                : <input type="button" className="processEditor__button" value="Cannot delete" title="This process is used in other processes" disabled={true} />
-
-        return (
-            <div className={classes}>
-                <SignatureEditor
-                    dataTypes={this.props.allTypes}
-
-                    name={this.state.name}
-                    nameValid={this.state.nameValid}
-                    nameChanged={nameChanged}
-
-                    description={this.state.description}
-                    descriptionChanged={descChanged}
-
-                    returnPaths={this.state.returnPaths}
-                    returnPathsValid={this.state.returnPathValidity}
-                    returnPathsChanged={returnPathsChanged}
-
-                    inputs={this.state.inputs}
-                    inputsValid={this.state.inputValidity}
-                    inputsChanged={inputsChanged}
-
-                    outputs={this.state.outputs}
-                    outputsValid={this.state.outputValidity}
-                    outputsChanged={outputsChanged}
-                />
-
-                {validationSummary}
-                
-                <div className="processEditor__footer">
-                    <input type="button" className="processEditor__button processEditor__button--save" value="Save changes" onClick={save} disabled={!canSave} />
-                    <input type="button" className="processEditor__button" value="Cancel" onClick={cancel} />
-                    {deleteButton}
-                </div>
+            {validationSummary}
+            
+            <div className="processEditor__footer">
+                <input type="button" className="processEditor__button processEditor__button--save" value="Save changes" onClick={save} disabled={!canSave} />
+                <input type="button" className="processEditor__button" value="Cancel" onClick={cancel} />
+                {deleteButton}
             </div>
+        </div>
+    );
+}
+
+function getErrors(name: IValidity<string>, returnPaths: IValiditySet<string>, inputs: IValiditySet<IParameter>, outputs: IValiditySet<IParameter>) {
+    const errors = [];
+
+    if (!name.valid) {
+        errors.push(
+            name.value.trim() === ''
+                ? 'Give this process a name.'
+                : 'This name is already in use, give this process a different name.'
+        );
+    }
+    
+    if (!returnPaths.validity.reduce((prev, curr) => prev && curr, true)) {
+        errors.push(
+            returnPaths.values.length === 1
+                ? 'Cannot have only one named return path. Either add more or remove this named path.'
+                : 'Ensure that all return paths have unique names.'
         );
     }
 
-    private getErrors() {
-        const errors = [];
-
-        if (!this.state.nameValid) {
-            errors.push(
-                this.state.name.trim() === ''
-                    ? 'Give this process a name.'
-                    : 'This name is already in use, give this process a different name.'
-            );
-        }
-        
-        if (!this.state.returnPathValidity.reduce((prev, curr) => prev && curr, true)) {
-            errors.push(
-                this.state.returnPaths.length === 1
-                ? 'Cannot have only one named return path. Either add more or remove this named path.'
-                : 'Ensure that all return paths have unique names.'
-            );
-        }
-
-        if (!this.state.inputValidity.reduce((prev, curr) => prev && curr, true)) {
-            errors.push('Ensure that all inputs have unique names.');
-        }
-
-        if (!this.state.outputValidity.reduce((prev, curr) => prev && curr, true)) {
-            errors.push('Ensure that all outputs have unique names.');
-        }
-        
-        return errors;
+    if (!inputs.validity.reduce((prev, curr) => prev && curr, true)) {
+        errors.push('Ensure that all inputs have unique names.');
     }
 
-    private saveChanges() {
-        if (this.props.process === undefined) {
-            this.context({
-                type: 'add process',
-                name: this.state.name,
-                description: this.state.description,
-                inputs: this.state.inputs.map(i => { return {
-                    name: i.name,
-                    type: i.type,
-                }}),
-                outputs: this.state.outputs.map(o => { return {
-                    name: o.name,
-                    type: o.type,
-                }}),
-                returnPaths: this.state.returnPaths,
-                folder: null, // TODO handle this
-            });
-        }
-        else {
-            const inputOrderMap = this.props.process === undefined
-                ? this.state.inputs.map(i => undefined)
-                : this.state.inputs.map(i => this.props.process!.inputs.findIndex(orig => orig === i.underlyingParameter));
-
-            const outputOrderMap = this.props.process === undefined
-                ? this.state.outputs.map(i => undefined)
-                : this.state.outputs.map(o => this.props.process!.outputs.findIndex(orig => orig === o.underlyingParameter));
-
-            this.context({
-                type: 'edit process',
-                oldName: this.props.process.name,
-                newName: this.state.name,
-                description: this.state.description,
-                folder: null, // TODO: handle this
-                inputs: this.state.inputs.map(i => { return {
-                    name: i.name,
-                    type: i.type,
-                }}),
-                outputs: this.state.outputs.map(o => { return {
-                    name: o.name,
-                    type: o.type,
-                }}),
-                inputOrderMap,
-                outputOrderMap,
-                returnPaths: this.state.returnPaths,
-            });
-        }
-
-        this.props.close();
+    if (!outputs.validity.reduce((prev, curr) => prev && curr, true)) {
+        errors.push('Ensure that all outputs have unique names.');
     }
+    
+    return errors;
+}
 
-    private isProcessNameValid(name: string, thisProcess: IUserProcess | undefined, allProcesses: IProcess[]) {
-        // A process name with space on the end or that exactly matches another is invalid.
-        return name !== ''
-            && name === name.trim()
-            && allProcesses.find(p => p.name === name) === thisProcess;
+function saveChanges(process: IUserProcess | undefined, name: string, description: string, returnPaths: string[], inputs: IParameter[], outputs: IParameter[], context: React.Dispatch<WorkspaceAction>) {
+    if (process === undefined) {
+        context({
+            type: 'add process',
+            name,
+            description,
+            inputs: inputs.map(i => { return {
+                name: i.name,
+                type: i.type,
+            }}),
+            outputs: outputs.map(o => { return {
+                name: o.name,
+                type: o.type,
+            }}),
+            returnPaths: returnPaths,
+            folder: null, // TODO handle this
+        });
     }
+    else {
+        const inputOrderMap = process === undefined
+            ? inputs.map(i => undefined)
+            : inputs.map(i => process!.inputs.findIndex(orig => orig === i.underlyingParameter));
 
-    private isReturnPathNameValid(pathIndex: number, pathNames: string[]) {
-        // A path name with space on the end or that exactly matches another is invalid.
-        // A path name is also invalid if we only have one: we should have 0 or 2+.
-        const pathName = pathNames[pathIndex];
-        return pathName !== ''
-            && pathName === pathName.trim()
-            && pathNames.indexOf(pathName) === pathIndex
-            && pathName.length !== 1;
-    }
+        const outputOrderMap = process === undefined
+            ? outputs.map(i => undefined)
+            : outputs.map(o => process!.outputs.findIndex(orig => orig === o.underlyingParameter));
 
-    private isParameterNameValid(paramIndex: number, parameters: INamed[]) {
-        // A parameter name with space on the end or that exactly matches another is invalid.
-        const paramName = parameters[paramIndex].name;
-        return paramName !== ''
-            && paramName === paramName.trim()
-            && parameters.findIndex(p => p.name === paramName) === paramIndex;
+        context({
+            type: 'edit process',
+            oldName: process.name,
+            newName: name,
+            description: description,
+            folder: null, // TODO: handle this
+            inputs: inputs.map(i => { return {
+                name: i.name,
+                type: i.type,
+            }}),
+            outputs: outputs.map(o => { return {
+                name: o.name,
+                type: o.type,
+            }}),
+            inputOrderMap,
+            outputOrderMap,
+            returnPaths,
+        });
     }
+}
+
+function isProcessNameValid(name: string, thisProcess: IUserProcess | undefined, allProcesses: IProcess[]) {
+    // A process name with space on the end or that exactly matches another is invalid.
+    return name !== ''
+        && name === name.trim()
+        && allProcesses.find(p => p.name === name) === thisProcess;
+}
+
+function isReturnPathNameValid(pathIndex: number, pathNames: string[]) {
+    // A path name with space on the end or that exactly matches another is invalid.
+    // A path name is also invalid if we only have one: we should have 0 or 2+.
+    const pathName = pathNames[pathIndex];
+    return pathName !== ''
+        && pathName === pathName.trim()
+        && pathNames.indexOf(pathName) === pathIndex
+        && pathName.length !== 1;
+}
+
+function isParameterNameValid(paramIndex: number, parameters: INamed[]) {
+    // A parameter name with space on the end or that exactly matches another is invalid.
+    const paramName = parameters[paramIndex].name;
+    return paramName !== ''
+        && paramName === paramName.trim()
+        && parameters.findIndex(p => p.name === paramName) === paramIndex;
 }
