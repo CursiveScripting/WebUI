@@ -218,7 +218,7 @@ function getErrors(name: IValidity<string>, returnPaths: IValiditySet<string>, i
     return errors;
 }
 
-function saveChanges(process: IUserProcess | undefined, name: string, description: string, returnPaths: string[], inputs: IParameter[], outputs: IParameter[], context: React.Dispatch<WorkspaceAction>) {
+function saveChanges(process: IUserProcess | undefined, name: string, description: string, returnPaths: string[], inputs: IParamInfo[], outputs: IParamInfo[], context: React.Dispatch<WorkspaceAction>) {
     if (process === undefined) {
         context({
             type: 'add process',
