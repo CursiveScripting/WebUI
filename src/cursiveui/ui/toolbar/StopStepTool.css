@@ -1,0 +1,22 @@
+.tool--stopSingle {
+    cursor: move;
+}
+
+.returnPathSelector {
+    cursor: move;
+    display: flex;
+    align-items: center;
+    margin: 0.5em 0;
+    padding: 0.25em 0;
+}
+
+.returnPathSelector__swatch {
+    width: 0.85em;
+    height: 0.85em;
+    background-color: #7F1919;
+    margin-right: 0.5em;
+}
+
+.returnPathSelector:hover {
+    text-decoration: underline;
+}

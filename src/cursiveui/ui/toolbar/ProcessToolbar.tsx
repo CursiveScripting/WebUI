@@ -4,11 +4,19 @@ import { UndoToolProps, UndoTool } from './UndoTool';
 import './ProcessToolbar.css';
 import { Tool, ToolState } from './Tool';
 import { ICustomTool } from '../../ICustomTool';
-import { VariableTool, VariableToolProps } from './VariableTool';
+import { VariableTool } from './VariableTool';
+import { DataType } from '../../state/IType';
+import { StopStepTool } from './StopStepTool';
 
-interface ProcessToolbarProps extends SaveToolProps, VariableToolProps, UndoToolProps {
+interface ProcessToolbarProps extends SaveToolProps, UndoToolProps {
     className?: string;
     customTools?: ICustomTool[];
+
+    returnPathNames: string[];
+    startDragReturnPath: (name: string | null) => void;
+
+    dataTypes: DataType[];
+    startDragVariable: (type: DataType) => void;
 }
 
 export const ProcessToolbar = (props: ProcessToolbarProps) => {
@@ -46,7 +54,12 @@ export const ProcessToolbar = (props: ProcessToolbarProps) => {
 
             <VariableTool
                 dataTypes={props.dataTypes}
-                startDrag={props.startDrag}
+                startDrag={props.startDragVariable}
+            />
+
+            <StopStepTool
+                returnPaths={props.returnPathNames}
+                startDrag={props.startDragReturnPath}
             />
 
             {customTools}

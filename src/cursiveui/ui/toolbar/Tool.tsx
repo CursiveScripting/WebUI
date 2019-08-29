@@ -12,6 +12,7 @@ interface Props {
     state: ToolState;
     prompt: string;
     onClick?: () => void;
+    onMouseDown?: () => void;
 }
 
 export const Tool: React.FunctionComponent<Props> = props => {
@@ -37,8 +38,12 @@ export const Tool: React.FunctionComponent<Props> = props => {
         ? props.onClick
         : undefined;
 
+    const onMouseDown = props.state === ToolState.Normal
+        ? props.onMouseDown
+        : undefined;
+
     return (
-        <div className={toolClasses} onClick={onClick}>
+        <div className={toolClasses} onClick={onClick} onMouseDown={onMouseDown}>
             <div className="tool__label">{props.prompt}</div>
             <div className="tool__icon" />
             {popout}

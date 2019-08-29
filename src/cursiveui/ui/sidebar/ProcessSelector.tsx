@@ -14,7 +14,6 @@ interface Props {
 
     deselect: () => void;
     processSelected: (process: IProcess) => void;
-    stopStepSelected: (name: string | null) => void;
     
     processOpened: (process: IUserProcess) => void;
     editDefinition: (process: IUserProcess) => void;
@@ -23,26 +22,18 @@ interface Props {
 interface State {
     rootProcesses: IProcess[];
     processFolders: Map<string, IProcess[]>;
-    returnPathNames: string[];
 }
 
 export class ProcessSelector extends React.PureComponent<Props, State> {
     constructor(props: Props) {
         super(props);
 
-        this.state = {
-            ...this.arrangeProcesses(props.processes),
-            ...this.determineReturnPaths(props),
-        };
+        this.state = this.arrangeProcesses(props.processes);
     }
 
     componentWillReceiveProps(nextProps: Props) {
         if (nextProps.processes !== this.props.processes) {
             this.setState(this.arrangeProcesses(nextProps.processes));
-        }
-
-        if (nextProps.openProcess !== this.props.openProcess) {
-            this.setState(this.determineReturnPaths(nextProps));
         }
     }
 
@@ -71,24 +62,11 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
         };
     }
 
-    private determineReturnPaths(props: Props) {
-        return {
-            returnPathNames: props.openProcess === undefined
-                ? []
-                : props.openProcess.returnPaths,
-        };
-    }
-
     render() {
         let classes = 'processSelector';
         if (this.props.className !== undefined) {
             classes += ' ' + this.props.className;
         }
-
-        const stopSteps = this.state.returnPathNames.length === 0
-            ? this.renderStopStep(null)
-            : this.state.returnPathNames.map((path, index) => this.renderStopStep(path, index));
-
         const rootProcesses = this.state.rootProcesses.map((p, i) => this.renderProcess(p, i));
 
         const folders = [];
@@ -100,31 +78,12 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
 
         return (
             <div className={classes}>
-                {stopSteps}
                 {rootProcesses}
                 {folders}
             </div>
         );
     }
-
-    private renderStopStep(returnPath: string | null, index?: number) {
-        const select = () => this.props.stopStepSelected(returnPath);
-        const deselect = () => this.props.deselect();
-
-        const subName = returnPath === null
-            ? undefined
-            : returnPath;
-
-        return <ToolboxItem
-            name="Stop"
-            subName={subName}
-            type={ToolboxItemType.StopStep}
-            key={index}
-            onMouseDown={select}
-            onMouseUp={deselect}
-        />
-    }
-
+    
     private renderProcess(process: IProcess, index: number) {
         let hasErrors: boolean;
         let isOpen: boolean;

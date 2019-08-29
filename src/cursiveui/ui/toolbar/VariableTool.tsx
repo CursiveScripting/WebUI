@@ -1,14 +1,14 @@
 import * as React from 'react';
-import './VariableSelector.css';
+import './VariableTool.css';
 import { Tool, ToolState } from './Tool';
 import { DataType } from '../../state/IType';
 
-export interface VariableToolProps {
+interface Props {
     dataTypes: DataType[];
     startDrag: (type: DataType) => void;
 }
 
-export const VariableTool: React.FunctionComponent<VariableToolProps> = props => {
+export const VariableTool: React.FunctionComponent<Props> = props => {
     return <Tool
         className="tool--variable"
         state={ToolState.Normal}
