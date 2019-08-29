@@ -30,7 +30,7 @@ export const StopStepTool: React.FunctionComponent<Props> = props => {
 function renderSelector(returnPath: string, index: number, startDrag: () => void) {
     return (
         <div
-            className="returnPathSelector"
+            className="tool__popoutItem returnPathSelector"
             key={index}
             onMouseDown={startDrag}
         >

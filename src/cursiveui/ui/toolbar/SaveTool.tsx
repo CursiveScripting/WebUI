@@ -1,5 +1,5 @@
 import * as React from 'react';
-import './ValidationError.css';
+import './SaveTool.css';
 import { IValidationError } from '../../state/IValidationError';
 import { Tool, ToolState } from './Tool';
 
@@ -50,7 +50,7 @@ function renderValidationError(error: IValidationError, index: number, setFocus:
 
     return (
         <div
-            className="validationError"
+            className="tool__popoutItem validationError"
             key={index}
             onFocus={focusError}
             onMouseOver={focusError}

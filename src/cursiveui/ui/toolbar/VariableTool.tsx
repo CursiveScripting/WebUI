@@ -21,7 +21,7 @@ export const VariableTool: React.FunctionComponent<Props> = props => {
 function renderDataType(type: DataType, index: number, startDrag: () => void) {
     return (
         <div
-            className="variableSelector"
+            className="tool__popoutItem variableSelector"
             key={index}
             onMouseDown={startDrag}
         >

@@ -11,6 +11,7 @@ interface Props {
     className?: string;
     state: ToolState;
     prompt: string;
+    iconBackground?: string;
     onClick?: () => void;
     onMouseDown?: () => void;
 }
@@ -42,11 +43,17 @@ export const Tool: React.FunctionComponent<Props> = props => {
         ? props.onMouseDown
         : undefined;
 
+    const iconStyle = props.iconBackground === undefined
+        ? undefined
+        : { backgroundImage: props.iconBackground };
+
     return (
-        <div className={toolClasses} onClick={onClick} onMouseDown={onMouseDown}>
-            <div className="tool__label">{props.prompt}</div>
-            <div className="tool__icon" />
-            {popout}
+        <div className="toolWrapper">
+            <div className={toolClasses} onClick={onClick} onMouseDown={onMouseDown}>
+                <div className="tool__label">{props.prompt}</div>
+                <div className="tool__icon" style={iconStyle} />
+                {popout}
+            </div>
         </div>
     );
 }

@@ -34,10 +34,10 @@ export const ProcessToolbar = (props: ProcessToolbarProps) => {
 
             return <Tool
                 key={index}
-                className={tool.icon}
                 prompt={tool.prompt}
                 onClick={action}
                 state={ToolState.Normal}
+                iconBackground={tool.iconBackground}
             />
         }),
         [props.customTools, props.saveProcesses]
@@ -52,6 +52,8 @@ export const ProcessToolbar = (props: ProcessToolbarProps) => {
                 focusError={props.focusError}
             />
 
+            {customTools}
+
             <VariableTool
                 dataTypes={props.dataTypes}
                 startDrag={props.startDragVariable}
@@ -61,8 +63,6 @@ export const ProcessToolbar = (props: ProcessToolbarProps) => {
                 returnPaths={props.returnPathNames}
                 startDrag={props.startDragReturnPath}
             />
-
-            {customTools}
 
             <UndoTool
                 undo={props.undo}
