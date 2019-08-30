@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ToolboxItem, ToolboxItemType } from './ToolboxItem';
+import { ProcessSelectorItem, ItemType } from './ProcessSelectorItem';
 import './ProcessSelector.css';
 import { ProcessFolder } from './ProcessFolder';
 import { IProcess } from '../../state/IProcess';
@@ -20,6 +20,7 @@ interface Props {
 }
 
 interface State {
+    filter: string;
     rootProcesses: IProcess[];
     processFolders: Map<string, IProcess[]>;
 }
@@ -28,7 +29,10 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
     constructor(props: Props) {
         super(props);
 
-        this.state = this.arrangeProcesses(props.processes);
+        this.state = {
+            ...this.arrangeProcesses(props.processes),
+            filter: '',
+        };
     }
 
     componentWillReceiveProps(nextProps: Props) {
@@ -80,6 +84,8 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
             <div className={classes}>
                 {rootProcesses}
                 {folders}
+
+                <input type="text" className="processSelector__filter" value={this.state.filter} onChange={e => this.setState({ filter: e.target.value })} />
             </div>
         );
     }
@@ -89,10 +95,10 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
         let isOpen: boolean;
         let openProcess: undefined | (() => void);
         let editDef: undefined | (() => void);
-        let type: ToolboxItemType;
+        let type: ItemType;
 
         if (isUserProcess(process)) {
-            type = ToolboxItemType.UserProcess;
+            type = ItemType.UserProcess;
             hasErrors = process.errors.length > 0;
             isOpen = process === this.props.openProcess;
 
@@ -105,22 +111,27 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
                 : () => this.props.editDefinition(process);
         }
         else {
-            type = ToolboxItemType.SystemProcess;
+            type = ItemType.SystemProcess;
             hasErrors = false;
             isOpen = false;
             openProcess = undefined;
             editDef = undefined;
         }
 
+        const isVisible = this.state.filter === ''
+            || process.name.indexOf(this.state.filter) !== -1
+            || process.description.indexOf(this.state.filter) !== -1;
+
         const select = () => this.props.processSelected(process);
         const deselect = () => this.props.deselect();
 
         return (
-            <ToolboxItem
+            <ProcessSelectorItem
                 name={process.name}
                 description={process.description}
                 type={type}
                 key={index}
+                visible={isVisible}
                 isOpen={isOpen}
                 isSelected={this.props.selectedProcess === process}
                 hasError={hasErrors}

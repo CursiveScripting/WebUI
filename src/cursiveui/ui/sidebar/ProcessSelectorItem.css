@@ -1,4 +1,4 @@
-.toolboxItem {
+.processSelectorItem {
     display: flex;
     flex-direction: column;
     position: relative;
@@ -8,7 +8,7 @@
     overflow: hidden;
 }
 
-.toolboxItem__header {
+.processSelectorItem__header {
     font-size: 1.1em;
     height: 1.4em;
     border-radius: 1em;
@@ -18,67 +18,71 @@
     display: flex;
 }
 
-.toolboxItem__name {
+.processSelectorItem__name {
     font-weight: bold;
 }
 
-.toolboxItem:not(.toolboxItem--subname) .toolboxItem__name {
+.processSelectorItem:not(.processSelectorItem--subname) .processSelectorItem__name {
     flex-grow: 1;
 }
 
-.toolboxItem__subname {
+.processSelectorItem__subname {
     margin-left: 0.5em;
     flex-grow: 1;
 }
 
-.toolboxItem__subname::before {
+.processSelectorItem__subname::before {
     content: '(';
 }
 
-.toolboxItem__subname::after {
+.processSelectorItem__subname::after {
     content: ')';
 }
 
-.toolboxItem__desc {
+.processSelectorItem__desc {
     font-size: 0.95em;
     padding-left: 0.5rem;
 }
 
-.toolboxItem--system .toolboxItem__header {
+.processSelectorItem--system .processSelectorItem__header {
     background-color: #cc8800;
 }
 
-.toolboxItem--user .toolboxItem__header {
+.processSelectorItem--user .processSelectorItem__header {
     background-color: #00aaaa;
 }
 
-.toolboxItem--stop .toolboxItem__header {
+.processSelectorItem--stop .processSelectorItem__header {
     background-color: #ff0000;
 }
 
-.toolboxItem:hover .toolboxItem__header {
+.processSelectorItem:hover .processSelectorItem__header {
     color: white;
     text-shadow: 0px 0px 4px black, 0px 0px 4px black, 0px 0px 2px black;
 }
 
-.toolboxItem--invalid .toolboxItem__header::after {
+.processSelectorItem--invalid .processSelectorItem__header::after {
     content: '!';
     color: #f00;
     text-shadow: 0px 0px 4px white;
     margin-right: 0.5em;
 }
 
-.toolboxItem--open .toolboxItem__header::after {
+.processSelectorItem--open .processSelectorItem__header::after {
     content: '\279C';
     margin-right: 0.3em;
 }
 
-.toolboxItem--user:not(.toolboxItem--open) > .toolboxItem__header {
+.processSelectorItem--user:not(.processSelectorItem--open) > .processSelectorItem__header {
     cursor: pointer;
 }
 
+.processSelectorItem--hidden {
+    display: none;
+}
+
 /*
-.toolboxItem__editLink {
+.processSelectorItem__editLink {
     display: none;
     position: absolute;
     right: 0.4em;
@@ -88,7 +92,7 @@
     cursor: pointer;
 }
 
-.toolboxItem:hover .toolboxItem__editLink {
+.processSelectorItem:hover .processSelectorItem__editLink {
     display: initial;
 }
 */
