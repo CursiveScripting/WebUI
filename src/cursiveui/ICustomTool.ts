@@ -1,6 +1,6 @@
 export interface ICustomTool {
     prompt: string;
-    icon: string; // TODO: image path? class?
+    iconBackground: string;
     unsavedConfirmation?: string;
     action: () => void;
 }

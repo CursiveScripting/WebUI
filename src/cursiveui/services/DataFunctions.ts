@@ -1,3 +1,5 @@
+import ajv from 'ajv';
+
 export function createMap<TElement>(elements: TElement[], getKey: (el: TElement) => string) {
     const map = new Map<string, TElement>();
 
@@ -8,10 +10,6 @@ export function createMap<TElement>(elements: TElement[], getKey: (el: TElement)
     return map;
 }
 
-export function isString(data: string | Document): data is string {
-    return typeof data === 'string';
-}
-
 export function isValueValid(value: string | null, expression: string | undefined) {
     if (value === null || expression === undefined) {
         return true;
@@ -19,4 +17,18 @@ export function isValueValid(value: string | null, expression: string | undefine
 
     const expr = new RegExp(expression);
     return expr.test(value);
+}
+
+export function validateSchema(schema: any, data: any) {
+    const validator = new ajv();
+
+    const validate = validator.compile(schema);
+
+    const valid = validate(data);
+
+    if (valid || validator.errors === undefined) {
+        return null;
+    }
+
+    return validator.errors;
 }

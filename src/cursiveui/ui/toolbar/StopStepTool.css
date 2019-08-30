@@ -1,0 +1,25 @@
+.tool--stop {
+    cursor: default;
+}
+
+.tool--stop .tool__icon {
+    /* "circle-plus" from feather icons */
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='feather feather-square'><rect x='3' y='3' width='18' height='18' rx='2' ry='2'></rect></svg>");
+}
+
+.tool--stopSingle .tool__icon {
+    cursor: move;
+}
+
+.returnPathSelector {
+    cursor: move;
+    display: flex;
+    align-items: center;
+}
+
+.returnPathSelector__swatch {
+    width: 0.85em;
+    height: 0.85em;
+    background-color: #7F1919;
+    margin-right: 0.5em;
+}

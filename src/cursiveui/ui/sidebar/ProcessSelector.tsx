@@ -4,7 +4,6 @@ import './ProcessSelector.css';
 import { ProcessFolder } from './ProcessFolder';
 import { IProcess } from '../../state/IProcess';
 import { IUserProcess } from '../../state/IUserProcess';
-import { IType } from '../../state/IType';
 import { isUserProcess } from '../../services/ProcessFunctions';
 
 interface Props {
@@ -12,12 +11,9 @@ interface Props {
     openProcess?: IUserProcess;
     selectedProcess?: IProcess;
     className?: string;
-    dataTypes: IType[];
 
     deselect: () => void;
     processSelected: (process: IProcess) => void;
-    stopStepSelected: (name: string | null) => void;
-    dataTypeSelected: (type: IType) => void;
     
     processOpened: (process: IUserProcess) => void;
     editDefinition: (process: IUserProcess) => void;
@@ -26,26 +22,18 @@ interface Props {
 interface State {
     rootProcesses: IProcess[];
     processFolders: Map<string, IProcess[]>;
-    returnPathNames: string[];
 }
 
 export class ProcessSelector extends React.PureComponent<Props, State> {
     constructor(props: Props) {
         super(props);
 
-        this.state = {
-            ...this.arrangeProcesses(props.processes),
-            ...this.determineReturnPaths(props),
-        };
+        this.state = this.arrangeProcesses(props.processes);
     }
 
     componentWillReceiveProps(nextProps: Props) {
         if (nextProps.processes !== this.props.processes) {
             this.setState(this.arrangeProcesses(nextProps.processes));
-        }
-
-        if (nextProps.openProcess !== this.props.openProcess) {
-            this.setState(this.determineReturnPaths(nextProps));
         }
     }
 
@@ -74,24 +62,11 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
         };
     }
 
-    private determineReturnPaths(props: Props) {
-        return {
-            returnPathNames: props.openProcess === undefined
-                ? []
-                : props.openProcess.returnPaths,
-        };
-    }
-
     render() {
         let classes = 'processSelector';
         if (this.props.className !== undefined) {
             classes += ' ' + this.props.className;
         }
-
-        const stopSteps = this.state.returnPathNames.length === 0
-            ? this.renderStopStep(null)
-            : this.state.returnPathNames.map((path, index) => this.renderStopStep(path, index));
-
         const rootProcesses = this.state.rootProcesses.map((p, i) => this.renderProcess(p, i));
 
         const folders = [];
@@ -101,60 +76,14 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
             </ProcessFolder>);
         }
 
-        const dataTypeItems = [];
-        for (const type of this.props.dataTypes) {
-            dataTypeItems.push(this.renderDataType(type));
-        }
-
-        const dataTypeRoot = dataTypeItems.length === 0
-            ? undefined
-            : <ProcessFolder name="Variables">
-                {dataTypeItems}
-            </ProcessFolder>;
-
         return (
             <div className={classes}>
-                {stopSteps}
                 {rootProcesses}
-                {dataTypeRoot}
                 {folders}
             </div>
         );
     }
-
-    private renderStopStep(returnPath: string | null, index?: number) {
-        const select = () => this.props.stopStepSelected(returnPath);
-        const deselect = () => this.props.deselect();
-
-        const subName = returnPath === null
-            ? undefined
-            : returnPath;
-
-        return <ToolboxItem
-            name="Stop"
-            subName={subName}
-            type={ToolboxItemType.StopStep}
-            key={index}
-            onMouseDown={select}
-            onMouseUp={deselect}
-        />
-    }
-
-    renderDataType(type: IType) {
-        const select = () => this.props.dataTypeSelected(type);
-        const deselect = () => this.props.deselect();
-
-        return <ToolboxItem
-            name={type.name}
-            description={type.guidance}
-            type={ToolboxItemType.Variable}
-            key={type.name}
-            colorOverride={type.color}
-            onMouseDown={select}
-            onMouseUp={deselect}
-        />
-    }
-
+    
     private renderProcess(process: IProcess, index: number) {
         let hasErrors: boolean;
         let isOpen: boolean;

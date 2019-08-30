@@ -1,32 +1,31 @@
-﻿import { IWorkspaceState } from '../state/IWorkspaceState';
-import { createMap, isString } from './DataFunctions';
+﻿import processSchema from 'cursive-schema/processes.json';
+import { IWorkspaceState } from '../state/IWorkspaceState';
+import { createMap, validateSchema } from './DataFunctions';
 import { usesOutputs, usesInputs } from './StepFunctions';
 import { IUserProcess } from '../state/IUserProcess';
 import { IVariable } from '../state/IVariable';
 import { IStep, StepType, IStepWithOutputs } from '../state/IStep';
 import { IProcess } from '../state/IProcess';
 import { IParameter } from '../state/IParameter';
-import { IStartStep } from '../state/IStartStep';
-import { IStopStep } from '../state/IStopStep';
 import { IProcessStep } from '../state/IProcessStep';
 import { DataType } from '../state/IType';
 import { isUserProcess } from './ProcessFunctions';
+import { IParameterData, IUserProcessData, IProcessStepData, IStopStepData, IStartStepData, IVariableData } from './serializedDataModels';
 
-export function loadProcesses(workspace: IWorkspaceState, processData: Document | string) {
-    const rootElement = isString(processData)
-        ? new DOMParser().parseFromString(processData, 'application/xml').documentElement
-        : processData.firstChild as HTMLElement;
+export function loadProcesses(workspace: IWorkspaceState, processData: IUserProcessData[], checkSchema: boolean) {
+    if (checkSchema) {
+        const validationErrors = validateSchema(processSchema, processData);
 
-    return loadProcessesFromElement(workspace, rootElement);
-}
-
-function loadProcessesFromElement(workspace: IWorkspaceState, processData: HTMLElement) {
-    const processNodes = processData.getElementsByTagName('Process');
+        if (validationErrors !== null) {
+            throw new Error(`Processes are not valid: ${validationErrors}`);
+        }
+    }
+    
     const processesByName = createMap(workspace.processes, p => p.name);
     const typesByName = createMap(workspace.types, t => t.name);
 
-    for (const processNode of processNodes) {
-        const process = loadProcessDefinition(typesByName, processNode);
+    for (const dataItem of processData) {
+        const process = loadProcessDefinition(typesByName, dataItem);
         
         const existing = processesByName.get(process.name);
         if (existing !== undefined) {
@@ -52,96 +51,91 @@ function loadProcessesFromElement(workspace: IWorkspaceState, processData: HTMLE
         }
     }
 
-    for (const processNode of processNodes) {
-        loadProcessSteps(processNode, processesByName);
+    for (const dataItem of processData) {
+        loadProcessSteps(dataItem, processesByName);
     }
 }
 
-function loadProcessDefinition(typesByName: Map<string, DataType>, processNode: Element): IUserProcess {
-    const name = processNode.getAttribute('name')!;
-    const folder = processNode.hasAttribute('folder') ? processNode.getAttribute('folder') : null;
-    const descNodes = processNode.getElementsByTagName('Description');
-    const description = descNodes.length > 0 ? descNodes[0].innerHTML : '';
-
-    const inputs: IParameter[] = [];
-    let paramNodes = processNode.getElementsByTagName('Input');
-    loadProcessParameters(typesByName, paramNodes, inputs, 'input');
-
-    const outputs: IParameter[] = [];
-    paramNodes = processNode.getElementsByTagName('Output');
-    loadProcessParameters(typesByName, paramNodes, outputs, 'output');
-
-    const variables: IVariable[] = [];
-    paramNodes = processNode.getElementsByTagName('Variable');
-    loadProcessParameters(typesByName, paramNodes, variables, 'variable');
-
-    const returnPaths: string[] = [];
-    const usedNames = new Set<string>();
-    paramNodes = processNode.getElementsByTagName('ReturnPath');
-    for (const paramNode of paramNodes) {
-        if (paramNode.parentElement !== processNode) {
-            continue;
-        }
-
-        const returnPathName = paramNode.getAttribute('name')!;
-        if (returnPathName !== '' && !usedNames.has(returnPathName)) { // TODO: was null, not ''
-            returnPaths.push(returnPathName);
-        }
-    }
-
+function loadProcessDefinition(typesByName: Map<string, DataType>, processData: IUserProcessData): IUserProcess {
     return {
-        name,
-        description,
-        folder,
+        name: processData.name,
+        description: processData.description === undefined
+            ? ''
+            : processData.description,
+        folder: processData.folder === undefined
+            ? null
+            : processData.folder,
         fixedSignature: false,
         isSystem: false,
-        inputs,
-        outputs,
-        returnPaths,
+        inputs: loadProcessParameters(typesByName, processData.inputs, processData.name, 'input'),
+        outputs: loadProcessParameters(typesByName, processData.outputs, processData.name, 'output'),
+        returnPaths: processData.returnPaths === undefined
+            ? []
+            : processData.returnPaths.slice(),
         steps: [],
-        variables,
+        variables: loadProcessVariables(typesByName, processData.variables, processData.name),
         errors: [],
     };
 }
 
 function loadProcessParameters(
     typesByName: Map<string, DataType>,
-    paramNodes: HTMLCollectionOf<Element>,
-    dataFields: IParameter[],
-    paramTypeName: 'input' | 'output' | 'variable'
+    paramData: IParameterData[] | undefined,
+    processName: string,
+    paramTypeName: 'input' | 'output'
 ) {
-    const isVariable = paramTypeName === 'variable';
+    if (paramData === undefined) {
+        return [];
+    }
 
-    for (const node of paramNodes) {
-        const paramName = node.getAttribute('name')!;
-        const typeName = node.getAttribute('type')!;
-        const type = typesByName.get(typeName);
+    return paramData.map(param => {
+        const type = typesByName.get(param.type);
 
         if (type === undefined) {
-            throw new Error(`The ${paramName} ${paramTypeName} has an invalid type: ${typeName}. That type doesn't exist in this workspace.`);
+            throw new Error(`The ${param.name} ${paramTypeName} in the ${processName} process has an invalid type: ${param.type}. That type doesn't exist in this workspace.`);
         }
 
-        let dataField: IVariable | IParameter;
-        if (isVariable) {
-            dataField = {
-                name: paramName,
-                type,
-                incomingLinks: [],
-                outgoingLinks: [],
-                x: parseInt(node.getAttribute('x')!),
-                y: parseInt(node.getAttribute('y')!),
-                initialValue: node.getAttribute('initialValue'),
-            };
+        return {
+            name: param.name,
+            type: type,
         }
-        else {
-            dataField = {
-                name: paramName,
-                type: type,
-            }
-        }
+    });
+}
 
-        dataFields.push(dataField);
+function loadProcessVariables(
+    typesByName: Map<string, DataType>,
+    variableData: IVariableData[] | undefined,
+    processName: string
+) {
+    if (variableData === undefined) {
+        return [];
     }
+
+    const usedNames = new Set<string>();
+
+    return variableData.map(v => {
+        if (usedNames.has(v.name)) {
+            throw new Error(`Multiple variables called ${v.name} in the ${processName} process. Variable names must be unique.`);
+        }
+
+        const type = typesByName.get(v.type);
+
+        if (type === undefined) {
+            throw new Error(`The ${v.name} variable in the ${processName} process has an invalid type: ${v.type}. That type doesn't exist in this workspace.`);
+        }
+
+        usedNames.add(v.name);
+
+        return {
+            name: v.name,
+            type,
+            incomingLinks: [],
+            outgoingLinks: [],
+            x: v.x,
+            y: v.y,
+            initialValue: v.initialValue === undefined ? null : v.initialValue,
+        };
+    })
 }
 
 interface IIntermediateReturnPath {
@@ -155,153 +149,166 @@ interface IIntermediateStep {
 }
 
 function loadProcessSteps(
-    processNode: Element,
+    processData: IUserProcessData,
     processesByName: Map<string, IProcess>
 ) {
-    const name = processNode.getAttribute('name')!;
+    if (processData.steps === undefined) {
+        return;
+    }
 
-    const process = processesByName.get(name);
+    const process = processesByName.get(processData.name);
     if (process === undefined || !isUserProcess(process)) {
         return;
     }
 
     const stepsById = new Map<string, IIntermediateStep>();
 
-    const startNodes = processNode.getElementsByTagName('Start');
-    for (const stepNode of startNodes) {
-        const id = stepNode.getAttribute('ID')!;
-
-        const step: IStartStep = {
-            uniqueId: id,
-            stepType: StepType.Start,
-            outputs: loadStepOutputs(id, process, process.inputs, stepNode),
-            returnPaths: [],
-            x: parseInt(stepNode.getAttribute('x')!),
-            y: parseInt(stepNode.getAttribute('y')!),
-        };
-
-        stepsById.set(id, {
-            step,
-            returnPaths: loadReturnPaths(stepNode),
-        });
+    for (const stepData of processData.steps) {
+        const id = stepData.id;
+        if (stepData.type === 'start') {
+            stepsById.set(id, {
+                step: loadStartStep(process, stepData),
+                returnPaths: loadReturnPaths(stepData),
+            });
+        }
+        else if (stepData.type === 'stop') {
+            stepsById.set(id, {
+                step: loadStopStep(process, stepData),
+            });
+        }
+        else if (stepData.type === 'process') {
+            stepsById.set(id, {
+                step: loadProcessStep(process, stepData, processesByName),
+                returnPaths: loadReturnPaths(stepData),
+            });
+        }
     }
 
-    const stopNodes = processNode.getElementsByTagName('Stop');
-    for (const stepNode of stopNodes) {
-        const id = stepNode.getAttribute('ID')!;
-
-        let returnPath: string | null;
-        if (stepNode.hasAttribute('name')) {
-            returnPath = stepNode.getAttribute('name')!;
-            if (process.returnPaths.indexOf(returnPath) === -1) {
-                throw new Error(`Step ${id} of the "${process.name}" process uses an unspecified return path name: ${name}.`
-                    + ' That name isn\'t a return path on this process.');
-            }
-        }
-        else {
-            returnPath = null;
-            if (process.returnPaths.length > 0) {
-                throw new Error(`Step ${id} of the "${process.name}" process has no return path name.`
-                    + ' This process uses named return paths, so a name is required.');
-            }
-        }
-
-        const step: IStopStep = {
-            uniqueId: id,
-            stepType: StepType.Stop,
-            inputs: loadStepInputs(id, process, process.outputs, stepNode),
-            x: parseInt(stepNode.getAttribute('x')!),
-            y: parseInt(stepNode.getAttribute('y')!),
-            returnPath,
-            inputConnected: false,
-        };
-        
-        stepsById.set(id, {
-            step,
-        });
-    }
-
-    const stepNodes = processNode.getElementsByTagName('Step');
-    for (const stepNode of stepNodes) {
-        const id = stepNode.getAttribute('ID')!;
-
-        const childProcessName = stepNode.getAttribute('process')!;
-        const childProcess = processesByName.get(childProcessName);
-        
-        if (childProcess === undefined) {
-            throw new Error(`Step ${id} of the "${process.name}" process wraps an unknown process: ${name}.`
-                + ' That process doesn\'t exist in this workspace.');
-        }
-
-        const isUser = isUserProcess(childProcess);
-        
-        const step: IProcessStep = {
-            uniqueId: id,
-            stepType: isUser ? StepType.UserProcess : StepType.SystemProcess,
-            process: childProcess,
-            inputs: loadStepInputs(id, process, childProcess.inputs, stepNode),
-            outputs: loadStepOutputs(id, process, childProcess.outputs, stepNode),
-            returnPaths: [],
-            x: parseInt(stepNode.getAttribute('x')!),
-            y: parseInt(stepNode.getAttribute('y')!),
-            inputConnected: false,
-        }
-
-        stepsById.set(id, {
-            step,
-            returnPaths: loadReturnPaths(stepNode),
-        });
-    }
-    
     validateReturnPaths(process.name, stepsById);
     
     process.steps = Array.from(stepsById.values()).map(s => s.step);
 }
 
-function loadStepInputs(stepId: string, process: IUserProcess, inputs: IParameter[], stepNode: Element) {
-    return loadStepParameters(stepId, process, inputs, stepNode, true);
+function loadProcessStep(process: IUserProcess, stepData: IProcessStepData, processesByName: Map<string, IProcess>) {
+    const childProcessName = stepData.process;
+    const childProcess = processesByName.get(childProcessName);
+
+    if (childProcess === undefined) {
+        throw new Error(`Step ${stepData.id} of the "${process.name}" process wraps an unknown process: ${childProcessName}.`
+            + ' That process doesn\'t exist in this workspace.');
+    }
+
+    const isUser = isUserProcess(childProcess);
+
+    const step: IProcessStep = {
+        uniqueId: stepData.id,
+        stepType: isUser ? StepType.UserProcess : StepType.SystemProcess,
+        process: childProcess,
+        inputs: loadStepInputs(stepData.id, process, childProcess.inputs, stepData),
+        outputs: loadStepOutputs(stepData.id, process, childProcess.outputs, stepData),
+        returnPaths: [],
+        x: stepData.x,
+        y: stepData.y,
+        inputConnected: false,
+    };
+    return step;
 }
 
-function loadStepOutputs(stepId: string, process: IUserProcess, outputs: IParameter[], stepNode: Element) {
-    return loadStepParameters(stepId, process, outputs, stepNode, false);
+function loadStopStep(process: IUserProcess, stepData: IStopStepData) {
+    let returnPath: string | null;
+
+    if (stepData.name !== undefined) {
+        returnPath = stepData.name;
+
+        if (process.returnPaths.indexOf(returnPath) === -1) {
+            throw new Error(`Step ${stepData.id} of the "${process.name}" process uses an unspecified return path name: ${returnPath}.`
+                + ' That name isn\'t a return path on this process.');
+        }
+    }
+    else {
+        returnPath = null;
+
+        if (process.returnPaths.length > 0) {
+            throw new Error(`Step ${stepData.id} of the "${process.name}" process has no return path name.`
+                + ' This process uses named return paths, so a name is required.');
+        }
+    }
+
+    return {
+        uniqueId: stepData.id,
+        stepType: StepType.Stop,
+        inputs: loadStepInputs(stepData.id, process, process.outputs, stepData),
+        x: stepData.x,
+        y: stepData.y,
+        returnPath,
+        inputConnected: false,
+    };
+}
+
+function loadStartStep(process: IUserProcess, stepData: IStartStepData) {
+    return {
+        uniqueId: stepData.id,
+        stepType: StepType.Start,
+        outputs: loadStepOutputs(stepData.id, process, process.inputs, stepData),
+        returnPaths: [],
+        x: stepData.x,
+        y: stepData.y,
+    };
+}
+
+function loadStepInputs(stepId: string, process: IUserProcess, inputs: IParameter[], stepData: IProcessStepData | IStopStepData) {
+    if (stepData.inputs === undefined) {
+        return [];
+    }
+
+    return loadStepParameters(stepId, process, inputs, stepData.inputs, true);
+}
+
+function loadStepOutputs(stepId: string, process: IUserProcess, outputs: IParameter[], stepData: IProcessStepData | IStartStepData) {
+    if (stepData.outputs === undefined) {
+        return [];
+    }
+    
+    return loadStepParameters(stepId, process, outputs, stepData.outputs, false);
 }
 
 function loadStepParameters(
     stepId: string,
     process: IUserProcess,
     parameters: IParameter[],
-    stepNode: Element,
+    paramData: Record<string, string>,
     isInputParam: boolean
 ) {
-    const sourceNodes = stepNode.getElementsByTagName(isInputParam ? 'Input' : 'Output');
-    const sourceNodesByName = new Map<string, Element>();
-    for (const sourceNode of sourceNodes) {
-        const paramName = sourceNode.getAttribute('name')!;
+    const usedParameters = new Set<string>();
+    const usedVariables = new Set<string>();
 
-        if (sourceNodesByName.has(paramName)) {
+    for (const paramName in Object.keys(paramData)) {
+        const varName = paramData[paramName];
+
+        if (usedParameters.has(paramName)) {
             const parameterTypeName = isInputParam ? 'input' : 'output';
             throw new Error(`Step ${stepId} of the "${process.name}" process tries to map the one ${parameterTypeName} multiple times: ${paramName}`);
         }
 
-        sourceNodesByName.set(paramName, sourceNode);
+        if (usedVariables.has(varName)) {
+            const parameterTypeName = isInputParam ? 'input' : 'output';
+            throw new Error(`Step ${stepId} of the "${process.name}" process tries to mulitple ${parameterTypeName} to the same variable: ${varName}`);
+        }
+
+        usedParameters.add(paramName);
+        usedVariables.add(varName);
     }
     
-    const linkAttributeName = isInputParam ? 'source' : 'destination';
-
     return parameters.map(p => {
-        const sourceNode = sourceNodesByName.get(p.name);
         let variable: IVariable | undefined;
 
-        if (sourceNode !== undefined) {
-            const variableName = sourceNode.getAttribute(linkAttributeName);
+        const variableName = paramData[p.name];
+        if (variableName !== undefined) {
+            variable = process.variables.find(v => v.name === variableName);
             
-            if (variableName !== null) {
-                variable = process.variables.find(v => v.name === variableName);
-                
-                if (variable === undefined) {
-                    const parameterTypeName = isInputParam ? 'input' : 'output';
-                    throw new Error(`Step ${stepId} of the "${process.name}" process tries to map an ${parameterTypeName} to a non-existant variable: ${variableName}`);
-                }
+            if (variable === undefined) {
+                const parameterTypeName = isInputParam ? 'input' : 'output';
+                throw new Error(`Step ${stepId} of the "${process.name}" process tries to map an ${parameterTypeName} to a non-existant variable: ${variableName}`);
             }
         }
 
@@ -323,27 +330,22 @@ function loadStepParameters(
     });
 }
 
-function loadReturnPaths(stepNode: Element) {
-    let returnPathNodes = stepNode.getElementsByTagName('ReturnPath');
+function loadReturnPaths(stepData: IStartStepData | IProcessStepData) {
     const returnPaths: IIntermediateReturnPath[] = [];
 
-    for (const returnPathNode of returnPathNodes) {
-        const targetStepID = returnPathNode.getAttribute('targetStepID')!;
-
-        returnPaths.push({ name: null, connection: targetStepID});
+    if (stepData.returnPath !== undefined) {
+        returnPaths.push({ name: null, connection: stepData.returnPath});
         return returnPaths; // can only ever have one non-named return path
     }
 
-    returnPathNodes = stepNode.getElementsByTagName('NamedReturnPath');
-
-    for (const returnPathNode of returnPathNodes) {
-        const name = returnPathNode.getAttribute('name')!;
-        const targetStepID = returnPathNode.getAttribute('targetStepID')!;
-
-        returnPaths.push({ name, connection: targetStepID});
+    else if (stepData.type === 'process' && stepData.returnPaths !== undefined) {
+        for (const pathName in Object.keys(stepData.returnPaths)) {
+            const targetStepId = stepData.returnPaths[pathName];
+            returnPaths.push({ name: pathName, connection: targetStepId});
+        }
+    
+        return returnPaths;
     }
-
-    return returnPaths;
 }
 
 function validateReturnPaths(

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { IUndoRedoAction } from '../../services/useUndoReducer';
 import { Tool, ToolState } from './Tool';
+import './UndoTool.css';
 
 export interface UndoToolProps {
     undo?: IUndoRedoAction;

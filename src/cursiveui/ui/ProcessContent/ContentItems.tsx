@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useContext } from 'react';
 import { StepDisplay } from './StepDisplay';
 import { StepType, IStep } from '../../state/IStep';
 import { WorkspaceDispatchContext } from '../../reducer';
@@ -31,7 +31,7 @@ interface Props {
 }
 
 export const ContentItems = (props: Props) => {
-    const context = React.useContext(WorkspaceDispatchContext);
+    const context = useContext(WorkspaceDispatchContext);
 
     useEffect(() => {
         if (props.focusError !== undefined) {
@@ -155,8 +155,10 @@ export const ContentItems = (props: Props) => {
         y: y - props.minScreenY,
     });
 
-    const stopDragVarConnector = (variable: IVariable, input: boolean) => {
-        if (props.dragging !== undefined && props.dragging.type === DragType.StepParameter && props.dragging.input !== input) {
+    const stopDragVarConnector = (variable: IVariable) => {
+        let dropped = false;
+
+        if (props.dragging !== undefined && props.dragging.type === DragType.StepParameter) {
             context({
                 type: 'link variable',
                 inProcessName: props.processName,
@@ -165,9 +167,12 @@ export const ContentItems = (props: Props) => {
                 stepInputParam: props.dragging.input,
                 varName: variable.name,
             });
+
+            dropped = true;
         }
 
         props.setDragging(undefined);
+        return dropped;
     }
 
     props.stepRefs.clear();
@@ -280,7 +285,7 @@ export const ContentItems = (props: Props) => {
                 
                 headerMouseDown={(x, y, displayX, displayY) => startDragVarHeader(variable, x, y, displayX, displayY)}
                 connectorMouseDown={(input, x, y) => startDragVarConnector(variable, input, x, y)}
-                connectorMouseUp={input => stopDragVarConnector(variable, input)}
+                connectorMouseUp={() => stopDragVarConnector(variable)}
             />
         );
     });

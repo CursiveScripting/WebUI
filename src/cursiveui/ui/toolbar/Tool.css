@@ -1,7 +1,17 @@
+.toolWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-grow: 1;
+    flex-basis: 0;
+}
+
 .tool {
     display: flex;
     flex-direction: column;
     user-select: none;
+    position: relative;
+    cursor: pointer;
 }
 
 .tool__label {
@@ -11,33 +21,39 @@
 
 .tool__icon {
     font-size: 2em;
+    width: 2rem;
     height: 2rem;
     align-self: center;
-    cursor: pointer;
+    background-repeat: no-repeat;
+    background-position: bottom;
+    background-size: 87.5%;
 }
 
 .tool--disabled {
     color: #666;
-}
-
-.tool--disabled .tool__icon {
     cursor: not-allowed;
 }
 
-.tool--invalid .tool__icon {
-    color: #ff0000;
+.tool--disabled .tool__icon {
+    opacity: 0.4;
+}
+
+.tool--invalid {
+    color: darkred;
     cursor: default;
 }
 
 .tool__popout {
     z-index: 5;
     background-color: white;
-    padding: 1em;
+    padding: 0 1em;
     border-bottom-left-radius: 0.5em;
     border-bottom-right-radius: 0.5em;
     border: solid grey 1px;
     display: none;
     border-top-width: 0px;
+    position: absolute;
+    top: 100%;
 }
 
 .tool:hover > .tool__popout, .tool:active .tool__popout {
@@ -49,18 +65,10 @@
     top: -0.125em;
 }
 
-.tool--save .tool__icon::before {
-    content: '\26BF';
+.tool__popoutItem {
+    padding: 0.5em 0;
 }
 
-.tool--close .tool__icon::before {
-    content: '\26BF';
-}
-
-.tool--undo .tool__icon::before {
-    content: '\21BA';
-}
-
-.tool--redo .tool__icon::before {
-    content: '\21BB';
+.tool__popoutItem:hover {
+    text-decoration: underline;
 }

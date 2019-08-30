@@ -1,34 +1,34 @@
+import workspaceSchema from 'cursive-schema/workspace.json';
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { IUserProcess } from '../state/IUserProcess';
 import { ISystemProcess } from '../state/ISystemProcess';
-import { isString } from './DataFunctions';
 import { IProcess } from '../state/IProcess';
 import { DataType, IType, ILookupType } from '../state/IType';
 import { IParameter } from '../state/IParameter';
 import { createEmptyStartStep } from './StepFunctions';
 import { usesOptions } from './TypeFunctions';
+import { validateSchema } from './DataFunctions';
+import { IWorkspaceData, IFixedTypeData, ILookupTypeData, IProcessData, IParameterData } from './serializedDataModels';
 
-export function loadWorkspace(workspaceData: Document | string) {
-    const rootElement = isString(workspaceData)
-        ? new DOMParser().parseFromString(workspaceData, 'application/xml').documentElement
-        : workspaceData.firstChild as HTMLElement;
+export function loadWorkspace(workspaceData: IWorkspaceData, checkSchema: boolean): IWorkspaceState {
+    if (checkSchema) {
+        const validationErrors = validateSchema(workspaceSchema, workspaceData);
 
-    return loadWorkspaceFromElement(rootElement);
-}
-
-function loadWorkspaceFromElement(workspaceData: HTMLElement): IWorkspaceState {
+        if (validationErrors !== null) {
+            throw new Error(`Workspace is not valid: ${validationErrors}`);
+        }
+    }
+    
     const typesByName = loadTypes(workspaceData);
     const processesByName = new Map<string, IProcess>();
 
-    let procNodes = workspaceData.getElementsByTagName('SystemProcess');
-    for (const procNode of procNodes) {
-        const process = loadProcessDefinition(procNode, typesByName, true) as ISystemProcess;
+    for (const processData of workspaceData.systemProcesses) {
+        const process = loadProcessDefinition(processData, typesByName, true);
         processesByName.set(process.name, process);
     }
 
-    procNodes = workspaceData.getElementsByTagName('RequiredProcess');
-    for (const procNode of procNodes) {
-        const process = loadProcessDefinition(procNode, typesByName, false) as IUserProcess;
+    for (const processData of workspaceData.requiredProcesses) {
+        const process = loadProcessDefinition(processData, typesByName, false);
         processesByName.set(process.name, process);
     }
 
@@ -42,36 +42,28 @@ type ITypeWithExtendsName = IType & {
     extendsTypeName?: string;
 }
 
-function loadTypes(workspaceData: HTMLElement) {
+function loadTypes(workspaceData: IWorkspaceData) {
     const typesByName = new Map<string, DataType>();
     const typesThatExtend: ITypeWithExtendsName[] = [];
 
-    let typeNodes = workspaceData.getElementsByTagName('Type');
-    
-    for (const typeNode of typeNodes) {
-        const type = loadType(typeNode);
-        
+    for (const typeData of workspaceData.types) {
+        let type = (typeData as any).options === undefined
+            ? loadStandardType(typeData as IFixedTypeData)
+            : loadLookupType(typeData as ILookupTypeData);
+
         if (typesByName.has(type.name)) {
             throw new Error(`There are two types in the workspace with the same name: ${type.name}. Type names must be unique.`);
         }
+
+        if (typeData.guidance !== undefined) {
+            type.guidance = typeData.guidance;
+        }    
 
         typesByName.set(type.name, type);
 
         if (!usesOptions(type) && type.extendsTypeName !== undefined) {
-            // TODO: if type extends, add it to typesThatExtend   
             typesThatExtend.push(type);
         }
-    }
-
-    typeNodes = workspaceData.getElementsByTagName('LookupType');
-    for (const typeNode of typeNodes) {
-        const type = loadLookupType(typeNode);
-        
-        if (typesByName.has(type.name)) {
-            throw new Error(`There are two types in the workspace with the same name: ${type.name}. Type names must be unique.`);
-        }
-
-        typesByName.set(type.name, type);
     }
 
     // Now that all types are loaded, properly hook up extendsType property
@@ -94,77 +86,64 @@ function loadTypes(workspaceData: HTMLElement) {
     return typesByName;
 }
 
-function loadType(typeNode: Element): ITypeWithExtendsName {
-    const name = typeNode.getAttribute('name')!;
-    const color = typeNode.getAttribute('color')!;
-    const guidance = typeNode.getAttribute('guidance');
-
+function loadStandardType(typeData: IFixedTypeData): ITypeWithExtendsName {
     let type: ITypeWithExtendsName = {
-        name,
-        color,
-        guidance: guidance === null ? undefined : guidance,
+        name: typeData.name,
+        color: typeData.color,
     };
 
-    const validationExpression = typeNode.getAttribute('validation');
-    if (validationExpression !== null) {
-        type.validationExpression = validationExpression;
+    if (typeData.validation !== undefined) {
+        type.validationExpression = typeData.validation;
     }
 
-    const extendsTypeName = typeNode.getAttribute('extends');
-    if (extendsTypeName !== null) {
-        type.extendsTypeName = extendsTypeName;
+    if (typeData.extends !== undefined) {
+        type.extendsTypeName = typeData.extends;
     }
 
     return type;
 }
 
-function loadLookupType(typeNode: Element): ILookupType {
-    const name = typeNode.getAttribute('name')!;
-    const color = typeNode.getAttribute('color')!;
-    const guidance = typeNode.getAttribute('guidance');
-
+function loadLookupType(typeData: ILookupTypeData): ILookupType {
     return {
-        name,
-        color,
-        guidance: guidance === null ? undefined : guidance,
-        options: Array.from(typeNode.getElementsByTagName('Option'))
-            .map(option => (option as HTMLElement).innerHTML),
+        name: typeData.name,
+        color: typeData.color,
+        options: typeData.options,
     };
 }
 
 function loadProcessDefinition(
-    procNode: Element,
+    processData: IProcessData,
     typesByName: Map<string, DataType>,
     isSystemProcess: boolean
 ): ISystemProcess | IUserProcess {
-    const processName = procNode.getAttribute('name') as string;
+    const processName = processData.name
     const inputs: IParameter[] = [];
     const outputs: IParameter[] = [];
     const returnPaths: string[] = [];
     const procTypeName = isSystemProcess ? 'system' : 'fixed';
     
-    const folder = procNode.hasAttribute('folder') ? procNode.getAttribute('folder') : null;
-    const descNodes = procNode.getElementsByTagName('Description');
-    const description = descNodes.length > 0 ? descNodes[0].innerHTML : '';
+    const folder = processData.folder === undefined ? null : processData.folder;
+    const description = processData.description === undefined ? '' : processData.description;
     
-    let paramNodes = procNode.getElementsByTagName('Input');
-    loadParameters(processName, typesByName, paramNodes, inputs, 'input', procTypeName);
+    if (processData.inputs !== undefined) {
+        loadParameters(processName, typesByName, processData.inputs, inputs, 'input', procTypeName);
+    }
 
-    paramNodes = procNode.getElementsByTagName('Output');
-    loadParameters(processName, typesByName, paramNodes, outputs, 'output', procTypeName);
+    if (processData.outputs !== undefined) {
+        loadParameters(processName, typesByName, processData.outputs, outputs, 'output', procTypeName);
+    }
     
-    const returnPathNodes = procNode.getElementsByTagName('ReturnPath');
-    const usedNames: {[key: string]: boolean} = {};
-    for (const returnPathNode of returnPathNodes) {
-        const path = returnPathNode.getAttribute('name') as string;
-        
-        if (usedNames.hasOwnProperty(path)) {
-            throw new Error(`The '${processName}' ${procTypeName} process has two return paths with the same name: ${path}.`
-            + ` Return path names must be unique within a process.`);
-        }
-        else {
-            usedNames[path] = true;
-            returnPaths.push(path);
+    if (processData.returnPaths !== undefined) {
+        const usedNames: {[key: string]: boolean} = {};
+        for (const path of processData.returnPaths) {
+            if (usedNames.hasOwnProperty(path)) {
+                throw new Error(`The '${processName}' ${procTypeName} process has two return paths with the same name: ${path}.`
+                + ` Return path names must be unique within a process.`);
+            }
+            else {
+                usedNames[path] = true;
+                returnPaths.push(path);
+            }
         }
     }
 
@@ -196,16 +175,16 @@ function loadProcessDefinition(
 function loadParameters(
     processName: string,
     typesByName: Map<string, DataType>,
-    paramNodes: HTMLCollectionOf<Element>,
+    paramData: IParameterData[],
     parameters: IParameter[],
     inputOrOutput: 'input' | 'output',
     procTypeName: string
 ) {
     const usedNames = new Set<string>();
 
-    for (const paramNode of paramNodes) {
-        const paramName = paramNode.getAttribute('name') as string;
-        const paramTypeName = paramNode.getAttribute('type') as string;
+    for (const param of paramData) {
+        const paramName = param.name;
+        const paramTypeName = param.type;
         
         const type = typesByName.get(paramTypeName);
 

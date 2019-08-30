@@ -8,12 +8,13 @@ import { useUndoReducer } from './services/useUndoReducer';
 import { IDebugConfiguration } from './debug/IDebugConfiguration';
 import { IDebugState } from './debug/IDebugState';
 import { ICustomTool } from './ICustomTool';
+import { IWorkspaceData, IUserProcessData } from './services/serializedDataModels';
 
 interface Props {
     className: string;
-    loadWorkspace: () => Promise<Document | string>;
-    loadProcesses: undefined | (() => Promise<string | null>);
-    saveProcesses: (processXml: string) => Promise<void>;
+    loadWorkspace: () => Promise<IWorkspaceData>;
+    loadProcesses: undefined | (() => Promise<IUserProcessData[] | null>);
+    saveProcesses: (processJson: string) => Promise<void>;
     customTools?: ICustomTool[];
     debug?: IDebugConfiguration;
 }
@@ -83,8 +84,8 @@ export const CursiveUI = (props: Props) => {
 
     const doSave = hasUnsavedChanges
         ? async () => {
-        const xml = saveProcesses(state.processes);
-        await props.saveProcesses(xml)
+        const json = saveProcesses(state.processes);
+        await props.saveProcesses(json)
         noteSaved();
     } : undefined;
 

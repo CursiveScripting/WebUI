@@ -19,6 +19,15 @@
     align-items: center;
 }
 
+.signatureEditor__name.valueInput--noValue::before {
+    content: 'Unnamed';
+    opacity: 0.5;
+    text-decoration: none;
+    text-shadow: none;
+    color: black;
+    font-weight: normal;
+}
+
 .signatureEditor__body {
     display: flex;
     justify-content: space-between;
