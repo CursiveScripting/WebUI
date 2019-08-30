@@ -91,7 +91,6 @@ export const CursiveUI = (props: Props) => {
 
     if (debugState !== undefined) {
         // TODO: render debugger instead of editor?
-        // TODO: Only allow debugging if changes have been saved ... so need a way of detecting if we have outstanding changes!
     }
 
     return (
@@ -104,6 +103,7 @@ export const CursiveUI = (props: Props) => {
                 redo={redo}
                 save={doSave}
                 customTools={props.customTools}
+                startDebugger={props.debug === undefined ? undefined : props.debug.start}
             />
         </WorkspaceDispatchContext.Provider>
     )

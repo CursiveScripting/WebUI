@@ -7,10 +7,13 @@ import { ICustomTool } from '../../ICustomTool';
 import { VariableTool } from './VariableTool';
 import { DataType } from '../../state/IType';
 import { StopStepTool } from './StopStepTool';
+import { DebugTool } from './DebugTool';
 
 interface ProcessToolbarProps extends SaveToolProps, UndoToolProps {
     className?: string;
     customTools?: ICustomTool[];
+
+    startDebugging?: () => void;
 
     returnPathNames: string[];
     startDragReturnPath: (name: string | null) => void;
@@ -43,6 +46,12 @@ export const ProcessToolbar = (props: ProcessToolbarProps) => {
         [props.customTools, props.saveProcesses]
     );
 
+    const debugTool = props.startDebugging === undefined
+        ? undefined
+        : <DebugTool
+            debug={props.saveProcesses === undefined || props.validationErrors.length > 0 || props.otherProcessesHaveErrors ? undefined : props.startDebugging}
+        />
+
     return (
         <div className={classes}>
             <SaveTool
@@ -51,6 +60,8 @@ export const ProcessToolbar = (props: ProcessToolbarProps) => {
                 otherProcessesHaveErrors={props.otherProcessesHaveErrors}
                 focusError={props.focusError}
             />
+
+            {debugTool}
 
             {customTools}
 

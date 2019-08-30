@@ -22,6 +22,7 @@ interface Props {
     customTools?: ICustomTool[];
     undo?: IUndoRedoAction;
     redo?: IUndoRedoAction;
+    startDebugger?: () => Promise<void>;
 }
 
 export type DropInfo = {
@@ -147,6 +148,7 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
                 otherProcessesHaveErrors={this.props.processes.find(p => p !== this.state.openProcess && isUserProcess(p) && p.errors.length > 0) !== undefined}
                 className="workspaceEditor__toolbar"
                 saveProcesses={this.props.save}
+                startDebugging={this.props.startDebugger}
                 returnPathNames={this.state.openProcess === undefined ? [] : this.state.openProcess.returnPaths}
                 startDragReturnPath={name => this.selectStopStep(name)}
                 dataTypes={this.props.types}
