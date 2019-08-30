@@ -6,6 +6,10 @@
     display: none;
 }
 
+.processFolder--hidden {
+    display: none;
+}
+
 .processFolder__header {
     font-weight: bold;
     cursor: pointer;

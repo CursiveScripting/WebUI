@@ -3,15 +3,20 @@ import './ProcessFolder.css';
 
 interface Props {
     name: string;
+    visible: boolean;
 }
 
-export const ProcessFolder: FunctionComponent<Props> = ({ name, children }) => {
+export const ProcessFolder: FunctionComponent<Props> = ({ name, visible, children }) => {
     const [open, setOpen] = useState(true);
 
-    const classes = open
+    let classes = open
         ? 'processFolder processFolder--open'
         : 'processFolder processFolder--closed';
     
+    if (!visible) {
+        classes += ' processFolder--hidden';
+    }
+
     const clickHeader = () => setOpen(!open);
 
     return (

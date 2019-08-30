@@ -73,12 +73,18 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
         }
         
         const filterRegex = new RegExp(this.state.filter, 'i');
-        const rootProcesses = this.state.rootProcesses.map((p, i) => this.renderProcess(p, i, filterRegex));
+        const rootProcesses = this.state.rootProcesses.map((p, i) => this.renderProcess(p, i, filterRegex, () => { }));
 
         const folders = [];
         for (const [folder, processes] of this.state.processFolders) {
-            folders.push(<ProcessFolder name={folder} key={folder}>
-                {processes.map((p, i) => this.renderProcess(p, i, filterRegex))}
+
+            let anyVisible = false;
+            const noteVisible = () => anyVisible = true;
+
+            const folderProcesses = processes.map((p, i) => this.renderProcess(p, i, filterRegex, noteVisible));
+
+            folders.push(<ProcessFolder name={folder} key={folder} visible={anyVisible}>
+                {folderProcesses}
             </ProcessFolder>);
         }
 
@@ -99,7 +105,7 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
         );
     }
     
-    private renderProcess(process: IProcess, index: number, filterRegex: RegExp) {
+    private renderProcess(process: IProcess, index: number, filterRegex: RegExp, noteVisible: () => void) {
         let hasErrors: boolean;
         let isOpen: boolean;
         let openProcess: undefined | (() => void);
@@ -130,6 +136,10 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
         const isVisible = this.state.filter === ''
             || process.name.search(filterRegex) !== -1
             || process.description.search(filterRegex) !== -1;
+
+        if (isVisible) {
+            noteVisible();
+        }
 
         const select = () => this.props.processSelected(process);
         const deselect = () => this.props.deselect();
