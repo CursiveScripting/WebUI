@@ -1,16 +1,18 @@
 .processSelector {
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    overflow: hidden;
+}
+
+.processSelector__scroll {
     overflow-y: scroll;
-    position: relative;
-    padding-bottom: 2em;
+    flex-grow: 1;
+    flex-shrink: 1;
 }
 
 .processSelector__filter {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2em;
+    padding: 0.25em 0.5em;
     border-left: none;
-    border-right: none;
     border-bottom: none;
 }

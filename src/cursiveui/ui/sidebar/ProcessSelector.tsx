@@ -82,9 +82,10 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
 
         return (
             <div className={classes}>
-                {rootProcesses}
-                {folders}
-
+                <div className="processSelector__scroll">
+                    {rootProcesses}
+                    {folders}
+                </div>
                 <input type="text" className="processSelector__filter" value={this.state.filter} onChange={e => this.setState({ filter: e.target.value })} />
             </div>
         );
