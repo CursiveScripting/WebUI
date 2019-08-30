@@ -88,7 +88,13 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
                     {rootProcesses}
                     {folders}
                 </div>
-                <input type="text" className="processSelector__filter" value={this.state.filter} onChange={e => this.setState({ filter: e.target.value })} />
+                <input
+                    type="text"
+                    className="processSelector__filter"
+                    value={this.state.filter}
+                    onChange={e => this.setState({ filter: e.target.value })}
+                    placeholder="filter processes..."
+                />
             </div>
         );
     }
