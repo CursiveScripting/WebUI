@@ -292,7 +292,7 @@ function loadStepParameters(
 
         if (usedVariables.has(varName)) {
             const parameterTypeName = isInputParam ? 'input' : 'output';
-            throw new Error(`Step ${stepId} of the "${process.name}" process tries to mulitple ${parameterTypeName} to the same variable: ${varName}`);
+            throw new Error(`Step ${stepId} of the "${process.name}" process tries to map multiple ${parameterTypeName}s to the same variable: ${varName}`);
         }
 
         usedParameters.add(paramName);
