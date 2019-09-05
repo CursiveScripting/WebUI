@@ -282,7 +282,7 @@ function loadStepParameters(
     const usedParameters = new Set<string>();
     const usedVariables = new Set<string>();
 
-    for (const paramName in Object.keys(paramData)) {
+    for (const paramName of Object.keys(paramData)) {
         const varName = paramData[paramName];
 
         if (usedParameters.has(paramName)) {
@@ -339,7 +339,7 @@ function loadReturnPaths(stepData: IStartStepData | IProcessStepData) {
     }
 
     else if (stepData.type === 'process' && stepData.returnPaths !== undefined) {
-        for (const pathName in Object.keys(stepData.returnPaths)) {
+        for (const pathName of Object.keys(stepData.returnPaths)) {
             const targetStepId = stepData.returnPaths[pathName];
             returnPaths.push({ name: pathName, connection: targetStepId});
         }
