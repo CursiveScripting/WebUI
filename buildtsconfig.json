@@ -9,21 +9,18 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
+    "declaration": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "esnext",
+    "module": "commonjs",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "outDir": "./lib",
-    "jsx": "preserve",
-    "allowJs": true,
-    "skipLibCheck": true,
-    "isolatedModules": true,
-    "noEmit": true
+    "jsx": "preserve"
   },
   "include": [
-    "src"
+    "src/cursiveui"
   ],
   "exclude": [
-    "node_modules"
+      "node_modules"
   ]
 }
