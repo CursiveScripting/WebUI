@@ -1,25 +1,41 @@
 {
   "name": "cursive-web-ui",
   "version": "0.3.0",
-  "private": true,
+  "author": "FTWinston",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CursiveScripting/WebUI/issues"
+  },
+  "homepage": "https://github.com/CursiveScripting/WebUI",
   "dependencies": {
-    "@types/jest": "24.0.13",
-    "@types/node": "12.0.8",
-    "@types/react": "16.8.19",
-    "@types/react-dom": "16.8.4",
     "ajv": "^6.10.2",
     "react": "^16.8.6",
     "react-contenteditable": "^3.2.6",
     "react-dom": "^16.8.6",
-    "react-scripts": "3.0.1",
-    "typescript": "3.5.1",
+    "cursive-runtime": "git+https://github.com/CursiveScripting/JsRuntime.git",
     "cursive-schema": "git+https://github.com/CursiveScripting/Schema.git"
+  },
+  "files": ["lib/**/*"],
+  "devDependencies": {
+    "@types/jest": "24.0.13",
+    "@types/node": "12.0.8",
+    "@types/react": "16.8.19",
+    "@types/react-dom": "16.8.4",
+    "react-scripts": "3.0.1",
+    "typescript": "3.5.1"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json",
+    "prepare": "npm run build",
+    "prepublishOnly" : "npm test && npm run lint",
+    "preversion" : "npm run lint",
+    "version" : "npm run format && git add -A src",
+    "postversion" : "git push && git push --tags"
   },
   "eslintConfig": {
     "extends": "react-app"
