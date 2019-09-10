@@ -12,7 +12,6 @@
     "react": "^16.8.6",
     "react-contenteditable": "^3.2.6",
     "react-dom": "^16.8.6",
-    "cursive-runtime": "git+https://github.com/CursiveScripting/JsRuntime.git",
     "cursive-schema": "git+https://github.com/CursiveScripting/Schema.git"
   },
   "files": ["lib/**/*"],
