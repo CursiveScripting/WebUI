@@ -7,21 +7,25 @@
     "url": "https://github.com/CursiveScripting/WebUI/issues"
   },
   "homepage": "https://github.com/CursiveScripting/WebUI",
-  "dependencies": {
-    "ajv": "^6.10.2",
-    "react": "^16.8.6",
-    "react-contenteditable": "^3.2.6",
-    "react-dom": "^16.8.6",
-    "cursive-schema": "git+https://github.com/CursiveScripting/Schema.git"
-  },
   "files": [
     "lib/**/*"
   ],
+  "dependencies": {
+    "ajv": "^6.10.2",
+    "react-contenteditable": "^3.2.6",
+    "cursive-schema": "git+https://github.com/CursiveScripting/Schema.git"
+  },
+  "peerDependencies": {
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
+  },
   "devDependencies": {
     "@types/jest": "24.0.13",
     "@types/node": "12.0.8",
     "@types/react": "16.8.19",
     "@types/react-dom": "16.8.4",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
     "react-scripts": "3.0.1",
     "typescript": "3.5.1"
   },
