@@ -14,7 +14,9 @@
     "react-dom": "^16.8.6",
     "cursive-schema": "git+https://github.com/CursiveScripting/Schema.git"
   },
-  "files": ["lib/**/*"],
+  "files": [
+    "lib/**/*"
+  ],
   "devDependencies": {
     "@types/jest": "24.0.13",
     "@types/node": "12.0.8",
@@ -30,10 +32,10 @@
     "eject": "react-scripts eject",
     "lint": "tslint -p tsconfig.json",
     "prepare": "npm run build",
-    "prepublishOnly" : "npm test && npm run lint",
-    "preversion" : "npm run lint",
-    "version" : "git add -A src",
-    "postversion" : "git push && git push --tags"
+    "prepublishOnly": "npm test && npm run lint",
+    "preversion": "npm run lint",
+    "version": "git add -A src",
+    "postversion": "git push && git push --tags"
   },
   "eslintConfig": {
     "extends": "react-app"
