@@ -15,7 +15,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "outDir": "./lib",
-    "jsx": "preserve"
+    "jsx": "react"
   },
   "include": [
     "src/cursiveui"
