@@ -15,7 +15,7 @@ export function saveProcesses(processes: IProcess[]) {
         }
     }
     
-    return JSON.stringify(processData);
+    return processData;
 }
 
 function saveProcess(process: IUserProcess): IUserProcessData {

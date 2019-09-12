@@ -12,7 +12,7 @@ interface Props {
     className: string;
     loadWorkspace: () => Promise<IWorkspaceData>;
     loadProcesses: undefined | (() => Promise<IUserProcessData[] | null>);
-    saveProcesses: (processJson: string) => Promise<void>;
+    saveProcesses: (processData: IUserProcessData[]) => Promise<void>;
     customTools?: ICustomTool[];
 }
 
@@ -79,8 +79,8 @@ export const CursiveUI = (props: Props) => {
 
     const doSave = hasUnsavedChanges
         ? async () => {
-        const json = saveProcesses(state.processes);
-        await props.saveProcesses(json)
+        const data = saveProcesses(state.processes);
+        await props.saveProcesses(data)
         noteSaved();
     } : undefined;
 
