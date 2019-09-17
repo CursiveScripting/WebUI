@@ -2,6 +2,7 @@ import * as React from 'react';
 import './App.css';
 import CursiveUI from './cursiveui';
 import { ICustomTool } from './cursiveui/ICustomTool';
+import { IUserProcessData } from './cursiveui/services/serializedDataModels';
 
 async function loadWorkspace() {
     const response = await fetch('workspace.json');
@@ -16,7 +17,8 @@ async function loadProcesses() {
         : JSON.parse(saved);
 }
 
-async function saveProcesses(processJson: string) {
+async function saveProcesses(processData: IUserProcessData[]) {
+    const processJson = JSON.stringify(processData);
     sessionStorage.setItem('saved', processJson);
 }
 
