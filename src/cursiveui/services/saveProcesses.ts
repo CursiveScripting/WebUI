@@ -66,47 +66,45 @@ function saveProcess(process: IUserProcess): IUserProcessData {
                 };
             }),
 
-        steps: process.steps.length === 0
-            ? undefined
-            : process.steps.map(step => {
-                if (isStartStep(step)) {
-                    return {
-                        type: 'start',
-                        id: step.uniqueId,
-                        x: step.x,
-                        y: step.y,
-                        outputs: saveStepParameters(step.outputs),
-                        returnPath: saveSingleReturnPath(step.returnPaths),
-                    }
+        steps: process.steps.map(step => {
+            if (isStartStep(step)) {
+                return {
+                    type: 'start',
+                    id: step.uniqueId,
+                    x: step.x,
+                    y: step.y,
+                    outputs: saveStepParameters(step.outputs),
+                    returnPath: saveSingleReturnPath(step.returnPaths),
                 }
-                else if (isStopStep(step)) {
-                    return {
-                        type: 'stop',
-                        id: step.uniqueId,
-                        x: step.x,
-                        y: step.y,
-                        name: step.returnPath === null
-                            ? undefined
-                            : step.returnPath,
-                        inputs: saveStepParameters(step.inputs),
-                    }
+            }
+            else if (isStopStep(step)) {
+                return {
+                    type: 'stop',
+                    id: step.uniqueId,
+                    x: step.x,
+                    y: step.y,
+                    name: step.returnPath === null
+                        ? undefined
+                        : step.returnPath,
+                    inputs: saveStepParameters(step.inputs),
                 }
-                else if (isProcessStep(step)) {
-                    return {
-                        type: 'process',
-                        id: step.uniqueId,
-                        x: step.x,
-                        y: step.y,
-                        process: step.process.name,
-                        inputs: saveStepParameters(step.inputs),
-                        outputs: saveStepParameters(step.outputs),
-                        returnPath: saveSingleReturnPath(step.returnPaths),
-                        returnPaths: saveMultipleReturnPaths(step.returnPaths),
-                    }
+            }
+            else if (isProcessStep(step)) {
+                return {
+                    type: 'process',
+                    id: step.uniqueId,
+                    x: step.x,
+                    y: step.y,
+                    process: step.process.name,
+                    inputs: saveStepParameters(step.inputs),
+                    outputs: saveStepParameters(step.outputs),
+                    returnPath: saveSingleReturnPath(step.returnPaths),
+                    returnPaths: saveMultipleReturnPaths(step.returnPaths),
                 }
+            }
 
-                throw new Error(`Unexpected step type, cannot save: ${step}`);
-            }),
+            throw new Error(`Unexpected step type, cannot save: ${step}`);
+        }),
     };
 }
 

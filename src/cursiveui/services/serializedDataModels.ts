@@ -35,7 +35,7 @@ export interface IProcessData {
 
 export interface IUserProcessData extends IProcessData {
     variables?: IVariableData[];
-    steps?: Array<IStartStepData | IStopStepData | IProcessStepData>;
+    steps: Array<IStartStepData | IStopStepData | IProcessStepData>;
 }
 
 interface IPositionData {
