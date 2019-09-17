@@ -6,7 +6,6 @@
   "bugs": {
     "url": "https://github.com/CursiveScripting/WebUI/issues"
   },
-  "homepage": "https://github.com/CursiveScripting/WebUI",
   "files": [
     "lib/**/*"
   ],
