@@ -6,7 +6,7 @@ interface ITypeBase {
 
 export interface IType extends ITypeBase {
     extendsType?: IType;
-    validationExpression?: string;
+    validationExpression?: RegExp;
 }
 
 export interface ILookupType extends ITypeBase {

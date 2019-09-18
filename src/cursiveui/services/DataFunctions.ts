@@ -10,13 +10,12 @@ export function createMap<TElement>(elements: TElement[], getKey: (el: TElement)
     return map;
 }
 
-export function isValueValid(value: string | null, expression: string | undefined) {
+export function isValueValid(value: string | null, expression: RegExp | undefined) {
     if (value === null || expression === undefined) {
         return true;
     }
 
-    const expr = new RegExp(expression);
-    return expr.test(value);
+    return expression.test(value);
 }
 
 export function validateSchema(schema: any, data: any) {

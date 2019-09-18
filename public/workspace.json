@@ -3,12 +3,16 @@
 		{
 			"name": "number",
 			"color": "#0cf",
-			"validation": "^[0-9]+$"
+			"validation": {
+                "pattern": "^[0-9]+$"
+            }
 		},
 		{
 			"name": "text",
 			"color": "#c0f",
-			"validation": ".*"
+			"validation": {
+                "pattern": ".*"
+            }
 		},
 		{
 			"name": "deck",

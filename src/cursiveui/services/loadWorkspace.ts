@@ -93,7 +93,7 @@ function loadStandardType(typeData: IFixedTypeData): ITypeWithExtendsName {
     };
 
     if (typeData.validation !== undefined) {
-        type.validationExpression = typeData.validation;
+        type.validationExpression = new RegExp(typeData.validation.pattern, typeData.validation.flags);
     }
 
     if (typeData.extends !== undefined) {

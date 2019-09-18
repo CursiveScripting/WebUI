@@ -10,9 +10,14 @@ interface ITypeData {
     guidance?: string;
 }
 
+interface IValidationExpression {
+    pattern: string;
+    flags?: string;
+}
+
 export interface IFixedTypeData extends ITypeData {
     extends?: string;
-    validation?: string;
+    validation?: IValidationExpression;
 }
 
 export interface ILookupTypeData extends ITypeData {
