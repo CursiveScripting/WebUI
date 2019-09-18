@@ -59,12 +59,6 @@ export class WorkspaceEditor extends React.PureComponent<Props, State> {
             editingSignature: false,
         };
     }
-    
-    componentWillMount() {
-        if (this.state.openProcess !== undefined) {
-            this.openProcess(this.state.openProcess);
-        }
-    }
 
     componentDidUpdate(prevProps: Props, prevState: State) {
         if (prevProps.processes !== this.props.processes) {
