@@ -26,6 +26,7 @@ interface State {
     width: number;
     height: number;
     initialValue: string | null;
+    editingValue: string | null;
 }
 
 export class VariableDisplay extends React.PureComponent<Props, State> {
@@ -59,6 +60,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
             width: 0,
             height: 0,
             initialValue: props.initialValue,
+            editingValue: props.initialValue,
         };
     }
 
@@ -69,21 +71,17 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
         });
     }
 
-    componentWillReceiveProps(newProps: Props) {
-        if (newProps.initialValue !== this.props.initialValue && newProps.initialValue !== this.state.initialValue) {
-            const widthIncreased = newProps.initialValue !== null
-                && (this.state.initialValue === null || newProps.initialValue.length >= this.state.initialValue.length);
-
-            this.setState({
-                width: widthIncreased
-                    ? growToFitGrid(this.root!.offsetWidth)
-                    : 0,
-                height: widthIncreased
-                    ? growToFitGrid(this.root!.offsetHeight)
-                    : 0,
-                initialValue: newProps.initialValue,
-            });
+    static getDerivedStateFromProps(nextProps: Props, prevState: State) {
+        if (nextProps.initialValue === prevState.initialValue || nextProps.initialValue === prevState.editingValue) {
+            return null;
         }
+
+        return {
+            width: 0,
+            height: 0,
+            initialValue: nextProps.initialValue,
+            editingValue: nextProps.initialValue,
+        };
     }
 
     componentDidUpdate() {
@@ -111,7 +109,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
 
         const inputState = this.props.inputConnected
             ? ConnectorState.Connected
-            : this.props.initialValue !== null
+            : this.state.editingValue !== null
                 ? ConnectorState.Fixed
                 : ConnectorState.Disconnected;
 
@@ -173,7 +171,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                     val = null;
                 }
 
-                this.setState({ initialValue: val });
+                this.setState({ editingValue: val });
 
                 this.context({
                     type: 'set variable',
@@ -183,7 +181,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                 });
             };
 
-            const strVal = this.state.initialValue === null ? '' : this.state.initialValue;
+            const strVal = this.state.editingValue === null ? '' : this.state.editingValue;
 
             return <select
                 className="processItem__default"
@@ -196,12 +194,12 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
 
         }
         else if (this.props.type.validationExpression !== undefined) {
-            const strVal = this.state.initialValue === null ? '' : this.state.initialValue;
+            const strVal = this.state.editingValue === null ? '' : this.state.editingValue;
 
-            const valueChanged = (val: string) => this.setState({ initialValue: val });
+            const valueChanged = (val: string) => this.setState({ editingValue: val });
 
             const doneEditing = () => {
-                let val = this.state.initialValue;
+                let val = this.state.editingValue;
 
                 if (val !== null) {
                     val = val
@@ -223,7 +221,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
                 });
             };
             
-            const isValid = isValueValid(this.state.initialValue, this.props.type.validationExpression);
+            const isValid = isValueValid(this.state.editingValue, this.props.type.validationExpression);
 
             return <ValueInput
                 className="processItem__default"

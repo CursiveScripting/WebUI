@@ -34,11 +34,15 @@ interface State {
     contentHeight: number;
     canvasWidth: number;
     canvasHeight: number;
+    dropping?: DropInfo;
     dragging?: DragInfo;
     minScreenX: number;
     minScreenY: number;
     scrollX: number;
     scrollY: number;
+    processName: string;
+    numSteps: number;
+    numVariables: number;
 }
 
 export enum DragType {
@@ -115,6 +119,9 @@ export class ProcessContent extends React.PureComponent<Props, State> {
             minScreenY: 0,
             scrollX: 0,
             scrollY: 0,
+            processName: props.processName,
+            numSteps: props.steps.length,
+            numVariables: props.variables.length,
         };
     }
 
@@ -189,24 +196,41 @@ export class ProcessContent extends React.PureComponent<Props, State> {
         );
     }
 
-    componentWillReceiveProps(nextProps: Props) {
-        if (nextProps.processName !== this.props.processName
-            || nextProps.steps.length !== this.props.steps.length
-            || nextProps.variables.length !== this.props.variables.length) {
-            this.updateContentSize();
+    static getDerivedStateFromProps(nextProps: Props, prevState: State) {
+        let hasChanged = false;
+        const nextState: Partial<State> = {};
+
+        // Force content size recalculation if these change
+        if (nextProps.processName !== prevState.processName
+            || nextProps.steps.length !== prevState.numSteps
+            || nextProps.variables.length !== prevState.numVariables) {
+            hasChanged = true;
+            nextState.contentWidth = 0;
+            nextState.contentHeight = 0;
+            nextState.processName = nextProps.processName;
+            nextState.numSteps = nextProps.steps.length;
+            nextState.numVariables = nextProps.variables.length;
         }
 
-        if (nextProps.dropping !== undefined && this.props.dropping !== nextProps.dropping) {
-            this.setState({
-                dragging: {
+        if (prevState.dropping !== nextProps.dropping) {
+            hasChanged = true;
+
+            if (nextProps.dropping !== undefined) {
+                nextState.dropping = nextProps.dropping;
+                nextState.dragging = {
                     type: DragType.DropNew,
                     x: 0,
                     y: 0,
-                }
-            });
+                };
+            }
+            else {
+                nextState.dropping = undefined;
+            }
         }
+
+        return hasChanged ? nextState : null;
     }
-    
+
     private stopDraggingOnNothing() {
         const dragging = this.state.dragging;
         if (dragging === undefined) {

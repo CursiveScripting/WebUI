@@ -20,6 +20,7 @@ interface Props {
 }
 
 interface State {
+    allProcesses: IProcess[];
     filter: string;
     rootProcesses: IProcess[];
     processFolders: Map<string, IProcess[]>;
@@ -30,18 +31,24 @@ export class ProcessSelector extends React.PureComponent<Props, State> {
         super(props);
 
         this.state = {
-            ...this.arrangeProcesses(props.processes),
+            ...ProcessSelector.arrangeProcesses(props.processes),
+            allProcesses: props.processes,
             filter: '',
         };
     }
 
-    componentWillReceiveProps(nextProps: Props) {
-        if (nextProps.processes !== this.props.processes) {
-            this.setState(this.arrangeProcesses(nextProps.processes));
+    static getDerivedStateFromProps(nextProps: Props, prevState: State) {
+        if (nextProps.processes === prevState.allProcesses) {
+            return null;
         }
+        
+        return {
+            ...ProcessSelector.arrangeProcesses(nextProps.processes),
+            allProcesses: nextProps.processes,
+        };
     }
 
-    private arrangeProcesses(allProcesses: IProcess[]) {
+    private static arrangeProcesses(allProcesses: IProcess[]) {
         const rootProcesses: IProcess[] = [];
         const processFolders = new Map<string, IProcess[]>();
 
