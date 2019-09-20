@@ -43,8 +43,6 @@ export const WorkspaceDispatchContext = createContext<Dispatch<WorkspaceAction>>
 
 
 export const workspaceReducer: Reducer<IWorkspaceState, WorkspaceAction> = (state, action) => {
-    console.log('action', action);
-
     switch (action.type) {
         case 'load':
             return load(action);

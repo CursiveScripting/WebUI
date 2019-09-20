@@ -1,13 +1,20 @@
 import { Reducer, ReducerState, useReducer, useCallback, useMemo } from 'react';
+import { logReducer } from './logReducer';
 
 export function useUndoReducer<TState, TAction extends IAction>(
     reducer: Reducer<TState, TAction>,
     initialState: ReducerState<Reducer<TState, TAction>>,
     maxHistorySize?: number,
+    log?: (action: TAction | UndoAction) => void
 ) {
-    const undoableReducer = useMemo(() => undoReducer(reducer, maxHistorySize), [reducer, maxHistorySize]);
+    let undoableReducer = useMemo(() => {
+        const newReducer = undoReducer(reducer, maxHistorySize)
+        return log === undefined
+            ? newReducer
+            : logReducer(newReducer, log);
+    }, [reducer, maxHistorySize, log]);
 
-    const [state, dispatch] = useReducer(undoableReducer, {
+    let [state, dispatch] = useReducer(undoableReducer, {
         present: {
             state: initialState,
             actionName: '',
@@ -80,11 +87,14 @@ interface IAction {
     type: string;
 }
 
-type UndoAction = {
+export type UndoAction = {
     type: 'undo' | 'redo' | 'clearHistory' | 'saved';
 }
 
-function undoReducer<TState, TAction extends IAction>(reducer: Reducer<TState, TAction>, maxHistorySize?: number) {
+function undoReducer<TState, TAction extends IAction>(
+    reducer: Reducer<TState, TAction>,
+    maxHistorySize?: number
+) {
     return function(state: IUndoable<TState>, action: TAction | UndoAction): IUndoable<TState> {
         if (action.type === 'undo') {
             if (state.past.length === 0) {

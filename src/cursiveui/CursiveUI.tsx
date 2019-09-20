@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Error } from './ui/Error';
 import { WorkspaceEditor } from './ui/WorkspaceEditor';
-import { workspaceReducer, WorkspaceDispatchContext } from './reducer';
+import { workspaceReducer, WorkspaceDispatchContext, WorkspaceAction } from './reducer';
 import { saveProcesses } from './services/saveProcesses';
 import { loadWorkspaceAndProcesses } from './services/loadWorkspaceAndProcesses';
-import { useUndoReducer } from './services/useUndoReducer';
+import { useUndoReducer, UndoAction } from './services/useUndoReducer';
 import { ICustomTool } from './ICustomTool';
 import { IWorkspaceData, IUserProcessData } from './services/serializedDataModels';
 
@@ -27,6 +27,8 @@ type LoadingState = {
     message: string;
 }
 
+const logAction = (action: WorkspaceAction | UndoAction) => console.log('action', action);
+
 export const CursiveUI = (props: Props) => {
     const {
         state,
@@ -39,7 +41,7 @@ export const CursiveUI = (props: Props) => {
     } = useUndoReducer(workspaceReducer, {
         types: [],
         processes: [],
-    }, 100);
+    }, 100, logAction);
 
     const [loadingState, setLoadingState] = useState<LoadingState>({ loading: true });
 
