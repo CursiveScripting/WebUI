@@ -6,7 +6,7 @@ import { ValueInput } from './ValueInput';
 import { DataType } from '../../state/IType';
 import { isValueValid } from '../../services/DataFunctions';
 import { WorkspaceDispatchContext } from '../../reducer';
-import { getDescendentMidLeftPos } from '../../services/StepFunctions';
+import { getDescendentMidLeftPos, getDescendentMidRightPos } from '../../services/StepFunctions';
 import { ICoord } from '../../state/dimensions';
 import { usesOptions } from '../../services/TypeFunctions';
 
@@ -42,7 +42,7 @@ export class VariableDisplay extends React.PureComponent<Props, State> {
     }
 
     public get outputConnectorPos() {
-        return getDescendentMidLeftPos(this.props, this.outputConnector!);
+        return getDescendentMidRightPos(this.props, this.outputConnector!);
     }
     
     public get maxX() {
