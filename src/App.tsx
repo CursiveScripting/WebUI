@@ -1,8 +1,6 @@
 import * as React from 'react';
 import './App.css';
-import CursiveUI from './cursiveui';
-import { ICustomTool } from './cursiveui/ICustomTool';
-import { IUserProcessData } from './cursiveui/services/serializedDataModels';
+import CursiveUI, { ICustomTool, IUserProcessData } from './cursiveui';
 
 async function loadWorkspace() {
     const response = await fetch('workspace.json');
