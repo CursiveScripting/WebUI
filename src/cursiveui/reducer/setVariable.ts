@@ -1,6 +1,7 @@
 import { IWorkspaceState } from '../state/IWorkspaceState';
 import { isUserProcess } from '../services/ProcessFunctions';
 import { validate } from './validate';
+import { replaceVariableReferences } from '../services/StepFunctions';
 
 export type SetVariableAction = {
     type: 'set variable';
@@ -12,7 +13,7 @@ export type SetVariableAction = {
 export function setVariable(state: IWorkspaceState, action: SetVariableAction) {
     const processIndex = state.processes.findIndex(p => p.name === action.inProcessName);
 
-    const process = { ...state.processes[processIndex] };
+    let process = { ...state.processes[processIndex] };
 
     if (!isUserProcess(process)) {
         return state;
@@ -26,17 +27,29 @@ export function setVariable(state: IWorkspaceState, action: SetVariableAction) {
 
     const variables = [ ...process.variables ];
 
-    variables[varIndex] = {
-        ...process.variables[varIndex],
+    const oldVariable = process.variables[varIndex];
+
+    if (oldVariable.initialValue === action.initialValue) {
+        return state;
+    }
+
+    const newVariable = {
+        ...oldVariable,
         initialValue: action.initialValue,
     };
+    
+    variables[varIndex] = newVariable;
 
     process.variables = variables;
     
+    process = replaceVariableReferences(process, oldVariable, newVariable, newVariable);
+
     const processes = state.processes.slice();
     processes[processIndex] = process;
 
-    process.errors = validate(process, processes);
+    if (isUserProcess(process)) { // don't see why this type assertion is needed
+        process.errors = validate(process, processes);
+    }
 
     return {
         ...state,
