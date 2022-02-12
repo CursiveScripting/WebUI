@@ -12,7 +12,7 @@
     "lib/**/*"
   ],
   "dependencies": {
-    "ajv": "^6.10.2",
+    "ajv": "^6.12.3",
     "react-contenteditable": "^3.2.6",
     "cursive-schema": "git+https://github.com/CursiveScripting/Schema.git"
   },
